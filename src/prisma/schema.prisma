@@ -1,0 +1,348 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "linux-arm64-openssl-1.1.x", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model batches {
+  batch_id                  Int       @id @default(autoincrement())
+  batch_name                String?
+  project_id                Int?
+  batch_size                String?
+  training_centre_id        Int?
+  assessment_start_datetime DateTime? @db.DateTime(0)
+  assessment_end_datetime   DateTime? @db.DateTime(0)
+  login_restrict            Int?      @default(0)
+  assessment_mode           Int?
+  capture_image_in_seconds  Int?
+  is_active                 Int       @default(1)
+  created_by                Int?
+  deleted_at                DateTime? @db.DateTime(0)
+  updated_at                DateTime? @db.DateTime(0)
+  created_at                DateTime? @db.DateTime(0)
+}
+
+model categories {
+  id     Int    @id @default(autoincrement())
+  name   String @default("") @db.VarChar(200)
+  active Int    @default(1)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model city {
+  city_id   Int     @id @default(autoincrement())
+  city_name String  @db.VarChar(80)
+  state_id  Int
+  is_active Boolean @default(true)
+  users     users[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model country {
+  country_id   Int     @id @default(autoincrement())
+  sortname     String  @db.VarChar(3)
+  country_name String  @db.VarChar(150)
+  country_code String  @db.VarChar(4)
+  is_active    Boolean @default(true)
+}
+
+model languages {
+  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  alias      String    @default("")
+  full_name  String    @default("")
+  short_name String    @default("")
+  deleted_at DateTime? @db.Timestamp(0)
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+}
+
+model migrations {
+  id        Int    @id @default(autoincrement()) @db.UnsignedInt
+  migration String
+  batch     Int
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model projects {
+  project_id   Int       @id @default(autoincrement())
+  project_name String?   @unique(map: "project_name")
+  project_code String    @db.VarChar(40)
+  is_active    Int       @default(1)
+  updated_at   DateTime? @db.DateTime(0)
+  created_at   DateTime? @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model qualification_pack_nos_pcs {
+  nos_pc_id             Int       @id @default(autoincrement())
+  ssc_id                Int
+  qualification_pack_id Int
+  nos_id                Int
+  pc_name               String?   @db.VarChar(100)
+  is_active             Int?      @default(1)
+  created_by            Int?
+  deleted_at            DateTime? @db.DateTime(0)
+  updated_at            DateTime? @db.DateTime(0)
+  created_at            DateTime? @db.DateTime(0)
+
+  @@unique([ssc_id, qualification_pack_id, nos_id], map: "qualification_pack_id")
+}
+
+model qualification_pack_pc {
+  pc_id        Int      @id @default(autoincrement())
+  pc_label_id  String   @db.VarChar(50)
+  pc_name      String   @db.VarChar(150)
+  qual_pack_id Int
+  nos_id       Int
+  created_by   Int
+  postdate     DateTime @default(now()) @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model qualification_packs {
+  id                       Int                      @id @default(autoincrement())
+  agency_id                Int
+  ssc                      sector_skill_councils    @relation(fields: [ssc_id], references: [id])
+  ssc_id                   Int
+  qualification_pack_id    String                   @unique @db.VarChar(100)
+  qualification_pack_name  String                   @db.VarChar(100)
+  nqr_code                 String?                  @db.VarChar(100)
+  nsqf_level               Int                      @db.TinyInt @default(1)
+  version                  Version                  @relation(fields: [version_id], references: [id])
+  version_id               Int
+  total_marks              Decimal                  @db.Decimal(10, 2)
+  total_theory_marks       Decimal                  @db.Decimal(10, 2)
+  total_practical_marks    Decimal                  @db.Decimal(10, 2)
+  total_viva_marks         Decimal                  @db.Decimal(10, 2)
+  theory_cutoff_marks      Decimal?                 @db.Decimal(10, 2)
+  viva_cutoff_marks        Decimal?                 @db.Decimal(10, 2)
+  practical_cutoff_marks   Decimal?                 @db.Decimal(10, 2)
+  overall_cutoff_marks     Decimal?                 @db.Decimal(10, 2)
+  nos_cutoff_marks         Decimal?                 @db.Decimal(10, 2)
+  weighted_available       Decimal?                 @db.Decimal(10, 2)
+  status                   Int                      @default(1) @db.TinyInt
+  created_by               Int
+  created_at               DateTime?                @default(now()) @db.DateTime(0)
+  updated_at               DateTime?                @default(now()) @db.DateTime(0)
+  deleted_at               DateTime?                @db.DateTime(0)
+  nos                      NOS[]
+
+  @@unique([qualification_pack_id, version_id], name: "unique_qualification_pack_version")
+}
+
+model Version {
+  id                 Int                   @id @default(autoincrement())
+  version_number     String                @db.VarChar(20)
+  version_name       String                @db.VarChar(50)
+  qualificatin_packs qualification_packs[]
+}
+
+model NOS {
+  id                     Int                   @id @default(autoincrement())
+  agency_id              Int
+  ssc                    sector_skill_councils @relation(fields: [ssc_id], references: [id])
+  ssc_id                 Int
+  nos_id                 String                @unique @db.VarChar(100)
+  nos_name               String                @db.VarChar(100)
+  status                 Int                   @default(1) @db.TinyInt
+  created_by             Int
+  created_at             DateTime?             @default(now()) @db.DateTime(0)
+  updated_at             DateTime?             @default(now()) @db.DateTime(0)
+
+  pc                  PC[]
+  qualification_packs qualification_packs[]
+}
+
+model PC {
+  id         Int       @id @default(autoincrement())
+  agency_id  Int
+  nos        NOS       @relation(fields: [nos_id], references: [id])
+  nos_id     Int
+  pc_id      String    @unique @db.VarChar(100)
+  pc_name    String    @db.VarChar(100)
+  created_by Int
+  created_at DateTime? @default(now()) @db.DateTime(0)
+  updated_at DateTime? @default(now()) @db.DateTime(0)
+
+  questions Questions[]
+}
+
+// model PC_Question {
+//   id          Int       @id @default(autoincrement())
+//   question    Questions @relation(fields: [question_id], references: [id])
+//   question_id Int
+//   pc          PC        @relation(fields: [pc_id], references: [id])
+//   pc_id       Int
+// }
+
+model Questions {
+  id                   Int            @id @default(autoincrement())
+  agency_id            Int
+  language_id          Int
+  question_level       question_level @default(E)
+  question_type        question_type  @default(theory)
+  question             String         @db.Text
+  option1              String?        @db.Text
+  option2              String?        @db.Text
+  option3              String?        @db.Text
+  option4              String?        @db.Text
+  option5              String?        @db.Text
+  answer               Int            @db.TinyInt
+  marks                Int
+  question_explanation String?        @db.Text
+  status               Int            @default(1) @db.TinyInt
+  created_by           Int
+  deactive_date        DateTime?
+  created_at           DateTime?      @default(now()) @db.DateTime(0)
+  updated_at           DateTime?      @default(now()) @db.DateTime(0)
+
+  pc PC[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model questionpapers {
+  ques_id        Int                           @id @default(autoincrement())
+  question       String                        @db.Text
+  option_a       String                        @db.Text
+  option_b       String                        @db.Text
+  option_c       String                        @db.Text
+  option_d       String                        @db.Text
+  question_level questionpapers_question_level
+  correct_answer questionpapers_correct_answer
+  pcid           Int
+  postdate       DateTime                      @default(now()) @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model sector_skill_councils {
+  id           Int       @id @default(autoincrement())
+  agency       users     @relation(fields: [agency_id], references: [id])
+  agency_id    Int
+  ssc_name     String    @db.VarChar(100)
+  ssc_code     String?   @db.VarChar(60)
+  ssc_username String?   @db.VarChar(100)
+  ssc_pwd      String?   @db.VarChar(100)
+  status       Int       @default(1) @db.TinyInt
+  created_by   Int?
+  deleted_at   DateTime? @db.DateTime(0)
+  created_at   DateTime  @default(now()) @db.DateTime(0)
+  updated_at   DateTime  @default(now()) @updatedAt @db.DateTime(0)
+
+  qualification_packs qualification_packs[]
+  nos                 NOS[]
+
+  @@unique([ssc_username, agency_id], map: "sector_skill_council_name")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model state {
+  state_id   Int     @id @default(autoincrement())
+  state_name String  @db.VarChar(80)
+  country_id Int     @default(1)
+  is_active  Boolean @default(true)
+  users      users[]
+}
+
+model users {
+  id            Int          @id @default(autoincrement())
+  email         String       @unique(map: "email") @db.VarChar(100)
+  user_name     String?      @unique(map: "user_name") @db.VarChar(60)
+  password      String?      @db.VarChar(80)
+  salt          String?      @db.VarChar(80)
+  company_name  String?      @db.VarChar(100)
+  user_type     String       @default("U") @db.VarChar(2)
+  first_name    String?      @db.VarChar(100)
+  last_name     String?      @db.VarChar(100)
+  mobile_no     String       @db.VarChar(15)
+  landline_no   String?      @db.VarChar(15)
+  gender        users_gender @default(m)
+  date_of_birth DateTime?    @db.Date
+  country_id    Int?
+  state         state?       @relation(fields: [state_id], references: [state_id])
+  state_id      Int?
+  city          city?        @relation(fields: [city_id], references: [city_id])
+  city_id       Int?
+  district_id   Int?
+  address       String?
+  pin_code      String?      @db.VarChar(6)
+  time_zone     String?      @db.VarChar(100)
+  avatar        String?
+  expiry_date   DateTime?    @db.Date
+  is_master     Boolean      @default(true)
+  master_id     Int
+  created_by    Int?
+  status        Int          @default(1) @db.TinyInt
+  is_deleted    Int          @default(0) @db.TinyInt
+  device_id     String?      @db.Text
+  deactive_date DateTime?    @db.DateTime(0)
+  created_at    DateTime     @default(now()) @db.DateTime(0)
+  updated_at    DateTime     @default(now()) @updatedAt @db.DateTime(0)
+
+  sector_skills sector_skill_councils[]
+  user_additional_data users_additional_data?
+}
+
+model users_additional_data {
+  id                        Int     @id @default(autoincrement())
+  user                      users   @relation(fields: [user_id], references: [id])
+  user_id                   Int     @unique
+  employee_id               Int
+  job_roles                 String? @db.Text
+  job_valid_upto            String? @db.Text
+  last_qualification        String?
+  aadhaar_no                Int?
+  pan_card_no               String?
+  certificate_8th           String?  @db.Text
+  certificate_10th          String?  @db.Text
+  certificate_12th          String?  @db.Text
+  certificate_DIPLOMA       String?  @db.Text
+  certificate_UG            String?  @db.Text
+  certificate_PG            String?  @db.Text
+  assessor_certificate      String?  @db.Text
+  agreement_copy            String?  @db.Text
+  aadhaar_card              String?  @db.Text
+  resume_cv                 String?  @db.Text
+  pan_card                  String?  @db.Text
+  cancel_check              String?  @db.Text
+  bank_name                 String?
+  account_no                Int?
+  ifsc_code                 String?
+  created_at                DateTime @default(now()) @db.DateTime(0)
+  updated_at                DateTime @default(now()) @updatedAt @db.DateTime(0)
+}
+
+
+enum question_level {
+  E
+  M
+  H
+}
+
+enum question_type {
+  theory
+  viva
+  practical
+}
+
+enum questionpapers_question_level {
+  E
+  H
+  M
+}
+
+enum questionpapers_correct_answer {
+  a
+  b
+  c
+  d
+}
+
+enum users_gender {
+  m
+  f
+}
