@@ -113,7 +113,7 @@ model qualification_packs {
   qualification_pack_name  String                   @db.VarChar(100)
   nqr_code                 String?                  @db.VarChar(100)
   nsqf_level               Int                      @db.TinyInt @default(1)
-  version                  Version                  @relation(fields: [version_id], references: [id])
+  version                  version                  @relation(fields: [version_id], references: [id])
   version_id               Int
   total_marks              Decimal                  @db.Decimal(10, 2)
   total_theory_marks       Decimal                  @db.Decimal(10, 2)
@@ -130,19 +130,19 @@ model qualification_packs {
   created_at               DateTime?                @default(now()) @db.DateTime(0)
   updated_at               DateTime?                @default(now()) @db.DateTime(0)
   deleted_at               DateTime?                @db.DateTime(0)
-  nos                      NOS[]
+  nos                      nos[]
 
   @@unique([qualification_pack_id, version_id], name: "unique_qualification_pack_version")
 }
 
-model Version {
+model version {
   id                 Int                   @id @default(autoincrement())
   version_number     String                @db.VarChar(20)
   version_name       String                @db.VarChar(50)
   qualificatin_packs qualification_packs[]
 }
 
-model NOS {
+model nos {
   id                     Int                   @id @default(autoincrement())
   agency_id              Int
   ssc                    sector_skill_councils @relation(fields: [ssc_id], references: [id])
@@ -154,14 +154,14 @@ model NOS {
   created_at             DateTime?             @default(now()) @db.DateTime(0)
   updated_at             DateTime?             @default(now()) @db.DateTime(0)
 
-  pc                  PC[]
+  pc                  pc[]
   qualification_packs qualification_packs[]
 }
 
-model PC {
+model pc {
   id         Int       @id @default(autoincrement())
   agency_id  Int
-  nos        NOS       @relation(fields: [nos_id], references: [id])
+  nos        nos       @relation(fields: [nos_id], references: [id])
   nos_id     Int
   pc_id      String    @unique @db.VarChar(100)
   pc_name    String    @db.VarChar(100)
@@ -169,7 +169,7 @@ model PC {
   created_at DateTime? @default(now()) @db.DateTime(0)
   updated_at DateTime? @default(now()) @db.DateTime(0)
 
-  questions Questions[]
+  questions questions[]
 }
 
 // model PC_Question {
@@ -180,7 +180,7 @@ model PC {
 //   pc_id       Int
 // }
 
-model Questions {
+model questions {
   id                   Int            @id @default(autoincrement())
   agency_id            Int
   language_id          Int
@@ -201,7 +201,7 @@ model Questions {
   created_at           DateTime?      @default(now()) @db.DateTime(0)
   updated_at           DateTime?      @default(now()) @db.DateTime(0)
 
-  pc PC[]
+  pc pc[]
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -234,7 +234,7 @@ model sector_skill_councils {
   updated_at   DateTime  @default(now()) @updatedAt @db.DateTime(0)
 
   qualification_packs qualification_packs[]
-  nos                 NOS[]
+  nos                 nos[]
 
   @@unique([ssc_username, agency_id], map: "sector_skill_council_name")
 }
