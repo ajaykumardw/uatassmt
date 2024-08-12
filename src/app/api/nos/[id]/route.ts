@@ -10,7 +10,7 @@ export async function GET(
 ) {
   const id = Number(context.params.id);
 
-  const nos = await prisma.nOS.findFirst({
+  const nos = await prisma.nos.findFirst({
     where: {
       id: id
     },
@@ -29,7 +29,7 @@ export async function POST(
   const id = Number(context.params.id);
   const {sscId, nosName} = await req.json();
 
-  const qualificationPackExist = await prisma.nOS.findUnique({
+  const qualificationPackExist = await prisma.nos.findUnique({
     where: {
       id: id
     }
@@ -37,7 +37,7 @@ export async function POST(
 
   if (qualificationPackExist) {
 
-    const result = await prisma.nOS.update({
+    const result = await prisma.nos.update({
       where:{
         id: id
       },

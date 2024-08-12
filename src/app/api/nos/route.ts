@@ -12,7 +12,7 @@ export async function GET() {
   const session = await getServerSession(authOptions);
   const agency_id = Number(session?.user?.agency_id);
 
-  const nos = await prisma.nOS.findMany({
+  const nos = await prisma.nos.findMany({
     where: {
       agency_id: agency_id
     },
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   const createdBy = Number(session?.user.id);
   const agency_id = Number(session?.user?.agency_id);
 
-  const result = await prisma.nOS.create({
+  const result = await prisma.nos.create({
     data: {
       agency_id: agency_id,
       ssc_id: Number(sscId),

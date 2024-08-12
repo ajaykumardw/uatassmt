@@ -15,7 +15,7 @@ export async function GET(
 ) {
   const id = Number(context.params.id);
 
-  const pc = await prisma.pC.findFirst({
+  const pc = await prisma.pc.findFirst({
     where: {
       id: id
     }
@@ -33,7 +33,7 @@ export async function POST(
   const session = await getServerSession(authOptions);
   const agency_id = Number(session?.user?.agency_id);
 
-  const pcExist = await prisma.pC.findUnique({
+  const pcExist = await prisma.pc.findUnique({
     where: {
       id: id,
       agency_id: agency_id,
@@ -44,7 +44,7 @@ export async function POST(
 
   if (pcExist) {
 
-    const result = await prisma.pC.update({
+    const result = await prisma.pc.update({
       where:{
         id: id,
         agency_id: agency_id,
