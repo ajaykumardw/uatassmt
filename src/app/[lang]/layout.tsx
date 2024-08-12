@@ -1,4 +1,7 @@
 // Third-party Imports
+
+import { SpeedInsights } from '@vercel/speed-insights/next';
+
 import 'react-perfect-scrollbar/dist/css/styles.css'
 
 // Type Imports
@@ -28,7 +31,10 @@ const RootLayout = ({ children, params }: ChildrenType & { params: { lang: Local
 
   return (
     <html id='__next' lang={params.lang} dir={direction}>
-      <body className='flex is-full min-bs-full flex-auto flex-col'>{children}</body>
+      <body className='flex is-full min-bs-full flex-auto flex-col'>
+        {children}
+        <SpeedInsights />
+      </body>
     </html>
   )
 }
