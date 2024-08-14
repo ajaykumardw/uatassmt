@@ -328,7 +328,7 @@ export async function POST(req: NextRequest) {
         job_roles: jobRoles.toString(),
         job_valid_upto: jobValidUpto.toString(),
         last_qualification: lastQualification.toString(),
-        aadhaar_no: Number(aadhaarNumber),
+        aadhaar_no: aadhaarNumber.toString(),
         pan_card_no: panCardNumber.toString(),
         bank_name: bankName.toString(),
         account_no: Number(accountNumber),
