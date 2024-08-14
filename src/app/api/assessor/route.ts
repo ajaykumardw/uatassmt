@@ -20,56 +20,56 @@ import { authOptions } from '@/libs/auth';
 
 
 
-export async function GET(req: NextRequest) {
+// export async function GET(req: NextRequest) {
 
-  // const {image} = await req.json();
+//   // const {image} = await req.json();
 
-  const formData = await req.formData();
-  const body = Object.fromEntries(formData);
+//   const formData = await req.formData();
+//   const body = Object.fromEntries(formData);
 
-  const file = (body.image as Blob);
+//   const file = (body.image as Blob);
 
-  const name = formData.get("name");
+//   const name = formData.get("name");
 
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'agency', 'users', '1');
+//   const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'agency', 'users', '1');
 
-  if (file) {
-    const buffer = Buffer.from(await file.arrayBuffer());
+//   if (file) {
+//     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // if (!fs.existsSync(uploadDir)) {
-    //   fs.mkdirSync(uploadDir);
-    // }
+//     // if (!fs.existsSync(uploadDir)) {
+//     //   fs.mkdirSync(uploadDir);
+//     // }
 
-    if (!fs.existsSync(uploadDir)) {
-      try {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      } catch (err) {
-        console.error('Error creating upload directory:', err);
-        throw new Error('Failed to create upload directory');
-      }
-    }
+//     if (!fs.existsSync(uploadDir)) {
+//       try {
+//         fs.mkdirSync(uploadDir, { recursive: true });
+//       } catch (err) {
+//         console.error('Error creating upload directory:', err);
+//         throw new Error('Failed to create upload directory');
+//       }
+//     }
 
-    fs.writeFileSync(
-      path.resolve(uploadDir, (body.image as File).name),
-      buffer
-    );
-  } else {
-    return NextResponse.json({
-      success: false,
-    });
-  }
+//     fs.writeFileSync(
+//       path.resolve(uploadDir, (body.image as File).name),
+//       buffer
+//     );
+//   } else {
+//     return NextResponse.json({
+//       success: false,
+//     });
+//   }
 
 
-  // if (!fs.existsSync(uploadDir)) {
-  //   try {
-  //     fs.mkdirSync(uploadDir, { recursive: true });
-  //   } catch (err) {
-  //     console.error('Error creating upload directory:', err);
-  //     throw new Error('Failed to create upload directory');
-  //   }
-  // }
-  return NextResponse.json({"folder": uploadDir, "formData": formData, "name": name, "image": { "type": (body.image as File).type}})
-}
+//   // if (!fs.existsSync(uploadDir)) {
+//   //   try {
+//   //     fs.mkdirSync(uploadDir, { recursive: true });
+//   //   } catch (err) {
+//   //     console.error('Error creating upload directory:', err);
+//   //     throw new Error('Failed to create upload directory');
+//   //   }
+//   // }
+//   return NextResponse.json({"folder": uploadDir, "formData": formData, "name": name, "image": { "type": (body.image as File).type}})
+// }
 
 
 export async function POST(req: NextRequest) {
@@ -178,6 +178,7 @@ export async function POST(req: NextRequest) {
       mobile_no: phoneNumber.toString(),
       is_master: false,
       master_id: agency_id,
+      role_id: 1,
       state_id: Number(state),
       city_id: Number(city),
       pin_code: pinCode.toString(),

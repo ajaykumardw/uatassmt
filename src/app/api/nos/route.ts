@@ -20,6 +20,9 @@ export async function GET() {
       ssc: true,
       qualification_packs: true,
       pc: true,
+    },
+    orderBy: {
+      nos_name: "asc"
     }
   });
 

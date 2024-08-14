@@ -41,7 +41,7 @@ export async function GET() {
       }
     },
     orderBy:{
-      created_at: "desc"
+      ssc_name: "asc"
     }
   });
 

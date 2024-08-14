@@ -22,6 +22,9 @@ export async function GET() {
     include: {
       state: true,
       city: true
+    },
+    orderBy: {
+      first_name: "asc"
     }
   })
 

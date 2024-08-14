@@ -1,4 +1,6 @@
 // Type Imports
+import type { role } from '@prisma/client'
+
 import type { ThemeColor } from '@core/types'
 
 export type UsersType = {
@@ -39,6 +41,8 @@ export type UsersType = {
   expiry_date: string,
   is_master: string,
   master_id: number,
+  role_id: number,
+  role: role,
   created_by: number,
   is_deleted: string,
   device_id: number,

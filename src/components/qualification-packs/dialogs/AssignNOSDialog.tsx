@@ -147,6 +147,8 @@ const AssignNOSDialog = ({ open, handleClose, qPack, data, assigned, updateQPLis
 
     if (res.ok) {
 
+      setLoading(false);
+
       reset();
 
       toast.success('NOS assigned successfully!', {
@@ -156,7 +158,7 @@ const AssignNOSDialog = ({ open, handleClose, qPack, data, assigned, updateQPLis
       updateQPList();
 
     } else {
-      // setLoading(false)
+      setLoading(false)
       toast.error('Something went wrong!', {
         hideProgressBar: false
       });
@@ -164,6 +166,8 @@ const AssignNOSDialog = ({ open, handleClose, qPack, data, assigned, updateQPLis
       updateQPList();
 
     }
+
+    setLoading(false);
 
     updateQPList();
 
@@ -185,7 +189,7 @@ const AssignNOSDialog = ({ open, handleClose, qPack, data, assigned, updateQPLis
         <i className='tabler-x' />
       </DialogCloseButton>
       <DialogTitle variant='h4' className='flex flex-col gap-2 text-center sm:pbs-16 sm:pbe-6 sm:pli-16'>
-        {'Add NOS'}
+        {'Assign NOS'}
         <Typography component='span' className='flex flex-col text-center'>
           Set NOS to Qualification Pack
         </Typography>

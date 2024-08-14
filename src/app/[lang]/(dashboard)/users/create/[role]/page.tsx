@@ -55,6 +55,8 @@ import CustomTextField from '@core/components/mui/TextField'
 import { generateRandomPassword } from '@/utils/passwordGenerator'
 
 import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
+import TPForm from '@/views/agency/users/forms/TPForm'
+import SkeletonForm from '@/components/skeleton/SkeletonForm'
 
 type FormDataType = Input<typeof schema> & {
   profile?: File | string
@@ -810,706 +812,713 @@ const UserCreate = ({ params }: { params: { role: string } }) => {
   //   'PG': 6,
   // };
 
-  return (
-    <Card>
-      <CardHeader title={`Create ${Number(params.role) === 1 ? 'Assessor' : Number(params.role) === 2 ? 'Training Partner' : 'User'}`} />
-      <Divider />
-      {Number(params.role) === 1 &&
-        <form onSubmit={handleSubmit(onSubmit)} encType='multipart/form-data'>
-          <CardContent>
-            <Grid container spacing={6}>
-              <Grid item xs={12}>
-                <Typography variant='body2' className='font-medium'>
-                  1. Assessor Details
-                </Typography>
-              </Grid>
-              <Grid item xs={12}>
-                <div className='flex max-sm:flex-col items-center gap-6'>
-                  <img height={100} width={100} className='rounded' src={imgSrc} alt='Profile' />
-                  <div className='flex flex-grow flex-col gap-4'>
-                    <div className='flex flex-col sm:flex-row gap-4'>
-                      <Button component='label' variant='contained' htmlFor='account-settings-upload-image'>
-                        Upload New Photo
-                        <input
-                          hidden
-                          type='file'
-                          accept='image/png, image/jpeg'
-                          onChange={handleFileInputChange}
-                          id='account-settings-upload-image'
-                        />
-                      </Button>
-                      <Button variant='tonal' color='secondary' onClick={handleFileInputReset}>
-                        Reset
-                      </Button>
+  if(Number(params.role) === 1){
+
+    return (
+      <Card>
+        <CardHeader title={`Create ${Number(params.role) === 1 ? 'Assessor' : Number(params.role) === 2 ? 'Training Partner' : 'User'}`} />
+        <Divider />
+        {Number(params.role) === 1 &&
+          <form onSubmit={handleSubmit(onSubmit)} encType='multipart/form-data'>
+            <CardContent>
+              <Grid container spacing={6}>
+                <Grid item xs={12}>
+                  <Typography variant='body2' className='font-medium'>
+                    1. Assessor Details
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <div className='flex max-sm:flex-col items-center gap-6'>
+                    <img height={100} width={100} className='rounded' src={imgSrc} alt='Profile' />
+                    <div className='flex flex-grow flex-col gap-4'>
+                      <div className='flex flex-col sm:flex-row gap-4'>
+                        <Button component='label' variant='contained' htmlFor='account-settings-upload-image'>
+                          Upload New Photo
+                          <input
+                            hidden
+                            type='file'
+                            accept='image/png, image/jpeg'
+                            onChange={handleFileInputChange}
+                            id='account-settings-upload-image'
+                          />
+                        </Button>
+                        <Button variant='tonal' color='secondary' onClick={handleFileInputReset}>
+                          Reset
+                        </Button>
+                      </div>
+                      <Typography>Allowed JPG, GIF or PNG. Max size of 800K</Typography>
                     </div>
-                    <Typography>Allowed JPG, GIF or PNG. Max size of 800K</Typography>
                   </div>
-                </div>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  control={control}
-                  name='username'
-                  rules={{ required: true }}
-                  render={({field}) => (
-                    <CustomTextField
-                      fullWidth
-                      required={true}
-                      label="SIDH Id (Assessor's Id/ auto reflected as User Name)"
-                      {...field}
-                      {...(errors.username && { error: true, helperText: errors.username.message })}
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  control={control}
-                  name='email'
-                  rules={{ required: true }}
-                  render={({field}) => (
-                    <CustomTextField
-                      fullWidth
-                      required={true}
-                      type='email'
-                      label='Email'
-                      {...field}
-                      {...(errors.email && { error: true, helperText: errors.email.message })}
-                      placeholder='johndoe@gmail.com'
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} className='flex items-end gap-4'>
-                <Controller
-                  control={control}
-                  name='password'
-                  rules={{ required: true }}
-                  render={({field}) => (
-                    <CustomTextField
-                      fullWidth
-                      required={true}
-                      label='Password'
-                      placeholder='············'
-                      id='form-layout-separator-password'
-                      type={isPasswordShown ? 'text' : 'password'}
-                      {...field}
-                      {...(errors.password && { error: true, helperText: errors.password.message })}
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position='end'>
-                            <IconButton
-                              edge='end'
-                              onClick={handleClickShowPassword}
-                              onMouseDown={e => e.preventDefault()}
-                              aria-label='toggle password visibility'
-                            >
-                              <i className={isPasswordShown ? 'tabler-eye' : 'tabler-eye-off'} />
-                            </IconButton>
-                          </InputAdornment>
-                        )
-                      }}
-                    />
-                  )}
-                />
-                <Button variant='tonal' onClick={handleGeneratePassword}>Generate</Button>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  control={control}
-                  name='employeeId'
-                  rules={{ required: true }}
-                  render={({field}) => (
-                    <CustomTextField
-                      fullWidth
-                      label='Employee ID'
-                      {...field}
-                      {...(errors.employeeId && { error: true, helperText: errors.employeeId.message })}
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  control={control}
-                  name='sscId'
-                  rules={{ required: true }}
-                  render={({field}) => (
-                    <CustomTextField
-                      select
-                      required={true}
-                      fullWidth
-                      label='Select SSC'
-                      {...field}
-                      {...(errors.sscId && { error: true, helperText: errors.sscId.message })}
-                      onChange={(e) => {
-                        handleSSCChange(e.target.value)
-                        field.onChange(e)
-                      }}
-                    >
-                      {sscData && sscData.length > 0 ? (
-                        sscData.map((ssc, index) => (
-                          <MenuItem key={index} value={ssc.id.toString()}>
-                            {ssc.ssc_name}
-                          </MenuItem>
-                        ))
-                      ) : (
-                        <MenuItem disabled>No SSC found</MenuItem>
-                      )}
-                    </CustomTextField>
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  control={control}
-                  name='jobRoles'
-                  rules={{ required: true }}
-                  render={({field}) => (
-                    <CustomTextField
-                      select
-                      required={true}
-                      fullWidth
-                      label='Select Job Roles (can be multiple)'
-                      {...field}
-                      SelectProps={{
-                        multiple: true,
-                        onChange: e => {setJobRolesLength(e.target.value as string[]); field.onChange(e)}
-                      }}
-                      {...(errors.jobRoles && { error: true, helperText: errors.jobRoles.message })}
-                    >
-                      {qpData && qpData.length > 0 ? (
-                        qpData.map((qualificationPack) => (
-                          <MenuItem key={qualificationPack.id.toString()} value={qualificationPack.id.toString()}>
-                            {qualificationPack.qualification_pack_name}
-                          </MenuItem>
-                        ))
-                      ) : (
-                        <MenuItem disabled>No job roles found</MenuItem>
-                      )}
-                    </CustomTextField>
-                  )}
-                />
-              </Grid>
-              {jobRolesLength.map((job, index) => {
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    control={control}
+                    name='username'
+                    rules={{ required: true }}
+                    render={({field}) => (
+                      <CustomTextField
+                        fullWidth
+                        required={true}
+                        label="SIDH Id (Assessor's Id/ auto reflected as User Name)"
+                        {...field}
+                        {...(errors.username && { error: true, helperText: errors.username.message })}
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    control={control}
+                    name='email'
+                    rules={{ required: true }}
+                    render={({field}) => (
+                      <CustomTextField
+                        fullWidth
+                        required={true}
+                        type='email'
+                        label='Email'
+                        {...field}
+                        {...(errors.email && { error: true, helperText: errors.email.message })}
+                        placeholder='johndoe@gmail.com'
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} className='flex items-end gap-4'>
+                  <Controller
+                    control={control}
+                    name='password'
+                    rules={{ required: true }}
+                    render={({field}) => (
+                      <CustomTextField
+                        fullWidth
+                        required={true}
+                        label='Password'
+                        placeholder='············'
+                        id='form-layout-separator-password'
+                        type={isPasswordShown ? 'text' : 'password'}
+                        {...field}
+                        {...(errors.password && { error: true, helperText: errors.password.message })}
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position='end'>
+                              <IconButton
+                                edge='end'
+                                onClick={handleClickShowPassword}
+                                onMouseDown={e => e.preventDefault()}
+                                aria-label='toggle password visibility'
+                              >
+                                <i className={isPasswordShown ? 'tabler-eye' : 'tabler-eye-off'} />
+                              </IconButton>
+                            </InputAdornment>
+                          )
+                        }}
+                      />
+                    )}
+                  />
+                  <Button variant='tonal' onClick={handleGeneratePassword}>Generate</Button>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    control={control}
+                    name='employeeId'
+                    rules={{ required: true }}
+                    render={({field}) => (
+                      <CustomTextField
+                        fullWidth
+                        label='Employee ID'
+                        {...field}
+                        {...(errors.employeeId && { error: true, helperText: errors.employeeId.message })}
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    control={control}
+                    name='sscId'
+                    rules={{ required: true }}
+                    render={({field}) => (
+                      <CustomTextField
+                        select
+                        required={true}
+                        fullWidth
+                        label='Select SSC'
+                        {...field}
+                        {...(errors.sscId && { error: true, helperText: errors.sscId.message })}
+                        onChange={(e) => {
+                          handleSSCChange(e.target.value)
+                          field.onChange(e)
+                        }}
+                      >
+                        {sscData && sscData.length > 0 ? (
+                          sscData.map((ssc, index) => (
+                            <MenuItem key={index} value={ssc.id.toString()}>
+                              {ssc.ssc_name}
+                            </MenuItem>
+                          ))
+                        ) : (
+                          <MenuItem disabled>No SSC found</MenuItem>
+                        )}
+                      </CustomTextField>
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    control={control}
+                    name='jobRoles'
+                    rules={{ required: true }}
+                    render={({field}) => (
+                      <CustomTextField
+                        select
+                        required={true}
+                        fullWidth
+                        label='Select Job Roles (can be multiple)'
+                        {...field}
+                        SelectProps={{
+                          multiple: true,
+                          onChange: e => {setJobRolesLength(e.target.value as string[]); field.onChange(e)}
+                        }}
+                        {...(errors.jobRoles && { error: true, helperText: errors.jobRoles.message })}
+                      >
+                        {qpData && qpData.length > 0 ? (
+                          qpData.map((qualificationPack) => (
+                            <MenuItem key={qualificationPack.id.toString()} value={qualificationPack.id.toString()}>
+                              {qualificationPack.qualification_pack_name}
+                            </MenuItem>
+                          ))
+                        ) : (
+                          <MenuItem disabled>No job roles found</MenuItem>
+                        )}
+                      </CustomTextField>
+                    )}
+                  />
+                </Grid>
+                {jobRolesLength.map((job, index) => {
 
-                const qp = qpData?.find(qp => qp.id.toString() === job);
+                  const qp = qpData?.find(qp => qp.id.toString() === job);
 
-                return (
+                  return (
+                    <Grid key={index} item xs={12} sm={6} md={3}>
+                      <AppReactDatepicker
+                        className='flex-auto'
+                        selected={jobValidUpto[Number(job)] || null}
+                        showYearDropdown
+                        showMonthDropdown
+                        required={true}
+                        onChange={(date: Date) => handleDateChange(date, Number(job)) }
+                        placeholderText='MM/DD/YYYY'
+                        customInput={
+                          <CustomTextField
+                            fullWidth
+                            required={true}
+                            label={`(${qp?.qualification_pack_id}) Certificate Valid Upto`}
+                            className='flex-auto'
+                            placeholder='MM-DD-YYYY'
+                          />
+                        }
+                      />
+                    </Grid>
+                  )
+
+                })}
+                <Grid item xs={12}>
+                  <Divider />
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant='body2' className='font-medium'>
+                    2. Personal Info
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    control={control}
+                    name='firstName'
+                    render={({ field }) => (
+                      <CustomTextField
+                        fullWidth
+                        {...field}
+                        label='First Name'
+                        placeholder='John'
+                        {...(errors.firstName && { error: true, helperText: errors.firstName.message })}
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                <Controller
+                    control={control}
+                    name='lastName'
+                    render={({ field }) => (
+                      <CustomTextField
+                        fullWidth
+                        label='Last Name'
+                        placeholder='Doe'
+                        {...field}
+                        {...(errors.lastName && { error: true, helperText: errors.lastName.message })}
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    control={control}
+                    name='state'
+                    render={({ field }) => (
+                      <CustomTextField
+                        select
+                        fullWidth
+                        label='State'
+                        {...field}
+                        {...(errors.state && { error: true, helperText: errors.state.message })}
+                        onChange={e => {
+                          handleStateChange(e.target.value)
+                          field.onChange(e)
+                        }}
+                      >
+                        <MenuItem value=''>Select State</MenuItem>
+                        {stateData?.map((state, index) => (
+                          <MenuItem key={index} value={state?.state_id?.toString()}>{state.state_name}</MenuItem>
+                        ))}
+                      </CustomTextField>
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    control={control}
+                    name='city'
+                    render={({ field }) => (
+                      <CustomTextField
+                        select
+                        fullWidth
+                        label='City'
+                        {...field}
+                        {...(errors.city && { error: true, helperText: errors.city.message })}
+                      >
+                        <MenuItem value=''>Select City</MenuItem>
+                        {cityData && cityData.length > 0 ? (
+                          cityData.map((city) => (
+                            <MenuItem key={city.city_id.toString()} value={city.city_id.toString()}>
+                              {city.city_name}
+                            </MenuItem>
+                          ))
+                        ) : (
+                          <MenuItem disabled>No cities found </MenuItem>
+                        )}
+
+                      </CustomTextField>
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    control={control}
+                    name='pinCode'
+                    render={({ field }) => (
+                      <CustomTextField
+                        fullWidth
+                        label='Pin code'
+                        {...field}
+                        {...(errors.pinCode && { error: true, helperText: errors.pinCode.message })}
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    control={control}
+                    name='address'
+                    render={({ field }) => (
+                      <CustomTextField
+                        fullWidth
+                        multiline
+                        label='Address'
+                        {...field}
+                        {...(errors.address && { error: true, helperText: errors.address.message })}
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    control={control}
+                    name='phoneNumber'
+                    rules={{ required: true }}
+                    render={({ field }) => (
+                      <CustomTextField
+                        fullWidth
+                        required={true}
+                        label='Phone Number'
+                        placeholder='123-456-7890'
+                        {...field}
+                        {...field}
+                        {...(errors.phoneNumber && { error: true, helperText: errors.phoneNumber.message })}
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    control={control}
+                    name='aadhaarNumber'
+                    render={({ field }) => (
+                      <CustomTextField
+                        fullWidth
+                        required={true}
+                        label='Aadhaar No.'
+                        {...field}
+                        {...(errors.aadhaarNumber && { error: true, helperText: errors.aadhaarNumber.message })}
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    control={control}
+                    name='panCardNumber'
+                    render={({ field }) => (
+                      <CustomTextField
+                        fullWidth
+                        label='Pan Card No.'
+                        {...field}
+                        {...(errors.panCardNumber && { error: true, helperText: errors.panCardNumber.message })}
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    control={control}
+                    name='lastQualification'
+                    rules={{ required: true }}
+                    render={({ field }) => (
+                      <CustomTextField
+                        select
+                        required={true}
+                        fullWidth
+                        label='Last Qualification'
+                        {...field}
+                        {...(errors.lastQualification && { error: true, helperText: errors.lastQualification.message })}
+                        onChange={e => {
+
+                          if(e.target.value === ''){
+                            setCountEducationCertificates('');
+                          }else{
+                            setCountEducationCertificates(e.target.value);
+                          }
+
+                          field.onChange(e)
+
+                        }}
+                      >
+                        <MenuItem value=''>Select Last Qualification</MenuItem>
+                        <MenuItem value='8th'>8th</MenuItem>
+                        <MenuItem value='10th'>10th</MenuItem>
+                        <MenuItem value='12th'>12th</MenuItem>
+                        <MenuItem value='Diploma'>Diploma</MenuItem>
+                        <MenuItem value='UG'>Undergraduate</MenuItem>
+                        <MenuItem value='PG'>Postgraduate</MenuItem>
+                      </CustomTextField>
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    control={control}
+                    name='bankName'
+                    render={({ field }) => (
+                      <CustomTextField
+                        fullWidth
+                        label='Bank Name'
+                        {...field}
+                        {...(errors.bankName && { error: true, helperText: errors.bankName.message })}
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    control={control}
+                    name='accountNumber'
+                    render={({ field }) => (
+                      <CustomTextField
+                        fullWidth
+                        label='Account No.'
+                        {...field}
+                        {...(errors.accountNumber && { error: true, helperText: errors.accountNumber.message })}
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Controller
+                    control={control}
+                    name='ifscCode'
+                    render={({ field }) => (
+                      <CustomTextField
+                        fullWidth
+                        label='IFSC Code'
+                        {...field}
+                        {...(errors.ifscCode && { error: true, helperText: errors.ifscCode.message })}
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Divider />
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant='body2' className='font-medium'>
+                    3. Documents
+                  </Typography>
+                </Grid>
+
+                {/* {Array.from(Array(countEducationCertificate).keys()).map((item, index) => (
+
                   <Grid key={index} item xs={12} sm={6} md={3}>
-                    <AppReactDatepicker
-                      className='flex-auto'
-                      selected={jobValidUpto[Number(job)] || null}
-                      showYearDropdown
-                      showMonthDropdown
-                      required={true}
-                      onChange={(date: Date) => handleDateChange(date, Number(job)) }
-                      placeholderText='MM/DD/YYYY'
-                      customInput={
+                    <Controller
+                      control={control}
+                      name={`certificate_${index}`}
+                      render={({ field }) => (
                         <CustomTextField
                           fullWidth
                           required={true}
-                          label={`(${qp?.qualification_pack_id}) Certificate Valid Upto`}
-                          className='flex-auto'
-                          placeholder='MM-DD-YYYY'
+                          type='file'
+                          label={`${Object.keys(qualificationCounts)[index]} Certificate`}
+                          {...field}
+                          {...(errors.educationalCertificates && { error: true, helperText: errors.educationalCertificates.message })}
+                          // onChange={e => setFormData({ ...formData, educationalCertificates: [e.target.value] as string[]})}
                         />
-                      }
+                      )}
                     />
                   </Grid>
-                )
+                ))} */}
 
-              })}
-              <Grid item xs={12}>
-                <Divider />
-              </Grid>
-              <Grid item xs={12}>
-                <Typography variant='body2' className='font-medium'>
-                  2. Personal Info
-                </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  control={control}
-                  name='firstName'
-                  render={({ field }) => (
-                    <CustomTextField
-                      fullWidth
-                      {...field}
-                      label='First Name'
-                      placeholder='John'
-                      {...(errors.firstName && { error: true, helperText: errors.firstName.message })}
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-              <Controller
-                  control={control}
-                  name='lastName'
-                  render={({ field }) => (
-                    <CustomTextField
-                      fullWidth
-                      label='Last Name'
-                      placeholder='Doe'
-                      {...field}
-                      {...(errors.lastName && { error: true, helperText: errors.lastName.message })}
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  control={control}
-                  name='state'
-                  render={({ field }) => (
-                    <CustomTextField
-                      select
-                      fullWidth
-                      label='State'
-                      {...field}
-                      {...(errors.state && { error: true, helperText: errors.state.message })}
-                      onChange={e => {
-                        handleStateChange(e.target.value)
-                        field.onChange(e)
-                      }}
-                    >
-                      <MenuItem value=''>Select State</MenuItem>
-                      {stateData?.map((state, index) => (
-                        <MenuItem key={index} value={state?.state_id?.toString()}>{state.state_name}</MenuItem>
-                      ))}
-                    </CustomTextField>
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  control={control}
-                  name='city'
-                  render={({ field }) => (
-                    <CustomTextField
-                      select
-                      fullWidth
-                      label='City'
-                      {...field}
-                      {...(errors.city && { error: true, helperText: errors.city.message })}
-                    >
-                      <MenuItem value=''>Select City</MenuItem>
-                      {cityData && cityData.length > 0 ? (
-                        cityData.map((city) => (
-                          <MenuItem key={city.city_id.toString()} value={city.city_id.toString()}>
-                            {city.city_name}
-                          </MenuItem>
-                        ))
-                      ) : (
-                        <MenuItem disabled>No cities found </MenuItem>
-                      )}
-
-                    </CustomTextField>
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  control={control}
-                  name='pinCode'
-                  render={({ field }) => (
-                    <CustomTextField
-                      fullWidth
-                      label='Pin code'
-                      {...field}
-                      {...(errors.pinCode && { error: true, helperText: errors.pinCode.message })}
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  control={control}
-                  name='address'
-                  render={({ field }) => (
-                    <CustomTextField
-                      fullWidth
-                      multiline
-                      label='Address'
-                      {...field}
-                      {...(errors.address && { error: true, helperText: errors.address.message })}
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  control={control}
-                  name='phoneNumber'
-                  rules={{ required: true }}
-                  render={({ field }) => (
+                {selectedQualification === '8th' || selectedQualification === '10th' ||
+                selectedQualification === '12th' || selectedQualification === 'Diploma' ||
+                selectedQualification === 'UG' || selectedQualification === 'PG' ? (
+                  <Grid item xs={12} sm={6} md={3}>
                     <CustomTextField
                       fullWidth
                       required={true}
-                      label='Phone Number'
-                      placeholder='123-456-7890'
-                      {...field}
-                      {...field}
-                      {...(errors.phoneNumber && { error: true, helperText: errors.phoneNumber.message })}
+                      type='file'
+                      label='8th Certificate'
+                      inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
+                      onChange={e => {handle8thCertificateChange(e);}}
                     />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  control={control}
-                  name='aadhaarNumber'
-                  render={({ field }) => (
+                  </Grid>
+                ) : null}
+
+                {selectedQualification === '10th' ||
+                selectedQualification === '12th' || selectedQualification === 'Diploma' ||
+                selectedQualification === 'UG' || selectedQualification === 'PG' ? (
+                  <Grid item xs={12} sm={6} md={3}>
                     <CustomTextField
                       fullWidth
                       required={true}
-                      label='Aadhaar No.'
-                      {...field}
-                      {...(errors.aadhaarNumber && { error: true, helperText: errors.aadhaarNumber.message })}
+                      type='file'
+                      label='10th Certificate'
+                      inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
+                      onChange={e => {handle10thCertificateChange(e);}}
                     />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  control={control}
-                  name='panCardNumber'
-                  render={({ field }) => (
+                  </Grid>
+                ) : null}
+
+                {selectedQualification === '12th' || selectedQualification === 'Diploma' ||
+                selectedQualification === 'UG' || selectedQualification === 'PG' ? (
+                  <Grid item xs={12} sm={6} md={3}>
                     <CustomTextField
                       fullWidth
-                      label='Pan Card No.'
-                      {...field}
-                      {...(errors.panCardNumber && { error: true, helperText: errors.panCardNumber.message })}
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  control={control}
-                  name='lastQualification'
-                  rules={{ required: true }}
-                  render={({ field }) => (
-                    <CustomTextField
-                      select
                       required={true}
-                      fullWidth
-                      label='Last Qualification'
-                      {...field}
-                      {...(errors.lastQualification && { error: true, helperText: errors.lastQualification.message })}
-                      onChange={e => {
+                      type='file'
+                      label='12th Certificate'
+                      name='certificate_12th'
+                      inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
+                      onChange={e => {handle12thCertificateChange(e);}}
+                    />
+                  </Grid>
+                ) : null}
 
-                        if(e.target.value === ''){
-                          setCountEducationCertificates('');
-                        }else{
-                          setCountEducationCertificates(e.target.value);
-                        }
-
-                        field.onChange(e)
-
-                      }}
-                    >
-                      <MenuItem value=''>Select Last Qualification</MenuItem>
-                      <MenuItem value='8th'>8th</MenuItem>
-                      <MenuItem value='10th'>10th</MenuItem>
-                      <MenuItem value='12th'>12th</MenuItem>
-                      <MenuItem value='Diploma'>Diploma</MenuItem>
-                      <MenuItem value='UG'>Undergraduate</MenuItem>
-                      <MenuItem value='PG'>Postgraduate</MenuItem>
-                    </CustomTextField>
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  control={control}
-                  name='bankName'
-                  render={({ field }) => (
+                {selectedQualification === 'Diploma' || selectedQualification === 'UG' || selectedQualification === 'PG' ? (
+                  <Grid item xs={12} sm={6} md={3}>
                     <CustomTextField
                       fullWidth
-                      label='Bank Name'
-                      {...field}
-                      {...(errors.bankName && { error: true, helperText: errors.bankName.message })}
+                      required={true}
+                      type='file'
+                      label='Diploma Certificate'
+                      name='certificate_DIPLOMA'
+                      inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
+                      onChange={e => {handleDiplomaCertificateChange(e);}}
                     />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  control={control}
-                  name='accountNumber'
-                  render={({ field }) => (
+                  </Grid>
+                ) : null}
+
+                {selectedQualification === 'UG' || selectedQualification === 'PG' ? (
+                  <Grid item xs={12} sm={6} md={3}>
                     <CustomTextField
                       fullWidth
-                      label='Account No.'
-                      {...field}
-                      {...(errors.accountNumber && { error: true, helperText: errors.accountNumber.message })}
+                      required={true}
+                      type='file'
+                      label='UG Certificate'
+                      name='certificate_UG'
+                      inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
+                      onChange={e => {handleUGCertificateChange(e);}}
                     />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  control={control}
-                  name='ifscCode'
-                  render={({ field }) => (
+                  </Grid>
+                ) : null}
+
+                {selectedQualification === 'PG' ? (
+                  <Grid item xs={12} sm={6} md={3}>
                     <CustomTextField
                       fullWidth
-                      label='IFSC Code'
-                      {...field}
-                      {...(errors.ifscCode && { error: true, helperText: errors.ifscCode.message })}
+                      required={true}
+                      type='file'
+                      label='PG Certificate'
+                      name='certificate_PG'
+                      inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
+                      onChange={e => {handlePGCertificateChange(e);}}
                     />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <Divider />
-              </Grid>
-              <Grid item xs={12}>
-                <Typography variant='body2' className='font-medium'>
-                  3. Documents
-                </Typography>
-              </Grid>
+                  </Grid>
+                ) : null}
 
-              {/* {Array.from(Array(countEducationCertificate).keys()).map((item, index) => (
-
-                <Grid key={index} item xs={12} sm={6} md={3}>
+                <Grid item xs={12} sm={6} md={3}>
                   <Controller
                     control={control}
-                    name={`certificate_${index}`}
+                    name='assessorCertificate'
+                    rules={{ required: true }}
                     render={({ field }) => (
                       <CustomTextField
                         fullWidth
                         required={true}
                         type='file'
-                        label={`${Object.keys(qualificationCounts)[index]} Certificate`}
+                        label='Assessor Certificate'
+                        inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
                         {...field}
-                        {...(errors.educationalCertificates && { error: true, helperText: errors.educationalCertificates.message })}
-                        // onChange={e => setFormData({ ...formData, educationalCertificates: [e.target.value] as string[]})}
+                        {...(errors.assessorCertificate && { error: true, helperText: errors.assessorCertificate.message })}
+                        onChange={e => {handleAssessorCertificateChange(e); field.onChange(e)}}
                       />
                     )}
                   />
                 </Grid>
-              ))} */}
-
-              {selectedQualification === '8th' || selectedQualification === '10th' ||
-              selectedQualification === '12th' || selectedQualification === 'Diploma' ||
-              selectedQualification === 'UG' || selectedQualification === 'PG' ? (
                 <Grid item xs={12} sm={6} md={3}>
-                  <CustomTextField
-                    fullWidth
-                    required={true}
-                    type='file'
-                    label='8th Certificate'
-                    inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
-                    onChange={e => {handle8thCertificateChange(e);}}
+                  <Controller
+                    control={control}
+                    name='agreementCopy'
+                    rules={{ required: true }}
+                    render={({ field }) => (
+                      <CustomTextField
+                        fullWidth
+                        required={true}
+                        type='file'
+                        label='Agreement Copy'
+                        inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
+                        {...field}
+                        {...(errors.agreementCopy && { error: true, helperText: errors.agreementCopy.message })}
+                        onChange={e => {handleAgreementCopyChange(e); field.onChange(e)}}
+                      />
+                    )}
                   />
                 </Grid>
-              ) : null}
-
-              {selectedQualification === '10th' ||
-              selectedQualification === '12th' || selectedQualification === 'Diploma' ||
-              selectedQualification === 'UG' || selectedQualification === 'PG' ? (
                 <Grid item xs={12} sm={6} md={3}>
-                  <CustomTextField
-                    fullWidth
-                    required={true}
-                    type='file'
-                    label='10th Certificate'
-                    inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
-                    onChange={e => {handle10thCertificateChange(e);}}
+                  <Controller
+                    control={control}
+                    name='aadhaarCardImage'
+                    render={({ field }) => (
+                      <CustomTextField
+                        fullWidth
+                        type='file'
+                        required={true}
+                        label='Aadhaar Card'
+                        inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
+                        {...field}
+                        {...(errors.aadhaarCardImage && { error: true, helperText: errors.aadhaarCardImage.message })}
+                        onChange={e => { handleAadhaarCardChange(e); field.onChange(e) }}
+                      />
+                    )}
                   />
                 </Grid>
-              ) : null}
-
-              {selectedQualification === '12th' || selectedQualification === 'Diploma' ||
-              selectedQualification === 'UG' || selectedQualification === 'PG' ? (
                 <Grid item xs={12} sm={6} md={3}>
-                  <CustomTextField
-                    fullWidth
-                    required={true}
-                    type='file'
-                    label='12th Certificate'
-                    name='certificate_12th'
-                    inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
-                    onChange={e => {handle12thCertificateChange(e);}}
+                  <Controller
+                    control={control}
+                    name='resumeCV'
+                    render={({ field }) => (
+                      <CustomTextField
+                        fullWidth
+                        type='file'
+                        required={true}
+                        label='Resume/ CV'
+                        inputProps={{ accept: 'application/pdf' }}
+                        {...field}
+                        {...(errors.resumeCV && { error: true, helperText: errors.resumeCV.message })}
+                        onChange={e => { handleResumeCVChange(e); field.onChange(e) }}
+                      />
+                    )}
                   />
                 </Grid>
-              ) : null}
-
-              {selectedQualification === 'Diploma' || selectedQualification === 'UG' || selectedQualification === 'PG' ? (
                 <Grid item xs={12} sm={6} md={3}>
-                  <CustomTextField
-                    fullWidth
-                    required={true}
-                    type='file'
-                    label='Diploma Certificate'
-                    name='certificate_DIPLOMA'
-                    inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
-                    onChange={e => {handleDiplomaCertificateChange(e);}}
+                  <Controller
+                    control={control}
+                    name='panCardImage'
+                    render={({ field }) => (
+                      <CustomTextField
+                        fullWidth
+                        type='file'
+                        label='Pan Card'
+                        inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
+                        {...field}
+                        {...(errors.panCardImage && { error: true, helperText: errors.panCardImage.message })}
+                        onChange={e => { handlePanCardImageChange(e); field.onChange(e) }}
+                      />
+                    )}
                   />
                 </Grid>
-              ) : null}
-
-              {selectedQualification === 'UG' || selectedQualification === 'PG' ? (
                 <Grid item xs={12} sm={6} md={3}>
-                  <CustomTextField
-                    fullWidth
-                    required={true}
-                    type='file'
-                    label='UG Certificate'
-                    name='certificate_UG'
-                    inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
-                    onChange={e => {handleUGCertificateChange(e);}}
+                  <Controller
+                    control={control}
+                    name='cancelCheck'
+                    render={({ field }) => (
+                      <CustomTextField
+                        fullWidth
+                        type='file'
+                        label='Cancel Check'
+                        inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
+                        {...field}
+                        {...(errors.cancelCheck && { error: true, helperText: errors.cancelCheck.message })}
+                        onChange={e => { handleCancelCheckImageChange(e); field.onChange(e) }}
+                      />
+                    )}
                   />
                 </Grid>
-              ) : null}
-
-              {selectedQualification === 'PG' ? (
-                <Grid item xs={12} sm={6} md={3}>
-                  <CustomTextField
-                    fullWidth
-                    required={true}
-                    type='file'
-                    label='PG Certificate'
-                    name='certificate_PG'
-                    inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
-                    onChange={e => {handlePGCertificateChange(e);}}
-                  />
-                </Grid>
-              ) : null}
-
-              <Grid item xs={12} sm={6} md={3}>
-                <Controller
-                  control={control}
-                  name='assessorCertificate'
-                  rules={{ required: true }}
-                  render={({ field }) => (
-                    <CustomTextField
-                      fullWidth
-                      required={true}
-                      type='file'
-                      label='Assessor Certificate'
-                      inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
-                      {...field}
-                      {...(errors.assessorCertificate && { error: true, helperText: errors.assessorCertificate.message })}
-                      onChange={e => {handleAssessorCertificateChange(e); field.onChange(e)}}
-                    />
-                  )}
-                />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Controller
-                  control={control}
-                  name='agreementCopy'
-                  rules={{ required: true }}
-                  render={({ field }) => (
-                    <CustomTextField
-                      fullWidth
-                      required={true}
-                      type='file'
-                      label='Agreement Copy'
-                      inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
-                      {...field}
-                      {...(errors.agreementCopy && { error: true, helperText: errors.agreementCopy.message })}
-                      onChange={e => {handleAgreementCopyChange(e); field.onChange(e)}}
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Controller
-                  control={control}
-                  name='aadhaarCardImage'
-                  render={({ field }) => (
-                    <CustomTextField
-                      fullWidth
-                      type='file'
-                      required={true}
-                      label='Aadhaar Card'
-                      inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
-                      {...field}
-                      {...(errors.aadhaarCardImage && { error: true, helperText: errors.aadhaarCardImage.message })}
-                      onChange={e => { handleAadhaarCardChange(e); field.onChange(e) }}
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Controller
-                  control={control}
-                  name='resumeCV'
-                  render={({ field }) => (
-                    <CustomTextField
-                      fullWidth
-                      type='file'
-                      required={true}
-                      label='Resume/ CV'
-                      inputProps={{ accept: 'application/pdf' }}
-                      {...field}
-                      {...(errors.resumeCV && { error: true, helperText: errors.resumeCV.message })}
-                      onChange={e => { handleResumeCVChange(e); field.onChange(e) }}
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Controller
-                  control={control}
-                  name='panCardImage'
-                  render={({ field }) => (
-                    <CustomTextField
-                      fullWidth
-                      type='file'
-                      label='Pan Card'
-                      inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
-                      {...field}
-                      {...(errors.panCardImage && { error: true, helperText: errors.panCardImage.message })}
-                      onChange={e => { handlePanCardImageChange(e); field.onChange(e) }}
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Controller
-                  control={control}
-                  name='cancelCheck'
-                  render={({ field }) => (
-                    <CustomTextField
-                      fullWidth
-                      type='file'
-                      label='Cancel Check'
-                      inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
-                      {...field}
-                      {...(errors.cancelCheck && { error: true, helperText: errors.cancelCheck.message })}
-                      onChange={e => { handleCancelCheckImageChange(e); field.onChange(e) }}
-                    />
-                  )}
-                />
-              </Grid>
-            </Grid>
-          </CardContent>
-          <Divider />
-          <CardActions>
-            <Button type='submit' variant='contained' className='mie-2 gap-2' disabled={loading}>
-              {loading && <CircularProgress size={20} color='inherit' />}
-              Submit
-            </Button>
-            <Button
-              type='reset'
-              variant='tonal'
-              color='secondary'
-              onClick={() => {
-                handleReset()
-              }}
-            >
-              Reset
-            </Button>
-          </CardActions>
-        </form>
-      }
-    </Card>
-  )
+            </CardContent>
+            <Divider />
+            <CardActions>
+              <Button type='submit' variant='contained' className='mie-2 gap-2' disabled={loading}>
+                {loading && <CircularProgress size={20} color='inherit' />}
+                Submit
+              </Button>
+              <Button
+                type='reset'
+                variant='tonal'
+                color='secondary'
+                onClick={() => {
+                  handleReset()
+                }}
+              >
+                Reset
+              </Button>
+            </CardActions>
+          </form>
+        }
+      </Card>
+    )
+  }else if(Number(params.role) === 2){
+    return <TPForm />
+  }else{
+    return <SkeletonForm />
+  }
 }
 
 export default UserCreate

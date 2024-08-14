@@ -1,20 +1,37 @@
+"use client"
+
 // Component Imports
+import { useEffect, useState } from 'react'
+
 import UserList from '@views/agency/users/list'
 
-const getData = async () => {
-  // Vars
-  const res = await fetch(`${process.env.API_URL}/apps/user-list`)
 
-  if (!res.ok) {
-    throw new Error('Failed to fetch userData')
+const UserListApp = () => {
+
+  const [data, setData] = useState([]);
+
+  // Vars
+  const getData = async () => {
+    // Vars
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`)
+
+    if (!res.ok) {
+      throw new Error('Failed to fetch userData')
+    }
+
+    const usersData = await res.json();
+
+    setData(usersData);
   }
 
-  return res.json()
-}
+  useEffect(() => {
 
-const UserListApp = async () => {
-  // Vars
-  const data = await getData()
+    getData()
+  }, []);
+
+  // const updateUsersList = () => {
+  //   getData();
+  // };
 
   return <UserList userData={data} />
 }

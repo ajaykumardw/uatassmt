@@ -24,7 +24,7 @@ export async function GET() {
       nos: true
     },
     orderBy:{
-      created_at: "desc"
+      ssc_name: "asc"
     }
   });
 

@@ -15,6 +15,9 @@ export async function GET() {
   const nos = await prisma.pc.findMany({
     where: {
       agency_id: agency_id
+    },
+    orderBy: {
+      pc_name: "asc"
     }
   });
 

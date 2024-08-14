@@ -19,6 +19,9 @@ export async function GET() {
     include: {
       ssc: true,
       nos: true
+    },
+    orderBy: {
+      qualification_pack_name: "asc"
     }
   });
 

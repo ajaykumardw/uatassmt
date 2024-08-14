@@ -454,7 +454,7 @@ const QualificationPackListTable = ({ tableData, updateQPList }: { tableData?: Q
               onClick={() => handleAddNos(row.original)}
               className='is-full sm:is-auto'
             >
-              Add
+              Assign
             </Button>
           </div>
         )

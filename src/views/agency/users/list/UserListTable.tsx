@@ -13,7 +13,6 @@ import CardHeader from '@mui/material/CardHeader'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Chip from '@mui/material/Chip'
-import Checkbox from '@mui/material/Checkbox'
 import IconButton from '@mui/material/IconButton'
 import { styled } from '@mui/material/styles'
 import TablePagination from '@mui/material/TablePagination'
@@ -35,28 +34,34 @@ import {
   getPaginationRowModel,
   getSortedRowModel
 } from '@tanstack/react-table'
+
 import type { ColumnDef, FilterFn } from '@tanstack/react-table'
+
 import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
+import type { role, users } from '@prisma/client'
+
 import type { ThemeColor } from '@core/types'
-import type { UsersType } from '@/types/apps/userTypes'
+
 import type { Locale } from '@configs/i18n'
 
 // Component Imports
 import TableFilters from './TableFilters'
-import OptionMenu from '@core/components/option-menu'
 import TablePaginationComponent from '@components/TablePaginationComponent'
 import CustomTextField from '@core/components/mui/TextField'
 import CustomAvatar from '@core/components/mui/Avatar'
 
 // Util Imports
 import { getInitials } from '@/utils/getInitials'
+
 import { getLocalizedUrl } from '@/utils/i18n'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 import AddUsersDialog from '@/components/users/dialogs/AddUsersDialog'
+
+import { formatDate } from '@/utils/formateDate'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -67,8 +72,9 @@ declare module '@tanstack/table-core' {
   }
 }
 
-type UsersTypeWithAction = UsersType & {
+type UsersTypeWithAction = users & {
   action?: string
+  role: role
 }
 
 type UserRoleType = {
@@ -77,6 +83,10 @@ type UserRoleType = {
 
 type UserStatusType = {
   [key: string]: ThemeColor
+}
+
+type UserShowStatusType = {
+  [key: string]: string
 }
 
 // Styled Components
@@ -125,27 +135,41 @@ const DebouncedInput = ({
 }
 
 // Vars
+// const userRoleObj: UserRoleType = {
+//   admin: { icon: 'tabler-crown', color: 'error' },
+//   author: { icon: 'tabler-device-desktop', color: 'warning' },
+//   editor: { icon: 'tabler-edit', color: 'info' },
+//   'Assessor': { icon: 'tabler-chart-pie', color: 'success' },
+//   subscriber: { icon: 'tabler-user', color: 'primary' }
+// }
 const userRoleObj: UserRoleType = {
-  admin: { icon: 'tabler-crown', color: 'error' },
-  author: { icon: 'tabler-device-desktop', color: 'warning' },
-  editor: { icon: 'tabler-edit', color: 'info' },
-  maintainer: { icon: 'tabler-chart-pie', color: 'success' },
-  subscriber: { icon: 'tabler-user', color: 'primary' }
+  1: { icon: 'tabler-school', color: 'info' },
+  2: { icon: 'tabler-building-bank', color: 'warning' },
 }
 
 const userStatusObj: UserStatusType = {
-  active: 'success',
-  pending: 'warning',
-  inactive: 'secondary'
+  1: 'success',
+  0: 'warning',
 }
+
+
+const userShowStatusObj: UserShowStatusType = {
+
+  1: 'Active',
+
+  0: 'Inactive'
+
+}
+
 
 // Column Definitions
 const columnHelper = createColumnHelper<UsersTypeWithAction>()
 
-const UserListTable = ({ tableData }: { tableData?: UsersType[] }) => {
+const UserListTable = ({ tableData }: { tableData?: users[]}) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [data, setData] = useState(...[tableData])
   const [globalFilter, setGlobalFilter] = useState('')
@@ -156,66 +180,53 @@ const UserListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
     () => [
       {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            {...{
-              checked: table.getIsAllRowsSelected(),
-              indeterminate: table.getIsSomeRowsSelected(),
-              onChange: table.getToggleAllRowsSelectedHandler()
-            }}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler()
-            }}
-          />
-        )
+        id: 'serialNumber', // Serial number column
+        header: 'S.No.',
+        cell: ({ row }) => <Typography>{row.index + 1}</Typography>
       },
-      columnHelper.accessor('fullName', {
+      columnHelper.accessor('first_name', {
         header: 'User',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            {getAvatar({ avatar: row.original.avatar, fullName: row.original.fullName })}
+            {getAvatar({ avatar: row.original.avatar || '', first_name: (row.original.first_name || '') + ' ' + (row.original.last_name || '') })}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-                {row.original.fullName}
+                {row.original.first_name + " "+row.original.last_name}
               </Typography>
-              <Typography variant='body2'>{row.original.username}</Typography>
+              <Typography variant='body2'>{row.original.user_name}</Typography>
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('role', {
+      columnHelper.accessor('role_id', {
         header: 'Role',
         cell: ({ row }) => (
           <div className='flex items-center gap-2'>
             <Icon
-              className={userRoleObj[row.original.role].icon}
-              sx={{ color: `var(--mui-palette-${userRoleObj[row.original.role].color}-main)` }}
+              className={userRoleObj[row.original.role.id].icon}
+              sx={{ color: `var(--mui-palette-${userRoleObj[row.original.role.id].color}-main)` }}
             />
             <Typography className='capitalize' color='text.primary'>
-              {row.original.role}
+              {row.original.role.name}
             </Typography>
           </div>
         )
       }),
-      columnHelper.accessor('currentPlan', {
-        header: 'Plan',
+      columnHelper.accessor('mobile_no', {
+        header: 'Phone',
         cell: ({ row }) => (
-          <Typography className='capitalize' color='text.primary'>
-            {row.original.currentPlan}
+          <Typography color='text.primary' className='font-medium'>
+            {row.original.mobile_no}
           </Typography>
         )
       }),
-      columnHelper.accessor('billing', {
-        header: 'Billing',
-        cell: ({ row }) => <Typography>{row.original.billing}</Typography>
+      columnHelper.accessor('email', {
+        header: 'Email',
+        cell: ({ row }) => (
+          <Typography color='text.primary' className='font-medium'>
+            {row.original.email}
+          </Typography>
+        )
       }),
       columnHelper.accessor('status', {
         header: 'Status',
@@ -224,21 +235,31 @@ const UserListTable = ({ tableData }: { tableData?: UsersType[] }) => {
             <Chip
               variant='tonal'
               className='capitalize'
-              label={row.original.status}
+              label={userShowStatusObj[row.original.status]}
               color={userStatusObj[row.original.status]}
               size='small'
             />
           </div>
         )
       }),
+      columnHelper.accessor('created_at', {
+        header: 'Created On',
+        cell: ({ row }) => (
+          <Typography color='text.primary' className='font-medium'>
+            {formatDate(row.original.created_at)}
+          </Typography>
+        )
+      }),
       columnHelper.accessor('action', {
         header: 'Action',
-        cell: () => (
+        cell: ({ row }) => (
           <div className='flex items-center'>
-            <IconButton>
-              <i className='tabler-trash text-[22px] text-textSecondary' />
-            </IconButton>
-            <IconButton>
+            <Link href={getLocalizedUrl(`users/edit/${row.original.id}/${row.original.role_id}`, locale as Locale)} className='flex'>
+              <IconButton>
+                <i className='tabler-edit text-[22px] text-textSecondary' />
+              </IconButton>
+            </Link>
+            {/* <IconButton>
               <Link href={getLocalizedUrl('apps/user/view', locale as Locale)} className='flex'>
                 <i className='tabler-eye text-[22px] text-textSecondary' />
               </Link>
@@ -257,7 +278,7 @@ const UserListTable = ({ tableData }: { tableData?: UsersType[] }) => {
                   menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
                 }
               ]}
-            />
+            /> */}
           </div>
         ),
         enableSorting: false
@@ -268,7 +289,7 @@ const UserListTable = ({ tableData }: { tableData?: UsersType[] }) => {
   )
 
   const table = useReactTable({
-    data: data as UsersType[],
+    data: data as users[],
     columns,
     filterFns: {
       fuzzy: fuzzyFilter
@@ -296,13 +317,13 @@ const UserListTable = ({ tableData }: { tableData?: UsersType[] }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  const getAvatar = (params: Pick<UsersType, 'avatar' | 'fullName'>) => {
-    const { avatar, fullName } = params
+  const getAvatar = (params: Pick<users, 'avatar' | 'first_name'>) => {
+    const { avatar, first_name } = params
 
     if (avatar) {
       return <CustomAvatar src={avatar} size={34} />
     } else {
-      return <CustomAvatar size={34}>{getInitials(fullName as string)}</CustomAvatar>
+      return <CustomAvatar size={34}>{getInitials(first_name as string)}</CustomAvatar>
     }
   }
 
