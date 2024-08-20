@@ -50,6 +50,7 @@ const schema = object(
     ]),
     scheme: string([toTrimmed(), minLength(1, 'This field is required')]),
     subScheme: string([toTrimmed(), minLength(1, 'This field is required')]),
+    trainingPartner: string([toTrimmed(), minLength(1, 'This field is required')]),
     trainingCenter: string([toTrimmed(), minLength(1, 'This field is required')]),
     assessmentStartDate: date('This field is required'),
     assessmentEndDate: date('This field is required'),
@@ -91,6 +92,7 @@ const AddEditBatchForm = () => {
       batchSize: '',
       scheme: '',
       subScheme: '',
+      trainingPartner: '',
       trainingCenter: '',
       loginRestrictCount: '3',
       assessmentStartDate: undefined,
@@ -255,6 +257,26 @@ const AddEditBatchForm = () => {
             </Grid>
             <Grid item xs={12} sm={6}>
               <Controller
+                name='trainingPartner'
+                control={control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <CustomTextField select required={true} fullWidth label='Training Partner' {...field}
+
+                    // onChange={(e) => {
+                    //   field.onChange(e); // Ensure the field value gets updated in the form state
+                    //   handleStateChange(e.target.value); // Call your custom onChange handler
+                    // }}
+
+                    {...(errors.trainingPartner && { error: true, helperText: errors.trainingPartner.message })}>
+                    <MenuItem value=''>Select Training Partner</MenuItem>
+                    <MenuItem disabled>No training partner found</MenuItem>
+                  </CustomTextField>
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
                 name='trainingCenter'
                 control={control}
                 rules={{ required: true }}
@@ -270,22 +292,6 @@ const AddEditBatchForm = () => {
                     <MenuItem value=''>Select Training Center</MenuItem>
                     <MenuItem disabled>No training center found</MenuItem>
                   </CustomTextField>
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name='loginRestrictCount'
-                control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <CustomTextField
-                    {...field}
-                    fullWidth
-                    label='Login Restrict Count'
-                    placeholder=''
-                    {...(errors.loginRestrictCount && { error: true, helperText: errors.loginRestrictCount.message })}
-                  />
                 )}
               />
             </Grid>
@@ -348,26 +354,16 @@ const AddEditBatchForm = () => {
             </Grid>
             <Grid item xs={12} sm={6}>
               <Controller
+                name='loginRestrictCount'
                 control={control}
-                name='captureImage'
-                render={({ field }) => (
-                  <FormControlLabel
-                    {...field}
-                    control={<Switch checked={isCaptureImage} size='small' onChange={e => setIsCaptureImage(e.target.checked)} />}
-                    label='Capture Image'
-                  />
-                )}
-              />
-
-              <Controller
-                control={control}
-                name='captureImageInSeconds'
+                rules={{ required: true }}
                 render={({ field }) => (
                   <CustomTextField
-                    fullWidth
                     {...field}
-                    {...(errors.captureImageInSeconds && { error: true, helperText: errors.captureImageInSeconds.message })}
-                    disabled={!isCaptureImage}
+                    fullWidth
+                    label='Login Restrict Count'
+                    placeholder=''
+                    {...(errors.loginRestrictCount && { error: true, helperText: errors.loginRestrictCount.message })}
                   />
                 )}
               />
@@ -391,6 +387,32 @@ const AddEditBatchForm = () => {
                     <MenuItem value="2">Digital Offline</MenuItem>
                     <MenuItem value="3">Paper Pen</MenuItem>
                   </CustomTextField>
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                control={control}
+                name='captureImage'
+                render={({ field }) => (
+                  <FormControlLabel
+                    {...field}
+                    control={<Switch checked={isCaptureImage} size='small' onChange={e => setIsCaptureImage(e.target.checked)} />}
+                    label='Capture Image'
+                  />
+                )}
+              />
+
+              <Controller
+                control={control}
+                name='captureImageInSeconds'
+                render={({ field }) => (
+                  <CustomTextField
+                    fullWidth
+                    {...field}
+                    {...(errors.captureImageInSeconds && { error: true, helperText: errors.captureImageInSeconds.message })}
+                    disabled={!isCaptureImage}
+                  />
                 )}
               />
             </Grid>
