@@ -64,7 +64,7 @@ const schema = object(
       custom((value) => !value || /^[0-9]+$/.test(value), 'Must contain only numbers'),
       maxLength(10, 'Max length is 10 digits')
     ])),
-    modOfAssessment: string([
+    modeOfAssessment: string([
       toTrimmed(),
       minLength(1, 'This field is required')
     ])
@@ -97,7 +97,7 @@ const AddEditBatchForm = () => {
       assessmentEndDate: undefined,
       captureImage: false,
       captureImageInSeconds: '',
-      modOfAssessment: '',
+      modeOfAssessment: '',
     }
   })
 
@@ -374,18 +374,18 @@ const AddEditBatchForm = () => {
             </Grid>
             <Grid item xs={12} sm={6}>
               <Controller
-                name='modOfAssessment'
+                name='modeOfAssessment'
                 control={control}
                 rules={{ required: true }}
                 render={({ field }) => (
-                  <CustomTextField select required={true} fullWidth label='Mod Of Assessment' {...field}
+                  <CustomTextField select required={true} fullWidth label='Mode Of Assessment' {...field}
 
                     // onChange={(e) => {
                     //   field.onChange(e); // Ensure the field value gets updated in the form state
                     //   handleStateChange(e.target.value); // Call your custom onChange handler
                     // }}
 
-                    {...(errors.modOfAssessment && { error: true, helperText: errors.modOfAssessment.message })}>
+                    {...(errors.modeOfAssessment && { error: true, helperText: errors.modeOfAssessment.message })}>
                     <MenuItem value=''>Select Mod Of Assessment</MenuItem>
                     <MenuItem value="1">Digital Online</MenuItem>
                     <MenuItem value="2">Digital Offline</MenuItem>
