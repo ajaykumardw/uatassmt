@@ -37,6 +37,8 @@ type FormData = Input<typeof schema>
 
 const schema = object(
   {
+    sscId: string([toTrimmed(), minLength(1, 'This field is required')]),
+    qpId: string([toTrimmed(), minLength(1, 'This field is required')]),
     batchName: string([
       toTrimmed(),
       minLength(1, 'This field is required'),
@@ -83,6 +85,8 @@ const AddEditBatchForm = () => {
   } = useForm<FormData>({
     resolver: valibotResolver(schema),
     defaultValues: {
+      sscId: '',
+      qpId: '',
       batchName: '',
       batchSize: '',
       scheme: '',
@@ -138,6 +142,46 @@ const AddEditBatchForm = () => {
           <Grid container spacing={6}>
             <Grid item xs={12} sm={6}>
               <Controller
+                name='sscId'
+                control={control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <CustomTextField select required={true} fullWidth label='SSC' {...field}
+
+                    // onChange={(e) => {
+                    //   field.onChange(e); // Ensure the field value gets updated in the form state
+                    //   handleStateChange(e.target.value); // Call your custom onChange handler
+                    // }}
+
+                    {...(errors.sscId && { error: true, helperText: errors.sscId.message })}>
+                    <MenuItem value=''>Select SSC</MenuItem>
+                    <MenuItem disabled>No SSC found</MenuItem>
+                  </CustomTextField>
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name='qpId'
+                control={control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <CustomTextField select required={true} fullWidth label='Qualification Pack' {...field}
+
+                    // onChange={(e) => {
+                    //   field.onChange(e); // Ensure the field value gets updated in the form state
+                    //   handleStateChange(e.target.value); // Call your custom onChange handler
+                    // }}
+
+                    {...(errors.qpId && { error: true, helperText: errors.qpId.message })}>
+                    <MenuItem value=''>Select Qualification Pack</MenuItem>
+                    <MenuItem disabled>No Qualification Pack found</MenuItem>
+                  </CustomTextField>
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
                 name='batchName'
                 control={control}
                 rules={{ required: true }}
@@ -163,7 +207,7 @@ const AddEditBatchForm = () => {
                     {...field}
                     fullWidth
                     label='Batch Size'
-                    placeholder='Doe'
+                    required={true}
                     {...(errors.batchSize && { error: true, helperText: errors.batchSize.message })}
                   />
                 )}
