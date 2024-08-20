@@ -11,7 +11,6 @@ import Divider from '@mui/material/Divider'
 import MenuItem from '@mui/material/MenuItem'
 import CardHeader from '@mui/material/CardHeader'
 import CardContent from '@mui/material/CardContent'
-import Typography from '@mui/material/Typography'
 
 // Third-party Imports
 import { toast } from 'react-toastify'
@@ -137,11 +136,6 @@ const AddEditBatchForm = () => {
       <form onSubmit={handleSubmit(onSubmit)} autoComplete='off' method='POST'>
         <CardContent>
           <Grid container spacing={6}>
-            <Grid item xs={12}>
-              <Typography variant='body2' className='font-medium'>
-                1. Account Details
-              </Typography>
-            </Grid>
             <Grid item xs={12} sm={6}>
               <Controller
                 name='batchName'
