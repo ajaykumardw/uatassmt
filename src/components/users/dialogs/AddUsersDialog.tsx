@@ -288,7 +288,7 @@ const AddUsersDialog = ({ open, nosId, pcId, handleClose, data }: AddQPDialogPro
                 </Button>
               </Link>
               <Link href={`/${locale}/users/create/2`}>
-                <Button size='large' variant='tonal' startIcon={<i className='tabler-building-bank text-[28px]' />}>
+                <Button size='large' variant='tonal' startIcon={<i className='tabler-heart-handshake text-[28px]' />}>
                   TP
                 </Button>
               </Link>

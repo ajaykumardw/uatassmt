@@ -42,6 +42,8 @@ import type { RankingInfo } from '@tanstack/match-sorter-utils'
 // Type Imports
 import type { role, users } from '@prisma/client'
 
+import { toast } from 'react-toastify'
+
 import type { ThemeColor } from '@core/types'
 
 import type { Locale } from '@configs/i18n'
@@ -59,6 +61,7 @@ import { getLocalizedUrl } from '@/utils/i18n'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
+
 import AddUsersDialog from '@/components/users/dialogs/AddUsersDialog'
 
 import { formatDate } from '@/utils/formateDate'
@@ -144,7 +147,7 @@ const DebouncedInput = ({
 // }
 const userRoleObj: UserRoleType = {
   1: { icon: 'tabler-school', color: 'info' },
-  2: { icon: 'tabler-building-bank', color: 'warning' },
+  2: { icon: 'tabler-heart-handshake', color: 'warning' },
 }
 
 const userStatusObj: UserStatusType = {
@@ -177,6 +180,17 @@ const UserListTable = ({ tableData }: { tableData?: users[]}) => {
   // Hooks
   const { lang: locale } = useParams()
 
+  useEffect(() => {
+
+    // Check for a notification message from localStorage or other storage
+    const message = localStorage.getItem('formSubmitMessage');
+
+    if (message) {
+      toast.success(message);
+      localStorage.removeItem('formSubmitMessage');
+    }
+  }, []);
+
   const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
     () => [
       {
@@ -188,7 +202,7 @@ const UserListTable = ({ tableData }: { tableData?: users[]}) => {
         header: 'User',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            {getAvatar({ avatar: row.original.avatar || '', first_name: (row.original.first_name || '') + ' ' + (row.original.last_name || '') })}
+            {getAvatar({ avatar: row.original.avatar ? `/uploads/agency/users/${row.original.id}/${row.original.avatar}` : '', first_name: (row.original.first_name || '') + ' ' + (row.original.last_name || '') })}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
                 {row.original.first_name + " "+row.original.last_name}

@@ -186,7 +186,7 @@ const FormValidationOnScheme = ({ stateData }: { stateData?: state[] }) => {
 
     });
 
-    console.log(res)
+    // console.log(res)
 
     if (res.ok) {
 

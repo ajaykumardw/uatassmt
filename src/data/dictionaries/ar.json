@@ -90,6 +90,11 @@
     "qps": "حزم التأهيل",
     "nosPC": "NOS والكمبيوتر",
     "questions": "أسئلة",
-    "users": "المستخدمين"
+    "users": "المستخدمين",
+    "batches": "دفعات",
+    "unassignedBatches": "دفعات غير مخصصة",
+    "allocatedBatches": "الدفعات المخصصة",
+
+    "tc": "مراكز التدريب"
   }
 }

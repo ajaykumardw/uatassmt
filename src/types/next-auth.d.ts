@@ -13,6 +13,7 @@ declare module 'next-auth' {
     is_master?: boolean;
     master_id?: string | null;
     agency_id?: string | null;
+    role_id?: string | null;
   }
   interface Session{
     user: {
@@ -23,6 +24,7 @@ declare module 'next-auth' {
       name?: string | null;
       email?: string | null;
       image?: string | null;
+      role_id?: string | null;
     } & DefaultSession['user']
   }
 }
@@ -36,5 +38,6 @@ declare module 'next-auth/jwt' {
     name?: string | null;
     email?: string | null;
     image?: string | null;
+    role_id?: string | null;
   }
 }

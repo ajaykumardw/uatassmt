@@ -1515,7 +1515,7 @@ const UserCreate = ({ params }: { params: { role: string } }) => {
       </Card>
     )
   }else if(Number(params.role) === 2){
-    return <TPForm />
+    return <TPForm stateData={stateData} />
   }else{
     return <SkeletonForm />
   }

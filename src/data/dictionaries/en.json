@@ -90,6 +90,11 @@
     "qps": "Qualification Packs",
     "nosPC": "NOS & PC",
     "questions": "Questions",
-    "users": "Users"
+    "users": "Users",
+    "batches": "Batches",
+    "unassignedBatches": "Unassigned Batches",
+    "allocatedBatches": "Allocated Batches",
+
+    "tc": "Training Centers"
   }
 }

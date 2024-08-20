@@ -63,6 +63,31 @@ const localizedRedirect = (url: string, locale: string | undefined, request: Nex
   return NextResponse.redirect(redirectUrl)
 }
 
+// Function to check if user exists in the database
+const checkUserExists = async (userId: string): Promise<boolean> => {
+
+  const response = await fetch(`${process.env.API_URL}/check-user/${userId}`, {
+    method: "POST"
+  });
+
+  const data = await response.json();
+
+  return data.exists;
+};
+
+
+const handleUserLogout = (response: NextResponse) => {
+  
+  // Clear cookies manually
+  const cookies = ['next-auth.session-token', 'next-auth.csrf-token']; // Replace these with your actual cookie names
+
+  cookies.forEach(cookie => {
+    response.cookies.set(cookie, '', { maxAge: -1, path: '/' });
+  });
+
+  return response;
+};
+
 export default withAuth(
   async function middleware(request: NextRequestWithAuth) {
 
@@ -95,6 +120,9 @@ export default withAuth(
     // Super admin routes
     const superAdminPaths = ['/super-admin', '/agency/list', `/agency/${agencyId}`, '/agency/create'];
 
+    // Training Partner routes
+    const trainingPartnerPaths = ['/training-partner', '/tc'];
+
 
     // Private routes (All routes except guest and shared routes that can only be accessed by logged in users)
     const privateRoute = ![...guestRoutes, ...sharedRoutes].some(route => pathname.endsWith(route))
@@ -110,6 +138,21 @@ export default withAuth(
       }
 
       return localizedRedirect(redirectUrl, locale, request)
+    }
+
+    if(isUserLoggedIn) {
+      const userId = token.id?.toString();
+
+      const userExist = await checkUserExists(userId || '0');
+
+      if(!userExist){
+
+        const redirectUrl = '/login'
+
+        const response = handleUserLogout(localizedRedirect(redirectUrl, locale, request))
+
+        return response;
+      }
     }
 
     // if(isUserLoggedIn && user_type === 'A') {
@@ -135,6 +178,10 @@ export default withAuth(
     if (user_type === 'SA' && !superAdminPaths.some(path => pathname.includes(`${locale}${path}`)) ) {
 
       return localizedRedirect('/super-admin', locale, request);
+    }
+
+    if(user_type === 'U' && Number(token?.role_id) === 2 && !trainingPartnerPaths.some(path => pathname.includes(`${locale}${path}`)) ) {
+      return localizedRedirect('/training-partner', locale, request);
     }
 
     if(user_type !== 'SA' && superAdminPaths.some(path => pathname.includes(`${locale}${path}`)) ){
@@ -173,6 +220,6 @@ export const config = {
      *    - next.svg (Next.js logo)
      *    - vercel.svg (Vercel logo)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|.+?/hook-examples|.+?/menu-examples|images|next.svg|vercel.svg).*)'
+    '/((?!api|_next/static|_next/image|favicon.ico|.+?/hook-examples|.+?/menu-examples|images|uploads|next.svg|vercel.svg).*)'
   ]
 }

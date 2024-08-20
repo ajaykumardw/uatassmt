@@ -96,17 +96,20 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
         menuSectionStyles={menuSectionStyles(verticalNavOptions, theme)}
       >
 
-        <SubMenu
+        {/* <SubMenu
           label={dictionary['navigation'].dashboards}
           icon={<i className='tabler-smart-home' />}
 
           // suffix={<CustomChip label='3' size='small' color='error' round='true' />}
 
         >
-          <MenuItem href={`/${locale}/dashboards/crm`}>{dictionary['navigation'].crm}</MenuItem>
+          <MenuItem href={`/${locale}/dashboards/crm`}>{dictionary['navigation'].crm}</MenuItem> */}
           {/* <MenuItem href={`/${locale}/dashboards/analytics`}>{dictionary['navigation'].analytics}</MenuItem>
           <MenuItem href={`/${locale}/dashboards/ecommerce`}>{dictionary['navigation'].eCommerce}</MenuItem> */}
-        </SubMenu>
+        {/* </SubMenu> */}
+        <MenuItem href={`/${locale}/dashboards/crm`} icon={<i className='tabler-smart-home' />}>
+          {dictionary['navigation'].dashboard}
+        </MenuItem>
         <MenuItem href={`/${locale}/sectorskills`} icon={<i className='tabler-chart-pie' />}>
           {dictionary['navigation'].sectors}
         </MenuItem>
@@ -117,7 +120,12 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
         <MenuItem href={`/${locale}/questions`} icon={<i className='tabler-checkup-list' />}>
           {dictionary['navigation'].questions}
         </MenuItem>
-        <MenuItem href={`/${locale}/users`} icon={<i className='tabler-user' />}>
+        <SubMenu label={dictionary['navigation'].batches} icon={<i className='tabler-stack-2' />}>
+          <MenuItem href={`/${locale}/batches/list`}>{dictionary['navigation'].list}</MenuItem>
+          <MenuItem href={`/${locale}/batches/unassigned`} disabled>{dictionary['navigation'].unassignedBatches}</MenuItem>
+          <MenuItem href={`/${locale}/batches/allocated`} disabled>{dictionary['navigation'].allocatedBatches}</MenuItem>
+        </SubMenu>
+        <MenuItem href={`/${locale}/users`} icon={<i className='tabler-users' />}>
           {dictionary['navigation'].users}
         </MenuItem>
         {/* <MenuSection label={dictionary['navigation'].appsPages}>

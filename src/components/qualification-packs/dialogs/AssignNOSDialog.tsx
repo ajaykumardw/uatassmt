@@ -204,16 +204,6 @@ const AssignNOSDialog = ({ open, handleClose, qPack, data, assigned, updateQPLis
               <tbody>
                 <tr className='border-bs-0'>
                   <th className='pis-0'>
-                    <Typography color='text.primary' className='font-medium whitespace-nowrap flex-grow'>
-                      NOS ID
-                    </Typography>
-                  </th>
-                  <th>
-                    <Typography color='text.primary' className='font-medium whitespace-nowrap flex-grow min-is-[225px]'>
-                      NOS Name
-                    </Typography>
-                  </th>
-                  <th className='!text-end pie-0'>
                     <FormControlLabel
                       className='mie-0 capitalize'
                       control={
@@ -226,30 +216,25 @@ const AssignNOSDialog = ({ open, handleClose, qPack, data, assigned, updateQPLis
                       label='Select All'
                     />
                   </th>
+                  <th >
+                    <Typography color='text.primary' className='font-medium whitespace-nowrap flex-grow'>
+                      NOS ID
+                    </Typography>
+                  </th>
+                  <th className='pie-0'>
+                    <Typography color='text.primary' className='font-medium whitespace-nowrap flex-grow min-is-[225px]'>
+                      NOS Name
+                    </Typography>
+                  </th>
+
                 </tr>
                 {data?.map((nos, index) => {
                   // const id = (typeof item === 'string' ? item : item.title).toLowerCase().split(' ').join('-')
 
                   return (
                     <tr key={index} className='border-be'>
-                      <td className='pis-0'>
-                        <Typography
-                          className='font-medium whitespace-nowrap flex-grow'
-                          color='text.primary'
-                        >
-                          {nos.nos_id}
-                        </Typography>
-                      </td>
-                      <td>
-                        <Typography
-                          className='font-medium whitespace-nowrap flex-grow min-is-[225px]'
-                          color='text.primary'
-                        >
-                          {nos.nos_name}
-                        </Typography>
-                      </td>
-                      <td className='!text-end pie-0'>
-                        <FormGroup className='flex-row justify-end flex-nowrap gap-6'>
+                      <td className='!text-end pis-0'>
+                        <FormGroup className='flex-row justify-start flex-nowrap gap-6'>
                           <Controller
                             control={control}
                             name={`nos.${nos.id}`}
@@ -271,6 +256,23 @@ const AssignNOSDialog = ({ open, handleClose, qPack, data, assigned, updateQPLis
                           />
                         </FormGroup>
                       </td>
+                      <td>
+                        <Typography
+                          className='font-medium whitespace-nowrap flex-grow'
+                          color='text.primary'
+                        >
+                          {nos.nos_id}
+                        </Typography>
+                      </td>
+                      <td className='pie-0'>
+                        <Typography
+                          className='font-medium whitespace-nowrap flex-grow min-is-[225px]'
+                          color='text.primary'
+                        >
+                          {nos.nos_name}
+                        </Typography>
+                      </td>
+
                     </tr>
                   )
                 })}

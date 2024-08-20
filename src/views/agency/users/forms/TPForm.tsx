@@ -1,7 +1,9 @@
 'use client'
 
 // React Imports
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+
+import { useParams, useRouter } from 'next/navigation'
 
 // MUI Imports
 import Card from '@mui/material/Card'
@@ -16,13 +18,14 @@ import CardActions from '@mui/material/CardActions'
 import InputAdornment from '@mui/material/InputAdornment'
 import IconButton from '@mui/material/IconButton'
 
+
 import { toast } from 'react-toastify'
+
+import { Controller, useForm } from 'react-hook-form';
 
 // Components Imports
 
 // Styled Component Imports
-import { Controller, useForm } from 'react-hook-form';
-
 import type { SubmitHandler } from 'react-hook-form';
 
 import { object, string, toTrimmed, minLength, optional, custom, maxLength, regex } from 'valibot'
@@ -33,11 +36,19 @@ import { valibotResolver } from '@hookform/resolvers/valibot'
 
 import type { city, state } from '@prisma/client'
 
+
 import { CircularProgress } from '@mui/material'
 
 import CustomTextField from '@core/components/mui/TextField'
 
 import { generateRandomPassword } from '@/utils/passwordGenerator'
+
+import type { UsersType } from '@/types/users/usersType'
+
+import { getLocalizedUrl } from '@/utils/i18n'
+
+import type { Locale } from '@configs/i18n'
+
 
 // type FormDataType = {
 //   username: string
@@ -122,55 +133,63 @@ const schema = object(
   }
 )
 
-const initialData = {
-  username: '',
-  email: '',
-  password: '',
-  firstName: '',
-  lastName: '',
-  state: '',
-  city: '',
-  pinCode: '',
-  address: '',
-  panCardNumber: '',
-  gstNumber: '',
-  phoneNumber: ''
-}
+// const initialData = {
+//   username: '',
+//   email: '',
+//   password: '',
+//   firstName: '',
+//   lastName: '',
+//   state: '',
+//   city: '',
+//   pinCode: '',
+//   address: '',
+//   panCardNumber: '',
+//   gstNumber: '',
+//   phoneNumber: ''
+// }
 
-const TPForm = ({ id }:{id?: number}) => {
+const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersType, stateData?: state[], citiesData?: city[]}) => {
+
+  const router = useRouter();
+  const { lang: locale } = useParams()
 
   // States
-  const [formData] = useState<FormDataType>(initialData)
+  // const [formData, setFormData] = useState<FormDataType>(initialData)
 
   const [isPasswordShown, setIsPasswordShown] = useState(false);
-  const [stateData, setStateData] = useState<state[]>([]);
-  const [cityData, setCityData] = useState<city[]>([]);
+
+  // const [stateData, setStateData] = useState<state[]>([]);
+  const [cityData, setCityData] = useState<city[]>(citiesData || []);
   const [loading, setLoading] = useState(false);
 
-  const getStateData = async () => {
+  const {
+    control,
+    reset,
+    resetField,
+    handleSubmit,
 
-    // Vars
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/state`, {method: 'POST', headers: {'Content-Type': 'application/json', }})
-
-    if (!res.ok) {
-      throw new Error('Failed to fetch stateData')
+    formState: { errors },
+  } = useForm<FormDataType>({
+    resolver: valibotResolver(schema),
+    values: {
+      username: data?.user_name || '',
+      email: data?.email || '',
+      password: data?.password || '',
+      firstName: data?.first_name || '',
+      lastName: data?.last_name || '',
+      state: data?.state_id?.toString() || '',
+      city: data?.city_id?.toString() || '',
+      pinCode: data?.pin_code || '',
+      address: data?.address || '',
+      panCardNumber: data?.user_additional_data.pan_card_no || '',
+      gstNumber: data?.user_additional_data.gst_no || '',
+      phoneNumber: data?.mobile_no || ''
     }
-
-    const allStates = await res.json()
-
-    setStateData(allStates)
-
-  }
-
-  useEffect(() => {
-
-    getStateData()
-
-  }, []);
+  })
 
   const handleStateChange = async (state: string) => {
 
-    resetField("city")
+    resetField("city", {defaultValue: ""})
 
     if (state) {
       try {
@@ -187,7 +206,6 @@ const TPForm = ({ id }:{id?: number}) => {
 
         }
 
-
       } catch (error) {
 
         console.error('Error fetching city data:', error);
@@ -200,48 +218,67 @@ const TPForm = ({ id }:{id?: number}) => {
 
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
 
-  const {
-    control,
-
-    reset,
-    resetField,
-    handleSubmit,
-
-    formState: { errors },
-  } = useForm<FormDataType>({
-    resolver: valibotResolver(schema),
-    values: formData
-  })
-
   const onSubmit: SubmitHandler<FormDataType> = async (data: FormDataType) => {
-    console.log('form data', data);
+
     setLoading(true);
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/training-partner`, {
+    if(id){
 
-      method: 'POST',
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/training-partner/${id}`, {
 
-      headers: {
+        method: 'POST',
 
-        'Content-Type': 'application/json'
+        headers: {
 
-      },
+          'Content-Type': 'application/json'
 
-      body: JSON.stringify(data)
-    });
+        },
 
-    if(res.ok){
-      setLoading(false);
-      handleReset();
-
-      toast.success('New Training Partner has been created successfully!', {
-        hideProgressBar: false
+        body: JSON.stringify(data)
       });
-    } else {
-      setLoading(false);
-      toast.error('Something went wrong!', {
-        hideProgressBar: false
+
+      if(res.ok){
+        setLoading(false);
+        handleReset();
+        localStorage.setItem("formSubmitMessage", "Training Partner has been updated successfully!");
+
+        router.push(getLocalizedUrl("/users", locale as Locale))
+
+      } else {
+        setLoading(false);
+        toast.error('Something went wrong!', {
+          hideProgressBar: false
+        });
+      }
+    }else{
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/training-partner`, {
+
+        method: 'POST',
+
+        headers: {
+
+          'Content-Type': 'application/json'
+
+        },
+
+        body: JSON.stringify(data)
       });
+
+      if(res.ok){
+        setLoading(false);
+        handleReset();
+
+        localStorage.setItem("formSubmitMessage", "New Training Partner has been created successfully!");
+
+        router.push(getLocalizedUrl("/users", locale as Locale))
+
+      } else {
+        setLoading(false);
+        toast.error('Something went wrong!', {
+          hideProgressBar: false
+        });
+      }
     }
 
     setLoading(false);
@@ -249,7 +286,9 @@ const TPForm = ({ id }:{id?: number}) => {
   }
 
   const handleReset = () => {
-    resetField("password", {defaultValue: ""})
+    resetField("password", {defaultValue: data?.password || ""})
+    resetField("state", {defaultValue: data?.state_id?.toString() || ""})
+    resetField("city", {defaultValue: data?.city_id?.toString() || ""})
     reset();
   }
 
@@ -307,39 +346,43 @@ const TPForm = ({ id }:{id?: number}) => {
                 )}
               />
             </Grid>
-            <Grid item xs={12} sm={6} className='flex items-end gap-4'>
-              <Controller
-                control={control}
-                name='password'
-                rules={{ required: true }}
-                render={({field}) => (
-                  <CustomTextField
-                    fullWidth
-                    required={true}
-                    label='Password'
-                    placeholder='············'
-                    type={isPasswordShown ? 'text' : 'password'}
-                    {...field}
-                    {...(errors.password && { error: true, helperText: errors.password.message })}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position='end'>
-                          <IconButton
-                            edge='end'
-                            onClick={handleClickShowPassword}
-                            onMouseDown={e => e.preventDefault()}
-                            aria-label='toggle password visibility'
-                          >
-                            <i className={isPasswordShown ? 'tabler-eye' : 'tabler-eye-off'} />
-                          </IconButton>
-                        </InputAdornment>
-                      )
-                    }}
-                  />
-                )}
-              />
-              <Button variant='tonal' onClick={handleGeneratePassword}>Generate</Button>
-            </Grid>
+            {id ? '' : (
+
+              <Grid item xs={12} sm={6} className='flex items-end gap-4'>
+                <Controller
+                  control={control}
+                  name='password'
+                  rules={{ required: true }}
+                  render={({field}) => (
+                    <CustomTextField
+                      fullWidth
+                      required={true}
+                      label='Password'
+                      placeholder='············'
+                      type={isPasswordShown ? 'text' : 'password'}
+                      {...field}
+                      {...(errors.password && { error: true, helperText: errors.password.message })}
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position='end'>
+                            <IconButton
+                              edge='end'
+                              onClick={handleClickShowPassword}
+                              onMouseDown={e => e.preventDefault()}
+                              aria-label='toggle password visibility'
+                            >
+                              <i className={isPasswordShown ? 'tabler-eye' : 'tabler-eye-off'} />
+                            </IconButton>
+                          </InputAdornment>
+                        )
+                      }}
+                    />
+                  )}
+                />
+                <Button variant='tonal' onClick={handleGeneratePassword}>Generate</Button>
+              </Grid>
+
+            )}
             <Grid item xs={12} sm={6}>
               <Controller
                 control={control}
@@ -574,6 +617,7 @@ const TPForm = ({ id }:{id?: number}) => {
             variant='tonal'
             color='secondary'
             onClick={() => {
+              setCityData(citiesData || []); resetField("city", {defaultValue: data?.city_id?.toString() || ''});
               handleReset()
             }}
           >

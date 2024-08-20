@@ -90,6 +90,11 @@
     "qps": "Packs de qualification",
     "nosPC": "NOS et PC",
     "questions": "Des questions",
-    "users": "Utilisatrices"
+    "users": "Utilisatrices",
+    "batches": "Lots",
+    "unassignedBatches": "Lots non Attribués",
+    "allocatedBatches": "Lots Alloués",
+
+    "tc": "Centres de Formation"
   }
 }

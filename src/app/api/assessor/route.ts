@@ -318,7 +318,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    console.log("console from api: ",body)
+    // console.log("console from api: ",body)
 
 
     await prisma.users_additional_data.create({

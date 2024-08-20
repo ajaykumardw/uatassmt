@@ -117,6 +117,7 @@ export const authOptions: NextAuthOptions = {
         token.user_type = user.user_type
         token.is_master = user.is_master
         token.agency_id = user.is_master ? user.id : user.master_id
+        token.role_id = user.role_id
       }
 
       return token
@@ -131,6 +132,7 @@ export const authOptions: NextAuthOptions = {
         session.user.image = token.picture
         session.user.is_master = token.is_master
         session.user.agency_id = token.agency_id
+        session.user.role_id = token.role_id
       }
 
       return session
