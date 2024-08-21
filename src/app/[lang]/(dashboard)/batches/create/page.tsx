@@ -20,20 +20,48 @@ import SkeletonForm from "@/components/skeleton/SkeletonForm"
 //   return res.json()
 // }
 
+const getSSCData = async () => {
+  // Vars
+  const sscData = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sectorskills`).then(function (response) { return response.json() });
+
+  // if (!res.ok) {
+  //   throw new Error('Failed to fetch sector skills council')
+  // }
+
+  // const userData = await res.json();
+
+  // setSscUsers(userData);
+
+  // if(sscData.length > 0){
+
+  // }
+
+  return sscData
+
+}
+
 const AgencyCreateApp = async () => {
 
   // Vars
   // const stateData = await getStateData();
 
-  return (
+  const ssc = await getSSCData();
 
-    <Grid item xs={12}>
-      <AddEditBatchForm />
-    </Grid>
+  if(ssc){
 
-  );
+    return (
 
-  return <SkeletonForm />
+      <Grid item xs={12}>
+        <AddEditBatchForm sscData={ssc} />
+      </Grid>
+
+    );
+  }else{
+
+    return <SkeletonForm />
+  }
+
+
 
 }
 

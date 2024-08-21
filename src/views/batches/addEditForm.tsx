@@ -30,6 +30,7 @@ import { FormControlLabel, Switch } from '@mui/material'
 
 import CustomTextField from '@core/components/mui/TextField'
 import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
+import { SSCType } from '@/types/sectorskills/sscType'
 
 
 type FormData = Input<typeof schema>
@@ -72,7 +73,7 @@ const schema = object(
   }
 )
 
-const AddEditBatchForm = () => {
+const AddEditBatchForm = ({sscData}:{sscData: SSCType[]}) => {
 
   // States
   const [isCaptureImage, setIsCaptureImage] = useState(false)
@@ -156,8 +157,16 @@ const AddEditBatchForm = () => {
                     // }}
 
                     {...(errors.sscId && { error: true, helperText: errors.sscId.message })}>
-                    <MenuItem value=''>Select SSC</MenuItem>
-                    <MenuItem disabled>No SSC found</MenuItem>
+
+                      <MenuItem value=''>Select SSC</MenuItem>
+                      {sscData && sscData.length > 0 ? (
+                        sscData.map((ssc) =>(
+                          <MenuItem key={ssc.id.toString()} value={ssc.id.toString()}>{ssc.ssc_name}</MenuItem>
+                        ))
+
+                      ) : (
+                        <MenuItem disabled>No SSC found</MenuItem>
+                      ) }
                   </CustomTextField>
                 )}
               />
