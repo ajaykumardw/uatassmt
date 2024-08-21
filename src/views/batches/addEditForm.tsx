@@ -21,7 +21,7 @@ import type { SubmitHandler } from 'react-hook-form'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, minLength, string, custom, toTrimmed, maxLength, optional, date, boolean } from 'valibot'
+import { object, minLength, string, custom, toTrimmed, maxLength, optional, date, boolean, regex } from 'valibot'
 
 import type { Input } from 'valibot'
 
@@ -54,11 +54,11 @@ const schema = object(
     trainingCenter: string([toTrimmed(), minLength(1, 'This field is required')]),
     assessmentStartDate: date('This field is required'),
     assessmentEndDate: date('This field is required'),
-    loginRestrictCount: optional(string([
+    loginRestrictCount: string([
       toTrimmed(),
-      custom((value) => !value || /^[0-9]+$/.test(value), 'Login Restrict Count must contain only numbers'),
+      regex(/^[1-9][0-9]{0,2}$/, 'Login Restrict Count must contain only numbers'),
       maxLength(3, 'The max length is 3')
-    ])),
+    ]),
     captureImage: optional(boolean()),
     captureImageInSeconds: optional(string([
       toTrimmed(),
@@ -382,7 +382,7 @@ const AddEditBatchForm = () => {
                     // }}
 
                     {...(errors.modeOfAssessment && { error: true, helperText: errors.modeOfAssessment.message })}>
-                    <MenuItem value=''>Select Mod Of Assessment</MenuItem>
+                    <MenuItem value=''>Select Mode Of Assessment</MenuItem>
                     <MenuItem value="1">Digital Online</MenuItem>
                     <MenuItem value="2">Digital Offline</MenuItem>
                     <MenuItem value="3">Paper Pen</MenuItem>
@@ -409,6 +409,7 @@ const AddEditBatchForm = () => {
                 render={({ field }) => (
                   <CustomTextField
                     fullWidth
+                    placeholder='Camera Interval in Seconds.'
                     {...field}
                     {...(errors.captureImageInSeconds && { error: true, helperText: errors.captureImageInSeconds.message })}
                     disabled={!isCaptureImage}

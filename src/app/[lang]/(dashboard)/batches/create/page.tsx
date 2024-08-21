@@ -3,6 +3,7 @@
 import Grid from "@mui/material/Grid"
 
 import AddEditBatchForm from "@/views/batches/addEditForm"
+import SkeletonForm from "@/components/skeleton/SkeletonForm"
 
 // const getStateData = async () => {
 //   // Vars
@@ -31,6 +32,9 @@ const AgencyCreateApp = async () => {
     </Grid>
 
   );
+
+  return <SkeletonForm />
+
 }
 
 export default AgencyCreateApp
