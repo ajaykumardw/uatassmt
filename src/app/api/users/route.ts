@@ -11,7 +11,7 @@ import prisma from '@/libs/prisma';
 export async function GET() {
 
   const session = await getServerSession(authOptions);
-  const createdBy = Number(session?.user.id) || 412;
+  const createdBy = Number(session?.user.id);
 
   const data = await prisma.users.findMany({
     where: {

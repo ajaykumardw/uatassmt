@@ -77,7 +77,7 @@ const checkUserExists = async (userId: string): Promise<boolean> => {
 
 
 const handleUserLogout = (response: NextResponse) => {
-  
+
   // Clear cookies manually
   const cookies = ['next-auth.session-token', 'next-auth.csrf-token']; // Replace these with your actual cookie names
 
@@ -220,6 +220,6 @@ export const config = {
      *    - next.svg (Next.js logo)
      *    - vercel.svg (Vercel logo)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|.+?/hook-examples|.+?/menu-examples|images|uploads|next.svg|vercel.svg).*)'
+    '/((?!api|_next/static|_next/image|favicon.ico|.+?/hook-examples|.+?/menu-examples|images|uploads|sample_students_excel_updated.xlsx|next.svg|vercel.svg).*)'
   ]
 }

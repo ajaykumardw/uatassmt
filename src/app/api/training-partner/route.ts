@@ -10,6 +10,24 @@ import prisma from '@/libs/prisma';
 
 import { authOptions } from '@/libs/auth';
 
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  const agency_id = Number(session?.user?.agency_id);
+
+  const trainingPartners = await prisma.users.findMany({
+    where: {
+      master_id: agency_id,
+      user_type: 'U',
+      role_id: 2
+    },
+    orderBy:{
+      company_name: "asc"
+    }
+  });
+
+  return NextResponse.json(trainingPartners);
+}
+
 
 export async function POST(req: Request) {
 

@@ -162,7 +162,7 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
 
   const [addQuestionOpen, setAddQuestionOpen] = useState(false);
   const [editQuestionOpen, setEditQuestionOpen] = useState(false);
-  
+
   const [editQuestionData, setEditQuestionData] = useState({
     selectPC: [],
     questionType: '',
@@ -343,6 +343,22 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
             <Typography className='capitalize' color='text.primary'>
               {row.original.marks}
             </Typography>
+          </div>
+        )
+      }),
+      columnHelper.accessor('marks', {
+        header: 'PC',
+        cell: ({ row }) => (
+          <div className='flex flex-col items-start gap-1'>
+            {row.original.pc?.map(pc => (
+              <Chip
+                variant='tonal'
+                className='capitalize'
+                label={pc.pc_id}
+                color='info'
+                size='small'
+              />
+            ))}
           </div>
         )
       }),

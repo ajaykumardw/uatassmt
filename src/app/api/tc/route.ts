@@ -10,14 +10,20 @@ import prisma from '@/libs/prisma';
 
 import { authOptions } from '@/libs/auth';
 
-export async function GET() {
+export async function GET(req: Request) {
 
+  const url = new URL(await req.url);
+  const id = url.searchParams.get('tpId');
   const session = await getServerSession(authOptions);
-  const createdBy = Number(session?.user.id);
+  // const isMaster = session?.user.is_master;
+  const createdBy = Number(id) || Number(session?.user.id);
+
+  // const whereCondition = isMaster ? {master_id: createdBy, user_type: 'TC'} : {created_by: createdBy, user_type: 'TC'};
 
   const trainingCenters = await prisma.users.findMany({
     where: {
-      created_by: createdBy
+      created_by: createdBy,
+      user_type: "TC"
     },
     orderBy:{
       company_name: "asc"
@@ -36,7 +42,7 @@ export async function POST(req: Request) {
   const { tcId, tcName, email, status, firstName, lastName, phoneNumber, state, city, address, pinCode } = await req.json()
 
   // const hashPassword = await hash(password, 10)
-  const userType = 'U'
+  const userType = 'TC'
   const session = await getServerSession(authOptions)
   const agency_id = Number(session?.user?.agency_id)
   const createdBy = Number(session?.user.id)

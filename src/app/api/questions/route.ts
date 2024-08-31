@@ -32,7 +32,17 @@ export async function GET() {
                   id: true,
                   pc_id: true,
                   pc_name: true,
-                  questions: true
+                  questions: {
+                    include: {
+                      pc: {
+                        select: {
+                          id: true,
+                          pc_id: true,
+                          pc_name: true
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }

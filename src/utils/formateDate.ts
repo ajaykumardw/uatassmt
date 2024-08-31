@@ -9,7 +9,11 @@ export function formatDate(dateInput: string | Date | undefined): string {
   if (!dateInput) return '';
 
   const date = new Date(dateInput);
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  const month = months[date.getMonth()]; // Get the month abbreviation
+
+  // const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
   const day = String(date.getDate()).padStart(2, '0');
   const year = date.getFullYear();
 
@@ -21,5 +25,5 @@ export function formatDate(dateInput: string | Date | undefined): string {
   hours = hours ? hours : 12; // Hour '0' should be '12'
   const formattedHours = String(hours).padStart(2, '0');
 
-  return `${day}/${month}/${year} ${formattedHours}:${minutes} ${ampm}`;
+  return `${day}-${month}-${year} ${formattedHours}:${minutes} ${ampm}`;
 }

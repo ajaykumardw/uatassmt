@@ -34,6 +34,8 @@ const Question = () => {
     getQuestionsData();
   };
 
+  console.log(data);
+
 
   return <QuestionsList questionsData={data} updateQuestionsList={updateQuestionsList} />
 }

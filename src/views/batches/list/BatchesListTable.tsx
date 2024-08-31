@@ -43,7 +43,7 @@ import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
-import type { batches } from '@prisma/client'
+import type { batches, schemes, users } from '@prisma/client'
 
 import { toast } from 'react-toastify'
 
@@ -62,6 +62,10 @@ import { getLocalizedUrl } from '@/utils/i18n'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 
+import { formatDate } from '@/utils/formateDate'
+import { QPType } from '@/types/qualification-pack/qpType'
+import ImportStudents from './ImportStudents'
+
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -74,6 +78,11 @@ declare module '@tanstack/table-core' {
 
 type BatchesTypeWithAction = batches & {
   action?: string
+  qualification_pack: QPType
+  training_partner: users
+  training_center: users
+  scheme: schemes
+  sub_scheme: schemes
 
   // role: role
 }
@@ -160,6 +169,7 @@ const BatchesListTable = ({ tableData }: { tableData?: batches[]}) => {
   // const [addUserOpen, setAddUserOpen] = useState(false)
 
   const [rowSelection, setRowSelection] = useState({})
+  const [showImportStudents, setShowImportStudents] = useState(false);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [data, setData] = useState(...[tableData])
@@ -174,7 +184,9 @@ const BatchesListTable = ({ tableData }: { tableData?: batches[]}) => {
     const message = localStorage.getItem('formSubmitMessage');
 
     if (message) {
-      toast.success(message);
+      toast.success(message,{
+        hideProgressBar: false
+      });
       localStorage.removeItem('formSubmitMessage');
     }
   }, []);
@@ -186,16 +198,25 @@ const BatchesListTable = ({ tableData }: { tableData?: batches[]}) => {
         header: 'S.No.',
         cell: ({ row }) => <Typography>{row.index + 1}</Typography>
       },
-      columnHelper.accessor('batch_name', {
-        header: 'Batch Name',
+      columnHelper.accessor('qualification_pack.ssc.ssc_code', {
+        header: () => (
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' >
+                SSC Code
+              </Typography>
+              <Typography variant='body2'>QP ID</Typography>
+            </div>
+          </div>
+        ),
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar ? `/uploads/agency/users/${row.original.id}/${row.original.avatar}` : '', first_name: (row.original.first_name || '') + ' ' + (row.original.last_name || '') })} */}
             <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-                {row.original.batch_name}
+              <Typography color='text.primary' >
+                {row.original.qualification_pack.ssc.ssc_code}
               </Typography>
-              {/* <Typography variant='body2'>{row.original.user_name}</Typography> */}
+              <Typography variant='body2'>{row.original.qualification_pack.qualification_pack_id}</Typography>
             </div>
           </div>
         )
@@ -216,11 +237,69 @@ const BatchesListTable = ({ tableData }: { tableData?: batches[]}) => {
       //   )
       // }),
 
+      columnHelper.accessor('batch_name', {
+        header: 'Batch Name',
+        cell: ({ row }) => (
+          <Typography color='text.primary' className='font-medium'>
+            {row.original.batch_name}
+          </Typography>
+        )
+      }),
+      columnHelper.accessor('batch_size', {
+        header: 'Batch Size',
+        cell: ({ row }) => (
+          <Typography color='text.primary' >
+            {row.original.batch_size}
+          </Typography>
+        )
+      }),
+      columnHelper.accessor('training_partner_id', {
+        header: 'Training Partner',
+        cell: ({ row }) => (
+          <Typography color='text.primary' >
+            {row.original.training_partner.first_name}
+          </Typography>
+        )
+      }),
       columnHelper.accessor('training_centre_id', {
         header: 'Center ID',
         cell: ({ row }) => (
+          <Typography color='text.primary' >
+            {row.original.training_center.user_name}
+          </Typography>
+        )
+      }),
+
+      columnHelper.accessor('assessment_start_datetime', {
+        header: 'Start Date Time',
+        cell: ({ row }) => (
           <Typography color='text.primary' className='font-medium'>
-            {row.original.training_centre_id}
+            {row.original.assessment_start_datetime && formatDate(row.original.assessment_start_datetime)}
+          </Typography>
+        )
+      }),
+
+      columnHelper.accessor('assessment_end_datetime', {
+        header: 'End Date Time',
+        cell: ({ row }) => (
+          <Typography color='text.primary' className='font-medium'>
+            {row.original.assessment_end_datetime && formatDate(row.original.assessment_end_datetime)}
+          </Typography>
+        )
+      }),
+      columnHelper.accessor('scheme', {
+        header: 'Scheme',
+        cell: ({ row }) => (
+          <Typography color='text.primary' >
+            {row.original.scheme.scheme_name}
+          </Typography>
+        )
+      }),
+      columnHelper.accessor('sub_scheme', {
+        header: 'Sub Scheme',
+        cell: ({ row }) => (
+          <Typography color='text.primary' >
+            {row.original.sub_scheme.scheme_name}
           </Typography>
         )
       }),
@@ -258,13 +337,13 @@ const BatchesListTable = ({ tableData }: { tableData?: batches[]}) => {
 
       columnHelper.accessor('action', {
         header: 'Action',
-        cell: () => (
+        cell: ({row}) => (
           <div className='flex items-center'>
-            {/* <Link href={getLocalizedUrl(`users/edit/${row.original.id}/${row.original.role_id}`, locale as Locale)} className='flex'> */}
+            <Link href={getLocalizedUrl(`batches/edit/${row.original.id}`, locale as Locale)} className='flex'>
               <IconButton>
                 <i className='tabler-edit text-[22px] text-textSecondary' />
               </IconButton>
-            {/* </Link> */}
+            </Link>
             {/* <IconButton>
               <Link href={getLocalizedUrl('apps/user/view', locale as Locale)} className='flex'>
                 <i className='tabler-eye text-[22px] text-textSecondary' />
@@ -324,6 +403,9 @@ const BatchesListTable = ({ tableData }: { tableData?: batches[]}) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
+  if (showImportStudents) {
+    return <ImportStudents onBack={() => setShowImportStudents(false)} />;
+  }
 
   return (
     <>
@@ -355,6 +437,17 @@ const BatchesListTable = ({ tableData }: { tableData?: batches[]}) => {
               className='is-full sm:is-auto'
             >
               Export
+            </Button>
+            <Button
+              variant='tonal'
+              startIcon={<i className='tabler-user-down' />}
+              color='error'
+              // onClick={() => setAddUserOpen(!addUserOpen)}
+
+              onClick={() => setShowImportStudents(true)}
+              className='is-full sm:is-auto'
+            >
+              Import Students
             </Button>
             <Link href={getLocalizedUrl('batches/create', locale as Locale)} className='flex'>
               <Button

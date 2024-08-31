@@ -1,7 +1,9 @@
 'use client'
 
 // React Imports
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+
+import { useParams, useRouter } from 'next/navigation'
 
 // MUI Imports
 import Card from '@mui/material/Card'
@@ -26,12 +28,22 @@ import { object, minLength, string, custom, toTrimmed, maxLength, optional, date
 import type { Input } from 'valibot'
 
 // Components Imports
-import { FormControlLabel, Switch } from '@mui/material'
+import { CircularProgress, FormControlLabel, Switch } from '@mui/material'
 
 import CustomTextField from '@core/components/mui/TextField'
 import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
+
 import { SSCType } from '@/types/sectorskills/sscType'
 
+import { QPType } from '@/types/qualification-pack/qpType'
+
+import { batches, schemes, users } from '@prisma/client'
+
+import { getLocalizedUrl } from '@/utils/i18n'
+
+import type { Locale } from '@configs/i18n'
+import { ModeOfAssessment } from '@/configs/customDataConfig'
+import { SchemesType } from '@/types/schemes/schemesType'
 
 type FormData = Input<typeof schema>
 
@@ -43,11 +55,13 @@ const schema = object(
     batchName: string([
       toTrimmed(),
       minLength(1, 'This field is required'),
-      minLength(3, 'First Name must be at least 3 characters long')
+      minLength(3, 'First Name must be at least 3 characters long'),
+      maxLength(191, 'The max length for this field is 191 characters.')
     ]),
     batchSize: string([
       toTrimmed(),
-      minLength(1, 'This field is required')
+      minLength(1, 'This field is required'),
+      maxLength(191, 'The max length for this field is 191 characters.')
     ]),
     scheme: string([toTrimmed(), minLength(1, 'This field is required')]),
     subScheme: string([toTrimmed(), minLength(1, 'This field is required')]),
@@ -57,8 +71,9 @@ const schema = object(
     assessmentEndDate: date('This field is required'),
     loginRestrictCount: string([
       toTrimmed(),
+      minLength(1, 'This field is required.'),
       regex(/^[1-9][0-9]{0,2}$/, 'Login Restrict Count must contain only numbers'),
-      maxLength(3, 'The max length is 3')
+      maxLength(3, 'The max length is 3 digits')
     ]),
     captureImage: optional(boolean()),
     captureImageInSeconds: optional(string([
@@ -73,73 +88,236 @@ const schema = object(
   }
 )
 
-const AddEditBatchForm = ({sscData}:{sscData: SSCType[]}) => {
+const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesData}:{id?: number, data?: batches & {qualification_pack: QPType}, sscData: SSCType[], tpData: users[], trainingCenters?: users[], schemesData: SchemesType[]}) => {
+
+  const router = useRouter();
+  const { lang: locale } = useParams()
 
   // States
-  const [isCaptureImage, setIsCaptureImage] = useState(false)
+  const [isCaptureImage, setIsCaptureImage] = useState(!!data?.capture_image_in_seconds || false)
+  const [qpData, setQPData] = useState<QPType[]>([])
+  const [tcData, setTCData] = useState<users[]>(trainingCenters || []);
+  const [subSchemesData, setSubSchemesData] = useState<schemes[]>([]);
+  const [loading, setLoading] = useState(false);
 
   // Hooks
   const {
     control,
+    setValue,
     reset,
+    resetField,
     handleSubmit,
     formState: { errors },
   } = useForm<FormData>({
     resolver: valibotResolver(schema),
     defaultValues: {
-      sscId: '',
+      sscId: data?.qualification_pack.ssc_id.toString() || '',
       qpId: '',
-      batchName: '',
-      batchSize: '',
-      scheme: '',
+      batchName: data?.batch_name || '',
+      batchSize: data?.batch_size || '',
+      scheme: data?.scheme_id.toString() || '',
       subScheme: '',
-      trainingPartner: '',
-      trainingCenter: '',
+      trainingPartner: data?.training_partner_id.toString() || '',
+      trainingCenter: data?.training_centre_id.toString() || '',
       loginRestrictCount: '3',
-      assessmentStartDate: undefined,
-      assessmentEndDate: undefined,
+      assessmentStartDate: data?.assessment_start_datetime ? new Date(data?.assessment_start_datetime) : null  || undefined,
+      assessmentEndDate: data?.assessment_end_datetime ? new Date(data?.assessment_end_datetime) : null || undefined,
       captureImage: false,
-      captureImageInSeconds: '',
-      modeOfAssessment: '',
+      captureImageInSeconds: data?.capture_image_in_seconds?.toString() || '',
+      modeOfAssessment: data?.assessment_mode?.toString() || '',
     }
   })
 
-  const onSubmit: SubmitHandler<FormData> = async (data: FormData) => {
+  useEffect(() => {
+    if(data?.qualification_pack.ssc_id){
+      getQPData(data?.qualification_pack.ssc_id)
+    }
+    if(data?.scheme_id){
+      getSubSchemes(data?.scheme_id);
+    }
+  },[data]);
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/agency`, {
+  const getQPData = async (ssc: number) => {
+    const sscId = Number(ssc);
 
-      method: 'POST',
+    const selectedSSC = sscData.find(ssc => ssc.id === sscId);
 
-      headers: {
+    if (selectedSSC) {
 
-        'Content-Type': 'application/json' // Assuming you're sending JSON data
-
-      },
-
-      body: JSON.stringify(data)
-
-    });
-
-    // console.log(res)
-
-    if (res.ok) {
-
-      reset()
-
-      toast.success('Form Submitted')
+      setQPData(selectedSSC.qualification_packs || []);
 
     } else {
 
-      toast.error('Something wrong')
+      setQPData([]);
+
+    }
+
+    setValue("qpId", data?.qp_id.toString() || '');
+  }
+
+  const getSubSchemes = async (scheme: number) => {
+    const schemeId = scheme;
+
+    const selectedScheme = schemesData.find(scheme => scheme.id === schemeId);
+
+    if(selectedScheme){
+
+      setSubSchemesData(selectedScheme.sub_schemes || [])
+
+    } else {
+      setSubSchemesData([])
+    }
+
+    setValue("subScheme", data?.sub_scheme_id.toString() || '')
+  }
+
+  const onSubmit: SubmitHandler<FormData> = async (data: FormData) => {
+
+    setLoading(true);
+    data.captureImage = isCaptureImage;
+
+    if(id){
+
+      console.log(data);
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches/${id}`, {
+
+        method: 'POST',
+
+        headers: {
+
+          'Content-Type': 'application/json' // Assuming you're sending JSON data
+
+        },
+
+        body: JSON.stringify(data)
+
+      });
+
+      if(res.ok){
+        handleReset();
+
+        localStorage.setItem("formSubmitMessage", "Batch Updated Successfully!");
+
+        router.push(getLocalizedUrl("/batches/list", locale as Locale))
+        setLoading(false);
+
+      } else {
+        setLoading(false);
+        toast.error('Batch not updated. Something went wrong!', {
+          hideProgressBar: false
+        });
+      }
+
+    }else{
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches`, {
+
+        method: 'POST',
+
+        headers: {
+
+          'Content-Type': 'application/json' // Assuming you're sending JSON data
+
+        },
+
+        body: JSON.stringify(data)
+
+      });
+
+
+      if(res.ok){
+        setLoading(false);
+        handleReset();
+
+        localStorage.setItem("formSubmitMessage", "New Batch Created Successfully!");
+
+        router.push(getLocalizedUrl("/batches/list", locale as Locale))
+
+      } else {
+        setLoading(false);
+        toast.error('Something went wrong!', {
+          hideProgressBar: false
+        });
+      }
+    }
+    setLoading(false);
+    handleReset();
+  }
+
+  const handleReset = () => {
+    reset();
+    setValue("qpId", data?.qp_id.toString() || '');
+    setValue("scheme", data?.scheme_id.toString() || '');
+    setValue("subScheme", data?.sub_scheme_id.toString() || '');
+    setValue("trainingPartner", data?.training_partner_id.toString() || '');
+    setValue("trainingCenter", data?.training_centre_id.toString() || '');
+    setIsCaptureImage(!!data?.capture_image_in_seconds || false);
+  }
+
+  const handleSSCChange = async (ssc: string) => {
+
+    resetField("qpId", {defaultValue: ""})
+
+    const sscId = Number(ssc);
+
+    // setSSC(sscId);
+
+    const selectedSSC = sscData.find(ssc => ssc.id === sscId);
+
+    if (selectedSSC) {
+
+      setQPData(selectedSSC.qualification_packs || []);
+
+    } else {
+
+      setQPData([]);
+
+    }
+  }
+
+  const handleTPChange = async (tp: string) => {
+
+    resetField("trainingCenter", {defaultValue: ""})
+
+    const tpId = Number(tp);
+
+    const trainingCenters = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tc?tpId=${tpId}`).then(function (response) { return response.json() });
+
+    if (trainingCenters.length > 0) {
+
+      setTCData(trainingCenters)
+
+    } else {
+
+      setTCData([])
+
+    }
+  }
+
+  const handleSchemeChange = async (scheme: string) => {
+
+    resetField("subScheme", {defaultValue: ""})
+
+    const schemeId = Number(scheme);
+
+    const subSchemes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sub-scheme/${schemeId}`).then(function (response) { return response.json() });
+
+    if (subSchemes.length > 0) {
+
+      setSubSchemesData(subSchemes)
+
+    } else {
+
+      setSubSchemesData([])
 
     }
   }
 
   return (
     <Card>
-      <CardHeader title='Create Batch' />
+      <CardHeader title={`${id ? 'Edit' : 'Create'} Batch`} />
       <Divider />
-
       <form onSubmit={handleSubmit(onSubmit)} autoComplete='off' method='POST'>
         <CardContent>
           <Grid container spacing={6}>
@@ -150,23 +328,20 @@ const AddEditBatchForm = ({sscData}:{sscData: SSCType[]}) => {
                 rules={{ required: true }}
                 render={({ field }) => (
                   <CustomTextField select required={true} fullWidth label='SSC' {...field}
-
-                    // onChange={(e) => {
-                    //   field.onChange(e); // Ensure the field value gets updated in the form state
-                    //   handleStateChange(e.target.value); // Call your custom onChange handler
-                    // }}
-
-                    {...(errors.sscId && { error: true, helperText: errors.sscId.message })}>
-
-                      <MenuItem value=''>Select SSC</MenuItem>
-                      {sscData && sscData.length > 0 ? (
-                        sscData.map((ssc) =>(
-                          <MenuItem key={ssc.id.toString()} value={ssc.id.toString()}>{ssc.ssc_name}</MenuItem>
-                        ))
-
-                      ) : (
-                        <MenuItem disabled>No SSC found</MenuItem>
-                      ) }
+                    onChange={(e) => {
+                      field.onChange(e); // Ensure the field value gets updated in the form state
+                      handleSSCChange(e.target.value); // Call your custom onChange handler
+                    }}
+                    {...(errors.sscId && { error: true, helperText: errors.sscId.message })}
+                  >
+                    <MenuItem value=''>Select SSC</MenuItem>
+                    {sscData && sscData.length > 0 ? (
+                      sscData.map((ssc) =>(
+                        <MenuItem key={ssc.id.toString()} value={ssc.id.toString()}>{ssc.ssc_name}</MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>No SSC found</MenuItem>
+                    ) }
                   </CustomTextField>
                 )}
               />
@@ -178,15 +353,17 @@ const AddEditBatchForm = ({sscData}:{sscData: SSCType[]}) => {
                 rules={{ required: true }}
                 render={({ field }) => (
                   <CustomTextField select required={true} fullWidth label='Qualification Pack' {...field}
-
-                    // onChange={(e) => {
-                    //   field.onChange(e); // Ensure the field value gets updated in the form state
-                    //   handleStateChange(e.target.value); // Call your custom onChange handler
-                    // }}
-
                     {...(errors.qpId && { error: true, helperText: errors.qpId.message })}>
                     <MenuItem value=''>Select Qualification Pack</MenuItem>
-                    <MenuItem disabled>No Qualification Pack found</MenuItem>
+                    {qpData && qpData.length > 0 ? (
+                      qpData.map((qualificationPack) => (
+                        <MenuItem key={qualificationPack.id.toString()} value={qualificationPack.id.toString()}>
+                          {qualificationPack.qualification_pack_name}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>No Qualification Pack found</MenuItem>
+                    )}
                   </CustomTextField>
                 )}
               />
@@ -232,14 +409,22 @@ const AddEditBatchForm = ({sscData}:{sscData: SSCType[]}) => {
                 render={({ field }) => (
                   <CustomTextField select required={true} fullWidth label='Scheme' {...field}
 
-                    // onChange={(e) => {
-                    //   field.onChange(e); // Ensure the field value gets updated in the form state
-                    //   handleStateChange(e.target.value); // Call your custom onChange handler
-                    // }}
+                    onChange={(e) => {
+                      field.onChange(e); // Ensure the field value gets updated in the form state
+                      handleSchemeChange(e.target.value); // Call your custom onChange handler
+                    }}
 
                     {...(errors.scheme && { error: true, helperText: errors.scheme.message })}>
                     <MenuItem value=''>Select Scheme</MenuItem>
-                    <MenuItem disabled>No scheme found</MenuItem>
+                    {schemesData && schemesData.length > 0 ? (
+                      schemesData.map((scheme) => (
+                        <MenuItem key={scheme.id.toString()} value={scheme.id.toString()}>
+                          {scheme.scheme_name}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>No scheme found</MenuItem>
+                    )}
                   </CustomTextField>
                 )}
               />
@@ -250,16 +435,24 @@ const AddEditBatchForm = ({sscData}:{sscData: SSCType[]}) => {
                 control={control}
                 rules={{ required: true }}
                 render={({ field }) => (
-                  <CustomTextField select required={true} fullWidth label='Sub Scheme' {...field}
-
-                    // onChange={(e) => {
-                    //   field.onChange(e); // Ensure the field value gets updated in the form state
-                    //   handleStateChange(e.target.value); // Call your custom onChange handler
-                    // }}
-
-                    {...(errors.subScheme && { error: true, helperText: errors.subScheme.message })}>
+                  <CustomTextField
+                    select
+                    required={true}
+                    fullWidth
+                    label='Sub Scheme'
+                    {...field}
+                    {...(errors.subScheme && { error: true, helperText: errors.subScheme.message })}
+                  >
                     <MenuItem value=''>Select Sub Scheme</MenuItem>
-                    <MenuItem disabled>No sub scheme found</MenuItem>
+                    {subSchemesData && subSchemesData.length > 0 ? (
+                      subSchemesData.map((subScheme) => (
+                        <MenuItem key={subScheme.id.toString()} value={subScheme.id.toString()}>
+                          {subScheme.scheme_name}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>No sub scheme found</MenuItem>
+                    )}
                   </CustomTextField>
                 )}
               />
@@ -270,16 +463,28 @@ const AddEditBatchForm = ({sscData}:{sscData: SSCType[]}) => {
                 control={control}
                 rules={{ required: true }}
                 render={({ field }) => (
-                  <CustomTextField select required={true} fullWidth label='Training Partner' {...field}
-
-                    // onChange={(e) => {
-                    //   field.onChange(e); // Ensure the field value gets updated in the form state
-                    //   handleStateChange(e.target.value); // Call your custom onChange handler
-                    // }}
-
-                    {...(errors.trainingPartner && { error: true, helperText: errors.trainingPartner.message })}>
+                  <CustomTextField
+                    select
+                    required={true}
+                    fullWidth
+                    label='Training Partner'
+                    {...field}
+                    onChange={(e) => {
+                      field.onChange(e); // Ensure the field value gets updated in the form state
+                      handleTPChange(e.target.value); // Call your custom onChange handler
+                    }}
+                    {...(errors.trainingPartner && { error: true, helperText: errors.trainingPartner.message })}
+                  >
                     <MenuItem value=''>Select Training Partner</MenuItem>
-                    <MenuItem disabled>No training partner found</MenuItem>
+                    {tpData && tpData.length > 0 ? (
+                      tpData.map((trainingPartner) => (
+                        <MenuItem key={trainingPartner.id.toString()} value={trainingPartner.id.toString()}>
+                          {trainingPartner.first_name + "" + trainingPartner.last_name}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>No training partner found</MenuItem>
+                    )}
                   </CustomTextField>
                 )}
               />
@@ -290,16 +495,24 @@ const AddEditBatchForm = ({sscData}:{sscData: SSCType[]}) => {
                 control={control}
                 rules={{ required: true }}
                 render={({ field }) => (
-                  <CustomTextField select required={true} fullWidth label='Training Center' {...field}
-
-                    // onChange={(e) => {
-                    //   field.onChange(e); // Ensure the field value gets updated in the form state
-                    //   handleStateChange(e.target.value); // Call your custom onChange handler
-                    // }}
-
-                    {...(errors.trainingCenter && { error: true, helperText: errors.trainingCenter.message })}>
+                  <CustomTextField
+                    select
+                    required={true}
+                    fullWidth
+                    label='Training Center'
+                    {...field}
+                    {...(errors.trainingCenter && { error: true, helperText: errors.trainingCenter.message })}
+                  >
                     <MenuItem value=''>Select Training Center</MenuItem>
-                    <MenuItem disabled>No training center found</MenuItem>
+                    {tcData && tcData.length > 0 ? (
+                      tcData.map((trainingCenter) => (
+                        <MenuItem key={trainingCenter.id.toString()} value={trainingCenter.id.toString()}>
+                          {trainingCenter.company_name}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>No training center found</MenuItem>
+                    )}
                   </CustomTextField>
                 )}
               />
@@ -370,6 +583,7 @@ const AddEditBatchForm = ({sscData}:{sscData: SSCType[]}) => {
                   <CustomTextField
                     {...field}
                     fullWidth
+                    required={true}
                     label='Login Restrict Count'
                     placeholder=''
                     {...(errors.loginRestrictCount && { error: true, helperText: errors.loginRestrictCount.message })}
@@ -383,18 +597,22 @@ const AddEditBatchForm = ({sscData}:{sscData: SSCType[]}) => {
                 control={control}
                 rules={{ required: true }}
                 render={({ field }) => (
-                  <CustomTextField select required={true} fullWidth label='Mode Of Assessment' {...field}
-
-                    // onChange={(e) => {
-                    //   field.onChange(e); // Ensure the field value gets updated in the form state
-                    //   handleStateChange(e.target.value); // Call your custom onChange handler
-                    // }}
-
-                    {...(errors.modeOfAssessment && { error: true, helperText: errors.modeOfAssessment.message })}>
+                  <CustomTextField
+                    select
+                    required={true}
+                    fullWidth
+                    label='Mode Of Assessment'
+                    {...field}
+                    {...(errors.modeOfAssessment && { error: true, helperText: errors.modeOfAssessment.message })}
+                  >
                     <MenuItem value=''>Select Mode Of Assessment</MenuItem>
-                    <MenuItem value="1">Digital Online</MenuItem>
-                    <MenuItem value="2">Digital Offline</MenuItem>
-                    <MenuItem value="3">Paper Pen</MenuItem>
+                    {ModeOfAssessment && ModeOfAssessment.length > 0 ? (
+                      ModeOfAssessment.map((mode) => (
+                        <MenuItem key={mode.id} value={mode.id}>{mode.label}</MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem value="2">No Mode found</MenuItem>
+                    )}
                   </CustomTextField>
                 )}
               />
@@ -411,7 +629,6 @@ const AddEditBatchForm = ({sscData}:{sscData: SSCType[]}) => {
                   />
                 )}
               />
-
               <Controller
                 control={control}
                 name='captureImageInSeconds'
@@ -427,10 +644,11 @@ const AddEditBatchForm = ({sscData}:{sscData: SSCType[]}) => {
               />
             </Grid>
             <Grid item xs={12} className='flex gap-4'>
-              <Button variant='contained' type='submit'>
+              <Button variant='contained' type='submit' disabled={loading}>
+                {loading && <CircularProgress size={20} color='inherit' />}
                 Submit
               </Button>
-              <Button variant='tonal' color='secondary' type='reset' onClick={() => reset()}>
+              <Button variant='tonal' color='secondary' type='reset' onClick={() => handleReset()}>
                 Reset
               </Button>
             </Grid>

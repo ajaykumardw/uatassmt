@@ -186,7 +186,9 @@ const UserListTable = ({ tableData }: { tableData?: users[]}) => {
     const message = localStorage.getItem('formSubmitMessage');
 
     if (message) {
-      toast.success(message);
+      toast.success(message,{
+        hideProgressBar: false
+      });
       localStorage.removeItem('formSubmitMessage');
     }
   }, []);
