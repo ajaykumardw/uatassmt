@@ -123,6 +123,9 @@ export default withAuth(
     // Training Partner routes
     const trainingPartnerPaths = ['/training-partner', '/tc'];
 
+    // Assessor routes
+    const assessorPaths = ['/assessor'];
+
 
     // Private routes (All routes except guest and shared routes that can only be accessed by logged in users)
     const privateRoute = ![...guestRoutes, ...sharedRoutes].some(route => pathname.endsWith(route))
@@ -180,6 +183,10 @@ export default withAuth(
       return localizedRedirect('/super-admin', locale, request);
     }
 
+    if(user_type === 'U' && Number(token?.role_id) === 1 && !assessorPaths.some(path => pathname.includes(`${locale}${path}`)) ) {
+      return localizedRedirect('/assessor', locale, request);
+    }
+
     if(user_type === 'U' && Number(token?.role_id) === 2 && !trainingPartnerPaths.some(path => pathname.includes(`${locale}${path}`)) ) {
       return localizedRedirect('/training-partner', locale, request);
     }
@@ -189,6 +196,10 @@ export default withAuth(
 
       return localizedRedirect(HOME_PAGE_URL,locale,request)
     }
+
+    // if(user_type !== 'AG' && privateRoute){
+    //   return localizedRedirect('/shared-route', locale, request);
+    // }
 
     // If pathname already contains a locale, return next() else redirect with localized URL
     return isUrlMissingLocale(pathname) ? localizedRedirect(pathname, locale, request) : NextResponse.next()

@@ -37,11 +37,11 @@ import { CircularProgress } from '@mui/material'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, string, toTrimmed, minLength, optional, regex, maxLength, custom, array, date } from 'valibot'
+import { object, string, trim, minLength, optional, regex, maxLength, check, array, date, pipe } from "valibot"
 
 import { toast } from 'react-toastify'
 
-import type { Input } from 'valibot'
+import type { InferInput } from 'valibot'
 
 import type { SSCType } from '@/types/sectorskills/sscType'
 
@@ -58,7 +58,7 @@ import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
 import TPForm from '@/views/agency/users/forms/TPForm'
 import SkeletonForm from '@/components/skeleton/SkeletonForm'
 
-type FormDataType = Input<typeof schema> & {
+type FormDataType = InferInput<typeof schema> & {
   profile?: File | string
   assessorCertificate: File | string
   certificate_8th: File | string
@@ -114,14 +114,8 @@ type FormDataType = Input<typeof schema> & {
 
 const schema = object(
   {
-    sscId: string([
-      toTrimmed(),
-      minLength(1, 'This field is required')
-    ]),
-    jobRoles: array( string([
-      toTrimmed(),
-      minLength(1, 'This field is required')
-    ])),
+    sscId: pipe(string(), trim() , minLength(1, 'This field is required')),
+    jobRoles: array( pipe(string(), trim() , minLength(1, 'This field is required'))),
 
     // jobValidUpto: array( string([
     //   toTrimmed(),
@@ -129,81 +123,41 @@ const schema = object(
     // ])),
 
     jobValidUpto: array(date()),
-    username: string([
-      toTrimmed(),
-      minLength(1, 'This field is required')
-    ]),
-    email: string([
-      toTrimmed(),
-      minLength(1, 'This field is required')
-    ]),
-    password: string([
-      toTrimmed(),
-      minLength(1, 'This field is required')
-    ]),
-    employeeId: optional(string([
-      toTrimmed(),
-    ])),
-    firstName: optional(string([
-      toTrimmed(),
-    ])),
-    lastName: optional(string([
-      toTrimmed(),
-    ])),
-    state: optional(string([
-      toTrimmed(),
-    ])),
-    city: optional(string([
-      toTrimmed(),
-    ])),
-    pinCode: optional(string([
-      toTrimmed(),
-      minLength(6, "Pin Code length must be 6 digits"),
-      custom((value) => !value || /^[1-9][0-9]{5}$/.test(value), 'Pin Code must contain only numbers and or can\'t starts from 0'),
-      maxLength(6, 'Pin Code length must be 6 digits'),
+    username: pipe(string(), trim() , minLength(1, 'This field is required')),
+    email: pipe(string(), trim() , minLength(1, 'This field is required')),
+    password: pipe(string(), trim() , minLength(1, 'This field is required')),
+    employeeId: optional(pipe(string(), trim() ,)),
+    firstName: optional(pipe(string(), trim() ,)),
+    lastName: optional(pipe(string(), trim() ,)),
+    state: optional(pipe(string(), trim() ,)),
+    city: optional(pipe(string(), trim() ,)),
+    pinCode: optional(
+      pipe(
+        string(),
+        trim() ,
+        minLength(6, "Pin Code length must be 6 digits") ,
+        check((value) => !value || /^[1-9][0-9]{5}$/.test(value), 'Pin Code must contain only numbers and or can\'t starts from 0') ,
+        maxLength(6, 'Pin Code length must be 6 digits') ,
 
-      // regex(/^[1-9][0-9]{5}$/, 'Pin Code must contain only numbers and or can\'t starts from 0')
+        // regex(/^[1-9][0-9]{5}$/, 'Pin Code must contain only numbers and or can\'t starts from 0')
+      )
+    ),
+    address: optional(pipe(string(), trim() ,)),
+    phoneNumber: pipe(string(), trim() , minLength(1, 'Phone Number is required') , regex(/^[0-9]+$/, 'Phone Number must contain only numbers') , minLength(10, 'Phone Number must be 10 digits') , maxLength(10, 'Phone Number must be 10 digits')),
+    aadhaarNumber: pipe(string(), trim() , minLength(1, 'Aadhaar Number is required') , regex(/^[0-9]+$/, 'Aadhaar Number must contain only numbers') , minLength(12, 'Aadhaar Number must be 12 digits') , maxLength(12, 'Aadhaar Number must be 12 digits')),
+    panCardNumber: optional(pipe(string(), trim() , check((value) => !value || value.length === 10, 'Pan Card Number must be 10 characters') ,)),
+    lastQualification: pipe(string(), trim() , minLength(1, 'This field is required')),
+    bankName: optional(pipe(string(), trim() ,)),
+    accountNumber: optional(
+      pipe(
+        string(),
+        trim() ,
+        check((value) => !value || /^[0-9]+(?:\.[0-9]+)?$/.test(value), 'Account number must contain only numbers') ,
 
-    ])),
-    address: optional(string([
-      toTrimmed(),
-    ])),
-    phoneNumber: string([
-      toTrimmed(),
-      minLength(1, 'Phone Number is required'),
-      regex(/^[0-9]+$/, 'Phone Number must contain only numbers'),
-      minLength(10, 'Phone Number must be 10 digits'),
-      maxLength(10, 'Phone Number must be 10 digits')
-    ]),
-    aadhaarNumber: string([
-      toTrimmed(),
-      minLength(1, 'Aadhaar Number is required'),
-      regex(/^[0-9]+$/, 'Aadhaar Number must contain only numbers'),
-      minLength(12, 'Aadhaar Number must be 12 digits'),
-      maxLength(12, 'Aadhaar Number must be 12 digits')
-    ]),
-    panCardNumber: optional(string([
-      toTrimmed(),
-      custom((value) => !value || value.length === 10, 'Pan Card Number must be 10 characters'),
-    ])),
-    lastQualification: string([
-      toTrimmed(),
-      minLength(1, 'This field is required')
-    ]),
-    bankName: optional(string([
-      toTrimmed(),
-    ])),
-    accountNumber: optional(string([
-      toTrimmed(),
-      custom((value) => !value || /^[0-9]+(?:\.[0-9]+)?$/.test(value), 'Account number must contain only numbers'),
-
-      // regex(/^[0-9]+(?:\.[0-9]+)?$/, 'Account number must contain only numbers'),
-
-      maxLength(17, 'Max length is 17 digits')
-    ])),
-    ifscCode: optional(string([
-      toTrimmed(),
-    ])),
+        // regex(/^[0-9]+(?:\.[0-9]+)?$/, 'Account number must contain only numbers'), maxLength(17, 'Max length is 17 digits')
+        )
+      ),
+    ifscCode: optional(pipe(string(), trim() ,)),
 
     // assessorCertificate: optional(maxSize(1024 * 1024 * 10, 'Please select a file smaller than 10 MB.')),
     // assessorCertificate: optional(instance(File, "Assessor Certificate is required",[

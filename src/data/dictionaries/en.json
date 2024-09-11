@@ -95,6 +95,7 @@
     "unassignedBatches": "Unassigned Batches",
     "allocatedBatches": "Allocated Batches",
 
-    "tc": "Training Centers"
+    "tc": "Training Centers",
+    "examInstructions": "Exam Instructions"
   }
 }

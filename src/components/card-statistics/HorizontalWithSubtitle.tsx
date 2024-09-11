@@ -17,8 +17,8 @@ export type UserDataType = {
   value: string
   avatarIcon: string
   avatarColor?: ThemeColor
-  change: string
-  changeNumber: string
+  change?: string
+  changeNumber?: string
   subTitle: string
 }
 
@@ -33,9 +33,11 @@ const HorizontalWithSubtitle = (props: UserDataType) => {
           <Typography color='text.primary'>{title}</Typography>
           <div className='flex items-center gap-2 flex-wrap'>
             <Typography variant='h4'>{value}</Typography>
-            <Typography color={change === 'negative' ? 'error.main' : 'success.main'}>
-              {`(${change === 'negative' ? '-' : '+'}${changeNumber})`}
-            </Typography>
+            {change &&
+              <Typography color={change === 'negative' ? 'error.main' : 'success.main'}>
+                {`(${change === 'negative' ? '-' : '+'}${changeNumber})`}
+              </Typography>
+            }
           </div>
           <Typography variant='body2'>{subTitle}</Typography>
         </div>

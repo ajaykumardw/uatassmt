@@ -24,9 +24,9 @@ import type { SubmitHandler } from 'react-hook-form'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, string, toTrimmed, minLength, optional, custom, array, number } from 'valibot'
+import { object, string, trim, minLength, optional, check, array, number, pipe } from "valibot"
 
-import type { Input } from 'valibot'
+import type { InferInput } from 'valibot'
 
 
 import DialogCloseButton from '@components/dialogs/DialogCloseButton'
@@ -74,7 +74,7 @@ import type { PCType } from '@/types/pc/pcType'
 //   vivaCutoffMarks?: string
 //   overallCutoffMarks?: string
 // }
-type AddQPDialogData = Input<typeof schema>
+type AddQPDialogData = InferInput<typeof schema>
 
 type AddQPDialogProps = {
   open: boolean
@@ -161,42 +161,15 @@ const schema = object(
   {
     selectPC: array(string(), 'This field is required'),
     pcId: optional(number()),
-    questionType: string([
-      toTrimmed(),
-      minLength(1, 'This field is required')
-    ]),
-    questionLevel: string([
-      toTrimmed(),
-      minLength(1, 'This field is required')
-    ]),
-    questionName: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'Question name must be at least 3 characters long')
-    ]),
-    questionExplanation: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'Question name must be at least 3 characters long')
-    ]),
-    questionMarks: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      custom((value) => !value || /^(?:[1-9]|1\d|2[0-5])(\.\d+)?$/.test(value), 'Marks must be between 1 and 25.'),
-    ]),
-    option1: string([
-      toTrimmed(),
-      minLength(1, 'This field is required')
-    ]),
-    option2: string([
-      toTrimmed(),
-      minLength(1, 'This field is required')
-    ]),
+    questionType: pipe(string(), trim() , minLength(1, 'This field is required')),
+    questionLevel: pipe(string(), trim() , minLength(1, 'This field is required')),
+    questionName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Question name must be at least 3 characters long')),
+    questionExplanation: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Question name must be at least 3 characters long')),
+    questionMarks: pipe(string(), trim() , minLength(1, 'This field is required') , check((value) => !value || /^(?:[1-9]|1\d|2[0-5])(\.\d+)?$/.test(value), 'Marks must be between 1 and 25.') ,),
+    option1: pipe(string(), trim() , minLength(1, 'This field is required')),
+    option2: pipe(string(), trim() , minLength(1, 'This field is required')),
     option: optional(array(string(),'optional field')),
-    correctAnswer: string([
-      toTrimmed(),
-      minLength(1, 'Please check any one option field for correct answer')
-    ]),
+    correctAnswer: pipe(string(), trim() , minLength(1, 'Please check any one option field for correct answer')),
 
     // options: Pipe(array(string(), minLength(2, 'At least two options are required')))
 
@@ -670,7 +643,7 @@ const AddEditQuestionsDialog = ({ open, pcID, allPC, questionId, handleClose, up
                           control={<Switch checked={isCorrectAnswer === index + 3} color='success' onChange={() => {
 
                             const newAnswer = isCorrectAnswer === index + 3 ? 0 : index + 3;
-                            
+
                             setCorrectAnswer(newAnswer);
                             setValue('correctAnswer', (newAnswer === 0 ? '' : newAnswer.toString()))
                           }} />}

@@ -64,6 +64,7 @@ import AddEditQuestionsDialog from '@/components/questions/dialogs/AddEditQuesti
 import type { QuestionsType } from '@/types/questions/questionsType';
 import type { SSCType } from '@/types/sectorskills/sscType';
 import type { PCType } from '@/types/pc/pcType';
+import BulkUploadQuestionsDialog from '@/components/questions/dialogs/BulkUploadQuestionsDialog';
 
 // import type { PCType } from '@/types/pc/pcType';
 
@@ -161,6 +162,7 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
   // States
 
   const [addQuestionOpen, setAddQuestionOpen] = useState(false);
+  const [bulkUploadQuestionsOpen, setBulkUploadQuestionsOpen] = useState(false);
   const [editQuestionOpen, setEditQuestionOpen] = useState(false);
 
   const [editQuestionData, setEditQuestionData] = useState({
@@ -346,12 +348,13 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
           </div>
         )
       }),
-      columnHelper.accessor('marks', {
+      columnHelper.accessor('pc', {
         header: 'PC',
         cell: ({ row }) => (
           <div className='flex flex-col items-start gap-1'>
-            {row.original.pc?.map(pc => (
+            {row.original.pc?.map((pc, index) => (
               <Chip
+              key={index}
                 variant='tonal'
                 className='capitalize'
                 label={pc.pc_id}
@@ -457,6 +460,15 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
               Export
             </Button>
             {pcID &&
+            <>
+              <Button
+                variant='contained'
+                startIcon={<i className='tabler-download' />}
+                onClick={() => setBulkUploadQuestionsOpen(!bulkUploadQuestionsOpen)}
+                className='is-full sm:is-auto'
+              >
+                Import Questions
+              </Button>
               <Button
                 variant='contained'
                 startIcon={<i className='tabler-plus' />}
@@ -465,6 +477,7 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
               >
                 Add New Question
               </Button>
+            </>
             }
           </div>
         </div>
@@ -534,6 +547,7 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
         />
       </Card>
       <AddEditQuestionsDialog open={addQuestionOpen} pcID={pcID} updateQuestionsList={updateQuestionsList} handleClose={() => setAddQuestionOpen(!addQuestionOpen)} />
+      <BulkUploadQuestionsDialog open={bulkUploadQuestionsOpen} pcID={pcID} updateQuestionsList={updateQuestionsList} handleClose={() => setBulkUploadQuestionsOpen(!bulkUploadQuestionsOpen)} />
 
       <AddEditQuestionsDialog open={editQuestionOpen} allPC={allPC} questionId={questionId} updateQuestionsList={updateQuestionsList} handleClose={() => setEditQuestionOpen(!editQuestionOpen)} data={editQuestionData} />
 

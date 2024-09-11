@@ -2,15 +2,18 @@
 
 import { useEffect, useState } from "react"
 
-import type { SSCType } from "@/types/sectorskills/sscType"
-
-import type { batches, schemes, users } from "@prisma/client"
+import type { batches, users } from "@prisma/client"
 
 import Grid from "@mui/material/Grid"
+
+import type { SSCType } from "@/types/sectorskills/sscType"
+
 import AddEditBatchForm from "@/views/batches/addEditForm"
 import SkeletonForm from "@/components/skeleton/SkeletonForm"
-import { QPType } from "@/types/qualification-pack/qpType"
-import { SchemesType } from "@/types/schemes/schemesType"
+
+import type { QPType } from "@/types/qualification-pack/qpType"
+
+import type { SchemesType } from "@/types/schemes/schemesType"
 
 const AgencyCreateApp = ({ params }: { params: { id: string } }) => {
   // Vars
@@ -48,7 +51,9 @@ const AgencyCreateApp = ({ params }: { params: { id: string } }) => {
       setTCData(tcData);
     } catch (error) {
       console.error('Error fetching data:', error);
+
       // Handle errors if needed
+
     } finally {
       setLoading(false); // Set loading to false after fetching is complete
     }

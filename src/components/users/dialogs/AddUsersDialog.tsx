@@ -27,9 +27,9 @@ import type { SubmitHandler } from 'react-hook-form'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, string, toTrimmed, minLength } from 'valibot'
+import { object, string, trim, minLength, pipe } from "valibot"
 
-import type { Input } from 'valibot'
+import type { InferInput } from 'valibot'
 
 
 import DialogCloseButton from '@components/dialogs/DialogCloseButton'
@@ -77,7 +77,7 @@ import DialogCloseButton from '@components/dialogs/DialogCloseButton'
 //   vivaCutoffMarks?: string
 //   overallCutoffMarks?: string
 // }
-type AddQPDialogData = Input<typeof schema> & {
+type AddQPDialogData = InferInput<typeof schema> & {
   nosId?: number
 }
 
@@ -115,16 +115,8 @@ const initialData: AddQPDialogData = {
 
 const schema = object(
   {
-    pcId: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'PC Id must be at least 3 characters long')
-    ]),
-    pcName: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'PC name must be at least 3 characters long')
-    ]),
+    pcId: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'PC Id must be at least 3 characters long')),
+    pcName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'PC name must be at least 3 characters long')),
   }
 )
 

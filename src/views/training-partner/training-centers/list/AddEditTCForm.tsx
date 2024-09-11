@@ -23,9 +23,9 @@ import type { SubmitHandler } from 'react-hook-form'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, string, toTrimmed, minLength, maxLength, email, regex } from 'valibot'
+import { object, string, trim, minLength, maxLength, email, regex, pipe } from "valibot"
 
-import type { Input } from 'valibot'
+import type { InferInput } from 'valibot'
 
 import type { city, state } from '@prisma/client'
 
@@ -35,7 +35,7 @@ import CustomTextField from '@core/components/mui/TextField'
 
 import type { UsersType } from '@/types/users/usersType'
 
-type AddEditTCDialogData = Input<typeof schema>
+type AddEditTCDialogData = InferInput<typeof schema>
 
 type AddEditTCDialogProps = {
   open: boolean
@@ -67,60 +67,17 @@ type AddEditTCDialogProps = {
 
 const schema = object(
   {
-    tcId: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      maxLength(11, 'The maximum length for TC Id is 11 characters.')
-    ]),
-    tcName: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'TC name must be at least 3 characters long'),
-      maxLength(255, 'The maximum length for a TC name is 255 characters.')
-    ]),
-
-    // nosId: string([
-    //   toTrimmed(),
-    //   minLength(1, 'This field is required'),
-    //   minLength(3, 'NOS Id must be at least 3 characters long'),
-    //   maxLength(100, 'The maximum length for a NOS Id is 100 characters.')
-    // ]),
-
-    email: string([toTrimmed(), minLength(1, 'This field is required'), email('Please enter a valid email address')]),
-    status: string([toTrimmed(), minLength(1, 'This field is required')]),
-    firstName: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'TC SPOC First Name must be at least 3 characters long'),
-      maxLength(100, 'The maximum length is 100 characters.')
-    ]),
-    lastName: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'TC SPOC Last Name must be at least 3 characters long'),
-      maxLength(100, 'The maximum length is 100 characters.')
-    ]),
-    state: string([toTrimmed(), minLength(1, 'This field is required')]),
-    city: string([toTrimmed(), minLength(1, 'This field is required')]),
-    address: string([
-      toTrimmed(),
-      minLength(1, 'Address is required'),
-      maxLength(100, 'Address max length is 100 characters')
-    ]),
-    pinCode: string([
-      toTrimmed(),
-      minLength(1, "Pin Code is required"),
-      minLength(6, "Pin Code length must be 6 digits"),
-      maxLength(6, 'Pin Code length must be 6 digits'),
-      regex(/^[1-9][0-9]{5}$/, 'Pin Code must contain only numbers and or can\'t starts from 0')
-    ]),
-    phoneNumber: string([
-      toTrimmed(),
-      minLength(1, 'Phone Number is required'),
-      regex(/^[0-9]+$/, 'Phone Number must contain only numbers'),
-      minLength(10, 'Phone Number must be 10 digits'),
-      maxLength(10, 'Phone Number must be 10 digits')
-    ]),
+    tcId: pipe(string(), trim() , minLength(1, 'This field is required') , maxLength(11, 'The maximum length for TC Id is 11 characters.')),
+    tcName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'TC name must be at least 3 characters long') , maxLength(255, 'The maximum length for a TC name is 255 characters.')),
+    email: pipe(string(), trim() , minLength(1, 'This field is required') , email('Please enter a valid email address')),
+    status: pipe(string(), trim() , minLength(1, 'This field is required')),
+    firstName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'TC SPOC First Name must be at least 3 characters long') , maxLength(100, 'The maximum length is 100 characters.')),
+    lastName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'TC SPOC Last Name must be at least 3 characters long') , maxLength(100, 'The maximum length is 100 characters.')),
+    state: pipe(string(), trim() , minLength(1, 'This field is required')),
+    city: pipe(string(), trim() , minLength(1, 'This field is required')),
+    address: pipe(string(), trim() , minLength(1, 'Address is required') , maxLength(100, 'Address max length is 100 characters')),
+    pinCode: pipe(string(), trim() , minLength(1, "Pin Code is required") , minLength(6, "Pin Code length must be 6 digits") , maxLength(6, 'Pin Code length must be 6 digits') , regex(/^[1-9][0-9]{5}$/, 'Pin Code must contain only numbers and or can\'t starts from 0')),
+    phoneNumber: pipe(string(), trim() , minLength(1, 'Phone Number is required') , regex(/^[0-9]+$/, 'Phone Number must contain only numbers') , minLength(10, 'Phone Number must be 10 digits') , maxLength(10, 'Phone Number must be 10 digits')),
   }
 )
 
@@ -333,7 +290,7 @@ const AddEditTCForm = ({ open, tcId, handleClose, updateTCList, data, stateData,
     }
 
     reset();
-    
+
     // setUserData(userData || initialData);
 
     handleClose();

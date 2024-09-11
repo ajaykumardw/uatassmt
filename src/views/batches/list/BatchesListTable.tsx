@@ -43,10 +43,11 @@ import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
-import type { batches, schemes, users } from '@prisma/client'
+import type { batches, schemes, students, users } from '@prisma/client'
 
 import { toast } from 'react-toastify'
 
+import { format } from 'date-fns'
 
 import type { Locale } from '@configs/i18n'
 
@@ -63,7 +64,9 @@ import { getLocalizedUrl } from '@/utils/i18n'
 import tableStyles from '@core/styles/table.module.css'
 
 import { formatDate } from '@/utils/formateDate'
-import { QPType } from '@/types/qualification-pack/qpType'
+
+import type { QPType } from '@/types/qualification-pack/qpType'
+
 import ImportStudents from './ImportStudents'
 
 
@@ -83,6 +86,8 @@ type BatchesTypeWithAction = batches & {
   training_center: users
   scheme: schemes
   sub_scheme: schemes
+  students?: students[]
+  assessor: users
 
   // role: role
 }
@@ -253,6 +258,14 @@ const BatchesListTable = ({ tableData }: { tableData?: batches[]}) => {
           </Typography>
         )
       }),
+      columnHelper.accessor('students', {
+        header: 'Students',
+        cell: ({ row }) => (
+          <Typography color='text.primary' >
+            {row.original.students?.length}
+          </Typography>
+        )
+      }),
       columnHelper.accessor('training_partner_id', {
         header: 'Training Partner',
         cell: ({ row }) => (
@@ -269,12 +282,21 @@ const BatchesListTable = ({ tableData }: { tableData?: batches[]}) => {
           </Typography>
         )
       }),
+      columnHelper.accessor('assessor.first_name', {
+        header: 'Assessor',
+        cell: ({ row }) => (
+          <Typography color='text.primary' >
+            {row.original.assessor?.first_name} {row.original.assessor?.last_name}
+          </Typography>
+        )
+      }),
 
       columnHelper.accessor('assessment_start_datetime', {
         header: 'Start Date Time',
         cell: ({ row }) => (
           <Typography color='text.primary' className='font-medium'>
-            {row.original.assessment_start_datetime && formatDate(row.original.assessment_start_datetime)}
+            {/* {row.original.assessment_start_datetime && formatDate(row.original.assessment_start_datetime)} */}
+            {row.original.assessment_start_datetime && format(row.original.assessment_start_datetime, 'd-MMM-y K:mm a')}
           </Typography>
         )
       }),
@@ -442,6 +464,7 @@ const BatchesListTable = ({ tableData }: { tableData?: batches[]}) => {
               variant='tonal'
               startIcon={<i className='tabler-user-down' />}
               color='error'
+
               // onClick={() => setAddUserOpen(!addUserOpen)}
 
               onClick={() => setShowImportStudents(true)}

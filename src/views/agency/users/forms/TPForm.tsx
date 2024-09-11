@@ -28,9 +28,9 @@ import { Controller, useForm } from 'react-hook-form';
 // Styled Component Imports
 import type { SubmitHandler } from 'react-hook-form';
 
-import { object, string, toTrimmed, minLength, optional, custom, maxLength, regex } from 'valibot'
+import { object, string, trim, minLength, optional, check, maxLength, regex, pipe } from "valibot"
 
-import type { Input } from 'valibot';
+import type { InferInput } from 'valibot';
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
@@ -71,65 +71,22 @@ import type { Locale } from '@configs/i18n'
 //   phoneNumber: string
 // }
 
-type FormDataType = Input<typeof schema>
+type FormDataType = InferInput<typeof schema>
 
 const schema = object(
   {
-    username: string([
-      toTrimmed(),
-      minLength(1, 'This field is required')
-    ]),
-    email: string([
-      toTrimmed(),
-      minLength(1, 'This field is required')
-    ]),
-    password: string([
-      toTrimmed(),
-      minLength(1, 'This field is required')
-    ]),
-    firstName: string([
-      toTrimmed(),
-      minLength(1, 'This field is required.'),
-      maxLength(50, 'The maximum length for First name is 50 characters.')
-    ]),
-    lastName: optional(string([
-      toTrimmed(),
-      maxLength(50, 'The maximum length for First name is 50 characters.')
-    ])),
-    state: string([
-      toTrimmed(),
-      minLength(1, 'This field is required.')
-    ]),
-    city: optional(string([
-      toTrimmed(),
-    ])),
-    pinCode: optional(string([
-      toTrimmed(),
-      minLength(6, "Pin Code length must be 6 digits"),
-      custom((value) => !value || /^[1-9][0-9]{5}$/.test(value), 'Pin Code must contain only numbers and or can\'t starts from 0'),
-      maxLength(6, 'Pin Code length must be 6 digits'),
-    ])),
-    address: string([
-      toTrimmed(),
-      minLength(1, 'First name is required.'),
-      maxLength(191, 'The maximum length for First name is 191 characters.')
-    ]),
-    phoneNumber: string([
-      toTrimmed(),
-      minLength(1, 'Phone Number is required'),
-      regex(/^[0-9]+$/, 'Phone Number must contain only numbers'),
-      minLength(10, 'Phone Number must be 10 digits'),
-      maxLength(10, 'Phone Number must be 10 digits')
-    ]),
-    panCardNumber: optional(string([
-      toTrimmed(),
-      custom((value) => !value || value.length === 10, 'Pan Card Number must be 10 characters'),
-    ])),
-    gstNumber: string([
-      toTrimmed(),
-      minLength(1, 'This field is required.'),
-      regex(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][A-Z1-9]Z[0-9A-Z]$/, 'GST number must be 15 characters long and follow the correct format (e.g., 12ABCDE3456F1Z7).'),
-    ])
+    username: pipe(string(), trim() , minLength(1, 'This field is required')),
+    email: pipe(string(), trim() , minLength(1, 'This field is required')),
+    password: pipe(string(), trim() , minLength(1, 'This field is required')),
+    firstName: pipe(string(), trim() , minLength(1, 'This field is required.') , maxLength(50, 'The maximum length for First name is 50 characters.')),
+    lastName: optional(pipe(string(), trim() , maxLength(50, 'The maximum length for First name is 50 characters.'))),
+    state: pipe(string(), trim() , minLength(1, 'This field is required.')),
+    city: optional(pipe(string(), trim() ,)),
+    pinCode: optional(pipe(string(), trim() , minLength(6, "Pin Code length must be 6 digits") , check((value) => !value || /^[1-9][0-9]{5}$/.test(value), 'Pin Code must contain only numbers and or can\'t starts from 0') , maxLength(6, 'Pin Code length must be 6 digits') ,)),
+    address: pipe(string(), trim() , minLength(1, 'First name is required.') , maxLength(191, 'The maximum length for First name is 191 characters.')),
+    phoneNumber: pipe(string(), trim() , minLength(1, 'Phone Number is required') , regex(/^[0-9]+$/, 'Phone Number must contain only numbers') , minLength(10, 'Phone Number must be 10 digits') , maxLength(10, 'Phone Number must be 10 digits')),
+    panCardNumber: optional(pipe(string(), trim() , check((value) => !value || value.length === 10, 'Pan Card Number must be 10 characters') ,)),
+    gstNumber: pipe(string(), trim() , minLength(1, 'This field is required.') , regex(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][A-Z1-9]Z[0-9A-Z]$/, 'GST number must be 15 characters long and follow the correct format (e.g., 12ABCDE3456F1Z7).') ,)
   }
 )
 

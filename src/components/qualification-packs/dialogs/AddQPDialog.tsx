@@ -28,9 +28,9 @@ import type { SubmitHandler } from 'react-hook-form'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, string, toTrimmed, minLength, regex, maxLength, optional, custom, boolean } from 'valibot'
+import { object, string, trim, minLength, regex, maxLength, optional, check, boolean, pipe } from "valibot"
 
-import type { Input } from 'valibot'
+import type { InferInput } from 'valibot'
 
 import type { SSCType } from '@/types/sectorskills/sscType'
 
@@ -39,7 +39,7 @@ import CustomTextField from '@core/components/mui/TextField'
 
 import { NSQFLevelLength } from '@/configs/customDataConfig';
 
-type AddQPDialogData = Input<typeof schema>
+type AddQPDialogData = InferInput<typeof schema>
 
 type AddQPDialogProps = {
   open: boolean
@@ -77,91 +77,28 @@ const initialData: AddQPDialogData = {
 
 const schema = object(
   {
-    sscId: string([
-      toTrimmed(),
-      minLength(1, 'This field is required')
-    ]),
-    qualificationPackId: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'Qualification pack Id must be at least 3 characters long')
-    ]),
-    qualificationPackName: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'Qualification pack name must be at least 3 characters long')
-    ]),
-    nSQFLevel: string([
-      toTrimmed(),
-      minLength(1, 'This field is required')
-    ]),
-    nQRCode: optional(string([
-      toTrimmed(),
-    ])),
-    version: string([
-      toTrimmed(),
-      minLength(1, 'This field is required')
-    ]),
-    totalTheoryMarks: string([
-      toTrimmed(),
-      minLength(1, 'Total theory marks is required'),
-      regex(/^[0-9]+(?:\.[0-9]+)?$/, 'Total theory marks must contain only numbers'),
-      maxLength(10, 'Max length is 10 digits')
-    ]),
-    totalVivaMarks: string([
-      toTrimmed(),
-      minLength(1, 'Total viva marks is required'),
-      regex(/^[0-9]+(?:\.[0-9]+)?$/, 'Total viva marks must contain only numbers'),
-      maxLength(10, 'Max length is 10 digits')
-    ]),
-    totalPracticalMarks: string([
-      toTrimmed(),
-      minLength(1, 'Total practical marks is required'),
-      regex(/^[0-9]+(?:\.[0-9]+)?$/, 'Total practical marks must contain only numbers'),
-      maxLength(10, 'Max length is 10 digits')
-    ]),
-    totalMarks: string([
-      toTrimmed(),
-      minLength(1, 'Total marks is required'),
-      regex(/^[0-9]+(?:\.[0-9]+)?$/, 'Total marks must contain only numbers'),
-      maxLength(10, 'Max length is 10 digits')
-    ]),
+    sscId: pipe(string(), trim() , minLength(1, 'This field is required')),
+    qualificationPackId: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Qualification pack Id must be at least 3 characters long')),
+    qualificationPackName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Qualification pack name must be at least 3 characters long')),
+    nSQFLevel: pipe(string(), trim() , minLength(1, 'This field is required')),
+    nQRCode: optional(pipe(string(), trim() ,)),
+    version: pipe(string(), trim() , minLength(1, 'This field is required')),
+    totalTheoryMarks: pipe(string(), trim() , minLength(1, 'Total theory marks is required') , regex(/^[0-9]+(?:\.[0-9]+)?$/, 'Total theory marks must contain only numbers') , maxLength(10, 'Max length is 10 digits')),
+    totalVivaMarks: pipe(string(), trim() , minLength(1, 'Total viva marks is required') , regex(/^[0-9]+(?:\.[0-9]+)?$/, 'Total viva marks must contain only numbers') , maxLength(10, 'Max length is 10 digits')),
+    totalPracticalMarks: pipe(string(), trim() , minLength(1, 'Total practical marks is required') , regex(/^[0-9]+(?:\.[0-9]+)?$/, 'Total practical marks must contain only numbers') , maxLength(10, 'Max length is 10 digits')),
+    totalMarks: pipe(string(), trim() , minLength(1, 'Total marks is required') , regex(/^[0-9]+(?:\.[0-9]+)?$/, 'Total marks must contain only numbers') , maxLength(10, 'Max length is 10 digits')),
     isTheoryCutoff: optional(boolean()),
     isVivaCutoff: optional(boolean()),
     isPracticalCutoff: optional(boolean()),
     isOverallCutoff: optional(boolean()),
     isNOSCutoff: optional(boolean()),
     isWeightedAvailable: optional(boolean()),
-    theoryCutoffMarks: optional(string([
-      toTrimmed(),
-      custom((value) => !value || /^[0-9]+$/.test(value), 'Theory cutoff marks must contain only numbers'),
-      maxLength(10, 'Max length is 10 digits')
-    ])),
-    vivaCutoffMarks: optional(string([
-      toTrimmed(),
-      custom((value) => !value || /^[0-9]+$/.test(value), 'Viva cutoff marks must contain only numbers'),
-      maxLength(10, 'Max length is 10 digits')
-    ])),
-    practicalCutoffMarks: optional(string([
-      toTrimmed(),
-      custom((value) => !value || /^[0-9]+$/.test(value), 'Practical cutoff marks must contain only numbers'),
-      maxLength(10, 'Max length is 10 digits')
-    ])),
-    overallCutoffMarks: optional(string([
-      toTrimmed(),
-      custom((value) => !value || /^[0-9]+(?:\.[0-9]+)?$/.test(value), 'Overall cutoff marks must contain only numbers'),
-      maxLength(10, 'Max length is 10 digits')
-    ])),
-    nosCutoffMarks: optional(string([
-      toTrimmed(),
-      custom((value) => !value || /^[0-9]+(?:\.[0-9]+)?$/.test(value), 'Overall cutoff marks must contain only numbers'),
-      maxLength(10, 'Max length is 10 digits')
-    ])),
-    weightedAvailable: optional(string([
-      toTrimmed(),
-      custom((value) => !value || /^[0-9]+(?:\.[0-9]+)?$/.test(value), 'Overall cutoff marks must contain only numbers'),
-      maxLength(10, 'Max length is 10 digits')
-    ])),
+    theoryCutoffMarks: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]+$/.test(value), 'Theory cutoff marks must contain only numbers') , maxLength(10, 'Max length is 10 digits'))),
+    vivaCutoffMarks: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]+$/.test(value), 'Viva cutoff marks must contain only numbers') , maxLength(10, 'Max length is 10 digits'))),
+    practicalCutoffMarks: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]+$/.test(value), 'Practical cutoff marks must contain only numbers') , maxLength(10, 'Max length is 10 digits'))),
+    overallCutoffMarks: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]+(?:\.[0-9]+)?$/.test(value), 'Overall cutoff marks must contain only numbers') , maxLength(10, 'Max length is 10 digits'))),
+    nosCutoffMarks: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]+(?:\.[0-9]+)?$/.test(value), 'Overall cutoff marks must contain only numbers') , maxLength(10, 'Max length is 10 digits'))),
+    weightedAvailable: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]+(?:\.[0-9]+)?$/.test(value), 'Overall cutoff marks must contain only numbers') , maxLength(10, 'Max length is 10 digits'))),
   }
 )
 

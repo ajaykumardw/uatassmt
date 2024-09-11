@@ -23,9 +23,9 @@ import type { SubmitHandler } from 'react-hook-form'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, string, toTrimmed, minLength, maxLength } from 'valibot'
+import { object, string, trim, minLength, maxLength, pipe } from "valibot"
 
-import type { Input } from 'valibot'
+import type { InferInput } from 'valibot'
 
 
 import DialogCloseButton from '@components/dialogs/DialogCloseButton'
@@ -70,7 +70,7 @@ import CustomTextField from '@core/components/mui/TextField'
 //   vivaCutoffMarks?: string
 //   overallCutoffMarks?: string
 // }
-type AddQPDialogData = Input<typeof schema> & {
+type AddQPDialogData = InferInput<typeof schema> & {
   nosId?: number
 }
 
@@ -107,18 +107,8 @@ const initialData: AddQPDialogData = {
 
 const schema = object(
   {
-    pcId: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'PC Id must be at least 3 characters long'),
-      maxLength(100, 'The maximum length for PC Id is 100 characters.')
-    ]),
-    pcName: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'PC name must be at least 3 characters long'),
-      maxLength(255, 'The maximum length for a PC name is 255 characters.')
-    ]),
+    pcId: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'PC Id must be at least 3 characters long') , maxLength(100, 'The maximum length for PC Id is 100 characters.')),
+    pcName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'PC name must be at least 3 characters long') , maxLength(255, 'The maximum length for a PC name is 255 characters.')),
   }
 )
 

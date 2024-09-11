@@ -44,6 +44,12 @@ export async function GET() {
           user_name: true
         }
       },
+      assessor: {
+        select: {
+          first_name: true,
+          last_name: true
+        }
+      },
       scheme: {
         select: {
           id: true,
@@ -57,7 +63,8 @@ export async function GET() {
           scheme_name: true,
           scheme_code: true
         }
-      }
+      },
+      students: true
     },
     orderBy: {
       assessment_start_datetime: "desc"

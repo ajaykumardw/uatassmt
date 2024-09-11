@@ -23,16 +23,16 @@ import type { SubmitHandler } from 'react-hook-form'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, string, toTrimmed, minLength, maxLength } from 'valibot'
+import { object, string, trim, minLength, maxLength, pipe } from "valibot"
 
-import type { Input } from 'valibot'
+import type { InferInput } from 'valibot'
 
 import type { SSCType } from '@/types/sectorskills/sscType'
 
 import DialogCloseButton from '@components/dialogs/DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
 
-type AddQPDialogData = Input<typeof schema>
+type AddQPDialogData = InferInput<typeof schema>
 
 type AddQPDialogProps = {
   open: boolean
@@ -54,22 +54,9 @@ const initialData: AddQPDialogData = {
 
 const schema = object(
   {
-    sscId: string([
-      toTrimmed(),
-      minLength(1, 'This field is required')
-    ]),
-    nosId: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'NOS Id must be at least 3 characters long'),
-      maxLength(100, 'The maximum length for a NOS Id is 100 characters.')
-    ]),
-    nosName: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'NOS name must be at least 3 characters long'),
-      maxLength(255, 'The maximum length for a NOS name is 255 characters.')
-    ])
+    sscId: pipe(string(), trim() , minLength(1, 'This field is required')),
+    nosId: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'NOS Id must be at least 3 characters long') , maxLength(100, 'The maximum length for a NOS Id is 100 characters.')),
+    nosName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'NOS name must be at least 3 characters long') , maxLength(255, 'The maximum length for a NOS name is 255 characters.'))
   }
 )
 

@@ -23,68 +23,49 @@ import type { SubmitHandler } from 'react-hook-form'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, minLength, string, custom, toTrimmed, maxLength, optional, date, boolean, regex } from 'valibot'
+import { object, minLength, string, check, trim, maxLength, optional, date, boolean, regex, pipe } from "valibot"
 
-import type { Input } from 'valibot'
+import type { InferInput } from 'valibot'
 
 // Components Imports
 import { CircularProgress, FormControlLabel, Switch } from '@mui/material'
 
+import type { batches, schemes, users } from '@prisma/client'
+
 import CustomTextField from '@core/components/mui/TextField'
 import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
 
-import { SSCType } from '@/types/sectorskills/sscType'
+import type { SSCType } from '@/types/sectorskills/sscType'
 
-import { QPType } from '@/types/qualification-pack/qpType'
-
-import { batches, schemes, users } from '@prisma/client'
+import type { QPType } from '@/types/qualification-pack/qpType'
 
 import { getLocalizedUrl } from '@/utils/i18n'
 
 import type { Locale } from '@configs/i18n'
-import { ModeOfAssessment } from '@/configs/customDataConfig'
-import { SchemesType } from '@/types/schemes/schemesType'
 
-type FormData = Input<typeof schema>
+import { ModeOfAssessment } from '@/configs/customDataConfig'
+
+import type { SchemesType } from '@/types/schemes/schemesType'
+
+type FormData = InferInput<typeof schema>
 
 
 const schema = object(
   {
-    sscId: string([toTrimmed(), minLength(1, 'This field is required')]),
-    qpId: string([toTrimmed(), minLength(1, 'This field is required')]),
-    batchName: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'First Name must be at least 3 characters long'),
-      maxLength(191, 'The max length for this field is 191 characters.')
-    ]),
-    batchSize: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      maxLength(191, 'The max length for this field is 191 characters.')
-    ]),
-    scheme: string([toTrimmed(), minLength(1, 'This field is required')]),
-    subScheme: string([toTrimmed(), minLength(1, 'This field is required')]),
-    trainingPartner: string([toTrimmed(), minLength(1, 'This field is required')]),
-    trainingCenter: string([toTrimmed(), minLength(1, 'This field is required')]),
+    sscId: pipe(string(), trim() , minLength(1, 'This field is required')),
+    qpId: pipe(string(), trim() , minLength(1, 'This field is required')),
+    batchName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'First Name must be at least 3 characters long') , maxLength(191, 'The max length for this field is 191 characters.')),
+    batchSize: pipe(string(), trim() , minLength(1, 'This field is required') , maxLength(191, 'The max length for this field is 191 characters.')),
+    scheme: pipe(string(), trim() , minLength(1, 'This field is required')),
+    subScheme: pipe(string(), trim() , minLength(1, 'This field is required')),
+    trainingPartner: pipe(string(), trim() , minLength(1, 'This field is required')),
+    trainingCenter: pipe(string(), trim() , minLength(1, 'This field is required')),
     assessmentStartDate: date('This field is required'),
     assessmentEndDate: date('This field is required'),
-    loginRestrictCount: string([
-      toTrimmed(),
-      minLength(1, 'This field is required.'),
-      regex(/^[1-9][0-9]{0,2}$/, 'Login Restrict Count must contain only numbers'),
-      maxLength(3, 'The max length is 3 digits')
-    ]),
+    loginRestrictCount: pipe(string(), trim() , minLength(1, 'This field is required.') , regex(/^[1-9][0-9]{0,2}$/, 'Login Restrict Count must contain only numbers') , maxLength(3, 'The max length is 3 digits')),
     captureImage: optional(boolean()),
-    captureImageInSeconds: optional(string([
-      toTrimmed(),
-      custom((value) => !value || /^[0-9]+$/.test(value), 'Must contain only numbers'),
-      maxLength(10, 'Max length is 10 digits')
-    ])),
-    modeOfAssessment: string([
-      toTrimmed(),
-      minLength(1, 'This field is required')
-    ])
+    captureImageInSeconds: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]+$/.test(value), 'Must contain only numbers') , maxLength(10, 'Max length is 10 digits'))),
+    modeOfAssessment: pipe(string(), trim() , minLength(1, 'This field is required'))
   }
 )
 
@@ -129,9 +110,11 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
   })
 
   useEffect(() => {
+
     if(data?.qualification_pack.ssc_id){
       getQPData(data?.qualification_pack.ssc_id)
     }
+
     if(data?.scheme_id){
       getSubSchemes(data?.scheme_id);
     }
@@ -235,13 +218,17 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
         router.push(getLocalizedUrl("/batches/list", locale as Locale))
 
       } else {
+
         setLoading(false);
+
         toast.error('Something went wrong!', {
           hideProgressBar: false
         });
       }
     }
+
     setLoading(false);
+    
     handleReset();
   }
 

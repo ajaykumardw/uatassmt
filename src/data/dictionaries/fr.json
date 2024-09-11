@@ -95,6 +95,7 @@
     "unassignedBatches": "Lots non Attribués",
     "allocatedBatches": "Lots Alloués",
 
-    "tc": "Centres de Formation"
+    "tc": "Centres de Formation",
+    "examInstructions": "Instructions pour l'examen"
   }
 }

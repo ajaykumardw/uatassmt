@@ -29,13 +29,16 @@ import type { Direction } from '@core/types'
 import type { PrimaryColorConfig } from '@configs/primaryColorConfig'
 
 // Icon Imports
-import SkinDefault from '@core/svg/SkinDefault'
-import SkinBordered from '@core/svg/SkinBordered'
+// import SkinDefault from '@core/svg/SkinDefault'
+// import SkinBordered from '@core/svg/SkinBordered'
+
 import LayoutVertical from '@core/svg/LayoutVertical'
 import LayoutCollapsed from '@core/svg/LayoutCollapsed'
 import LayoutHorizontal from '@core/svg/LayoutHorizontal'
-import ContentCompact from '@core/svg/ContentCompact'
-import ContentWide from '@core/svg/ContentWide'
+
+// import ContentCompact from '@core/svg/ContentCompact'
+// import ContentWide from '@core/svg/ContentWide'
+
 import DirectionLtr from '@core/svg/DirectionLtr'
 import DirectionRtl from '@core/svg/DirectionRtl'
 
@@ -313,7 +316,7 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
                   </div>
                 </div>
               </div>
-              <div className='flex flex-col gap-2'>
+              {/* <div className='flex flex-col gap-2'>
                 <p className='font-medium'>Skin</p>
                 <div className='flex items-center gap-4'>
                   <div className='flex flex-col items-start gap-0.5'>
@@ -339,7 +342,7 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
                     </p>
                   </div>
                 </div>
-              </div>
+              </div> */}
               {settings.mode === 'dark' ||
               (settings.mode === 'system' && isSystemDark) ||
               settings.layout === 'horizontal' ? null : (
@@ -402,7 +405,7 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
                   </div>
                 </div>
               </div>
-              <div className='flex flex-col gap-2'>
+              {/* <div className='flex flex-col gap-2'>
                 <p className='font-medium'>Content</p>
                 <div className='flex items-center gap-4'>
                   <div className='flex flex-col items-start gap-0.5'>
@@ -452,7 +455,7 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
                     </p>
                   </div>
                 </div>
-              </div>
+              </div> */}
               {!disableDirection && (
                 <div className='flex flex-col gap-2'>
                   <p className='font-medium'>Direction</p>

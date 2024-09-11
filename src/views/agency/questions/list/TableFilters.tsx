@@ -19,9 +19,13 @@ import CustomTextField from '@core/components/mui/TextField';
 // Utility function to remove duplicates based on a specific key
 const removeDuplicates = <T, K extends keyof T>(data: T[], key: K): T[] => {
   const seen = new Set();
+
   return data.filter((item) => {
+
     const id = item[key];
+
     return seen.has(id) ? false : seen.add(id);
+
   });
 };
 
@@ -68,6 +72,7 @@ const TableFilters = ({ setPCID, setAllPC, setData, tableData }: { setPCID?: any
     setPCData([]);
 
     const sscId = Number(ssc);
+
     setSSC(sscId);
 
     const selectedSSC = sscData.find(ssc => ssc.id === sscId);
@@ -81,6 +86,7 @@ const TableFilters = ({ setPCID, setAllPC, setData, tableData }: { setPCID?: any
 
   // Function to handle QP change
   const handleQPChange = async (qp: string) => {
+
     setNOS(-1);
     setPC(-1);
     setPCID('');
@@ -89,13 +95,16 @@ const TableFilters = ({ setPCID, setAllPC, setData, tableData }: { setPCID?: any
     setPCData([]);
 
     const qpId = Number(qp);
+
     setQP(qpId);
 
     const selectedQP = qpData.find(qp => qp.id === qpId);
 
     if (selectedQP) {
+
       setNOSData(removeDuplicates(selectedQP.nos || [], 'id'));
     } else {
+
       setNOSData([]);
     }
   };
@@ -106,6 +115,7 @@ const TableFilters = ({ setPCID, setAllPC, setData, tableData }: { setPCID?: any
     setPCID('');
 
     const nosId = Number(nos);
+    
     setNOS(nosId);
 
     const selectedNOS = nosData.find(nos => nos.id === nosId);

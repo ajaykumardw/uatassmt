@@ -24,77 +24,36 @@ import type { SubmitHandler } from 'react-hook-form'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { email, object, minLength, string, forward, custom, toTrimmed, regex, maxLength, optional } from 'valibot'
+import { email, object, minLength, string, forward, check, trim, regex, maxLength, optional, pipe } from "valibot"
 
-import type { Input } from 'valibot'
+import type { InferInput } from 'valibot'
 
 // Components Imports
 import type { state } from '@prisma/client'
 
 import CustomTextField from '@core/components/mui/TextField'
 
-type FormData = Input<typeof schema>
+type FormData = InferInput<typeof schema>
 
 
 
-const schema = object(
-  {
-    companyName: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'First Name must be at least 3 characters long')
-    ]),
-    contactPersonFirstName: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'First Name must be at least 3 characters long')
-    ]),
-    contactPersonLastName: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'Last Name must be at least 3 characters long')
-    ]),
-    email: string([toTrimmed(), minLength(1, 'This field is required'), email('Please enter a valid email address')]),
-    password: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(8, 'Password must be at least 8 characters long')
-    ]),
-    confirmPassword: string([toTrimmed(), minLength(1, 'This field is required')]),
-    phoneNumber: string([
-      toTrimmed(),
-      minLength(1, 'Phone Number is required'),
-      regex(/^[0-9]+$/, 'Phone Number must contain only numbers'),
-      minLength(10, 'Phone Number must be 10 digits'),
-      maxLength(10, 'Phone Number must be 10 digits')
-    ]),
-    landlineNumber: optional(string([
-      toTrimmed(),
-      custom((value) => !value || /^[0-9]+$/.test(value), 'Landline Number must contain only numbers'),
-      maxLength(10, 'Landline Number must be 10 digits')
-    ])),
-    state: string([toTrimmed(), minLength(1, 'This field is required')]),
-    city: string([toTrimmed(), minLength(1, 'This field is required')]),
-    pincode: string([
-      toTrimmed(),
-      minLength(1, "Pin Code is required"),
-      minLength(6, "Pin Code length must be 6 digits"),
-      maxLength(6, 'Pin Code length must be 6 digits'),
-      regex(/^[1-9][0-9]{5}$/, 'Pin Code must contain only numbers and or can\'t starts from 0')
-    ]),
-    address: string([
-      toTrimmed(),
-      minLength(1, 'Address is required'),
-      maxLength(100, 'Address max length is 100 characters')
-    ])
-  },
-  [
-    forward(
-      custom(input => input.password === input.confirmPassword, 'Passwords do not match.'),
+const schema = pipe(object({
+    companyName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'First Name must be at least 3 characters long')),
+    contactPersonFirstName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'First Name must be at least 3 characters long')),
+    contactPersonLastName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Last Name must be at least 3 characters long')),
+    email: pipe(string(), trim() , minLength(1, 'This field is required') , email('Please enter a valid email address')),
+    password: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(8, 'Password must be at least 8 characters long')),
+    confirmPassword: pipe(string(), trim() , minLength(1, 'This field is required')),
+    phoneNumber: pipe(string(), trim() , minLength(1, 'Phone Number is required') , regex(/^[0-9]+$/, 'Phone Number must contain only numbers') , minLength(10, 'Phone Number must be 10 digits') , maxLength(10, 'Phone Number must be 10 digits')),
+    landlineNumber: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]+$/.test(value), 'Landline Number must contain only numbers') , maxLength(10, 'Landline Number must be 10 digits'))),
+    state: pipe(string(), trim() , minLength(1, 'This field is required')),
+    city: pipe(string(), trim() , minLength(1, 'This field is required')),
+    pincode: pipe(string(), trim() , minLength(1, "Pin Code is required") , minLength(6, "Pin Code length must be 6 digits") , maxLength(6, 'Pin Code length must be 6 digits') , regex(/^[1-9][0-9]{5}$/, 'Pin Code must contain only numbers and or can\'t starts from 0')),
+    address: pipe(string(), trim() , minLength(1, 'Address is required') , maxLength(100, 'Address max length is 100 characters'))
+  }), forward(
+      check(input => input.password === input.confirmPassword, 'Passwords do not match.'),
       ['confirmPassword']
-    )
-  ]
-)
+    ))
 
 const FormValidationOnScheme = ({ stateData }: { stateData?: state[] }) => {
 

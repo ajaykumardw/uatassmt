@@ -24,9 +24,9 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import { signIn } from 'next-auth/react'
 import { Controller, useForm } from 'react-hook-form'
 import { valibotResolver } from '@hookform/resolvers/valibot'
-import { object, minLength, string, email } from 'valibot'
+import { object, minLength, string, email, pipe } from "valibot"
 import type { SubmitHandler } from 'react-hook-form'
-import type { Input } from 'valibot'
+import type { InferInput } from 'valibot'
 import classnames from 'classnames'
 
 // Type Imports
@@ -75,14 +75,11 @@ type ErrorType = {
   message: string[]
 }
 
-type FormData = Input<typeof schema>
+type FormData = InferInput<typeof schema>
 
 const schema = object({
-  email: string([minLength(1, 'This field is required'), email('Email is invalid')]),
-  password: string([
-    minLength(1, 'This field is required'),
-    minLength(5, 'Password must be at least 5 characters long')
-  ])
+  email: pipe(string(), minLength(1, 'This field is required') , email('Email is invalid')),
+  password: pipe(string(), minLength(1, 'This field is required') , minLength(5, 'Password must be at least 5 characters long'))
 })
 
 const Login = ({ mode }: { mode: SystemMode }) => {

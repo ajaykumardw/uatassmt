@@ -15,7 +15,9 @@ export async function GET(req: Request) {
   const url = new URL(await req.url);
   const id = url.searchParams.get('tpId');
   const session = await getServerSession(authOptions);
+
   // const isMaster = session?.user.is_master;
+  
   const createdBy = Number(id) || Number(session?.user.id);
 
   // const whereCondition = isMaster ? {master_id: createdBy, user_type: 'TC'} : {created_by: createdBy, user_type: 'TC'};

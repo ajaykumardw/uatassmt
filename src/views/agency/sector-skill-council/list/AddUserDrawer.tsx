@@ -20,9 +20,9 @@ import type { SubmitHandler } from 'react-hook-form';
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, minLength, string, forward, custom, toTrimmed } from 'valibot'
+import { object, minLength, string, forward, check, trim, pipe } from "valibot"
 
-import type { Input } from 'valibot'
+import type { InferInput } from 'valibot'
 
 import CustomTextField from '@core/components/mui/TextField'
 
@@ -41,7 +41,7 @@ type Props = {
 //   status: string
 // }
 
-type FormDataType = Input<typeof schema>
+type FormDataType = InferInput<typeof schema>
 
 // Vars
 // const initialData = {
@@ -54,37 +54,21 @@ type FormDataType = Input<typeof schema>
 // }
 
 
-const schema = object(
-  {
-    sscName: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'First Name must be at least 3 characters long')
-    ]),
-    sscCode: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'First Name must be at least 3 characters long')
-    ]),
-    username: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(3, 'Last Name must be at least 3 characters long')
-    ]),
-    password: string([
-      toTrimmed(),
-      minLength(1, 'This field is required'),
-      minLength(8, 'Password must be at least 8 characters long')
-    ]),
-    confirmPassword: string([toTrimmed(), minLength(1, 'This field is required')]),
-    status: string([toTrimmed(), minLength(1, 'This field is required')])
-  },
-  [
-    forward(
-      custom(input => input.password === input.confirmPassword, 'Passwords do not match.'),
-      ['confirmPassword']
-    )
-  ]
+const schema = pipe(
+  object(
+    {
+      sscName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'First Name must be at least 3 characters long')),
+      sscCode: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'First Name must be at least 3 characters long')),
+      username: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Last Name must be at least 3 characters long')),
+      password: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(8, 'Password must be at least 8 characters long')),
+      confirmPassword: pipe(string(), trim() , minLength(1, 'This field is required')),
+      status: pipe(string(), trim() , minLength(1, 'This field is required'))
+    }
+  ),
+  forward(
+    check(input => input.password === input.confirmPassword, 'Passwords do not match.'),
+    ['confirmPassword']
+  )
 )
 
 const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {

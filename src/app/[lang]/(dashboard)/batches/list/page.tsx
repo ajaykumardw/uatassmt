@@ -1,11 +1,9 @@
 "use client"
 
 // Component Imports
-import type { batches } from '@prisma/client'
+import { useEffect, useState } from 'react'
 
 import BatchesList from '@/views/batches/list'
-import { useEffect, useState } from 'react'
-import SkeletonForm from '@/components/skeleton/SkeletonForm'
 import SkeletonTable from '@/components/skeleton/SkeletonTable'
 
 // import UserList from '@views/apps/user/list'
@@ -37,6 +35,7 @@ const UserListApp = () => {
 
     getData()
   }, []);
+
 
   // const data: batches[] = [];
 

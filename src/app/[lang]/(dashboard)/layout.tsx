@@ -58,7 +58,7 @@ const Layout = async ({ children, params }: ChildrenType & { params: { lang: Loc
           <i className='tabler-arrow-up' />
         </Button>
       </ScrollToTop>
-      <Customizer dir={direction} />
+      <Customizer dir={direction} disableDirection={true} />
     </Providers>
   )
 }

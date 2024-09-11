@@ -93,8 +93,9 @@ export async function POST(req: Request) {
     agency_id: agencyId,
     created_by: createdBy
   }));
-  console.log("data", data);
-  console.log("mapped data", mappedData);
+  
+  // console.log("data", data);
+  // console.log("mapped data", mappedData);
 
   const result = await prisma.students.createMany({
     data: mappedData

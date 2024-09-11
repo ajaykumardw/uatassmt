@@ -14,7 +14,8 @@ import type { VerticalMenuContextProps } from '@menu/components/vertical-menu/Me
 // Component Imports
 import HorizontalNav, { Menu, SubMenu, MenuItem } from '@menu/horizontal-menu'
 import VerticalNavContent from './VerticalNavContent'
-import CustomChip from '@core/components/mui/Chip'
+
+// import CustomChip from '@core/components/mui/Chip'
 
 // import { GenerateHorizontalMenu } from '@components/GenerateMenu'
 
@@ -67,7 +68,7 @@ const HorizontalMenu = ({ dictionary }: { dictionary: Awaited<ReturnType<typeof 
   // Vars
   const { skin } = settings
   const { transitionDuration } = verticalNavOptions
-  const { lang: locale, id } = params
+  const { lang: locale } = params
 
   return (
     <HorizontalNav
@@ -97,7 +98,31 @@ const HorizontalMenu = ({ dictionary }: { dictionary: Awaited<ReturnType<typeof 
           menuSectionStyles: verticalMenuSectionStyles(verticalNavOptions, theme)
         }}
       >
-        <SubMenu label={dictionary['navigation'].dashboards} icon={<i className='tabler-smart-home' />}>
+        <MenuItem href={`/${locale}/dashboards/crm`} icon={<i className='tabler-smart-home' />}>
+          {dictionary['navigation'].dashboard}
+        </MenuItem>
+        <MenuItem href={`/${locale}/sectorskills`} icon={<i className='tabler-chart-pie' />}>
+          {dictionary['navigation'].sectors}
+        </MenuItem>
+        <SubMenu label={dictionary['navigation'].qpsNos} icon={<i className='tabler-map' />}>
+          <MenuItem href={`/${locale}/qualification-packs`}>{dictionary['navigation'].qps}</MenuItem>
+          <MenuItem href={`/${locale}/nos`}>{dictionary['navigation'].nosPC}</MenuItem>
+        </SubMenu>
+        <MenuItem href={`/${locale}/questions`} icon={<i className='tabler-checkup-list' />}>
+          {dictionary['navigation'].questions}
+        </MenuItem>
+        <SubMenu label={dictionary['navigation'].batches} icon={<i className='tabler-stack-2' />}>
+          <MenuItem href={`/${locale}/batches/list`}>{dictionary['navigation'].list}</MenuItem>
+          <MenuItem href={`/${locale}/batches/unassigned`} disabled>{dictionary['navigation'].unassignedBatches}</MenuItem>
+          <MenuItem href={`/${locale}/batches/allocated`} disabled>{dictionary['navigation'].allocatedBatches}</MenuItem>
+        </SubMenu>
+        <MenuItem href={`/${locale}/users`} icon={<i className='tabler-users' />}>
+          {dictionary['navigation'].users}
+        </MenuItem>
+        <MenuItem href={`/${locale}/exam-instructions`} icon={<i className='tabler-file-description' />}>
+          {dictionary['navigation'].examInstructions}
+        </MenuItem>
+        {/* <SubMenu label={dictionary['navigation'].dashboards} icon={<i className='tabler-smart-home' />}>
           <MenuItem href={`/${locale}/dashboards/crm`} icon={<i className='tabler-chart-pie-2' />}>
             {dictionary['navigation'].crm}
           </MenuItem>
@@ -332,7 +357,7 @@ const HorizontalMenu = ({ dictionary }: { dictionary: Awaited<ReturnType<typeof 
             </SubMenu>
           </SubMenu>
           <MenuItem disabled>{dictionary['navigation'].disabledMenu}</MenuItem>
-        </SubMenu>
+        </SubMenu> */}
       </Menu>
       {/* <Menu
         rootStyles={menuRootStyles(theme)}

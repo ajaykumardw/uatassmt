@@ -1,14 +1,18 @@
 "use client"
 
 // Component Imports
+import { useEffect, useState } from "react"
+
 import Grid from "@mui/material/Grid"
+
+import type { users } from "@prisma/client"
 
 import AddEditBatchForm from "@/views/batches/addEditForm"
 import SkeletonForm from "@/components/skeleton/SkeletonForm"
-import { useEffect, useState } from "react"
-import { SSCType } from "@/types/sectorskills/sscType"
-import { schemes, users } from "@prisma/client"
-import { SchemesType } from "@/types/schemes/schemesType"
+
+import type { SSCType } from "@/types/sectorskills/sscType"
+
+import type { SchemesType } from "@/types/schemes/schemesType"
 
 // const getStateData = async () => {
 //   // Vars

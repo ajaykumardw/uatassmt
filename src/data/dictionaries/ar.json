@@ -95,6 +95,7 @@
     "unassignedBatches": "دفعات غير مخصصة",
     "allocatedBatches": "الدفعات المخصصة",
 
-    "tc": "مراكز التدريب"
+    "tc": "مراكز التدريب",
+    "examInstructions": "تعليمات الامتحان"
   }
 }
