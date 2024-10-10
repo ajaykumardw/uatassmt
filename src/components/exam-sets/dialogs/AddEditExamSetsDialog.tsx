@@ -304,6 +304,11 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
       const isEqual = totalCounts === totalQuestions;
 
       isEqual ? clearErrors(['easy', 'medium', 'hard']) : (setError('easy', {type: 'custom', message: 'The sum of Easy, Medium, and Hard questions must equal Total Questions.'}), setValue('easy', ''), setValue('medium', ''), setValue('hard', ''), setError('medium', {type: 'custom', message: 'The sum of Easy, Medium, and Hard questions must equal Total Questions.'}), setError('hard', {type: 'custom', message: 'The sum of Easy, Medium, and Hard questions must equal Total Questions.'}))
+    }else{
+      clearErrors(['easy', 'medium', 'hard']);
+      setValue('easy', '0');
+      setValue('medium', '0');
+      setValue('hard', '0');
     }
 
   }, [changedMode, easyCount, mediumCount, hardCount, getValues]);
