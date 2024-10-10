@@ -107,7 +107,7 @@ export async function POST(req: Request) {
         ssc_id: sscId,
         qp_id: qpId,
         language_id: 1,
-        question_type: questionType,
+        question_type: 'theory',
         question_level: questionLevel,
         question_explanation: questionExplanation,
         question: questionName,
