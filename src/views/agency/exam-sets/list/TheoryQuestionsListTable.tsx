@@ -159,8 +159,6 @@ const TheoryQuestionListTable = ({ tableData, selectedQuestion, setSelectedQuest
   const [data, setData] = useState(...[tableData])
   const [globalFilter, setGlobalFilter] = useState('')
 
-  console.log("question table data:", tableData);
-
   useEffect(()=>{
     if(tableData && tableData?.length > 0){
       setData(tableData);
@@ -171,7 +169,7 @@ const TheoryQuestionListTable = ({ tableData, selectedQuestion, setSelectedQuest
 
   useEffect(()=>{
     if(rowSelection){
-      console.log("rowSelection", rowSelection);
+
       const filteredSelection = Object.entries(rowSelection).filter(([, value]) => value === true).map(([key]) => Number(key));
 
       setSelectedQuestions(filteredSelection);
