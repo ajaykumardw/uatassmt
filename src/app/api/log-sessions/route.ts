@@ -16,7 +16,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
 
-  const { userId, action } = await req.json();
+  const { userId, action, user_agent } = await req.json();
 
   if(action == 'login'){
 
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
         user_id: userId,
         status: 'IN',
         ip_address: req.headers.get('x-forwarded-for') || req.ip,
-        user_agent: req.headers.get('user-agent'),
+        user_agent: user_agent,
         login_at: formateTimeZone(new Date())
       }
     })
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
           logout_at: formateTimeZone(new Date())
         }
       })
-      
+
       return NextResponse.json({message: 'log updated successfully!'})
     }
 

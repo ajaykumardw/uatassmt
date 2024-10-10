@@ -146,13 +146,15 @@ export const authOptions: NextAuthOptions = {
       const userId = Number(message.user.id);
       const action = 'login';
 
+      const userAgent = navigator.userAgent;
+
       if(userId){
         await fetch(`${process.env.API_URL}/log-sessions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ "userId": userId, "action": action })
+          body: JSON.stringify({ "userId": userId, "action": action, user_agent: userAgent })
         })
       }
 
