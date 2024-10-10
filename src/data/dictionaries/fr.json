@@ -90,12 +90,17 @@
     "qps": "Packs de qualification",
     "nosPC": "NOS et PC",
     "questions": "Des questions",
+    "theory": "Théorie",
+    "practical": "Pratique",
+    "viva": "Vive",
     "users": "Utilisatrices",
     "batches": "Lots",
     "unassignedBatches": "Lots non Attribués",
     "allocatedBatches": "Lots Alloués",
 
     "tc": "Centres de Formation",
-    "examInstructions": "Instructions pour l'examen"
+    "examInstructions": "Instructions pour l'examen",
+    "students": "Étudiantes",
+    "examSets": "Ensembles d'examen"
   }
 }

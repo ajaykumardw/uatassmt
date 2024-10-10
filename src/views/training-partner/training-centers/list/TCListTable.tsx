@@ -42,7 +42,7 @@ import {
 
 import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 
-import type { RankingInfo } from '@tanstack/match-sorter-utils'
+// import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
 import type { state, city, role, users } from '@prisma/client'
@@ -72,14 +72,14 @@ import AddEditTCForm from './AddEditTCForm'
 
 import type { UsersType } from '@/types/users/usersType'
 
-declare module '@tanstack/table-core' {
-  interface FilterFns {
-    fuzzy: FilterFn<unknown>
-  }
-  interface FilterMeta {
-    itemRank: RankingInfo
-  }
-}
+// declare module '@tanstack/table-core' {
+//   interface FilterFns {
+//     fuzzy: FilterFn<unknown>
+//   }
+//   interface FilterMeta {
+//     itemRank: RankingInfo
+//   }
+// }
 
 type UsersTypeWithAction = users & {
   action?: string

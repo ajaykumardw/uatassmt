@@ -15,21 +15,22 @@ import type { PCType } from '@/types/pc/pcType';
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField';
+import { removeDuplicates } from '@/utils/removeDuplicates';
 
 // Utility function to remove duplicates based on a specific key
-const removeDuplicates = <T, K extends keyof T>(data: T[], key: K): T[] => {
-  const seen = new Set();
+// const removeDuplicates = <T, K extends keyof T>(data: T[], key: K): T[] => {
+//   const seen = new Set();
 
-  return data.filter((item) => {
+//   return data.filter((item) => {
 
-    const id = item[key];
+//     const id = item[key];
 
-    return seen.has(id) ? false : seen.add(id);
+//     return seen.has(id) ? false : seen.add(id);
 
-  });
-};
+//   });
+// };
 
-const TableFilters = ({ setPCID, setAllPC, setData, tableData }: { setPCID?: any, setData: any, setAllPC: any, tableData?: SSCType[] }) => {
+const TableFilters = ({ setSSCID, setQPID, setPCID, setAllPC, setData, tableData }: { setSSCID?:any, setQPID?:any, setPCID?: any, setData: any, setAllPC: any, tableData?: SSCType[] }) => {
   // States
   const [ssc, setSSC] = useState<SSCType['id']>(-1);
   const [qp, setQP] = useState<QPType['id']>(-1);
@@ -66,6 +67,8 @@ const TableFilters = ({ setPCID, setAllPC, setData, tableData }: { setPCID?: any
     setNOS(-1);
     setPC(-1);
     setPCID('');
+    setSSCID('');
+    setQPID('');
 
     setQPData([]);
     setNOSData([]);
@@ -73,6 +76,7 @@ const TableFilters = ({ setPCID, setAllPC, setData, tableData }: { setPCID?: any
 
     const sscId = Number(ssc);
 
+    setSSCID(sscId);
     setSSC(sscId);
 
     const selectedSSC = sscData.find(ssc => ssc.id === sscId);
@@ -90,12 +94,14 @@ const TableFilters = ({ setPCID, setAllPC, setData, tableData }: { setPCID?: any
     setNOS(-1);
     setPC(-1);
     setPCID('');
+    setQPID('');
 
     setNOSData([]);
     setPCData([]);
 
     const qpId = Number(qp);
 
+    setQPID(qpId);
     setQP(qpId);
 
     const selectedQP = qpData.find(qp => qp.id === qpId);
@@ -115,7 +121,7 @@ const TableFilters = ({ setPCID, setAllPC, setData, tableData }: { setPCID?: any
     setPCID('');
 
     const nosId = Number(nos);
-    
+
     setNOS(nosId);
 
     const selectedNOS = nosData.find(nos => nos.id === nosId);

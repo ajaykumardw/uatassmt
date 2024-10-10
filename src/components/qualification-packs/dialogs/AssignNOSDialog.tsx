@@ -35,7 +35,7 @@ import type { QPType } from '@/types/qualification-pack/qpType'
 import tableStyles from '@core/styles/table.module.css'
 import DialogCloseButton from '@/components/dialogs/DialogCloseButton'
 
-type RoleDialogProps = {
+type AssignNOSDialogProps = {
   open: boolean
   title?: string
   qPack?: QPType
@@ -50,7 +50,7 @@ type addNosType = {
 }
 
 
-const AssignNOSDialog = ({ open, handleClose, qPack, data, assigned, updateQPList }: RoleDialogProps) => {
+const AssignNOSDialog = ({ open, handleClose, qPack, data, assigned, updateQPList }: AssignNOSDialogProps) => {
   // States
   const [selectedCheckbox, setSelectedCheckbox] = useState<number[]>(
     assigned

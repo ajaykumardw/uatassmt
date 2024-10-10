@@ -28,7 +28,8 @@ import {
   getSortedRowModel
 } from '@tanstack/react-table'
 import type { ColumnDef, FilterFn } from '@tanstack/react-table'
-import type { RankingInfo } from '@tanstack/match-sorter-utils'
+
+// import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
 import type { ThemeColor } from '@core/types'
@@ -52,14 +53,14 @@ type ProjectListDataType = {
   progressColor: ThemeColor
 }
 
-declare module '@tanstack/table-core' {
-  interface FilterFns {
-    fuzzy: FilterFn<unknown>
-  }
-  interface FilterMeta {
-    itemRank: RankingInfo
-  }
-}
+// declare module '@tanstack/table-core' {
+//   interface FilterFns {
+//     fuzzy: FilterFn<unknown>
+//   }
+//   interface FilterMeta {
+//     itemRank: RankingInfo
+//   }
+// }
 
 // Vars
 const projectTable: ProjectListDataType[] = [

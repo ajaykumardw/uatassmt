@@ -108,14 +108,22 @@ const HorizontalMenu = ({ dictionary }: { dictionary: Awaited<ReturnType<typeof 
           <MenuItem href={`/${locale}/qualification-packs`}>{dictionary['navigation'].qps}</MenuItem>
           <MenuItem href={`/${locale}/nos`}>{dictionary['navigation'].nosPC}</MenuItem>
         </SubMenu>
-        <MenuItem href={`/${locale}/questions`} icon={<i className='tabler-checkup-list' />}>
+        {/* <MenuItem href={`/${locale}/questions`} icon={<i className='tabler-checkup-list' />}>
           {dictionary['navigation'].questions}
-        </MenuItem>
+        </MenuItem> */}
+        <SubMenu label={dictionary['navigation'].questions} icon={<i className='tabler-checkup-list' />}>
+          <MenuItem href={`/${locale}/questions`}>{dictionary['navigation'].theory}</MenuItem>
+          <MenuItem href={`/${locale}/questions/practical`}>{dictionary['navigation'].practical}</MenuItem>
+          <MenuItem href={`/${locale}/questions/viva`}>{dictionary['navigation'].viva}</MenuItem>
+        </SubMenu>
         <SubMenu label={dictionary['navigation'].batches} icon={<i className='tabler-stack-2' />}>
           <MenuItem href={`/${locale}/batches/list`}>{dictionary['navigation'].list}</MenuItem>
-          <MenuItem href={`/${locale}/batches/unassigned`} disabled>{dictionary['navigation'].unassignedBatches}</MenuItem>
-          <MenuItem href={`/${locale}/batches/allocated`} disabled>{dictionary['navigation'].allocatedBatches}</MenuItem>
+          <MenuItem href={`/${locale}/batches/unassigned`}>{dictionary['navigation'].unassignedBatches}</MenuItem>
+          <MenuItem href={`/${locale}/batches/allocated`}>{dictionary['navigation'].allocatedBatches}</MenuItem>
         </SubMenu>
+        <MenuItem href={`/${locale}/students`} icon={<i className='tabler-school' />}>
+          {dictionary['navigation'].students}
+        </MenuItem>
         <MenuItem href={`/${locale}/users`} icon={<i className='tabler-users' />}>
           {dictionary['navigation'].users}
         </MenuItem>

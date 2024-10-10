@@ -90,12 +90,17 @@
     "qps": "حزم التأهيل",
     "nosPC": "NOS والكمبيوتر",
     "questions": "أسئلة",
+    "theory": "نظرية",
+    "practical": "عملي",
+    "viva": "فيفا",
     "users": "المستخدمين",
     "batches": "دفعات",
     "unassignedBatches": "دفعات غير مخصصة",
     "allocatedBatches": "الدفعات المخصصة",
 
     "tc": "مراكز التدريب",
-    "examInstructions": "تعليمات الامتحان"
+    "examInstructions": "تعليمات الامتحان",
+    "students": "طلاب",
+    "examSets": "مجموعات الامتحانات"
   }
 }

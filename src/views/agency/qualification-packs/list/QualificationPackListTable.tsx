@@ -34,7 +34,7 @@ import {
 
 import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 
-import type { RankingInfo } from '@tanstack/match-sorter-utils'
+// import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
 import type { ThemeColor } from '@core/types'
@@ -63,14 +63,14 @@ import type { NOSType } from '@/types/nos/nosType';
 
 import AssignNOSDialog from '@/components/qualification-packs/dialogs/AssignNOSDialog';
 
-declare module '@tanstack/table-core' {
-  interface FilterFns {
-    fuzzy: FilterFn<unknown>
-  }
-  interface FilterMeta {
-    itemRank: RankingInfo
-  }
-}
+// declare module '@tanstack/table-core' {
+//   interface FilterFns {
+//     fuzzy: FilterFn<unknown>
+//   }
+//   interface FilterMeta {
+//     itemRank: RankingInfo
+//   }
+// }
 
 type QPTypeWithAction = QPType & {
   nos?: number

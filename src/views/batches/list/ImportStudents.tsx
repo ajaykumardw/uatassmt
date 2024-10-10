@@ -29,15 +29,18 @@ import { ExpectedStudentExcelHeaders } from '@/configs/customDataConfig';
 
 type StudentsTypeWithError = {
   BatchName: {value: string, error: string}
-  EnrollmentNo: {value: number, error: string}
-  NameOfTrainingAgency: {value: string, error: string}
-  NameOfTheTrainee: {value: string, error: string}
+  CandidateId: {value: string, error: string}
+  Password: {value: string, error: string}
+
+  // NameOfTrainingAgency: {value: string, error: string}
+
+  CandidateName: {value: string, error: string}
   Gender: {value: string, error: string}
   Category: {value: string, error: string}
   DOB: {value: string, error: string}
   FatherName: {value: string, error: string}
   MotherName: {value: string, error: string}
-  AddressOfTheTrainee: {value: string, error: string}
+  Address: {value: string, error: string}
   City: {value: string, error: string}
   State: {value: string, error: string}
   MobileNo: {value: number, error: string}
@@ -45,26 +48,95 @@ type StudentsTypeWithError = {
 
 const checkUnique = async (input: any) => {
 
-  const student = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/check-unique?enrollId=${input}`).then(function (response) { return response.json() });
+  const student = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/check-unique?candidateId=${input}`).then(function (response) { return response.json() });
 
   return student.isUnique;
 
 }
 
+const checkExistBatchId = async (input: any) => {
+
+  const student = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/check-batch-id?batchId=${input}`).then(function (response) { return response.json() });
+
+  return student.isBatchExist;
+
+}
+
+// const checkBatchSize = async (input: any) => {
+
+//   // console.log('index', index);
+//   const result = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/check-batch-id?batchId=${input}`).then(function (response) { return response.json() });
+
+//   // console.log("batch not exceeds",result.batchSizeNotExceeds)
+
+//   return result.batchSizeNotExceeds;
+// }
+
 const studentSchema = v.objectAsync(
   {
-    BatchName: v.pipe(v.string(), v.trim() , v.minLength(1, 'This field is required') , v.maxLength(191, 'The max length for this field is 191 characters.')),
-    EnrollmentNo: v.pipeAsync(v.number('Enrollment No. is required and type of number only'), v.checkAsync(checkUnique, 'Enrollment No. should be unique.')),
-    NameOfTheTrainee: v.pipe(v.string(), v.trim() , v.minLength(1, 'This field is required') , v.maxLength(191, 'The max length for this field is 191 characters.')),
+    BatchName: v.unionAsync([
+      v.pipeAsync(
+        v.number('Batch ID is required.'),
+        v.minValue(1, 'This field is required'),
+        v.checkAsync(checkExistBatchId, "Batch ID doesn't exist in our records."),
+
+        // v.checkAsync(checkBatchSize, "Batch is full no more students allowed.")
+      ),
+      v.pipeAsync(
+        v.string('Batch ID is required.'),
+        v.trim(),
+        v.minLength(1, 'This field is required.'),
+        v.maxLength(191, 'The max length for this field is 191 characters.'),
+        v.checkAsync(checkExistBatchId, "Batch ID doesn't exist in our records."),
+
+        // v.checkAsync(checkBatchSize, "Batch is full no more students allowed.")
+      )
+    ], 'Batch ID is required.'),
+    CandidateId: v.unionAsync([
+      v.pipeAsync(
+        v.number('Candidate ID is required.'),
+        v.minValue(1, 'Candidate ID is required.'),
+        v.checkAsync(checkUnique, 'Candidate ID should be unique.'),
+        v.check(value => !/\s/.test(value.toString()), 'Candidate ID should not contain any spaces.')
+      ),
+      v.pipeAsync(
+        v.string('Candidate ID is required.'),
+        v.trim(),
+        v.minLength(1, 'Candidate ID is required.'),
+        v.maxLength(60, 'The max length for this field is 60 characters.'),
+        v.checkAsync(checkUnique, 'Candidate ID should be unique.'),
+        v.check(value => !/\s/.test(value.toString()), 'Candidate ID should not contain any spaces.')
+      )
+    ], 'Candidate ID is required.'),
+    Password: v.union([
+      v.pipe(
+        v.string(),
+        v.trim(),
+        v.minLength(1, 'Password field is required.'),
+        v.minLength(4, 'Your password is too short.'),
+        v.maxLength(30, 'Your password is too long. Should be max 30 characters.'),
+        v.check(value => !/\s/.test(value), 'Password should not contain any spaces.')
+      ),
+      v.pipe(
+        v.number(),
+        v.check(value => value.toString().length >= 4, 'This field is required and must be at least 4 characters.'),
+        v.check(value => value.toString().length <= 191, 'Your password is too long. Should be max 30 characters.'),
+        v.check(value => !/\s/.test(value.toString()), 'Password should not contain any spaces.')
+      ),
+    ]),
+    CandidateName: v.pipe(v.string(), v.trim() , v.minLength(1, 'This field is required') , v.maxLength(191, 'The max length for this field is 191 characters.')),
     Gender: v.pipe(v.string(), v.trim() , v.minLength(1, 'This field is required') , v.check(value => ['M', 'F', 'T'].includes(value), 'Gender must be M, F, or T')),
     Category: v.pipe(v.string(), v.trim() , v.minLength(1, 'This field is required') , v.check(value => ['Gen', 'SC', 'ST', 'BC', 'OBC', 'OC'].includes(value), 'Category must be Gen, SC, ST, OC, or OBC')),
     DOB: v.pipe(v.string(), v.trim() , v.minLength(1, 'DOB is required') ,),
     FatherName: v.optional(v.pipe(v.string('Father\'s name type should be string'), v.trim() , v.maxLength(191, 'The max length for Father Name is 191 characters.'))),
     MotherName: v.optional(v.pipe(v.string('Mother\'s name type should be string'), v.trim() , v.maxLength(191, 'The max length for Mother Name is 191 characters.'))),
-    AddressOfTheTrainee: v.optional(v.pipe(v.string(), v.trim() , v.maxLength(191, 'The max length for Address is 191 characters.'))),
+    Address: v.optional(v.pipe(v.string(), v.trim() , v.maxLength(191, 'The max length for Address is 191 characters.'))),
     City: v.optional(v.pipe(v.string('City should be type of string'), v.trim() , v.maxLength(100, 'The max length for City is 100 characters.'))),
     State: v.optional(v.pipe(v.string('State should be type of string'), v.trim() , v.maxLength(100, 'The max length for State is 100 characters.'))),
-    MobileNo: v.number('Mobile No. is required and should be number only')
+    MobileNo: v.pipe(
+      v.number('Mobile No. is required and should be number only'),
+      v.check(value => value.toString().length == 10, 'Mobile No. must be 10 digits.'),
+    )
   }
 )
 
@@ -84,18 +156,19 @@ const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
 
 // Map your keys to the schema
 const mapKeys = (data: any[]) => data.map((item: any) => ({
-  BatchName: item['Batch Name'],
-  EnrollmentNo: item['Enrollment No'],
+  BatchName: item['Batch ID'],
+  CandidateId: item['Candidate ID'],
+  Password: item['Password'],
 
   // NameOfTrainingAgency: item['Name of Training Agency'],
 
-  NameOfTheTrainee: item['Name of the Trainee'],
+  CandidateName: item['Candidate Name'],
   Gender: item['Gender(M/F/T)'],
   Category: item['Category(Gen/SC/ST/BC/OBC/OC)'],
   DOB: item['DOB'],
   FatherName: item['Father\'s name'],
   MotherName: item['Mother\'s name'],
-  AddressOfTheTrainee: item['Address of the trainee'],
+  Address: item['Address'],
   City: item['City'],
   State: item['State'],
   MobileNo: item['Mobile No']
@@ -181,25 +254,201 @@ const ImportStudents = ({ onBack }: { onBack: () => void }) => {
 
             const mappedData = mapKeys(jsonData);
 
-            console.log("mapped data", mappedData);
+            const candidateIds = mappedData.map((item: any) => item.CandidateId);
+            const duplicateIds = candidateIds.filter((id: any, index: number) => candidateIds.indexOf(id) !== index);
+            const duplicates = new Set(duplicateIds);
 
-            const validatedData = await Promise.all(mappedData.map(async(item: any) => {
+            // const validatedData = await Promise.all(mappedData.map(async(item: any) => {
 
-              const result = await v.safeParseAsync(studentSchema,item);
+            //   const result = await v.safeParseAsync(studentSchema,item);
 
-              return {
-                ...item,
-                result
-              };
+            //   const candidateIdError = duplicates.has(item.CandidateId) ? {
+            //     path: [{key:'CandidateId'}],
+            //     message: `Candidate ID ${item.CandidateId} is duplicated.`
+            //   } : null;
+
+            //   const {batchId} = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/check-batch-id?batchId=${item.BatchName.toString()}`).then(function (response) { return response.json() });
+
+            //   const augmentedIssues = candidateIdError ? [...(result.issues || []), candidateIdError] : result.issues;
+
+
+
+            //   return {
+            //     batchId: batchId,
+            //     ...item,
+            //     result: {
+            //       ...result,
+            //       issues: augmentedIssues
+            //     }
+            //   };
+
+            // }));
+
+            // const validatedData = await Promise.all(mappedData.map(async (item: any) => {
+            //   // Validate student data using your existing schema
+            //   const result = await v.safeParseAsync(studentSchema, item);
+
+            //   // Check for duplicate Candidate IDs
+            //   const candidateIdError = duplicates.has(item.CandidateId) ? {
+            //     path: [{ key: 'CandidateId' }],
+            //     message: `Candidate ID ${item.CandidateId} is duplicated.`
+            //   } : null;
+
+            //   // Fetch the batch details including batch size
+            //   const { batchId, batchSize } = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/check-batch-id?batchId=${item.BatchName.toString()}`)
+            //     .then(response => response.json());
+
+            //   // Count existing students in the batch
+            //   const existingStudentsCount = 3
+
+            //   // Check if adding the new student exceeds the batch size
+            //   const exceedsBatchSize = existingStudentsCount + 1  > batchSize;
+            //   const batchSizeError = exceedsBatchSize ? {
+            //     path: [{ key: 'BatchName' }],
+            //     message: `Cannot add student. Batch size of ${batchSize} exceeded.`
+            //   } : null;
+
+            //   // Augment issues with any new validation errors
+            //   const augmentedIssues = [
+            //     ...(result.issues || []),
+            //     candidateIdError,
+            //     batchSizeError
+            //   ].filter(Boolean); // Remove null values
+
+            //   return {
+            //     batchId: batchId,
+            //     ...item,
+            //     result: {
+            //       ...result,
+            //       issues: augmentedIssues
+            //     }
+            //   };
+            // }));
+
+            // Fetch batch details for each batch and initialize counts
+            // Define the structure of each batch's data
+            // Define the structure of each batch's data
+            // Define the structure of each batch's data
+            interface BatchCount {
+              batchID: number; // Unique identifier for the batch
+              batchSize: number; // Maximum students allowed
+              currentCount: number; // Current number of students in the batch
+            }
+
+            // Define the type for the batchCounts object
+            const batchCounts: { [batchId: number]: BatchCount } = {};
+
+            // Fetch existing student counts and initialize batchCounts
+            await Promise.all(mappedData.map(async (item) => {
+              const batchName = item.BatchName.toString();
+
+              // Fetch batch details from the database
+              const { batchId, batchSize, existingStudentsCount } = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/check-batch-id?batchId=${batchName}`)
+                .then(response => response.json());
+
+              // Check if batchId exists and has not been initialized yet
+              if (batchId && !batchCounts[batchId]) {
+                // Initialize the batch count in the map
+                batchCounts[batchId] = {
+                  batchID: batchId,
+                  batchSize: batchSize,
+                  currentCount: existingStudentsCount
+                };
+              }
             }));
 
-            console.log("validated data", validatedData);
+            // Process students
+            const validatedData = [];
+
+            for (const [index, item] of mappedData.entries()) {
+              const batchName = item.BatchName.toString();
+
+              // Fetch batch details from the database
+              const { batchId } = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/check-batch-id?batchId=${batchName}`)
+                .then(response => response.json());
+
+              // Only proceed if the batchId exists in batchCounts
+              const batchDetail = batchId ? batchCounts[batchId] : null;
+
+              if (!batchDetail) {
+                validatedData.push({
+                  ...item,
+                  result: {
+                    issues: [{
+                      path: [{ key: 'BatchName' }],
+                      message: `Batch ID ${batchName} does not exist. Student will not be processed.`
+                    }]
+                  }
+                });
+                continue; // Skip to the next iteration
+              }
+
+              console.log(`Processing [${index}]: current count of students upload`, batchDetail.currentCount);
+
+              // Calculate remaining capacity
+              const remainingCapacity = batchDetail.batchSize - batchDetail.currentCount;
+
+              // Validate student data using your existing schema
+              const result = await v.safeParseAsync(studentSchema, item);
+
+              // Check for duplicate Candidate IDs
+              const candidateIdError = duplicates.has(item.CandidateId) ? {
+                path: [{ key: 'CandidateId' }],
+                message: `Candidate ID ${item.CandidateId} is duplicated.`
+              } : null;
+
+              // Check if adding the new student exceeds the batch size
+              const exceedsBatchSize = remainingCapacity <= 0;
+
+              const batchSizeError = exceedsBatchSize ? {
+                path: [{ key: 'BatchName' }],
+                message: `Cannot add student. Batch size of ${batchDetail.batchSize} exceeded.`
+              } : null;
+
+              // Debugging: Log current counts and capacity
+              console.log(`Processing Candidate ID [${index}]: ${item.CandidateId}`);
+              console.log(`Current Count: ${batchDetail.currentCount}, Batch Size: ${batchDetail.batchSize}, Remaining Capacity: ${remainingCapacity}`);
+              console.log(`Exceeds Batch Size: ${exceedsBatchSize}`);
+
+              // If there's space, increment the current count for the batch
+              if (!exceedsBatchSize) {
+                batchCounts[batchId].currentCount += 1; // Increment the count since we're allowing this student
+                console.log(`Student added [${index}]. New Current Count: ${batchCounts[batchId].currentCount}`);
+              }
+
+              // Augment issues with any new validation errors
+              const augmentedIssues = [
+                ...(result.issues || []),
+                candidateIdError,
+                batchSizeError
+              ].filter(Boolean); // Remove null values
+
+              validatedData.push({
+                batchId: batchId,
+                ...item,
+                result: {
+                  ...result,
+                  issues: augmentedIssues.length === 0 ? undefined : augmentedIssues
+                }
+              });
+            }
+
+
+
+
+
+
 
             // Transform data
 
+            console.log("validated data", validatedData);
+
+
             const filteredData = validatedData.filter(item => item.result.issues === undefined);
 
-            const transformedTrainees = validatedData.map((trainee: any) => {
+            console.log("filtered data", filteredData);
+
+            const transformedStudents = validatedData.map((trainee: any) => {
               const transformed: {[key: string]: { value: any; error: string | null; }} = {};
 
               for (const [key, value] of Object.entries(trainee)) {
@@ -217,11 +466,9 @@ const ImportStudents = ({ onBack }: { onBack: () => void }) => {
               return transformed;
             });
 
-            console.log("transformed data", transformedTrainees);
-
             // Example usage
             setUploadData(filteredData);
-            setData(transformedTrainees); // Update state with parsed data
+            setData(transformedStudents); // Update state with parsed data
             setProgress(100); // Set progress to 100%
             setLoading(false); // End loading
             setFileInput(acceptedFiles[0]);
@@ -288,8 +535,6 @@ const ImportStudents = ({ onBack }: { onBack: () => void }) => {
         return `Error with file ${file.file.name}.`;
       });
 
-      console.log(errorMessage);
-
       errorMessage.map(error => {
         toast.error(error, {
           hideProgressBar: false
@@ -320,7 +565,7 @@ const ImportStudents = ({ onBack }: { onBack: () => void }) => {
         cell: ({ row }) => <Typography>{row.index + 1}</Typography>
       },
       columnHelper.accessor('BatchName.value', {
-        header: 'Batch Name',
+        header: 'Batch ID',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ avatar: row.original.avatar ? `/uploads/agency/users/${row.original.id}/${row.original.avatar}` : '', first_name: (row.original.first_name || '') + ' ' + (row.original.last_name || '') })} */}
@@ -334,25 +579,36 @@ const ImportStudents = ({ onBack }: { onBack: () => void }) => {
         )
       }),
 
-      columnHelper.accessor('EnrollmentNo.value', {
-        header: 'Enrollment No.',
+      columnHelper.accessor('CandidateId.value', {
+        header: 'Candidate ID',
         cell: ({ row }) => (
           <div className="flex flex-col">
             <Typography color='text.primary' className='font-medium'>
-              {row.original.EnrollmentNo.value}
+              {row.original.CandidateId.value}
             </Typography>
-            <Typography variant='body2' color="error">{row.original.EnrollmentNo.error}</Typography>
+            <Typography variant='body2' color="error">{row.original.CandidateId.error}</Typography>
           </div>
         )
       }),
-      columnHelper.accessor('NameOfTheTrainee.value', {
-        header: 'Name Of The Trainee',
+      columnHelper.accessor('Password.value', {
+        header: 'Password',
+        cell: ({ row }) => (
+          <div className="flex flex-col">
+            <Typography color='text.primary' className='font-medium'>
+              {row.original.Password.value}
+            </Typography>
+            <Typography variant='body2' color="error">{row.original.Password.error}</Typography>
+          </div>
+        )
+      }),
+      columnHelper.accessor('CandidateName.value', {
+        header: 'Candidate Name',
         cell: ({ row }) => (
           <div className="flex flex-col">
             <Typography color='text.primary' >
-              {row.original.NameOfTheTrainee.value}
+              {row.original.CandidateName.value}
             </Typography>
-            <Typography variant='body2' color="error">{row.original.NameOfTheTrainee.error}</Typography>
+            <Typography variant='body2' color="error">{row.original.CandidateName.error}</Typography>
           </div>
         )
       }),
@@ -413,14 +669,14 @@ const ImportStudents = ({ onBack }: { onBack: () => void }) => {
           </div>
         )
       }),
-      columnHelper.accessor('AddressOfTheTrainee.value', {
-        header: 'Address Of The Trainee',
+      columnHelper.accessor('Address.value', {
+        header: 'Address',
         cell: ({ row }) => (
           <div className="flex flex-col">
             <Typography color='text.primary' >
-              {row.original.AddressOfTheTrainee?.value}
+              {row.original.Address?.value}
             </Typography>
-            <Typography variant='body2' color="error">{row.original.AddressOfTheTrainee.error}</Typography>
+            <Typography variant='body2' color="error">{row.original.Address.error}</Typography>
           </div>
         )
       }),
@@ -595,44 +851,8 @@ const ImportStudents = ({ onBack }: { onBack: () => void }) => {
     </>
   )
 
-  // const handleFileInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-  //   const file = event.target.files?.[0];
-  //   if (!file) return; // Handle case where no file is selected
-
-  //   const reader = new FileReader();
-
-  //   reader.onload = (e) => {
-  //     if (e.target?.result) {
-  //       try {
-  //         const arrayBuffer = e.target.result as ArrayBuffer;
-  //         const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
-
-  //         const sheetName = workbook.SheetNames[0];
-  //         const worksheet = workbook.Sheets[sheetName];
-  //         const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-  //         setData(jsonData); // Update state with parsed data
-  //         setFileInput(file); // Update state with the file
-  //         setLoading(false); // End loading
-  //         setProgress(100); // Set progress to 100%
-  //       } catch (error) {
-  //         console.error('Error processing the Excel file:', error);
-  //         setLoading(false); // End loading
-  //         setProgress(0); // Reset progress on error
-  //       }
-  //     }
-  //   };
-
-  //   reader.onerror = (error) => {
-  //     console.error('Error reading the file:', error);
-  //   };
-
-  //   reader.readAsArrayBuffer(file); // Read the file as an ArrayBuffer
-  // };
-
 
   const handleUploadData = async () => {
-    console.log("upload data", uploadData);
 
     if(uploadData.length > 0) {
 

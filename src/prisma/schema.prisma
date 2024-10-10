@@ -1,6 +1,7 @@
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-3.0.x", "linux-arm64-openssl-1.1.x", "rhel-openssl-3.0.x"]
+  previewFeatures = ["omitApi"]
 }
 
 datasource db {
@@ -214,6 +215,9 @@ model pc {
 model questions {
   id                   Int            @id @default(autoincrement())
   agency_id            Int
+  ssc_id               Int
+  qp_id                Int
+  nos_id               Int?
   language_id          Int
   question_level       question_level @default(E)
   question_type        question_type  @default(theory)
@@ -223,7 +227,7 @@ model questions {
   option3              String?        @db.Text
   option4              String?        @db.Text
   option5              String?        @db.Text
-  answer               Int            @db.TinyInt
+  answer               Int?           @db.TinyInt
   marks                Int
   question_explanation String?        @db.Text
   status               Int            @default(1) @db.TinyInt
@@ -233,6 +237,8 @@ model questions {
   updated_at           DateTime?      @default(now()) @db.DateTime(0)
 
   pc pc[]
+
+  exam_sets_questions exam_sets_questions[]
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -324,6 +330,7 @@ model users {
   assessor_batches batches[] @relation("assessor")
   students students[]
   exam_instructions exam_instructions[]
+  log_sessions log_sessions[]
 }
 
 model users_additional_data {
@@ -363,25 +370,27 @@ model role {
 }
 
 model students {
-  id            Int                @id @default(autoincrement())
-  batch         batches            @relation(fields: [batch_name], references: [batch_name])
-  batch_name    String
-  enrollment_no Int                @unique
-  trainee_name  String             @db.VarChar(50)
-  gender        users_gender?      @default(m)
-  category      students_category? @default(Gen)
-  date_of_birth DateTime?          @db.Date
-  father_name   String?            @db.VarChar(50)
-  mother_name   String?            @db.VarChar(50)
-  state         String?            @db.VarChar(50)
-  city          String?            @db.VarChar(50)
-  address       String?            @db.VarChar(255)
-  mobile_no     String             @db.VarChar(15)
-  agency        users              @relation(fields: [agency_id], references: [id])
-  agency_id     Int
-  created_by    Int
-  created_at    DateTime           @default(now()) @db.DateTime(0)
-  updated_at    DateTime           @default(now()) @updatedAt @db.DateTime(0)
+  id             Int                @id @default(autoincrement())
+  batch          batches            @relation(fields: [batch_id], references: [id])
+  batch_id       Int
+  candidate_id   String             @unique @db.VarChar(60)
+  user_name      String             @unique @db.VarChar(60)
+  password       String             @db.VarChar(80)
+  candidate_name String             @db.VarChar(50)
+  gender         users_gender?      @default(m)
+  category       students_category? @default(Gen)
+  date_of_birth  DateTime?          @db.Date
+  father_name    String?            @db.VarChar(50)
+  mother_name    String?            @db.VarChar(50)
+  state          String?            @db.VarChar(50)
+  city           String?            @db.VarChar(50)
+  address        String?            @db.VarChar(255)
+  mobile_no      String             @db.VarChar(15)
+  agency         users              @relation(fields: [agency_id], references: [id])
+  agency_id      Int
+  created_by     Int
+  created_at     DateTime           @default(now()) @db.DateTime(0)
+  updated_at     DateTime           @default(now()) @updatedAt @db.DateTime(0)
 }
 
 model exam_instructions {
@@ -395,6 +404,52 @@ model exam_instructions {
   status        Int                   @default(1) @db.TinyInt
   ssc           sector_skill_councils @relation(fields: [ssc_id], references: [id])
   agency        users                 @relation(fields: [agency_id], references: [id])
+}
+
+model log_sessions {
+  id         Int        @id @default(autoincrement())
+  user_id    Int
+  status     log_status @default(IN)
+  ip_address String?   @db.VarChar(20)
+  user_agent String?   @db.VarChar(255)
+  login_at   DateTime?  @db.DateTime(0)
+  logout_at  DateTime?  @db.DateTime(0)
+  user       users      @relation(fields: [user_id], references: [id])
+}
+
+model exam_sets {
+  id              Int           @id @default(autoincrement())
+  agency_id       Int
+  ssc_id          Int
+  qp_id           Int
+  set_name        String
+  mode            exam_set_mode @default(Manual)
+  question_random Int           @default(0) @db.TinyInt
+  option_random   Int           @default(0) @db.TinyInt
+  total_questions Int
+  question_levels Json?
+  status          Int           @default(0) @db.TinyInt
+  created_by      Int
+  created_at      DateTime      @default(now()) @db.DateTime(0)
+  updated_at      DateTime      @default(now()) @updatedAt @db.DateTime(0)
+
+  exam_sets_questions exam_sets_questions[]
+}
+
+model exam_sets_questions {
+  id          Int @id @default(autoincrement())
+  agency_id   Int
+  exam_set_id Int
+  question_id Int
+  marks       Int
+  created_by  Int
+  created_at  DateTime @default(now()) @db.DateTime(0)
+  updated_at  DateTime @default(now()) @updatedAt @db.DateTime(0)
+
+  exam_sets exam_sets @relation(fields: [exam_set_id], references: [id])
+  questions questions @relation(fields: [question_id], references: [id])
+
+  @@unique(name: "exam_set_id_question_id", [exam_set_id, question_id])
 }
 
 enum question_level {
@@ -435,4 +490,14 @@ enum students_category {
   BC
   OBC
   OC
+}
+
+enum log_status {
+  IN
+  OUT
+}
+
+enum exam_set_mode {
+  Auto
+  Manual
 }

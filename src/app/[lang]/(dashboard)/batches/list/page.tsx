@@ -22,9 +22,9 @@ const UserListApp = () => {
       throw new Error('Failed to fetch userData')
     }
 
-    const nosData = await res.json();
+    const batchData = await res.json();
 
-    setBatches(nosData);
+    setBatches(batchData);
     setLoading(false);
   }
 
@@ -36,11 +36,15 @@ const UserListApp = () => {
     getData()
   }, []);
 
+  const updateBatchList = () => {
+    getData();
+  };
+
 
   // const data: batches[] = [];
 
   if(!loading){
-    return <BatchesList tableData={data} />
+    return <BatchesList tableData={data} updateBatchList={updateBatchList}/>
   }else{
     return <SkeletonTable />
   }

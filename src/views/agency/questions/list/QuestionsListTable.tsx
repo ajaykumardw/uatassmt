@@ -34,7 +34,7 @@ import {
 
 import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 
-import type { RankingInfo } from '@tanstack/match-sorter-utils'
+// import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
 import type { ThemeColor } from '@core/types'
@@ -68,14 +68,14 @@ import BulkUploadQuestionsDialog from '@/components/questions/dialogs/BulkUpload
 
 // import type { PCType } from '@/types/pc/pcType';
 
-declare module '@tanstack/table-core' {
-  interface FilterFns {
-    fuzzy: FilterFn<unknown>
-  }
-  interface FilterMeta {
-    itemRank: RankingInfo
-  }
-}
+// declare module '@tanstack/table-core' {
+//   interface FilterFns {
+//     fuzzy: FilterFn<unknown>
+//   }
+//   interface FilterMeta {
+//     itemRank: RankingInfo
+//   }
+// }
 
 type QuestionsTypeWithAction = QuestionsType & {
   action?: string
@@ -185,6 +185,8 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
   const [allPC, setPCData] = useState<PCType[]>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [pcID, setPCID] = useState<number>();
+  const [sscID, setSSCID] = useState<number>();
+  const [qpID, setQPID] = useState<number>();
   const [questionId, setQuestionId] = useState(0);
 
   const handleOnEditClick = async (id: number) => {
@@ -432,7 +434,7 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
     <>
       <Card>
         <CardHeader title='Filters' className='pbe-4' />
-        <TableFilters setPCID={setPCID} setAllPC={setPCData} setData={setData} tableData={tableData} />
+        <TableFilters setSSCID={setSSCID} setQPID={setQPID} setPCID={setPCID} setAllPC={setPCData} setData={setData} tableData={tableData} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
             select
@@ -546,10 +548,10 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
           }}
         />
       </Card>
-      <AddEditQuestionsDialog open={addQuestionOpen} pcID={pcID} updateQuestionsList={updateQuestionsList} handleClose={() => setAddQuestionOpen(!addQuestionOpen)} />
+      <AddEditQuestionsDialog open={addQuestionOpen} sscID={sscID} qpID={qpID} pcID={pcID} updateQuestionsList={updateQuestionsList} handleClose={() => setAddQuestionOpen(!addQuestionOpen)} />
       <BulkUploadQuestionsDialog open={bulkUploadQuestionsOpen} pcID={pcID} updateQuestionsList={updateQuestionsList} handleClose={() => setBulkUploadQuestionsOpen(!bulkUploadQuestionsOpen)} />
 
-      <AddEditQuestionsDialog open={editQuestionOpen} allPC={allPC} questionId={questionId} updateQuestionsList={updateQuestionsList} handleClose={() => setEditQuestionOpen(!editQuestionOpen)} data={editQuestionData} />
+      <AddEditQuestionsDialog open={editQuestionOpen} sscID={sscID} qpID={qpID} allPC={allPC} questionId={questionId} updateQuestionsList={updateQuestionsList} handleClose={() => setEditQuestionOpen(!editQuestionOpen)} data={editQuestionData} />
 
     </>
   )

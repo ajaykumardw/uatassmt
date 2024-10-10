@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo } from 'react'
 
 // Next Imports
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 
 // MUI Imports
 import Card from '@mui/material/Card'
@@ -40,7 +40,7 @@ import {
 
 import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 
-import type { RankingInfo } from '@tanstack/match-sorter-utils'
+// import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
 import type { batches, schemes, students, users } from '@prisma/client'
@@ -70,14 +70,14 @@ import type { QPType } from '@/types/qualification-pack/qpType'
 import ImportStudents from './ImportStudents'
 
 
-declare module '@tanstack/table-core' {
-  interface FilterFns {
-    fuzzy: FilterFn<unknown>
-  }
-  interface FilterMeta {
-    itemRank: RankingInfo
-  }
-}
+// declare module '@tanstack/table-core' {
+//   interface FilterFns {
+//     fuzzy: FilterFn<unknown>
+//   }
+//   interface FilterMeta {
+//     itemRank: RankingInfo
+//   }
+// }
 
 type BatchesTypeWithAction = batches & {
   action?: string
@@ -168,10 +168,12 @@ const DebouncedInput = ({
 // Column Definitions
 const columnHelper = createColumnHelper<BatchesTypeWithAction>()
 
-const BatchesListTable = ({ tableData }: { tableData?: batches[]}) => {
+const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: batches[], updateBatchList: () => void }) => {
 
   // States
   // const [addUserOpen, setAddUserOpen] = useState(false)
+
+  const router = useRouter();
 
   const [rowSelection, setRowSelection] = useState({})
   const [showImportStudents, setShowImportStudents] = useState(false);
@@ -195,6 +197,15 @@ const BatchesListTable = ({ tableData }: { tableData?: batches[]}) => {
       localStorage.removeItem('formSubmitMessage');
     }
   }, []);
+
+  const handleViewStudentsClick = (row: BatchesTypeWithAction) => {
+    localStorage.setItem("ssc_id", row.qualification_pack.ssc.id.toString());
+    localStorage.setItem("qp_id", row.qualification_pack.id.toString());
+    localStorage.setItem("batch_id", row.id.toString());
+
+    router.push(getLocalizedUrl(`students`, locale as Locale))
+
+  }
 
   const columns = useMemo<ColumnDef<BatchesTypeWithAction, any>[]>(
     () => [
@@ -260,11 +271,28 @@ const BatchesListTable = ({ tableData }: { tableData?: batches[]}) => {
       }),
       columnHelper.accessor('students', {
         header: 'Students',
-        cell: ({ row }) => (
-          <Typography color='text.primary' >
-            {row.original.students?.length}
-          </Typography>
-        )
+        cell: ({ row }) => {
+          if(row.original.students?.length && row.original.students?.length > 0){
+            return (
+              <Button
+                variant='tonal'
+                size='small'
+                startIcon={row.original.students?.length}
+
+                // onClick={() => {
+                //   localStorage.setItem("ssc_id", '1');
+                //   localStorage.setItem("qp_id", '1');
+                //   localStorage.setItem("batch_id", '1');
+                // }}
+
+                onClick={() => handleViewStudentsClick(row.original)}
+                className='is-full sm:is-auto'
+              >
+                View
+              </Button>
+            );
+          }
+        }
       }),
       columnHelper.accessor('training_partner_id', {
         header: 'Training Partner',
@@ -426,7 +454,7 @@ const BatchesListTable = ({ tableData }: { tableData?: batches[]}) => {
   })
 
   if (showImportStudents) {
-    return <ImportStudents onBack={() => setShowImportStudents(false)} />;
+    return <ImportStudents onBack={() => {setShowImportStudents(false); updateBatchList()}} />;
   }
 
   return (

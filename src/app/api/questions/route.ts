@@ -7,7 +7,22 @@ import { authOptions } from '@/libs/auth';
 
 import prisma from '@/libs/prisma';
 
-export async function GET() {
+export async function GET(req: Request) {
+
+  const url = new URL(await req.url);
+  const qpId = url.searchParams.get('qpId');
+
+  if(qpId){
+    const questions = await prisma.questions.findMany({
+      where: {
+        qp_id: Number(qpId),
+        question_type: 'theory'
+      }
+    })
+
+    return NextResponse.json(questions);
+
+  }
 
   // const questions = await prisma.questions.findMany({
   // });
@@ -64,7 +79,7 @@ export async function POST(req: Request) {
 
   const reqData = await req.json();
 
-  const {pcId, questionType, questionLevel, questionName, questionExplanation, option1, option2, option, correctAnswer, questionMarks} = reqData;
+  const {sscId, qpId, pcId, questionType, questionLevel, questionName, questionExplanation, option1, option2, option, correctAnswer, questionMarks} = reqData;
   const session = await getServerSession(authOptions);
   const createdBy = Number(session?.user.id);
   const agency_id = Number(session?.user?.agency_id);
@@ -89,6 +104,8 @@ export async function POST(req: Request) {
     const result = await prisma.questions.create({
       data: {
         agency_id: agency_id,
+        ssc_id: sscId,
+        qp_id: qpId,
         language_id: 1,
         question_type: questionType,
         question_level: questionLevel,

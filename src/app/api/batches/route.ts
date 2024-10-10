@@ -7,27 +7,36 @@ import { authOptions } from '@/libs/auth';
 
 import prisma from '@/libs/prisma';
 
-export async function GET() {
+export async function GET(req: Request) {
+
+  const url = new URL(await req.url);
+  const qpId = url.searchParams.get('qpId');
 
   const session = await getServerSession(authOptions);
   const agencyId = Number(session?.user?.agency_id);
 
+  const whereCondition = {
+    agency_id: agencyId,
+    ...(qpId ? { qp_id: Number(qpId) } : {}),
+  };
+
   const batches = await prisma.batches.findMany({
-    where: {
-      agency_id: agencyId
-    },
+    where: whereCondition,
     select: {
       id: true,
       batch_name: true,
       batch_size: true,
       assessment_start_datetime: true,
       assessment_end_datetime: true,
+      assessor_id: true,
       qualification_pack: {
         select: {
+          id: true,
           qualification_pack_id: true,
           qualification_pack_name: true,
           ssc: {
             select: {
+              id: true,
               ssc_code: true
             }
           }
@@ -46,6 +55,7 @@ export async function GET() {
       },
       assessor: {
         select: {
+          id: true,
           first_name: true,
           last_name: true
         }

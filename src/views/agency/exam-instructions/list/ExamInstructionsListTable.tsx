@@ -38,7 +38,7 @@ import {
 
 import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 
-import type { RankingInfo } from '@tanstack/match-sorter-utils'
+// import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 import type { exam_instructions } from '@prisma/client';
 
@@ -64,14 +64,14 @@ import type { SSCType } from '@/types/sectorskills/sscType'
 import AddEditExamInstructionsDrawer from './AddEditExamInstructionsDrawer';
 
 
-declare module '@tanstack/table-core' {
-  interface FilterFns {
-    fuzzy: FilterFn<unknown>
-  }
-  interface FilterMeta {
-    itemRank: RankingInfo
-  }
-}
+// declare module '@tanstack/table-core' {
+//   interface FilterFns {
+//     fuzzy: FilterFn<unknown>
+//   }
+//   interface FilterMeta {
+//     itemRank: RankingInfo
+//   }
+// }
 
 type ExamInstructionTypeWithAction = exam_instructions & {
   ssc: SSCType
@@ -333,7 +333,7 @@ const ExamInstructionsListTable = ({ tableData, updateExamInstructionsList }: { 
             onChange={e => table.setPageSize(Number(e.target.value))}
 
             // className='is-[80px]'
-            
+
           >
             {/* <MenuItem value='10'>10</MenuItem> */}
             <MenuItem value='25'>25</MenuItem>

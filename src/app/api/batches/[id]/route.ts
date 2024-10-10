@@ -25,7 +25,8 @@ export async function GET(
       agency_id: agencyId
     },
     include: {
-      qualification_pack: true
+      qualification_pack: true,
+      students: true
     }
   })
 
@@ -54,7 +55,7 @@ export async function POST(
   const session = await getServerSession(authOptions);
 
   // const createdBy = Number(session?.user.id);
-  
+
   const agencyId = Number(session?.user?.agency_id);
 
   const batchExist = await prisma.batches.findUnique({

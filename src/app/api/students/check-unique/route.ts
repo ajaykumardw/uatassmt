@@ -10,14 +10,14 @@ import prisma from '@/libs/prisma';
 export async function GET(req: Request) {
 
   const url = new URL(await req.url);
-  const id = url.searchParams.get('enrollId');
+  const candidateId = url.searchParams.get('candidateId');
 
   // const session = await getServerSession(authOptions);
   // const agencyId = Number(session?.user?.agency_id);
 
   const uniqueEnrollmentNo = await prisma.students.findUnique({
     where: {
-      enrollment_no: Number(id)
+      candidate_id: candidateId?.toString()
     },
     select: {
       id: true

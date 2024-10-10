@@ -71,6 +71,86 @@ import { authOptions } from '@/libs/auth';
 //   return NextResponse.json({"folder": uploadDir, "formData": formData, "name": name, "image": { "type": (body.image as File).type}})
 // }
 
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  const agencyId = Number(session?.user?.agency_id);
+
+  const assessors = await prisma.users.findMany({
+    where: {
+      master_id: agencyId,
+      role_id: 1
+    },
+    include: {
+      user_additional_data: true
+    }
+  })
+
+  // const batches = await prisma.batches.findMany({
+  //   where: {
+  //     agency_id: agencyId
+  //   },
+  //   select: {
+  //     id: true,
+  //     batch_name: true,
+  //     batch_size: true,
+  //     assessment_start_datetime: true,
+  //     assessment_end_datetime: true,
+  //     assessor_id: true,
+  //     qualification_pack: {
+  //       select: {
+  //         qualification_pack_id: true,
+  //         qualification_pack_name: true,
+  //         ssc: {
+  //           select: {
+  //             ssc_code: true
+  //           }
+  //         }
+  //       }
+  //     },
+  //     training_partner: {
+  //       select: {
+  //         first_name: true,
+  //         last_name: true
+  //       }
+  //     },
+  //     training_center: {
+  //       select: {
+  //         user_name: true
+  //       }
+  //     },
+  //     assessor: {
+  //       select: {
+  //         id: true,
+  //         first_name: true,
+  //         last_name: true
+  //       }
+  //     },
+  //     scheme: {
+  //       select: {
+  //         id: true,
+  //         scheme_name: true,
+  //         scheme_code: true
+  //       }
+  //     },
+  //     sub_scheme: {
+  //       select:{
+  //         id: true,
+  //         scheme_name: true,
+  //         scheme_code: true
+  //       }
+  //     },
+  //     students: true
+  //   },
+  //   orderBy: {
+  //     assessment_start_datetime: "desc"
+  //   }
+  // });
+
+  // console.log(batches)
+
+  return NextResponse.json(assessors);
+}
+
 
 export async function POST(req: NextRequest) {
 

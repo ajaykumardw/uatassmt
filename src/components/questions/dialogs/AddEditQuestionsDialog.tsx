@@ -74,10 +74,15 @@ import type { PCType } from '@/types/pc/pcType'
 //   vivaCutoffMarks?: string
 //   overallCutoffMarks?: string
 // }
-type AddQPDialogData = InferInput<typeof schema>
+type AddQPDialogData = InferInput<typeof schema> & {
+  sscId?: number
+  qpId?: number
+}
 
 type AddQPDialogProps = {
   open: boolean
+  sscID?: number
+  qpID?: number
   nosId?: number
   pcID?: number
   questionId?: number
@@ -217,7 +222,7 @@ const schema = object(
 //   }
 // ]
 
-const AddEditQuestionsDialog = ({ open, pcID, allPC, questionId, handleClose, updateQuestionsList, data }: AddQPDialogProps) => {
+const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, handleClose, updateQuestionsList, data }: AddQPDialogProps) => {
 
   // States
   const [userData, setUserData] = useState<AddQPDialogProps['data']>(data || initialData)
@@ -307,6 +312,8 @@ const AddEditQuestionsDialog = ({ open, pcID, allPC, questionId, handleClose, up
     // data.isWeightedAvailable = isWeightedAvailable;
 
     data.pcId = pcID
+    data.sscId = sscID
+    data.qpId = qpID
 
     setLoading(true)
 

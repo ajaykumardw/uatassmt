@@ -90,12 +90,17 @@
     "qps": "Qualification Packs",
     "nosPC": "NOS & PC",
     "questions": "Questions",
+    "theory": "Theory",
+    "practical": "Practical",
+    "viva": "Viva",
     "users": "Users",
     "batches": "Batches",
     "unassignedBatches": "Unassigned Batches",
     "allocatedBatches": "Allocated Batches",
 
     "tc": "Training Centers",
-    "examInstructions": "Exam Instructions"
+    "examInstructions": "Exam Instructions",
+    "students": "Students",
+    "examSets": "Exam Sets"
   }
 }

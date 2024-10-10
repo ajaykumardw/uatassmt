@@ -137,5 +137,43 @@ export const authOptions: NextAuthOptions = {
 
       return session
     }
+  },
+
+  events: {
+
+    async signIn(message) {
+
+      const userId = Number(message.user.id);
+      const action = 'login';
+
+      if(userId){
+        await fetch(`${process.env.API_URL}/log-sessions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ "userId": userId, "action": action })
+        })
+      }
+
+    },
+
+    async signOut(message) {
+
+      const userId = Number(message.token.id);
+      const action = 'logout';
+
+      if(userId){
+
+        await fetch(`${process.env.API_URL}/log-sessions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ "userId": userId, "action": action })
+        })
+
+      }
+    }
   }
 }

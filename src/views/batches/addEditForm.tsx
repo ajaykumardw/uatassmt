@@ -101,8 +101,8 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
       trainingPartner: data?.training_partner_id.toString() || '',
       trainingCenter: data?.training_centre_id.toString() || '',
       loginRestrictCount: '3',
-      assessmentStartDate: data?.assessment_start_datetime ? new Date(data?.assessment_start_datetime) : null  || undefined,
-      assessmentEndDate: data?.assessment_end_datetime ? new Date(data?.assessment_end_datetime) : null || undefined,
+      assessmentStartDate: (data?.assessment_start_datetime ? new Date(data?.assessment_start_datetime) : null)  || undefined,
+      assessmentEndDate: (data?.assessment_end_datetime ? new Date(data?.assessment_end_datetime) : null) || undefined,
       captureImage: false,
       captureImageInSeconds: data?.capture_image_in_seconds?.toString() || '',
       modeOfAssessment: data?.assessment_mode?.toString() || '',
@@ -228,7 +228,7 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
     }
 
     setLoading(false);
-    
+
     handleReset();
   }
 

@@ -124,3 +124,73 @@ code {
   background-color: rgb(var(--mui-palette-info-mainChannel) / 0.08);
   border: 0;
 }
+
+table tbody tr:hover {
+  background-color: var(--mui-palette-action-hover);
+}
+
+
+@property --fill {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 0%;
+}
+
+.custom-circle:hover {
+  --fill: 100%;
+}
+
+.custom-circle::after {
+  content: "";
+  border-radius: inherit;
+  position: absolute;
+  background: conic-gradient(var(--mui-palette-primary-main) var(--fill), transparent var(--fill));
+  transition: --fill 0.5s ease-in-out;
+  inset: -3px;
+  z-index: -1;
+  border-radius: 50%;
+}
+
+.custom-circle {
+  position: relative;
+}
+
+.custom-bg{
+  background: linear-gradient(-45deg,#ffa63d,#ff3d77,#338aff,#3cf0c5);
+  background-size: 600%;
+  animation: animate_bg 12s linear infinite;
+  color: hsla(0,0%,100%,.9);
+  position: relative;
+  &:not(:hover)::before{
+    opacity: 0.8;
+  }
+
+  &::before{
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    filter: blur(12px);
+    opacity: 0;
+    color: inherit;
+    transition: opacity .2s ease-in-out;
+    background: inherit;
+    background-size: inherit;
+    animation: animate_bg 12s linear infinite;
+  }
+}
+
+
+@keyframes animate_bg {
+  0% {
+      background-position: 0 50%
+  }
+
+  50% {
+      background-position: 100% 50%
+  }
+
+  to {
+      background-position: 0 50%
+  }
+}

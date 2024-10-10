@@ -13,14 +13,18 @@ import prisma from '@/libs/prisma';
 export async function GET() {
 
   const session = await getServerSession(authOptions);
-  const agency_id = Number(session?.user?.agency_id)
+  const agency_id = Number(session?.user?.agency_id) || 412
 
   const sectorSkills = await prisma.sector_skill_councils.findMany({
     where: {
       agency_id: agency_id
     },
     include: {
-      qualification_packs: true,
+      qualification_packs: {
+        include: {
+          nos: true
+        }
+      },
       nos: true
     },
     orderBy:{
@@ -36,6 +40,7 @@ export async function POST(req: Request) {
   const hashPassword = await hash(password, 10);
 
   const session = await getServerSession(authOptions);
+  const agencyId = Number(session?.user?.agency_id);
   const createdBy = Number(session?.user.id);
 
   const result = await prisma.sector_skill_councils.create({
@@ -45,7 +50,8 @@ export async function POST(req: Request) {
       ssc_username: username,
       ssc_pwd: hashPassword,
       status: Number(status),
-      agency_id: createdBy
+      agency_id: agencyId,
+      created_by: createdBy
     }
   });
 
