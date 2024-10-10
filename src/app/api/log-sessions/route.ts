@@ -37,8 +37,6 @@ export async function POST(req: NextRequest) {
     const session = await prisma.log_sessions.findFirst({
       where: {
         user_id: userId,
-        ip_address: req.headers.get('x-forwarded-for') || req.ip,
-        user_agent: req.headers.get('user-agent'),
         logout_at: null
       },
       select: {
@@ -54,6 +52,8 @@ export async function POST(req: NextRequest) {
         },
         data: {
           status: 'OUT',
+          ip_address: req.headers.get('x-forwarded-for') || req.ip,
+          user_agent: req.headers.get('user-agent'),
           logout_at: formateTimeZone(new Date())
         }
       })
