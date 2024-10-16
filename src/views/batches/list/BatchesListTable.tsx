@@ -68,6 +68,7 @@ import { formatDate } from '@/utils/formateDate'
 import type { QPType } from '@/types/qualification-pack/qpType'
 
 import ImportStudents from './ImportStudents'
+import { MenuProps, TableRowLimit } from '@/configs/customDataConfig'
 
 
 // declare module '@tanstack/table-core' {
@@ -436,7 +437,7 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: batches[
     },
     initialState: {
       pagination: {
-        pageSize: 10
+        pageSize: TableRowLimit.pageSize
       }
     },
     enableRowSelection: true, //enable row selection for all rows
@@ -468,10 +469,11 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: batches[
             value={table.getState().pagination.pageSize}
             onChange={e => table.setPageSize(Number(e.target.value))}
             className='is-[70px]'
+            SelectProps={{ MenuProps }}
           >
-            <MenuItem value='10'>10</MenuItem>
-            <MenuItem value='25'>25</MenuItem>
-            <MenuItem value='50'>50</MenuItem>
+            {TableRowLimit && TableRowLimit.rowLimit.length > 0 && TableRowLimit.rowLimit.map((limit, index) => (
+              <MenuItem key={index} value={limit}>{limit}</MenuItem>
+            ))}
           </CustomTextField>
           <div className='flex flex-col sm:flex-row is-full sm:is-auto items-start sm:items-center gap-4'>
             <DebouncedInput

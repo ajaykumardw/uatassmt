@@ -11,6 +11,7 @@ import Divider from '@mui/material/Divider'
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
+import { MenuProps } from '@/configs/customDataConfig'
 
 type Props = {
   open: boolean
@@ -121,6 +122,7 @@ const AddUserDrawer = ({ open, handleClose }: Props) => {
             onChange={e => setFormData({ ...formData, country: e.target.value })}
             label='Select Country'
             inputProps={{ placeholder: 'Country' }}
+            SelectProps={{ MenuProps }}
           >
             <MenuItem value='UK'>UK</MenuItem>
             <MenuItem value='USA'>USA</MenuItem>
@@ -142,6 +144,7 @@ const AddUserDrawer = ({ open, handleClose }: Props) => {
             value={formData.role}
             onChange={e => setFormData({ ...formData, role: e.target.value })}
             label='Select Role'
+            SelectProps={{ MenuProps }}
           >
             <MenuItem value='admin'>Admin</MenuItem>
             <MenuItem value='author'>Author</MenuItem>
@@ -157,6 +160,7 @@ const AddUserDrawer = ({ open, handleClose }: Props) => {
             onChange={e => setFormData({ ...formData, plan: e.target.value })}
             label='Select Plan'
             inputProps={{ placeholder: 'Select Plan' }}
+            SelectProps={{ MenuProps }}
           >
             <MenuItem value='basic'>Basic</MenuItem>
             <MenuItem value='company'>Company</MenuItem>
@@ -170,6 +174,7 @@ const AddUserDrawer = ({ open, handleClose }: Props) => {
             value={formData.status}
             onChange={e => setFormData({ ...formData, status: e.target.value })}
             label='Select Status'
+            SelectProps={{ MenuProps }}
           >
             <MenuItem value='pending'>Pending</MenuItem>
             <MenuItem value='active'>Active</MenuItem>

@@ -13,6 +13,7 @@ import type { users } from '@prisma/client'
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
+import { MenuProps } from '@/configs/customDataConfig'
 
 const TableFilters = ({ setData, tableData }: { setData: any; tableData?: users[] }) => {
   // States
@@ -47,7 +48,7 @@ const TableFilters = ({ setData, tableData }: { setData: any; tableData?: users[
             id='select-role'
             value={role}
             onChange={e => setRole(parseInt(e.target.value))}
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value='-1'>Select Role</MenuItem>
             <MenuItem value='1'>Assessor</MenuItem>
@@ -77,7 +78,7 @@ const TableFilters = ({ setData, tableData }: { setData: any; tableData?: users[
             id='select-status'
             value={status}
             onChange={e => setStatus(parseInt(e.target.value))}
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value='-1'>Select Status</MenuItem>
             <MenuItem value='1'>Active</MenuItem>

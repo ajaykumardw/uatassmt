@@ -19,6 +19,14 @@ export type CardStatsSquareProps = {
   statsTitle: string
 }
 
+export type CardStatsHorizontalWithBorderProps = {
+  title: string
+  stats: number
+  trendNumber: number
+  avatarIcon: string
+  color?: ThemeColor
+}
+
 export type CardStatsHorizontalProps = {
   title: string
   stats: string

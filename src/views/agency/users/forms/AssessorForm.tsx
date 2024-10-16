@@ -95,6 +95,7 @@ const schema = object(
     phoneNumber: pipe(string(), trim() , minLength(1, 'Phone Number is required') , regex(/^[0-9]+$/, 'Phone Number must contain only numbers') , minLength(10, 'Phone Number must be 10 digits') , maxLength(10, 'Phone Number must be 10 digits')),
     aadhaarNumber: pipe(string(), trim() , minLength(1, 'Aadhaar Number is required') , regex(/^[0-9]+$/, 'Aadhaar Number must contain only numbers') , minLength(12, 'Aadhaar Number must be 12 digits') , maxLength(12, 'Aadhaar Number must be 12 digits')),
     panCardNumber: optional(pipe(string(), trim() , check((value) => !value || value.length === 10, 'Pan Card Number must be 10 characters') ,)),
+    toa_nomination: optional(pipe(string(), trim())),
     lastQualification: pipe(string(), trim() , minLength(1, 'This field is required')),
     bankName: optional(pipe(string(), trim() ,)),
     accountNumber: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]+(?:\.[0-9]+)?$/.test(value), 'Account number must contain only numbers') , maxLength(17, 'Max length is 17 digits'))),
@@ -123,6 +124,7 @@ const initialData = {
   phoneNumber: '',
   aadhaarNumber: '',
   panCardNumber: '',
+  toa_nomination: '',
   lastQualification: '',
   bankName: '',
   accountNumber: '',
@@ -294,6 +296,7 @@ const AssessorForm = () => {
     formData.append("phoneNumber", data.phoneNumber);
     formData.append("aadhaarNumber", data.aadhaarNumber);
     formData.append("panCardNumber", data.panCardNumber || "");
+    formData.append("toa_nomination", data.toa_nomination || "");
     formData.append("lastQualification", data.lastQualification);
     formData.append("bankName", data.bankName || "");
     formData.append("accountNumber", data.accountNumber || "");
@@ -944,6 +947,25 @@ const AssessorForm = () => {
                       {...field}
                       {...(errors.panCardNumber && { error: true, helperText: errors.panCardNumber.message })}
                     />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  control={control}
+                  name='toa_nomination'
+                  render={({ field }) => (
+                    <CustomTextField
+                      select
+                      fullWidth
+                      label='TOA Nomination Status'
+                      {...field}
+                      {...(errors.city && { error: true, helperText: errors.city.message })}
+                    >
+                      <MenuItem value=''>Select TOA Nomination</MenuItem>
+                      <MenuItem value='1'>Yes</MenuItem>
+                      <MenuItem value='0'>No</MenuItem>
+                    </CustomTextField>
                   )}
                 />
               </Grid>

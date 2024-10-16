@@ -56,6 +56,7 @@ import { getLocalizedUrl } from '@/utils/i18n'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
+import { MenuProps } from '@/configs/customDataConfig'
 
 // declare module '@tanstack/table-core' {
 //   interface FilterFns {
@@ -377,7 +378,7 @@ const InvoiceListTable = ({ invoiceData }: { invoiceData: InvoiceType[] }) => {
             value={status}
             onChange={e => setStatus(e.target.value)}
             className='is-[160px]'
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value=''>Invoice Status</MenuItem>
             <MenuItem value='downloaded'>Downloaded</MenuItem>

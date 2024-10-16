@@ -14,6 +14,7 @@ import type { SSCType } from '@/types/sectorskills/sscType'
 // Component Imports
 
 import CustomTextField from '@core/components/mui/TextField'
+import { MenuProps } from '@/configs/customDataConfig'
 
 
 const TableFilters = ({ setData, tableData }: { setData: any; tableData?: NOSType[] }) => {
@@ -97,7 +98,7 @@ const TableFilters = ({ setData, tableData }: { setData: any; tableData?: NOSTyp
             id='select-ssc'
             value={ssc}
             onChange={e => setSSC(parseInt(e.target.value))}
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value='-1'>Select SSC</MenuItem>
             {sscData.map((ssc, index) => (
@@ -114,7 +115,7 @@ const TableFilters = ({ setData, tableData }: { setData: any; tableData?: NOSTyp
             id='select-status'
             value={status}
             onChange={e => setStatus(parseInt(e.target.value))}
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value='-1'>Select Status</MenuItem>
             <MenuItem value='1'>Active</MenuItem>

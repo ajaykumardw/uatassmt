@@ -12,6 +12,7 @@ import type { UsersType } from '@/types/super-admin/agency/usersType'
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
+import { MenuProps } from '@/configs/customDataConfig'
 
 const TableFilters = ({ setData, tableData }: { setData: any; tableData?: UsersType[] }) => {
   // States
@@ -21,7 +22,7 @@ const TableFilters = ({ setData, tableData }: { setData: any; tableData?: UsersT
 
   useEffect(() => {
     const filteredData = tableData?.filter(user => {
-      
+
       // if (role && user.role !== role) return false
       if (plan && user.currentPlan !== plan) return false
 
@@ -60,7 +61,7 @@ const TableFilters = ({ setData, tableData }: { setData: any; tableData?: UsersT
             id='select-plan'
             value={plan}
             onChange={e => setPlan(e.target.value)}
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value=''>Select Plan</MenuItem>
             <MenuItem value='basic'>Basic</MenuItem>
@@ -76,7 +77,7 @@ const TableFilters = ({ setData, tableData }: { setData: any; tableData?: UsersT
             id='select-status'
             value={status}
             onChange={e => setStatus(parseInt(e.target.value))}
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value='-1'>Select Status</MenuItem>
             <MenuItem value='2'>Pending</MenuItem>

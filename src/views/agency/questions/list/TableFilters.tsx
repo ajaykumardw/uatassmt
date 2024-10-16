@@ -16,6 +16,7 @@ import type { PCType } from '@/types/pc/pcType';
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField';
 import { removeDuplicates } from '@/utils/removeDuplicates';
+import { MenuProps } from '@/configs/customDataConfig';
 
 // Utility function to remove duplicates based on a specific key
 // const removeDuplicates = <T, K extends keyof T>(data: T[], key: K): T[] => {
@@ -212,7 +213,7 @@ const TableFilters = ({ setSSCID, setQPID, setPCID, setAllPC, setData, tableData
             id='select-ssc'
             value={ssc}
             onChange={(e) => handleSSCChange(e.target.value)}
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value='-1'>Select SSC</MenuItem>
             {sscData.map((ssc, index) => (
@@ -229,7 +230,7 @@ const TableFilters = ({ setSSCID, setQPID, setPCID, setAllPC, setData, tableData
             id='select-qp'
             value={qp}
             onChange={(e) => handleQPChange(e.target.value)}
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value='-1'>Select Qualification Pack</MenuItem>
             {qpData.length > 0 ? (
@@ -250,7 +251,7 @@ const TableFilters = ({ setSSCID, setQPID, setPCID, setAllPC, setData, tableData
             id='select-nos'
             value={nos}
             onChange={(e) => handleNOSChange(e.target.value)}
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value='-1'>Select NOS</MenuItem>
             {nosData.length > 0 ? (
@@ -274,7 +275,7 @@ const TableFilters = ({ setSSCID, setQPID, setPCID, setAllPC, setData, tableData
               setPC(parseInt(e.target.value));
               setPCID(e.target.value !== '-1' ? e.target.value : '');
             }}
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value='-1'>Select PC</MenuItem>
             {pcData.length > 0 ? (

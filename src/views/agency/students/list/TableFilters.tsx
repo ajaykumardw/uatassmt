@@ -21,6 +21,7 @@ import type { SSCType } from '@/types/sectorskills/sscType'
 import type { QPType } from '@/types/qualification-pack/qpType'
 
 import { removeDuplicates } from '@/utils/removeDuplicates'
+import { MenuProps } from '@/configs/customDataConfig'
 
 const TableFilters = ({ setData, onUpdateStudent }: { setData: any, onUpdateStudent: any }) => {
   // States
@@ -270,7 +271,7 @@ const TableFilters = ({ setData, onUpdateStudent }: { setData: any, onUpdateStud
             id='select-ssc'
             value={sscId}
             onChange={e => handleSSCChange(e.target.value)}
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value='-1'>Select SSC</MenuItem>
             {sscData.map((ssc, index) => (
@@ -287,7 +288,7 @@ const TableFilters = ({ setData, onUpdateStudent }: { setData: any, onUpdateStud
             id='select-qp'
             value={qpId}
             onChange={e => handleQPChange(e.target.value)}
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value='-1'>Select Qualification Pack</MenuItem>
             {qpData.length > 0 ? (
@@ -308,7 +309,7 @@ const TableFilters = ({ setData, onUpdateStudent }: { setData: any, onUpdateStud
             id='select-batch'
             value={batchId}
             onChange={e => handleBatchChange(e.target.value)}
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value='-1'>Select Batch</MenuItem>
             {batchData.length > 0 ? (
@@ -329,7 +330,7 @@ const TableFilters = ({ setData, onUpdateStudent }: { setData: any, onUpdateStud
             id='select-search'
             value={searchBy}
             onChange={e => {setSearchBy(e.target.value); setSearchValue(''); setError('')}}
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value=''>Select Search By</MenuItem>
             <MenuItem value='candidate_id'>Candidate ID</MenuItem>

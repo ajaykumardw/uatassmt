@@ -11,6 +11,7 @@ import type { UsersType } from '@/types/apps/userTypes'
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
+import { MenuProps } from '@/configs/customDataConfig'
 
 const TableFilters = ({ setData, tableData }: { setData: any; tableData?: UsersType[] }) => {
   // States
@@ -40,7 +41,7 @@ const TableFilters = ({ setData, tableData }: { setData: any; tableData?: UsersT
             id='select-role'
             value={role}
             onChange={e => setRole(e.target.value)}
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value=''>Select Role</MenuItem>
             <MenuItem value='admin'>Admin</MenuItem>
@@ -57,7 +58,7 @@ const TableFilters = ({ setData, tableData }: { setData: any; tableData?: UsersT
             id='select-plan'
             value={plan}
             onChange={e => setPlan(e.target.value)}
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value=''>Select Plan</MenuItem>
             <MenuItem value='basic'>Basic</MenuItem>
@@ -73,7 +74,7 @@ const TableFilters = ({ setData, tableData }: { setData: any; tableData?: UsersT
             id='select-status'
             value={status}
             onChange={e => setStatus(e.target.value)}
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value=''>Select Status</MenuItem>
             <MenuItem value='pending'>Pending</MenuItem>

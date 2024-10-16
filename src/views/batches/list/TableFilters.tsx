@@ -17,6 +17,7 @@ import { format } from 'date-fns'
 import CustomTextField from '@core/components/mui/TextField'
 
 import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
+import { MenuProps } from '@/configs/customDataConfig'
 
 const TableFilters = ({ setData, tableData }: { setData: any; tableData?: batches[] }) => {
   // States
@@ -98,7 +99,7 @@ const TableFilters = ({ setData, tableData }: { setData: any; tableData?: batche
             label='Select Status'
             value={status}
             onChange={e => setStatus(parseInt(e.target.value))}
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value='-1'>All</MenuItem>
             <MenuItem value='1'>Active</MenuItem>

@@ -14,6 +14,7 @@ import Divider from '@mui/material/Divider'
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
+import { MenuProps } from '@/configs/customDataConfig'
 
 type Props = {
   open: boolean
@@ -114,6 +115,7 @@ const AddCustomerDrawer = ({ open, setOpen, onFormSubmit }: Props) => {
             variant='outlined'
             value={data?.country?.toLowerCase().replace(/\s+/g, '-') || ''}
             onChange={e => setData({ ...data, country: e.target.value })}
+            SelectProps={{ MenuProps }}
           >
             {countries.map((item, index) => (
               <MenuItem key={index} value={item.toLowerCase().replace(/\s+/g, '-')}>

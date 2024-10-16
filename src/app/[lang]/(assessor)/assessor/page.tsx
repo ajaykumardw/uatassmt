@@ -7,6 +7,8 @@ import Grid from '@mui/material/Grid'
 // import CardStatVertical from '@/components/card-statistics/Vertical'
 // import BarChartRevenueGrowth from '@views/dashboards/crm/BarChartRevenueGrowth'
 
+import { getServerSession } from 'next-auth'
+
 import AssessorReports from '@/views/dashboards/assessor/AssessorReports'
 
 // import EarningReportsWithTabs from '@views/dashboards/crm/EarningReportsWithTabs'
@@ -22,15 +24,21 @@ import { getServerMode } from '@core/utils/serverHelpers'
 
 import prisma from '@/libs/prisma'
 
-const batches = await prisma.batches.findMany({
-  where: {
-    assessor_id: 423
-  }
-});
+
+import { authOptions } from '@/libs/auth'
 
 
-const AssessorDashboard = () => {
-  
+
+const AssessorDashboard = async () => {
+
+  const session = await getServerSession(authOptions);
+
+  const batches = await prisma.batches.findMany({
+    where: {
+      assessor_id: Number(session?.user.id)
+    }
+  });
+
   // Vars
   const serverMode = getServerMode()
 

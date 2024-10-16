@@ -18,6 +18,7 @@ import CustomTextField from '@core/components/mui/TextField'
 
 // Styled Component Imports
 import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
+import { MenuProps } from '@/configs/customDataConfig'
 
 type Props = {
   open: boolean
@@ -102,6 +103,7 @@ const AddPaymentDrawer = ({ open, handleClose }: Props) => {
             id='payment-method-select'
             value={formData.paymentMethod}
             onChange={e => setFormData({ ...formData, paymentMethod: e.target.value as string })}
+            SelectProps={{ MenuProps }}
           >
             <MenuItem value='select-method' disabled>
               Select Payment Method

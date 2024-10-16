@@ -12,6 +12,7 @@ import MenuItem from '@mui/material/MenuItem'
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
 import type { SSCType } from '@/types/sectorskills/sscType'
+import { MenuProps } from '@/configs/customDataConfig'
 
 const TableFilters = ({ setData, tableData }: { setData: any; tableData?: SSCType[] }) => {
   // States
@@ -74,7 +75,7 @@ const TableFilters = ({ setData, tableData }: { setData: any; tableData?: SSCTyp
             id='select-status'
             value={status}
             onChange={e => setStatus(parseInt(e.target.value))}
-            SelectProps={{ displayEmpty: true }}
+            SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value='-1'>Select Status</MenuItem>
             <MenuItem value='1'>Active</MenuItem>

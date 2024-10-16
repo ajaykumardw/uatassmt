@@ -62,6 +62,7 @@ import tableStyles from '@core/styles/table.module.css'
 import type { SSCType } from '@/types/sectorskills/sscType'
 
 import AddEditExamInstructionsDrawer from './AddEditExamInstructionsDrawer';
+import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
 
 
 // declare module '@tanstack/table-core' {
@@ -303,7 +304,7 @@ const ExamInstructionsListTable = ({ tableData, updateExamInstructionsList }: { 
     },
     initialState: {
       pagination: {
-        pageSize: 25
+        pageSize: TableRowLimit.pageSize
       }
     },
     enableRowSelection: true, //enable row selection for all rows
@@ -331,14 +332,14 @@ const ExamInstructionsListTable = ({ tableData, updateExamInstructionsList }: { 
             select
             value={table.getState().pagination.pageSize}
             onChange={e => table.setPageSize(Number(e.target.value))}
+            SelectProps={{ MenuProps }}
 
             // className='is-[80px]'
 
           >
-            {/* <MenuItem value='10'>10</MenuItem> */}
-            <MenuItem value='25'>25</MenuItem>
-            <MenuItem value='50'>50</MenuItem>
-            <MenuItem value='100'>100</MenuItem>
+            {TableRowLimit && TableRowLimit.rowLimit.length > 0 && TableRowLimit.rowLimit.map((limit, index) => (
+              <MenuItem key={index} value={limit}>{limit}</MenuItem>
+            ))}
           </CustomTextField>
           <div className='flex flex-col sm:flex-row is-full sm:is-auto items-start sm:items-center gap-4'>
             <DebouncedInput

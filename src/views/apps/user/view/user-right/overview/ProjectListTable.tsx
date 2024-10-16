@@ -41,6 +41,7 @@ import TablePaginationComponent from '@components/TablePaginationComponent'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
+import { MenuProps } from '@/configs/customDataConfig'
 
 type ProjectListDataType = {
   id: number
@@ -272,6 +273,7 @@ const ProjectListTable = () => {
             value={table.getState().pagination.pageSize}
             onChange={e => table.setPageSize(Number(e.target.value))}
             className='is-[70px]'
+            SelectProps={{ MenuProps }}
           >
             <MenuItem value='5'>5</MenuItem>
             <MenuItem value='7'>7</MenuItem>

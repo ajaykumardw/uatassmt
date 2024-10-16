@@ -101,6 +101,7 @@
     "tc": "Training Centers",
     "examInstructions": "Exam Instructions",
     "students": "Students",
-    "examSets": "Exam Sets"
+    "examSets": "Exam Sets",
+    "trainingResources": "Training Resources"
   }
 }
