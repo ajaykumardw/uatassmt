@@ -75,6 +75,7 @@ type FormDataType = InferInput<typeof schema>
 
 const schema = object(
   {
+    tpName: pipe(string(), trim() , minLength(1, 'This field is required')),
     username: pipe(string(), trim() , minLength(1, 'This field is required')),
     email: pipe(string(), trim() , minLength(1, 'This field is required')),
     password: pipe(string(), trim() , minLength(1, 'This field is required')),
@@ -84,7 +85,7 @@ const schema = object(
     city: optional(pipe(string(), trim() ,)),
     pinCode: optional(pipe(string(), trim() , minLength(6, "Pin Code length must be 6 digits") , check((value) => !value || /^[1-9][0-9]{5}$/.test(value), 'Pin Code must contain only numbers and or can\'t starts from 0') , maxLength(6, 'Pin Code length must be 6 digits') ,)),
     address: pipe(string(), trim() , minLength(1, 'First name is required.') , maxLength(191, 'The maximum length for First name is 191 characters.')),
-    phoneNumber: pipe(string(), trim() , minLength(1, 'Phone Number is required') , regex(/^[0-9]+$/, 'Phone Number must contain only numbers') , minLength(10, 'Phone Number must be 10 digits') , maxLength(10, 'Phone Number must be 10 digits')),
+    phoneNumber: optional(pipe(string(), trim() , minLength(1, 'Phone Number is required') , regex(/^[0-9]+$/, 'Phone Number must contain only numbers') , minLength(10, 'Phone Number must be 10 digits') , maxLength(10, 'Phone Number must be 10 digits'))),
     panCardNumber: optional(pipe(string(), trim() , check((value) => !value || value.length === 10, 'Pan Card Number must be 10 characters') ,)),
     gstNumber: pipe(string(), trim() , minLength(1, 'This field is required.') , regex(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][A-Z1-9]Z[0-9A-Z]$/, 'GST number must be 15 characters long and follow the correct format (e.g., 12ABCDE3456F1Z7).') ,)
   }
@@ -129,6 +130,7 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
   } = useForm<FormDataType>({
     resolver: valibotResolver(schema),
     values: {
+      tpName: data?.company_name || '',
       username: data?.user_name || '',
       email: data?.email || '',
       password: data?.password || '',
@@ -271,6 +273,23 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
             <Grid item xs={12} sm={6}>
               <Controller
                 control={control}
+                name='tpName'
+                rules={{ required: true }}
+                render={({field}) => (
+                  <CustomTextField
+                    {...field}
+                    fullWidth
+                    label='TP Name'
+                    required={true}
+                    {...(errors.email && { error: true, helperText: errors.email.message })}
+
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                control={control}
                 name='username'
                 rules={{ required: true }}
                 render={({field}) => (
@@ -348,7 +367,6 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
                 render={({ field }) => (
                   <CustomTextField
                     fullWidth
-                    required={true}
                     label='Phone Number'
                     {...field}
                     {...field}
@@ -412,7 +430,7 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
             </Grid>
             <Grid item xs={12}>
               <Typography variant='body2' className='font-medium'>
-                2. Personal Info
+                2. Spokesperson Info
               </Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -424,7 +442,7 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
                     {...field}
                     fullWidth
                     required={true}
-                    label='First Name'
+                    label='Spokesperson First Name'
                     {...(errors.firstName && { error: true, helperText: errors.firstName.message })}
                   />
                 )}
@@ -438,7 +456,7 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
                   <CustomTextField
                     {...field}
                     fullWidth
-                    label='Last Name'
+                    label='Spokesperson Last Name'
                     {...(errors.lastName && { error: true, helperText: errors.lastName.message })}
                   />
                 )}
@@ -452,7 +470,7 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
                   <CustomTextField
                     select
                     fullWidth
-                    label='State'
+                    label='Spokesperson State'
                     required={true}
                     {...field}
                     {...(errors.state && { error: true, helperText: errors.state.message })}
@@ -481,7 +499,7 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
                   <CustomTextField
                     select
                     fullWidth
-                    label='City'
+                    label='Spokesperson City'
                     required={true}
                     {...field}
                     {...(errors.city && { error: true, helperText: errors.city.message })}
@@ -509,7 +527,7 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
                   <CustomTextField
                     fullWidth
                     required={true}
-                    label='Pin code'
+                    label='Spokesperson Pin code'
                     {...field}
                     {...(errors.pinCode && { error: true, helperText: errors.pinCode.message })}
                   />
@@ -525,7 +543,7 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
                     fullWidth
                     required={true}
                     multiline
-                    label='Address'
+                    label='Spokesperson Address'
                     {...field}
                     {...(errors.address && { error: true, helperText: errors.address.message })}
                   />

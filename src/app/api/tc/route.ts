@@ -17,14 +17,14 @@ export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
 
   // const isMaster = session?.user.is_master;
-  
-  const createdBy = Number(id) || Number(session?.user.id);
+
+  const tpId = Number(id) || Number(session?.user.id);
 
   // const whereCondition = isMaster ? {master_id: createdBy, user_type: 'TC'} : {created_by: createdBy, user_type: 'TC'};
 
   const trainingCenters = await prisma.users.findMany({
     where: {
-      created_by: createdBy,
+      tp_id: tpId,
       user_type: "TC"
     },
     orderBy:{
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
 
   // return NextResponse.json({success: false, message: "User not created"}, {status: 500})
 
-  const { tcId, tcName, email, status, firstName, lastName, phoneNumber, state, city, address, pinCode } = await req.json()
+  const {tpId, tcId, tcName, email, status, firstName, lastName, phoneNumber, state, city, address, pinCode } = await req.json()
 
   // const hashPassword = await hash(password, 10)
   const userType = 'TC'
@@ -51,6 +51,7 @@ export async function POST(req: Request) {
 
   const result = await prisma.users.create({
     data: {
+      tp_id: Number(tpId) || createdBy,
       user_name: tcId.toString(),
       company_name: tcName,
       email: email as string,

@@ -288,6 +288,7 @@ model state {
 
 model users {
   id            Int          @id @default(autoincrement())
+  tp_id         Int?
   email         String       @unique(map: "email") @db.VarChar(100)
   user_name     String?      @unique(map: "user_name") @db.VarChar(60)
   password      String?      @db.VarChar(80)
@@ -296,7 +297,7 @@ model users {
   user_type     String       @default("U") @db.VarChar(2)
   first_name    String?      @db.VarChar(100)
   last_name     String?      @db.VarChar(100)
-  mobile_no     String       @db.VarChar(15)
+  mobile_no     String?       @db.VarChar(15)
   landline_no   String?      @db.VarChar(15)
   gender        users_gender @default(m)
   date_of_birth DateTime?    @db.Date

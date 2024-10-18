@@ -33,7 +33,7 @@ export async function POST(req: Request) {
 
   // return NextResponse.json({success: false, message: "User not created"}, {status: 500})
 
-  const { username, email, password, firstName, lastName, phoneNumber, state, city, pinCode, address, panCardNumber, gstNumber } = await req.json()
+  const { tpName, username, email, password, firstName, lastName, phoneNumber, state, city, pinCode, address, panCardNumber, gstNumber } = await req.json()
   const hashPassword = await hash(password, 10)
   const userType = 'U'
   const session = await getServerSession(authOptions)
@@ -42,6 +42,7 @@ export async function POST(req: Request) {
 
   const result = await prisma.users.create({
     data: {
+      company_name: tpName.toString(),
       user_name: username.toString(),
       email: email as string,
       password: hashPassword,

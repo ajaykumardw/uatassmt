@@ -35,10 +35,13 @@ import CustomTextField from '@core/components/mui/TextField'
 
 import type { UsersType } from '@/types/users/usersType'
 
-type AddEditTCDialogData = InferInput<typeof schema>
+type AddEditTCDialogData = InferInput<typeof schema> & {
+  tpId?: number
+}
 
 type AddEditTCDialogProps = {
   open: boolean
+  tpId?: number
   tcId?: number
 
   // setOpen: (open: boolean) => void
@@ -81,7 +84,7 @@ const schema = object(
   }
 )
 
-const AddEditTCForm = ({ open, tcId, handleClose, updateTCList, data, stateData, cities }: AddEditTCDialogProps) => {
+const AddEditTCForm = ({ open, tpId, tcId, handleClose, updateTCList, data, stateData, cities }: AddEditTCDialogProps) => {
 
   // States
   // const [userData, setUserData] = useState<AddEditTCDialogData>(initialData)
@@ -209,6 +212,7 @@ const AddEditTCForm = ({ open, tcId, handleClose, updateTCList, data, stateData,
     // e.preventDefault();
 
     setLoading(true)
+    data.tpId = tpId;
 
     if (tcId) {
 
@@ -391,7 +395,7 @@ const AddEditTCForm = ({ open, tcId, handleClose, updateTCList, data, stateData,
                     required={true}
                     {...field}
                     {...(errors.firstName && { error: true, helperText: errors.firstName.message })}
-                    label='TC SPOC First Name'
+                    label='TC Spokesperson First Name'
                   />
                 )}
               />
@@ -407,7 +411,7 @@ const AddEditTCForm = ({ open, tcId, handleClose, updateTCList, data, stateData,
                     required={true}
                     {...field}
                     {...(errors.lastName && { error: true, helperText: errors.lastName.message })}
-                    label='TC SPOC Last Name'
+                    label='TC Spokesperson Last Name'
                   />
                 )}
               />

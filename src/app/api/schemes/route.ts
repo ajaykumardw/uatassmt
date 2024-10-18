@@ -56,7 +56,7 @@ export async function POST(req: Request) {
         scheme_name: schemeName,
         scheme_code: schemeCode,
         parent_id: parentId || null,
-        status: status
+        status: Number(status)
       }
     });
 

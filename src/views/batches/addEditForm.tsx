@@ -17,7 +17,7 @@ import CardContent from '@mui/material/CardContent'
 // Third-party Imports
 import { toast } from 'react-toastify'
 
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 
 import type { SubmitHandler } from 'react-hook-form'
 
@@ -28,9 +28,11 @@ import { object, minLength, string, check, trim, maxLength, optional, date, bool
 import type { InferInput } from 'valibot'
 
 // Components Imports
-import { CircularProgress, FormControlLabel, Switch } from '@mui/material'
+import { CircularProgress, FormControlLabel, Switch, Tooltip } from '@mui/material'
 
-import type { batches, schemes, users } from '@prisma/client'
+import type { batches, schemes, state, users } from '@prisma/client'
+
+import CustomIconButton from '@/@core/components/mui/IconButton'
 
 import CustomTextField from '@core/components/mui/TextField'
 import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
@@ -43,9 +45,11 @@ import { getLocalizedUrl } from '@/utils/i18n'
 
 import type { Locale } from '@configs/i18n'
 
-import { ModeOfAssessment } from '@/configs/customDataConfig'
+import { MenuProps, ModeOfAssessment } from '@/configs/customDataConfig'
 
 import type { SchemesType } from '@/types/schemes/schemesType'
+import AddEditTCForm from '../training-partner/training-centers/list/AddEditTCForm'
+import AddEditSchemeDialog from '@/components/scheme/dialogs/AddEditSchemeDialog'
 
 type FormData = InferInput<typeof schema>
 
@@ -77,9 +81,17 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
   // States
   const [isCaptureImage, setIsCaptureImage] = useState(!!data?.capture_image_in_seconds || false)
   const [qpData, setQPData] = useState<QPType[]>([])
+  const [trainingPartnerData, setTPData] = useState<users[]>(tpData || []);
   const [tcData, setTCData] = useState<users[]>(trainingCenters || []);
   const [subSchemesData, setSubSchemesData] = useState<schemes[]>([]);
   const [loading, setLoading] = useState(false);
+  const [tpLoading, setTPLoading] = useState(false);
+  const [tcLoading, setTCLoading] = useState(false);
+  const [subSchemeLoading, setSubSchemeLoading] = useState(false);
+  const [addTCOpen, setAddTCOpen] = useState(false);
+  const [addSubSchemeOpen, setAddSubSchemeOpen] = useState(false);
+  const [stateData, setStateData] = useState<state[]>([]);
+
 
   // Hooks
   const {
@@ -108,6 +120,14 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
       modeOfAssessment: data?.assessment_mode?.toString() || '',
     }
   })
+
+  useEffect(() => {
+
+    if(tpData && tpData.length > 0){
+      setTPData(tpData)
+    }
+
+  },[tpData]);
 
   useEffect(() => {
 
@@ -301,348 +321,498 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
     }
   }
 
+  const handleReloadTP = async () => {
+
+    setTPLoading(true);
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/training-partner`);
+
+
+    if(res.ok){
+      setTPLoading(false);
+
+      const tpData = await res.json();
+
+      setTPData(tpData);
+
+    } else {
+
+      setTPLoading(false);
+
+    }
+
+    setTPLoading(false);
+
+  }
+
+  const handleReloadTC = async (tp: string) => {
+
+    setTCLoading(true);
+
+    const tpId = Number(tp);
+
+    const trainingCenters = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tc?tpId=${tpId}`).then(function (response) { return response.json() });
+
+    if (trainingCenters.length > 0) {
+
+      setTCData(trainingCenters)
+
+    } else {
+
+      setTCData([])
+
+    }
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/training-partner`);
+
+
+    if(res.ok){
+      setTCLoading(false);
+
+      const tpData = await res.json();
+
+      setTPData(tpData);
+
+    } else {
+
+      setTCLoading(false);
+
+    }
+
+    setTCLoading(false);
+
+  }
+
+  const handleReloadSubScheme = async (scheme: string) => {
+    setSubSchemeLoading(true)
+    handleSchemeChange(scheme);
+    setSubSchemeLoading(false);
+  }
+
+  const handleAddTC = async () => {
+
+    try {
+
+      const states = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/state`, {method: 'POST', headers: {'Content-Type': 'application/json', }}).then(function (response) { return response.json() });
+
+      if (states.length > 0) {
+
+        setStateData(states)
+
+      } else {
+
+        setStateData([])
+
+      }
+
+    } catch (error) {
+
+      console.error('Error fetching city data:', error);
+    }
+
+    setAddTCOpen(true)
+  }
+
+  const selectedScheme = useWatch({control, name: 'scheme'});
+  const selectedTP = useWatch({control, name: 'trainingPartner'});
+
   return (
-    <Card>
-      <CardHeader title={`${id ? 'Edit' : 'Create'} Batch`} />
-      <Divider />
-      <form onSubmit={handleSubmit(onSubmit)} autoComplete='off' method='POST'>
-        <CardContent>
-          <Grid container spacing={6}>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name='sscId'
-                control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <CustomTextField select required={true} fullWidth label='SSC' {...field}
-                    onChange={(e) => {
-                      field.onChange(e); // Ensure the field value gets updated in the form state
-                      handleSSCChange(e.target.value); // Call your custom onChange handler
-                    }}
-                    {...(errors.sscId && { error: true, helperText: errors.sscId.message })}
-                  >
-                    <MenuItem value=''>Select SSC</MenuItem>
-                    {sscData && sscData.length > 0 ? (
-                      sscData.map((ssc) =>(
-                        <MenuItem key={ssc.id.toString()} value={ssc.id.toString()}>{ssc.ssc_name}</MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem disabled>No SSC found</MenuItem>
-                    ) }
-                  </CustomTextField>
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name='qpId'
-                control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <CustomTextField select required={true} fullWidth label='Qualification Pack' {...field}
-                    {...(errors.qpId && { error: true, helperText: errors.qpId.message })}>
-                    <MenuItem value=''>Select Qualification Pack</MenuItem>
-                    {qpData && qpData.length > 0 ? (
-                      qpData.map((qualificationPack) => (
-                        <MenuItem key={qualificationPack.id.toString()} value={qualificationPack.id.toString()}>
-                          {qualificationPack.qualification_pack_name}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem disabled>No Qualification Pack found</MenuItem>
-                    )}
-                  </CustomTextField>
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name='batchName'
-                control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <CustomTextField
-                    {...field}
-                    fullWidth
-                    required={true}
-                    label='Batch Name'
-                    placeholder=''
-                    {...(errors.batchName && { error: true, helperText: errors.batchName.message })}
-                  />
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name='batchSize'
-                control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <CustomTextField
-                    {...field}
-                    fullWidth
-                    label='Batch Size'
-                    required={true}
-                    {...(errors.batchSize && { error: true, helperText: errors.batchSize.message })}
-                  />
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name='scheme'
-                control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <CustomTextField select required={true} fullWidth label='Scheme' {...field}
+    <>
+      <Card>
+        <CardHeader title={`${id ? 'Edit' : 'Create'} Batch`} />
+        <Divider />
+        <form onSubmit={handleSubmit(onSubmit)} autoComplete='off' method='POST'>
+          <CardContent>
+            <Grid container spacing={6}>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='sscId'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomTextField select SelectProps={{ MenuProps }} required={true} fullWidth label='SSC' {...field}
+                      onChange={(e) => {
+                        field.onChange(e); // Ensure the field value gets updated in the form state
+                        handleSSCChange(e.target.value); // Call your custom onChange handler
+                      }}
+                      {...(errors.sscId && { error: true, helperText: errors.sscId.message })}
+                    >
+                      <MenuItem value=''>Select SSC</MenuItem>
+                      {sscData && sscData.length > 0 ? (
+                        sscData.map((ssc) =>(
+                          <MenuItem key={ssc.id.toString()} value={ssc.id.toString()}>{ssc.ssc_name}</MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem disabled>No SSC found</MenuItem>
+                      ) }
+                    </CustomTextField>
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='qpId'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomTextField select SelectProps={{ MenuProps }} required={true} fullWidth label='Qualification Pack' {...field}
+                      {...(errors.qpId && { error: true, helperText: errors.qpId.message })}>
+                      <MenuItem value=''>Select Qualification Pack</MenuItem>
+                      {qpData && qpData.length > 0 ? (
+                        qpData.map((qualificationPack) => (
+                          <MenuItem key={qualificationPack.id.toString()} value={qualificationPack.id.toString()}>
+                            {qualificationPack.qualification_pack_name}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem disabled>No Qualification Pack found</MenuItem>
+                      )}
+                    </CustomTextField>
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='batchName'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomTextField
+                      {...field}
+                      fullWidth
+                      required={true}
+                      label='Batch Name'
+                      placeholder=''
+                      {...(errors.batchName && { error: true, helperText: errors.batchName.message })}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='batchSize'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomTextField
+                      {...field}
+                      fullWidth
+                      label='Batch Size'
+                      required={true}
+                      {...(errors.batchSize && { error: true, helperText: errors.batchSize.message })}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name='scheme'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomTextField select SelectProps={{ MenuProps }} required={true} fullWidth label='Scheme' {...field}
 
-                    onChange={(e) => {
-                      field.onChange(e); // Ensure the field value gets updated in the form state
-                      handleSchemeChange(e.target.value); // Call your custom onChange handler
-                    }}
+                      onChange={(e) => {
+                        field.onChange(e); // Ensure the field value gets updated in the form state
+                        handleSchemeChange(e.target.value); // Call your custom onChange handler
+                      }}
 
-                    {...(errors.scheme && { error: true, helperText: errors.scheme.message })}>
-                    <MenuItem value=''>Select Scheme</MenuItem>
-                    {schemesData && schemesData.length > 0 ? (
-                      schemesData.map((scheme) => (
-                        <MenuItem key={scheme.id.toString()} value={scheme.id.toString()}>
-                          {scheme.scheme_name}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem disabled>No scheme found</MenuItem>
-                    )}
-                  </CustomTextField>
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name='subScheme'
-                control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <CustomTextField
-                    select
-                    required={true}
-                    fullWidth
-                    label='Sub Scheme'
-                    {...field}
-                    {...(errors.subScheme && { error: true, helperText: errors.subScheme.message })}
-                  >
-                    <MenuItem value=''>Select Sub Scheme</MenuItem>
-                    {subSchemesData && subSchemesData.length > 0 ? (
-                      subSchemesData.map((subScheme) => (
-                        <MenuItem key={subScheme.id.toString()} value={subScheme.id.toString()}>
-                          {subScheme.scheme_name}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem disabled>No sub scheme found</MenuItem>
-                    )}
-                  </CustomTextField>
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name='trainingPartner'
-                control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <CustomTextField
-                    select
-                    required={true}
-                    fullWidth
-                    label='Training Partner'
-                    {...field}
-                    onChange={(e) => {
-                      field.onChange(e); // Ensure the field value gets updated in the form state
-                      handleTPChange(e.target.value); // Call your custom onChange handler
-                    }}
-                    {...(errors.trainingPartner && { error: true, helperText: errors.trainingPartner.message })}
-                  >
-                    <MenuItem value=''>Select Training Partner</MenuItem>
-                    {tpData && tpData.length > 0 ? (
-                      tpData.map((trainingPartner) => (
-                        <MenuItem key={trainingPartner.id.toString()} value={trainingPartner.id.toString()}>
-                          {trainingPartner.first_name + "" + trainingPartner.last_name}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem disabled>No training partner found</MenuItem>
-                    )}
-                  </CustomTextField>
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name='trainingCenter'
-                control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <CustomTextField
-                    select
-                    required={true}
-                    fullWidth
-                    label='Training Center'
-                    {...field}
-                    {...(errors.trainingCenter && { error: true, helperText: errors.trainingCenter.message })}
-                  >
-                    <MenuItem value=''>Select Training Center</MenuItem>
-                    {tcData && tcData.length > 0 ? (
-                      tcData.map((trainingCenter) => (
-                        <MenuItem key={trainingCenter.id.toString()} value={trainingCenter.id.toString()}>
-                          {trainingCenter.company_name}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem disabled>No training center found</MenuItem>
-                    )}
-                  </CustomTextField>
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name='assessmentStartDate'
-                control={control}
-                rules={{ required: true }}
-                render={({ field: { value, onChange } }) => (
-                  <AppReactDatepicker
-                    selected={value}
-                    showYearDropdown
-                    showMonthDropdown
-                    showTimeSelect
-                    onChange={onChange}
-                    dateFormat='MM/dd/yyyy h:mm aa'
-                    placeholderText='MM/DD/YYYY h:mm aa'
-                    required={true}
-                    customInput={
-                      <CustomTextField
-                        value={value}
-                        onChange={onChange}
-                        fullWidth
-                        label='Assessment Start Date'
-                        {...(errors.assessmentStartDate && { error: true, helperText: errors.assessmentStartDate.message })}
-                      />
+                      {...(errors.scheme && { error: true, helperText: errors.scheme.message })}>
+                      <MenuItem value=''>Select Scheme</MenuItem>
+                      {schemesData && schemesData.length > 0 ? (
+                        schemesData.map((scheme) => (
+                          <MenuItem key={scheme.id.toString()} value={scheme.id.toString()}>
+                            {scheme.scheme_name}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem disabled>No scheme found</MenuItem>
+                      )}
+                    </CustomTextField>
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} md={6} className='flex items-end gap-4'>
+                <Controller
+                  name='subScheme'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomTextField
+                      select
+                      required={true}
+                      fullWidth
+                      SelectProps={{ MenuProps }}
+                      label='Sub Scheme'
+                      className='flex-1'
+                      {...field}
+                      {...(errors.subScheme && { error: true, helperText: errors.subScheme.message })}
+                    >
+                      <MenuItem value=''>Select Sub Scheme</MenuItem>
+                      {subSchemesData && subSchemesData.length > 0 ? (
+                        subSchemesData.map((subScheme) => (
+                          <MenuItem key={subScheme.id.toString()} value={subScheme.id.toString()}>
+                            {subScheme.scheme_name}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem disabled>No sub scheme found</MenuItem>
+                      )}
+                    </CustomTextField>
+                  )}
+                />
+                <Tooltip title="Reload Sub Scheme">
+                  <CustomIconButton aria-label='Reload' color='primary' variant='tonal' onClick={() => handleReloadSubScheme(selectedScheme)} disabled={subSchemeLoading}>
+                    {
+                      subSchemeLoading ?
+                      <CircularProgress size={22} color='inherit' />
+                      :
+                      <i className='tabler-reload' />
                     }
-                  />
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name='assessmentEndDate'
-                control={control}
-                rules={{ required: true }}
-                render={({ field: { value, onChange } }) => (
-                  <AppReactDatepicker
-                    selected={value}
-                    showYearDropdown
-                    showMonthDropdown
-                    showTimeSelect
-                    onChange={onChange}
-                    dateFormat='MM/dd/yyyy h:mm aa'
-                    placeholderText='MM/DD/YYYY h:mm aa'
-                    required={true}
-                    customInput={
-                      <CustomTextField
-                        value={value}
-                        onChange={onChange}
-                        required={true}
-                        fullWidth
-                        label='Assessment End Date'
-                        {...(errors.assessmentEndDate && { error: true, helperText: errors.assessmentEndDate.message })}
-                      />
+                  </CustomIconButton>
+                </Tooltip>
+                {/* <IconButton aria-label='capture screenshot' color='primary' size='large'>
+                  <i className='tabler-aperture' />
+                </IconButton> */}
+                {/* <CustomIconButton target='_blank' href={`/${locale}/users/create/2`} aria-label='Add TP' color='primary' variant='tonal' onClick={handleReloadTP} disabled={tpLoading}>
+                  <i className='tabler-plus' />
+                </CustomIconButton> */}
+                <Button variant='tonal' disabled={selectedScheme === ''} onClick={() => setAddSubSchemeOpen(true)} color={selectedScheme === '' ? 'secondary' : 'primary'}>Add Sub Scheme</Button>
+              </Grid>
+              <Grid item xs={12} sm={6} className='flex items-end gap-4'>
+                <Controller
+                  name='trainingPartner'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomTextField
+                      className='flex-1'
+                      select
+                      SelectProps={{ MenuProps }}
+                      required={true}
+                      fullWidth
+                      label='Training Partner'
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e); // Ensure the field value gets updated in the form state
+                        handleTPChange(e.target.value); // Call your custom onChange handler
+                      }}
+                      {...(errors.trainingPartner && { error: true, helperText: errors.trainingPartner.message })}
+                    >
+                      <MenuItem value=''>Select Training Partner</MenuItem>
+                      {trainingPartnerData && trainingPartnerData.length > 0 ? (
+                        trainingPartnerData.map((trainingPartner) => (
+                          <MenuItem key={trainingPartner.id.toString()} value={trainingPartner.id.toString()}>
+                            {trainingPartner.first_name + " " + trainingPartner.last_name}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem disabled>No training partner found</MenuItem>
+                      )}
+                    </CustomTextField>
+                  )}
+                />
+                <Tooltip title="Reload TP">
+                  <CustomIconButton aria-label='Reload' color='primary' variant='tonal' onClick={handleReloadTP} disabled={tpLoading}>
+                    {
+                      tpLoading ?
+                      <CircularProgress size={22} color='inherit' />
+                      :
+                      <i className='tabler-reload' />
                     }
-                  />
-                )}
-              />
+                  </CustomIconButton>
+                </Tooltip>
+                {/* <IconButton aria-label='capture screenshot' color='primary' size='large'>
+                  <i className='tabler-aperture' />
+                </IconButton> */}
+                {/* <CustomIconButton target='_blank' href={`/${locale}/users/create/2`} aria-label='Add TP' color='primary' variant='tonal' onClick={handleReloadTP} disabled={tpLoading}>
+                  <i className='tabler-plus' />
+                </CustomIconButton> */}
+                <Button variant='tonal' target='_blank' href={`/${locale}/users/create/2`}>Add TP</Button>
+              </Grid>
+              <Grid item xs={12} sm={6} className='flex items-end gap-4'>
+                <Controller
+                  name='trainingCenter'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomTextField
+                      select
+                      SelectProps={{ MenuProps }}
+                      required={true}
+                      fullWidth
+                      label='Training Center'
+                      className='flex-1'
+                      {...field}
+                      {...(errors.trainingCenter && { error: true, helperText: errors.trainingCenter.message })}
+                    >
+                      <MenuItem value=''>Select Training Center</MenuItem>
+                      {tcData && tcData.length > 0 ? (
+                        tcData.map((trainingCenter) => (
+                          <MenuItem key={trainingCenter.id.toString()} value={trainingCenter.id.toString()}>
+                            {trainingCenter.company_name}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem disabled>No training center found</MenuItem>
+                      )}
+                    </CustomTextField>
+                  )}
+                />
+                <Tooltip title="Reload TC">
+                  <CustomIconButton aria-label='Reload' color='primary' variant='tonal' onClick={() => handleReloadTC(selectedTP)} disabled={tcLoading}>
+                    {
+                      tcLoading ?
+                      <CircularProgress size={22} color='inherit' />
+                      :
+                      <i className='tabler-reload' />
+                    }
+                  </CustomIconButton>
+                </Tooltip>
+                <Button variant='tonal' color={selectedTP === '' ? 'secondary' : 'primary'} disabled={selectedTP === ''} onClick={handleAddTC} style={{ textWrap: "nowrap" }}>Add TC</Button>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='assessmentStartDate'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: { value, onChange } }) => (
+                    <AppReactDatepicker
+                      selected={value}
+                      showYearDropdown
+                      showMonthDropdown
+                      showTimeSelect
+                      onChange={onChange}
+                      dateFormat='MM/dd/yyyy h:mm aa'
+                      placeholderText='MM/DD/YYYY h:mm aa'
+                      required={true}
+                      customInput={
+                        <CustomTextField
+                          value={value}
+                          onChange={onChange}
+                          fullWidth
+                          label='Assessment Start Date'
+                          {...(errors.assessmentStartDate && { error: true, helperText: errors.assessmentStartDate.message })}
+                        />
+                      }
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='assessmentEndDate'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: { value, onChange } }) => (
+                    <AppReactDatepicker
+                      selected={value}
+                      showYearDropdown
+                      showMonthDropdown
+                      showTimeSelect
+                      onChange={onChange}
+                      dateFormat='MM/dd/yyyy h:mm aa'
+                      placeholderText='MM/DD/YYYY h:mm aa'
+                      required={true}
+                      customInput={
+                        <CustomTextField
+                          value={value}
+                          onChange={onChange}
+                          required={true}
+                          fullWidth
+                          label='Assessment End Date'
+                          {...(errors.assessmentEndDate && { error: true, helperText: errors.assessmentEndDate.message })}
+                        />
+                      }
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='loginRestrictCount'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomTextField
+                      {...field}
+                      fullWidth
+                      required={true}
+                      label='Login Restrict Count'
+                      placeholder=''
+                      {...(errors.loginRestrictCount && { error: true, helperText: errors.loginRestrictCount.message })}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='modeOfAssessment'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomTextField
+                      select
+                      required={true}
+                      fullWidth
+                      label='Mode Of Assessment'
+                      {...field}
+                      {...(errors.modeOfAssessment && { error: true, helperText: errors.modeOfAssessment.message })}
+                    >
+                      <MenuItem value=''>Select Mode Of Assessment</MenuItem>
+                      {ModeOfAssessment && ModeOfAssessment.length > 0 ? (
+                        ModeOfAssessment.map((mode) => (
+                          <MenuItem key={mode.id} value={mode.id}>{mode.label}</MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem value="2">No Mode found</MenuItem>
+                      )}
+                    </CustomTextField>
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  control={control}
+                  name='captureImage'
+                  render={({ field }) => (
+                    <FormControlLabel
+                      {...field}
+                      control={<Switch checked={isCaptureImage} size='small' onChange={e => setIsCaptureImage(e.target.checked)} />}
+                      label='Capture Image'
+                    />
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name='captureImageInSeconds'
+                  render={({ field }) => (
+                    <CustomTextField
+                      fullWidth
+                      placeholder='Camera Interval in Seconds.'
+                      {...field}
+                      {...(errors.captureImageInSeconds && { error: true, helperText: errors.captureImageInSeconds.message })}
+                      disabled={!isCaptureImage}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} className='flex gap-4'>
+                <Button variant='contained' type='submit' disabled={loading}>
+                  {loading && <CircularProgress size={20} color='inherit' />}
+                  Submit
+                </Button>
+                <Button variant='tonal' color='secondary' type='reset' onClick={() => handleReset()}>
+                  Reset
+                </Button>
+              </Grid>
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name='loginRestrictCount'
-                control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <CustomTextField
-                    {...field}
-                    fullWidth
-                    required={true}
-                    label='Login Restrict Count'
-                    placeholder=''
-                    {...(errors.loginRestrictCount && { error: true, helperText: errors.loginRestrictCount.message })}
-                  />
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name='modeOfAssessment'
-                control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <CustomTextField
-                    select
-                    required={true}
-                    fullWidth
-                    label='Mode Of Assessment'
-                    {...field}
-                    {...(errors.modeOfAssessment && { error: true, helperText: errors.modeOfAssessment.message })}
-                  >
-                    <MenuItem value=''>Select Mode Of Assessment</MenuItem>
-                    {ModeOfAssessment && ModeOfAssessment.length > 0 ? (
-                      ModeOfAssessment.map((mode) => (
-                        <MenuItem key={mode.id} value={mode.id}>{mode.label}</MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem value="2">No Mode found</MenuItem>
-                    )}
-                  </CustomTextField>
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                control={control}
-                name='captureImage'
-                render={({ field }) => (
-                  <FormControlLabel
-                    {...field}
-                    control={<Switch checked={isCaptureImage} size='small' onChange={e => setIsCaptureImage(e.target.checked)} />}
-                    label='Capture Image'
-                  />
-                )}
-              />
-              <Controller
-                control={control}
-                name='captureImageInSeconds'
-                render={({ field }) => (
-                  <CustomTextField
-                    fullWidth
-                    placeholder='Camera Interval in Seconds.'
-                    {...field}
-                    {...(errors.captureImageInSeconds && { error: true, helperText: errors.captureImageInSeconds.message })}
-                    disabled={!isCaptureImage}
-                  />
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} className='flex gap-4'>
-              <Button variant='contained' type='submit' disabled={loading}>
-                {loading && <CircularProgress size={20} color='inherit' />}
-                Submit
-              </Button>
-              <Button variant='tonal' color='secondary' type='reset' onClick={() => handleReset()}>
-                Reset
-              </Button>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </form>
-    </Card>
+          </CardContent>
+        </form>
+      </Card>
+      <AddEditTCForm tpId={selectedTP ? Number(selectedTP) : undefined} open={addTCOpen} stateData={stateData} updateTCList={() => handleReloadTC(selectedTP)} handleClose={() => setAddTCOpen(!addTCOpen)} />
+      <AddEditSchemeDialog open={addSubSchemeOpen} parentId={selectedScheme ? Number(selectedScheme) : undefined} updateSchemeList={() => handleSchemeChange(selectedScheme)} handleClose={() => setAddSubSchemeOpen(!addSubSchemeOpen)} />
+    </>
   )
 
 }
