@@ -1,30 +1,16 @@
-// Component Imports
-// import UserList from '@views/apps/user/list'
-
 "use client"
+
+// Component Imports
 
 import { useEffect, useState } from "react"
 
 import NOSList from "@/views/agency/nos/list"
-
-// const getData = async () => {
-//   // Vars
-//   const res = await fetch(`${process.env.API_URL}/sectorskills`)
-
-//   if (!res.ok) {
-//     throw new Error('Failed to fetch userData')
-//   }
-
-//   return res.json()
-// }
+import SkeletonTable from '@/components/skeleton/SkeletonTable'
 
 const NOS = () => {
   // Vars
-  // const data = await getData()
-
-  const [data, setQP] = useState([])
-
-  // const[sscData, setSscUsers] = useState([])
+  const [data, setNOS] = useState([])
+  const [loading, setLoading] = useState(true);
 
   const getNOSData = async () => {
     // Vars
@@ -36,9 +22,9 @@ const NOS = () => {
 
     const nosData = await res.json();
 
-    setQP(nosData);
+    setNOS(nosData);
+    setLoading(false);
 
-    // return res.json()
   }
 
   useEffect(() => {
@@ -46,15 +32,15 @@ const NOS = () => {
     getNOSData()
   }, []);
 
-  // console.log(sscData);
-
   const updateNOSList = () => {
     getNOSData();
   };
 
-  // console.log(data);
-
-  return <NOSList nosData={data} updateNOSList={updateNOSList} />
+  if(!loading){
+    return <NOSList nosData={data} updateNOSList={updateNOSList} />
+  }else{
+    return <SkeletonTable />
+  }
 }
 
 export default NOS

@@ -1,15 +1,16 @@
-// Component Imports
-// import UserList from '@views/apps/user/list'
-
 "use client"
+
+// Component Imports
 
 import { useEffect, useState } from "react"
 
 import ExamSetsList from "@views/agency/exam-sets/list"
+import SkeletonTable from '@/components/skeleton/SkeletonTable'
 
 const ExamSets = () => {
   // Vars
   const [data, setQuestions] = useState([])
+  const [loading, setLoading] = useState(true);
 
   const getExamSetsData = async () => {
     // Vars
@@ -22,6 +23,7 @@ const ExamSets = () => {
     const questionsData = await res.json();
 
     setQuestions(questionsData);
+    setLoading(false);
 
   }
 
@@ -34,10 +36,11 @@ const ExamSets = () => {
     getExamSetsData();
   };
 
-  // console.log(data);
-
-
-  return <ExamSetsList questionsData={data} updateExamSetsList={updateExamSetsList} />
+  if(!loading){
+    return <ExamSetsList questionsData={data} updateExamSetsList={updateExamSetsList} />
+  }else{
+    return <SkeletonTable />
+  }
 }
 
 export default ExamSets

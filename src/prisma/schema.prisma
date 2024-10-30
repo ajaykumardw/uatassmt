@@ -358,6 +358,7 @@ model users_additional_data {
   aadhaar_card              String?  @db.Text
   resume_cv                 String?  @db.Text
   pan_card                  String?  @db.Text
+  contact_person_address    String?  @db.Text
   cancel_check              String?  @db.Text
   bank_name                 String?
   account_no                Int?

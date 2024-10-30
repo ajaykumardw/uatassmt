@@ -24,6 +24,28 @@ export const ExpectedStudentExcelHeaders = [
   'Mobile No'
 ];
 
+export const ExpectedTheoryQuestionExcelHeaders = [
+  'Question',
+  'Option1',
+  'Option2',
+  'Option3',
+  'Option4',
+  'Option5',
+  'Correct_Answer',
+  'Question_Level(E/M/H)',
+  'Question_Explanation',
+  'Marks',
+  'PC_ID',
+];
+
+export const ExpectedNOSExcelHeaders = [
+  'QP_ID',
+  'NOS_ID',
+  'NOS_Name',
+  'PC_ID',
+  'PC_Name'
+];
+
 export const GenderMap = {
   m: "Male",
   f: "Female",

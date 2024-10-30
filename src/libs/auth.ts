@@ -32,34 +32,63 @@ export const authOptions: NextAuthOptions = {
          * For e.g. return { id: 1, name: 'J Smith', email: 'jsmith@example.com' }
          * You can also use the `req` object to obtain additional parameters (i.e., the request IP address)
          */
-        const { email, password } = credentials as { email: string; password: string }
+        const { email, password, isStudent } = credentials as { email: string; password: string, isStudent?: boolean }
 
         try {
           // ** Login API Call to match the user credentials and receive user data in response along with his role
-          const res = await fetch(`${process.env.API_URL}/login`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email, password })
-          })
 
-          const data = await res.json()
+          if(isStudent) {
+            console.log("student trying to login");
 
-          if (res.status === 401) {
-            throw new Error(JSON.stringify(data))
+            const res = await fetch(`${process.env.API_URL}/student-login`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ email, password })
+            })
+
+            const data = await res.json()
+
+            if (res.status === 401) {
+              throw new Error(JSON.stringify(data))
+            }
+
+            if (res.status === 200) {
+              /*
+               * Please unset all the sensitive information of the user either from API response or before returning
+               * user data below. Below return statement will set the user object in the token and the same is set in
+               * the session which will be accessible all over the app.
+               */
+              return data
+            }
+          }else{
+
+            const res = await fetch(`${process.env.API_URL}/login`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ email, password })
+            })
+
+            const data = await res.json()
+
+            if (res.status === 401) {
+              throw new Error(JSON.stringify(data))
+            }
+
+            if (res.status === 200) {
+              /*
+              * Please unset all the sensitive information of the user either from API response or before returning
+              * user data below. Below return statement will set the user object in the token and the same is set in
+              * the session which will be accessible all over the app.
+              */
+              return data
+            }
+
+            return null
           }
-
-          if (res.status === 200) {
-            /*
-             * Please unset all the sensitive information of the user either from API response or before returning
-             * user data below. Below return statement will set the user object in the token and the same is set in
-             * the session which will be accessible all over the app.
-             */
-            return data
-          }
-
-          return null
         } catch (e: any) {
           throw new Error(e.message)
         }

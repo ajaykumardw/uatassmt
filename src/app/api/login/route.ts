@@ -15,9 +15,12 @@ export async function POST(req: Request) {
   // Vars
   const { email, password } = await req.json()
 
-  const rows = await prisma.users.findUnique({
+  const rows = await prisma.users.findFirst({
     where: {
-      email: email
+      OR: [
+        { email: email },
+        { user_name : email }
+      ]
     }
   })
 

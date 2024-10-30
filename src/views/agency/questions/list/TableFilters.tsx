@@ -17,6 +17,7 @@ import type { PCType } from '@/types/pc/pcType';
 import CustomTextField from '@core/components/mui/TextField';
 import { removeDuplicates } from '@/utils/removeDuplicates';
 import { MenuProps } from '@/configs/customDataConfig';
+import { Typography } from '@mui/material';
 
 // Utility function to remove duplicates based on a specific key
 // const removeDuplicates = <T, K extends keyof T>(data: T[], key: K): T[] => {
@@ -102,7 +103,7 @@ const TableFilters = ({ setSSCID, setQPID, setPCID, setAllPC, setData, tableData
 
     const qpId = Number(qp);
 
-    setQPID(qpId);
+    setQPID(qp !== '-1' ? qpId : undefined);
     setQP(qpId);
 
     const selectedQP = qpData.find(qp => qp.id === qpId);
@@ -218,7 +219,7 @@ const TableFilters = ({ setSSCID, setQPID, setPCID, setAllPC, setData, tableData
             <MenuItem value='-1'>Select SSC</MenuItem>
             {sscData.map((ssc, index) => (
               <MenuItem key={index} value={ssc.id.toString()}>
-                {ssc.ssc_name}
+                <Typography variant='inherit' noWrap>{ssc.ssc_name}</Typography>
               </MenuItem>
             ))}
           </CustomTextField>
@@ -236,7 +237,7 @@ const TableFilters = ({ setSSCID, setQPID, setPCID, setAllPC, setData, tableData
             {qpData.length > 0 ? (
               qpData.map((qualificationPack) => (
                 <MenuItem key={qualificationPack.id.toString()} value={qualificationPack.id.toString()}>
-                  {qualificationPack.qualification_pack_name}
+                  <Typography variant='inherit' noWrap>{qualificationPack.qualification_pack_name}</Typography>
                 </MenuItem>
               ))
             ) : (
@@ -257,7 +258,7 @@ const TableFilters = ({ setSSCID, setQPID, setPCID, setAllPC, setData, tableData
             {nosData.length > 0 ? (
               nosData.map((nos) => (
                 <MenuItem key={nos.id.toString()} value={nos.id.toString()}>
-                  {nos.nos_name}
+                  <Typography variant='inherit' noWrap>{nos.nos_name}</Typography>
                 </MenuItem>
               ))
             ) : (
@@ -281,7 +282,7 @@ const TableFilters = ({ setSSCID, setQPID, setPCID, setAllPC, setData, tableData
             {pcData.length > 0 ? (
               pcData.map((pc) => (
                 <MenuItem key={pc.id.toString()} value={pc.id.toString()}>
-                  {pc.pc_id}
+                  <Typography variant='inherit' noWrap>{pc.pc_id}</Typography>
                 </MenuItem>
               ))
             ) : (

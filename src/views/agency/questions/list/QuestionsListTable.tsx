@@ -66,6 +66,7 @@ import type { SSCType } from '@/types/sectorskills/sscType';
 import type { PCType } from '@/types/pc/pcType';
 import BulkUploadQuestionsDialog from '@/components/questions/dialogs/BulkUploadQuestionsDialog';
 import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
+import { Tooltip } from '@mui/material';
 
 // import type { PCType } from '@/types/pc/pcType';
 
@@ -248,7 +249,7 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
+              <Typography color='text.primary' className='font-medium min-w-96 text-wrap'>
                 {row.original.question}
               </Typography>
             </div>
@@ -258,7 +259,7 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
       columnHelper.accessor('option1', {
         header: 'Option 1',
         cell: ({ row }) => (
-          <div className='flex items-center gap-2'>
+          <div className='flex items-center gap-2 min-w-40 text-wrap'>
             {row.original.option1 &&
               <CustomAvatar skin='light' color={row.original.answer == 1 ? 'success' : 'error'} size={28}>
                 <i className={classnames('bs-4 is-4', row.original.answer == 1 ? 'tabler-check' : 'tabler-x')} />
@@ -335,7 +336,7 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
         header: 'Explanation',
         cell: ({ row }) => (
           <div className='flex items-center gap-2'>
-            <Typography className='capitalize' color='text.primary'>
+            <Typography className='capitalize min-w-96 text-wrap' color='text.primary'>
               {row.original.question_explanation}
             </Typography>
           </div>
@@ -463,26 +464,36 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
             >
               Export
             </Button>
-            {pcID &&
-            <>
-              <Button
-                variant='contained'
-                startIcon={<i className='tabler-download' />}
-                onClick={() => setBulkUploadQuestionsOpen(!bulkUploadQuestionsOpen)}
-                className='is-full sm:is-auto'
-              >
-                Import Questions
-              </Button>
-              <Button
-                variant='contained'
-                startIcon={<i className='tabler-plus' />}
-                onClick={() => setAddQuestionOpen(!addQuestionOpen)}
-                className='is-full sm:is-auto'
-              >
-                Add New Question
-              </Button>
-            </>
-            }
+            {/* {qpID && */}
+            <Tooltip title={Boolean(!qpID) && 'Please select SSC and QP'}>
+              <span>
+                <Button
+                  variant='tonal'
+                  startIcon={<i className='tabler-download' />}
+                  onClick={() => setBulkUploadQuestionsOpen(!bulkUploadQuestionsOpen)}
+                  className='is-full sm:is-auto'
+                  disabled={Boolean(!qpID)}
+                  color={qpID ? 'success' : 'error'}
+                >
+                  Import Questions
+                </Button>
+              </span>
+            </Tooltip>
+            {/* // } */}
+            <Tooltip title={Boolean(!pcID) && 'Please select PC'}>
+              <span>
+                <Button
+                  variant={pcID ? 'contained' : 'tonal'}
+                  startIcon={<i className='tabler-plus' />}
+                  onClick={() => setAddQuestionOpen(!addQuestionOpen)}
+                  className='is-full sm:is-auto'
+                  disabled={Boolean(!pcID)}
+                  color={pcID ? 'primary' : 'secondary'}
+                >
+                  Add New Question
+                </Button>
+              </span>
+            </Tooltip>
           </div>
         </div>
         <div className='overflow-x-auto'>
@@ -551,7 +562,7 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
         />
       </Card>
       <AddEditQuestionsDialog open={addQuestionOpen} sscID={sscID} qpID={qpID} pcID={pcID} updateQuestionsList={updateQuestionsList} handleClose={() => setAddQuestionOpen(!addQuestionOpen)} />
-      <BulkUploadQuestionsDialog open={bulkUploadQuestionsOpen} pcID={pcID} updateQuestionsList={updateQuestionsList} handleClose={() => setBulkUploadQuestionsOpen(!bulkUploadQuestionsOpen)} />
+      <BulkUploadQuestionsDialog open={bulkUploadQuestionsOpen} sscID={sscID} qpID={qpID} updateQuestionsList={updateQuestionsList} handleClose={() => setBulkUploadQuestionsOpen(!bulkUploadQuestionsOpen)} />
 
       <AddEditQuestionsDialog open={editQuestionOpen} sscID={sscID} qpID={qpID} allPC={allPC} questionId={questionId} updateQuestionsList={updateQuestionsList} handleClose={() => setEditQuestionOpen(!editQuestionOpen)} data={editQuestionData} />
 

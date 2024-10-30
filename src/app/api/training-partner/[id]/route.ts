@@ -12,7 +12,7 @@ import { authOptions } from '@/libs/auth';
 
 export async function POST(req: Request, context: { params: { id: number } }) {
 
-  const { tpName, username, email, firstName, lastName, phoneNumber, state, city, pinCode, address, panCardNumber, gstNumber } = await req.json()
+  const { tpName, username, email, firstName, lastName, phoneNumber, state, city, pinCode, address, contactPersonAddress, panCardNumber, gstNumber } = await req.json()
 
   const session = await getServerSession(authOptions)
   const agency_id = Number(session?.user?.agency_id)
@@ -54,7 +54,8 @@ export async function POST(req: Request, context: { params: { id: number } }) {
         },
         data: {
           gst_no: gstNumber,
-          pan_card_no: panCardNumber
+          pan_card_no: panCardNumber,
+          contact_person_address: contactPersonAddress
         }
       })
 

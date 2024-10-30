@@ -17,7 +17,7 @@ import CustomTextField from '@core/components/mui/TextField'
 import { MenuProps } from '@/configs/customDataConfig'
 
 
-const TableFilters = ({ setData, tableData }: { setData: any; tableData?: NOSType[] }) => {
+const TableFilters = ({ setSSCID, setData, tableData }: { setSSCID?: any, setData: any; tableData?: NOSType[] }) => {
   // States
   // const [role, setRole] = useState<UsersType['role']>('')
   // const [plan, setPlan] = useState<UsersType['currentPlan']>('')
@@ -97,7 +97,7 @@ const TableFilters = ({ setData, tableData }: { setData: any; tableData?: NOSTyp
             fullWidth
             id='select-ssc'
             value={ssc}
-            onChange={e => setSSC(parseInt(e.target.value))}
+            onChange={e => {setSSC(parseInt(e.target.value)), setSSCID(e.target.value !== '-1' ? parseInt(e.target.value) : undefined)}}
             SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value='-1'>Select SSC</MenuItem>

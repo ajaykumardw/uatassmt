@@ -24,7 +24,7 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import { signIn } from 'next-auth/react'
 import { Controller, useForm } from 'react-hook-form'
 import { valibotResolver } from '@hookform/resolvers/valibot'
-import { object, minLength, string, email, pipe } from "valibot"
+import { object, minLength, string, email, pipe, check } from "valibot"
 import type { SubmitHandler } from 'react-hook-form'
 import type { InferInput } from 'valibot'
 import classnames from 'classnames'
@@ -78,7 +78,7 @@ type ErrorType = {
 type FormData = InferInput<typeof schema>
 
 const schema = object({
-  email: pipe(string(), minLength(1, 'This field is required') , email('Email is invalid')),
+  email: pipe(string(), minLength(1, 'This field is required') , check(value => !/\s/.test(value), 'Login ID/Email must not contain whitespace'), check(value => /^[A-Za-z0-9._@-]+$/.test(value), 'Login ID/Email must not contain special characters except "_", "-", "@", and "."')),
   password: pipe(string(), minLength(1, 'This field is required') , minLength(5, 'Password must be at least 5 characters long'))
 })
 
@@ -196,9 +196,9 @@ const Login = ({ mode }: { mode: SystemMode }) => {
                   {...field}
                   autoFocus
                   fullWidth
-                  type='email'
-                  label='Email'
-                  placeholder='Enter your email'
+                  // type='email'
+                  label='Login ID/Email'
+                  placeholder='Enter your login id or email'
                   onChange={e => {
                     field.onChange(e.target.value)
                     errorState !== null && setErrorState(null)

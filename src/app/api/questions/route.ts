@@ -17,6 +17,9 @@ export async function GET(req: Request) {
       where: {
         qp_id: Number(qpId),
         question_type: 'theory'
+      },
+      include: {
+        pc: true
       }
     })
 

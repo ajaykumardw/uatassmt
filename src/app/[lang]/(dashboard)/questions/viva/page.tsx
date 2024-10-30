@@ -6,10 +6,12 @@
 import { useEffect, useState } from "react"
 
 import QuestionsList from "@views/agency/questions/viva/list"
+import SkeletonTable from '@/components/skeleton/SkeletonTable'
 
 const Question = () => {
   // Vars
   const [data, setQuestions] = useState([])
+  const [loading, setLoading] = useState(true);
 
   const getQuestionsData = async () => {
     // Vars
@@ -22,6 +24,7 @@ const Question = () => {
     const questionsData = await res.json();
 
     setQuestions(questionsData);
+    setLoading(false);
 
   }
 
@@ -36,8 +39,11 @@ const Question = () => {
 
   // console.log(data);
 
-
-  return <QuestionsList questionsData={data} updateQuestionsList={updateQuestionsList} />
+  if(!loading){
+    return <QuestionsList questionsData={data} updateQuestionsList={updateQuestionsList} />
+  }else{
+    return <SkeletonTable />
+  }
 }
 
 export default Question

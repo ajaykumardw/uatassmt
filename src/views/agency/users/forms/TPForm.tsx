@@ -49,62 +49,26 @@ import { getLocalizedUrl } from '@/utils/i18n'
 
 import type { Locale } from '@configs/i18n'
 
-
-// type FormDataType = {
-//   username: string
-//   email: string
-//   password: string
-//   isPasswordShown: boolean
-//   confirmPassword: string
-//   isConfirmPasswordShown: boolean
-//   firstName: string
-//   lastName: string
-//   state: string
-//   city: string
-//   pinCode: string
-//   address: string
-//   panCardNumber?: string
-//   gstNumber: string
-//   country: string
-//   language: string[]
-//   date: Date | null
-//   phoneNumber: string
-// }
-
 type FormDataType = InferInput<typeof schema>
 
 const schema = object(
   {
     tpName: pipe(string(), trim() , minLength(1, 'This field is required')),
-    username: pipe(string(), trim() , minLength(1, 'This field is required')),
+    username: pipe(string(), trim() , minLength(1, 'This field is required'), check(value => !/\s/.test(value), 'TP Login ID must not contain whitespace'), check(value => /^[A-Za-z0-9_]+$/.test(value), 'TP Login ID must not contain special characters except "_"')),
     email: pipe(string(), trim() , minLength(1, 'This field is required')),
     password: pipe(string(), trim() , minLength(1, 'This field is required')),
+    address: pipe(string(), trim() , minLength(1, 'First name is required.') , maxLength(191, 'The maximum length for First name is 191 characters.')),
     firstName: pipe(string(), trim() , minLength(1, 'This field is required.') , maxLength(50, 'The maximum length for First name is 50 characters.')),
     lastName: optional(pipe(string(), trim() , maxLength(50, 'The maximum length for First name is 50 characters.'))),
     state: pipe(string(), trim() , minLength(1, 'This field is required.')),
     city: optional(pipe(string(), trim() ,)),
     pinCode: optional(pipe(string(), trim() , minLength(6, "Pin Code length must be 6 digits") , check((value) => !value || /^[1-9][0-9]{5}$/.test(value), 'Pin Code must contain only numbers and or can\'t starts from 0') , maxLength(6, 'Pin Code length must be 6 digits') ,)),
-    address: pipe(string(), trim() , minLength(1, 'First name is required.') , maxLength(191, 'The maximum length for First name is 191 characters.')),
-    phoneNumber: optional(pipe(string(), trim() , minLength(1, 'Phone Number is required') , regex(/^[0-9]+$/, 'Phone Number must contain only numbers') , minLength(10, 'Phone Number must be 10 digits') , maxLength(10, 'Phone Number must be 10 digits'))),
+    contactPersonAddress: pipe(string(), trim() , minLength(1, 'First name is required.') , maxLength(191, 'The maximum length for First name is 191 characters.')),
+    phoneNumber: pipe(string(), trim() , minLength(1, 'Phone Number is required') , regex(/^[0-9]+$/, 'Phone Number must contain only numbers') , minLength(10, 'Phone Number must be 10 digits') , maxLength(10, 'Phone Number must be 10 digits')),
     panCardNumber: optional(pipe(string(), trim() , check((value) => !value || value.length === 10, 'Pan Card Number must be 10 characters') ,)),
-    gstNumber: pipe(string(), trim() , minLength(1, 'This field is required.') , regex(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][A-Z1-9]Z[0-9A-Z]$/, 'GST number must be 15 characters long and follow the correct format (e.g., 12ABCDE3456F1Z7).') ,)
+    gstNumber: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][A-Z1-9]Z[0-9A-Z]$/.test(value), 'GST number must be 15 characters long and follow the correct format (e.g., 12ABCDE3456F1Z7).') ))
   }
 )
-
-// const initialData = {
-//   username: '',
-//   email: '',
-//   password: '',
-//   firstName: '',
-//   lastName: '',
-//   state: '',
-//   city: '',
-//   pinCode: '',
-//   address: '',
-//   panCardNumber: '',
-//   gstNumber: '',
-//   phoneNumber: ''
-// }
 
 const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersType, stateData?: state[], citiesData?: city[]}) => {
 
@@ -112,11 +76,7 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
   const { lang: locale } = useParams()
 
   // States
-  // const [formData, setFormData] = useState<FormDataType>(initialData)
-
   const [isPasswordShown, setIsPasswordShown] = useState(false);
-
-  // const [stateData, setStateData] = useState<state[]>([]);
   const [cityData, setCityData] = useState<city[]>(citiesData || []);
   const [loading, setLoading] = useState(false);
 
@@ -140,6 +100,7 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
       city: data?.city_id?.toString() || '',
       pinCode: data?.pin_code || '',
       address: data?.address || '',
+      contactPersonAddress: data?.user_additional_data.contact_person_address || '',
       panCardNumber: data?.user_additional_data.pan_card_no || '',
       gstNumber: data?.user_additional_data.gst_no || '',
       phoneNumber: data?.mobile_no || ''
@@ -304,24 +265,6 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
                 )}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                control={control}
-                name='email'
-                rules={{ required: true }}
-                render={({field}) => (
-                  <CustomTextField
-                    {...field}
-                    fullWidth
-                    type='email'
-                    label='Email'
-                    required={true}
-                    {...(errors.email && { error: true, helperText: errors.email.message })}
-
-                  />
-                )}
-              />
-            </Grid>
             {id ? '' : (
 
               <Grid item xs={12} sm={6} className='flex items-end gap-4'>
@@ -362,75 +305,53 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
             <Grid item xs={12} sm={6}>
               <Controller
                 control={control}
-                name='phoneNumber'
-                rules={{ required: true }}
+                name='address'
                 render={({ field }) => (
                   <CustomTextField
                     fullWidth
-                    label='Phone Number'
+                    required={true}
+                    multiline
+                    label='Address'
                     {...field}
-                    {...field}
-                    {...(errors.phoneNumber && { error: true, helperText: errors.phoneNumber.message })}
+                    {...(errors.address && { error: true, helperText: errors.address.message })}
                   />
                 )}
               />
             </Grid>
-            {/* <Grid item xs={12} sm={6}>
-              <CustomTextField
-                fullWidth
-                label='Password'
-                placeholder='············'
-                id='form-layout-separator-password'
-                type={formData.isPasswordShown ? 'text' : 'password'}
-                value={formData.password}
-                onChange={e => setFormData({ ...formData, password: e.target.value })}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position='end'>
-                      <IconButton
-                        edge='end'
-                        onClick={handleClickShowPassword}
-                        onMouseDown={e => e.preventDefault()}
-                        aria-label='toggle password visibility'
-                      >
-                        <i className={formData.isPasswordShown ? 'tabler-eye-off' : 'tabler-eye'} />
-                      </IconButton>
-                    </InputAdornment>
-                  )
-                }}
+            <Grid item xs={12} sm={6}>
+              <Controller
+                control={control}
+                name='panCardNumber'
+                render={({ field }) => (
+                  <CustomTextField
+                    fullWidth
+                    label='Pan Card No.'
+                    {...field}
+                    {...(errors.panCardNumber && { error: true, helperText: errors.panCardNumber.message })}
+                  />
+                )}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <CustomTextField
-                fullWidth
-                label='Confirm Password'
-                placeholder='············'
-                id='form-layout-separator-confirm-password'
-                type={formData.isConfirmPasswordShown ? 'text' : 'password'}
-                value={formData.confirmPassword}
-                onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position='end'>
-                      <IconButton
-                        edge='end'
-                        onClick={handleClickShowConfirmPassword}
-                        onMouseDown={e => e.preventDefault()}
-                        aria-label='toggle confirm password visibility'
-                      >
-                        <i className={formData.isConfirmPasswordShown ? 'tabler-eye-off' : 'tabler-eye'} />
-                      </IconButton>
-                    </InputAdornment>
-                  )
-                }}
+              <Controller
+                control={control}
+                name='gstNumber'
+                render={({ field }) => (
+                  <CustomTextField
+                    fullWidth
+                    label='GST No.'
+                    {...field}
+                    {...(errors.gstNumber && { error: true, helperText: errors.gstNumber.message })}
+                  />
+                )}
               />
-            </Grid> */}
+            </Grid>
             <Grid item xs={12}>
               <Divider />
             </Grid>
             <Grid item xs={12}>
               <Typography variant='body2' className='font-medium'>
-                2. Spokesperson Info
+                2. TP SPOC Details
               </Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -442,7 +363,7 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
                     {...field}
                     fullWidth
                     required={true}
-                    label='Spokesperson First Name'
+                    label='SPOC First Name'
                     {...(errors.firstName && { error: true, helperText: errors.firstName.message })}
                   />
                 )}
@@ -456,8 +377,43 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
                   <CustomTextField
                     {...field}
                     fullWidth
-                    label='Spokesperson Last Name'
+                    label='SPOC Last Name'
                     {...(errors.lastName && { error: true, helperText: errors.lastName.message })}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                control={control}
+                name='email'
+                rules={{ required: true }}
+                render={({field}) => (
+                  <CustomTextField
+                    {...field}
+                    fullWidth
+                    type='email'
+                    label='SPOC Email'
+                    required={true}
+                    {...(errors.email && { error: true, helperText: errors.email.message })}
+
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                control={control}
+                name='phoneNumber'
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <CustomTextField
+                    fullWidth
+                    required={true}
+                    label='SPOC Contact No.'
+                    {...field}
+                    {...field}
+                    {...(errors.phoneNumber && { error: true, helperText: errors.phoneNumber.message })}
                   />
                 )}
               />
@@ -470,7 +426,7 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
                   <CustomTextField
                     select
                     fullWidth
-                    label='Spokesperson State'
+                    label='SPOC State'
                     required={true}
                     {...field}
                     {...(errors.state && { error: true, helperText: errors.state.message })}
@@ -499,7 +455,7 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
                   <CustomTextField
                     select
                     fullWidth
-                    label='Spokesperson City'
+                    label='SPOC City'
                     required={true}
                     {...field}
                     {...(errors.city && { error: true, helperText: errors.city.message })}
@@ -527,7 +483,7 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
                   <CustomTextField
                     fullWidth
                     required={true}
-                    label='Spokesperson Pin code'
+                    label='SPOC Pin code'
                     {...field}
                     {...(errors.pinCode && { error: true, helperText: errors.pinCode.message })}
                   />
@@ -537,48 +493,19 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
             <Grid item xs={12} sm={6}>
               <Controller
                 control={control}
-                name='address'
+                name='contactPersonAddress'
                 render={({ field }) => (
                   <CustomTextField
                     fullWidth
                     required={true}
                     multiline
-                    label='Spokesperson Address'
+                    label='SPOC Address'
                     {...field}
                     {...(errors.address && { error: true, helperText: errors.address.message })}
                   />
                 )}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                control={control}
-                name='panCardNumber'
-                render={({ field }) => (
-                  <CustomTextField
-                    fullWidth
-                    label='Pan Card No.'
-                    {...field}
-                    {...(errors.panCardNumber && { error: true, helperText: errors.panCardNumber.message })}
-                  />
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-                <Controller
-                  control={control}
-                  name='gstNumber'
-                  render={({ field }) => (
-                    <CustomTextField
-                      fullWidth
-                      required={true}
-                      label='GST No.'
-                      {...field}
-                      {...(errors.gstNumber && { error: true, helperText: errors.gstNumber.message })}
-                    />
-                  )}
-                />
-              </Grid>
           </Grid>
         </CardContent>
         <Divider />

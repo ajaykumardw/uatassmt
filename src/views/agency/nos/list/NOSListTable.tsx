@@ -59,10 +59,12 @@ import tableStyles from '@core/styles/table.module.css'
 
 import AddEditNOSDialog from '@/components/nos/dialogs/AddEditNOSDialog';
 import AddEditPCDialog from '@/components/pc/dialogs/AddEditPCDialog';
+import BulkUploadNOSDialog from '@/components/nos/dialogs/BulkUploadNOSDialog';
 
 import type { NOSType } from '@/types/nos/nosType';
 import type { PCType } from '@/types/pc/pcType';
 import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
+import { Tooltip } from '@mui/material';
 
 // declare module '@tanstack/table-core' {
 //   interface FilterFns {
@@ -182,8 +184,10 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
   const [editNOSOpen, setEditNOSOpen] = useState(false);
   const [addPCOpen, setAddPCOpen] = useState(false);
   const [editPCOpen, setEditPCOpen] = useState(false);
+  const [sscID, setSSCID] = useState<number>();
   const [nosId, setNOSId] = useState(0);
   const [pcId, setPCId] = useState(0);
+  const [bulkUploadNOSOpen, setBulkUploadNOSOpen] = useState(false);
 
   const [nosEditData, setNOSEditData] = useState({
     sscId: '',
@@ -397,7 +401,7 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
     <>
       <Card>
         <CardHeader title='Filters' className='pbe-4' />
-        <TableFilters setData={setData} tableData={tableData} />
+        <TableFilters setSSCID={setSSCID} setData={setData} tableData={tableData} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
             select
@@ -425,6 +429,20 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
             >
               Export
             </Button>
+            <Tooltip title={Boolean(!sscID) && 'Please select SSC'}>
+              <span>
+                <Button
+                  variant='tonal'
+                  startIcon={<i className='tabler-download' />}
+                  onClick={() => setBulkUploadNOSOpen(!bulkUploadNOSOpen)}
+                  className='is-full sm:is-auto'
+                  disabled={Boolean(!sscID)}
+                  color={sscID ? 'success' : 'error'}
+                >
+                  Import NOS & PC
+                </Button>
+              </span>
+            </Tooltip>
             <Button
               variant='contained'
               startIcon={<i className='tabler-plus' />}
@@ -574,6 +592,7 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
       <AddEditNOSDialog open={editNOSOpen} nosId={nosId} updateNOSList={updateNOSList} handleClose={() => setEditNOSOpen(!editNOSOpen)} data={nosEditData} />
       <AddEditPCDialog open={addPCOpen} nosId={nosId} data={pcAddData} updatePCList={updateNOSList} handleClose={() => setAddPCOpen(!addPCOpen)} />
       <AddEditPCDialog open={editPCOpen} pcId={pcId} updatePCList={updateNOSList} handleClose={() => setEditPCOpen(!editPCOpen)} data={pcEditData} />
+      <BulkUploadNOSDialog open={bulkUploadNOSOpen} sscID={sscID} updateNOSList={updateNOSList} handleClose={() => setBulkUploadNOSOpen(!bulkUploadNOSOpen)} />
     </>
   )
 }

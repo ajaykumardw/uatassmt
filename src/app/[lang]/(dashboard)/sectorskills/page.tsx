@@ -1,28 +1,18 @@
-// Component Imports
-// import UserList from '@views/apps/user/list'
-
 "use client"
+
+// Component Imports
 
 import { useEffect, useState } from "react"
 
 import UserList from "@/views/agency/sector-skill-council/list"
-
-// const getData = async () => {
-//   // Vars
-//   const res = await fetch(`${process.env.API_URL}/sectorskills`)
-
-//   if (!res.ok) {
-//     throw new Error('Failed to fetch userData')
-//   }
-
-//   return res.json()
-// }
+import SkeletonTable from '@/components/skeleton/SkeletonTable'
 
 const SectorSkillCouncilList = () => {
   // Vars
   // const data = await getData()
 
   const[data, setSscUsers] = useState([])
+  const [loading, setLoading] = useState(true);
 
   const getSSCData = async () => {
     // Vars
@@ -35,8 +25,8 @@ const SectorSkillCouncilList = () => {
     const userData = await res.json();
 
     setSscUsers(userData);
+    setLoading(false);
 
-    // return res.json()
   }
 
   useEffect(() => {
@@ -48,9 +38,11 @@ const SectorSkillCouncilList = () => {
     getSSCData();
   };
 
-  // console.log(data);
-
-  return <UserList userData={data} updateSSCList={updateSSCList} />
+  if(!loading){
+    return <UserList userData={data} updateSSCList={updateSSCList} />
+  }else{
+    return <SkeletonTable />
+  }
 }
 
 export default SectorSkillCouncilList
