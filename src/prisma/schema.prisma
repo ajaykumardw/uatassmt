@@ -458,8 +458,10 @@ model exam_sets_questions {
 
 model training_resources {
   id Int @id @default(autoincrement())
+  ssc_id Int
   file String @db.VarChar(255)
   description String @db.VarChar(255)
+  status Int           @default(1) @db.TinyInt
   created_by Int
   created_at DateTime @default(now()) @db.DateTime(0)
   updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
@@ -470,7 +472,7 @@ model user_training_resources {
   id                   Int                @id @default(autoincrement())
   user_id              Int
   training_resource_id Int
-
+  is_read              Int                @default(0) @db.TinyInt
   user                 users              @relation(fields: [user_id], references: [id])
   trainingResource     training_resources @relation(fields: [training_resource_id], references: [id])
 

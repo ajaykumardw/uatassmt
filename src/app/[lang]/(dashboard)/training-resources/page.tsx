@@ -5,7 +5,8 @@
 
 import { useEffect, useState } from "react"
 
-import UserList from "@/views/agency/sector-skill-council/list"
+// import UserList from "@/views/agency/sector-skill-council/list"
+import TrainingResourcesList from "@/views/agency/training-resources/list"
 
 // const getData = async () => {
 //   // Vars
@@ -18,7 +19,7 @@ import UserList from "@/views/agency/sector-skill-council/list"
 //   return res.json()
 // }
 
-const TrainingResourcesList = () => {
+const TrainingResourcesListApp = () => {
   // Vars
   // const data = await getData()
 
@@ -26,7 +27,7 @@ const TrainingResourcesList = () => {
 
   const getSSCData = async () => {
     // Vars
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sectorskills`)
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/training-resources`)
 
     if (!res.ok) {
       throw new Error('Failed to fetch userData')
@@ -50,7 +51,7 @@ const TrainingResourcesList = () => {
 
   // console.log(data);
 
-  return <UserList userData={data} updateSSCList={updateSSCList} />
+  return <TrainingResourcesList userData={data} updateSSCList={updateSSCList} />
 }
 
-export default TrainingResourcesList
+export default TrainingResourcesListApp
