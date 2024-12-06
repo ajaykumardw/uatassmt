@@ -35,24 +35,30 @@ import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 
 // import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
+import type { training_resources, user_training_resources, users } from '@prisma/client';
+
 // Type Imports
 import type { ThemeColor } from '@core/types'
 
 // Component Imports
+
 import TableFilters from './TableFilters'
+
 // import AddUserDrawer from './AddUserDrawer'
+
 import TablePaginationComponent from '@components/TablePaginationComponent'
 import CustomTextField from '@core/components/mui/TextField'
-import CustomAvatar from '@core/components/mui/Avatar'
 
 // Util Imports
-import { getInitials } from '@/utils/getInitials'
+import CustomIconButton from '@/@core/components/mui/IconButton';
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
+
 // import EditUserDrawer from './EditUserDrawer'
-import type { SSCType } from '@/types/sectorskills/sscType'
 import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
+
+import AddEditTrainingResourcesDialog from '@/components/training-resources/dialogs/AddEditTrainingResourcesDialog';
 
 // declare module '@tanstack/table-core' {
 //   interface FilterFns {
@@ -63,9 +69,12 @@ import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
 //   }
 // }
 
-type SSCTypeWithAction = SSCType & {
+type TrainingResourcesTypeWithAction = training_resources & {
+  user_training_resources?: user_training_resources & {user: users}[]
   action?: string
   serialNumber?: number
+
+  // resourceName: string
 }
 
 // type UserRoleType = {
@@ -148,61 +157,110 @@ const userStatusObj: UserStatusType = {
 }
 
 // Column Definitions
-const columnHelper = createColumnHelper<SSCTypeWithAction>()
+const columnHelper = createColumnHelper<TrainingResourcesTypeWithAction>()
 
-const TrainingResourcesListTable = ({ tableData, updateSSCList }: { tableData?: SSCType[], updateSSCList: () => void }) => {
+const TrainingResourcesListTable = ({ tableData, updateTrainingResourceList }: { tableData?: training_resources[], updateTrainingResourceList: () => void }) => {
   // States
-  const [addUserOpen, setAddUserOpen] = useState(false);
-  const [editUserOpen, setEditUserOpen] = useState(false);
-  const [sscId, setSSCId] = useState(0);
-  const [sscName, setSSCName] = useState('');
-  const [sscCode, setSscCode] = useState('');
-  const [username, setUsername] = useState('');
-  const [sscStatus, setStatus] = useState('0');
+  const [addTrainingResourceOpen, setAddTrainingResourceOpen] = useState(false);
+  const [editTrainingResourceOpen, setEditTrainingResourceOpen] = useState(false);
+  const [trainingResourceId, setTrainingResourceId] = useState<number | undefined>(undefined);
   const [rowSelection, setRowSelection] = useState({})
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [data, setData] = useState(...[tableData]);
   const [globalFilter, setGlobalFilter] = useState('');
 
+  const downloadFile = (id:number, file: string) => {
+    // Create a temporary invisible link to trigger the download
+
+    if(!file || file == ""){
+      return
+    }
+
+    const link = document.createElement('a');
+
+    link.href = '/uploads/agency/training-resources/' + id + '/' + file;  // Path to file in the public folder
+    link.download = file;  // Desired download file name
+    document.body.appendChild(link);
+
+    // Trigger the download by simulating a click
+    link.click();
+    document.body.removeChild(link);
+
+  };
+
   // Hooks
-  const columns = useMemo<ColumnDef<SSCTypeWithAction, any>[]>(
+  const columns = useMemo<ColumnDef<TrainingResourcesTypeWithAction, any>[]>(
     () => [
       {
         id: 'serialNumber', // Serial number column
         header: 'S.No.',
         cell: ({ row }) => <Typography>{row.index + 1}</Typography>
       },
-      columnHelper.accessor('ssc_username', {
+      columnHelper.accessor('name', {
         header: 'Training Resource Name',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            {getAvatar({ avatar: row.original.avatar, ssc_name: row.original.ssc_username })}
+            {/* {getAvatar({ avatar: row.original.avatar, ssc_name: row.original.ssc_username })} */}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-                {row.original.ssc_username}
+                {row.original.name}
               </Typography>
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('ssc_name', {
-        header: 'Shared With',
+      columnHelper.accessor('description', {
+        header: 'Description',
         cell: ({ row }) => (
-          <div className='flex items-center gap-2'>
-            <Typography className='capitalize' color='text.primary'>
-              {row.original.ssc_name}
-            </Typography>
+          <div className='flex items-center gap-4'>
+            {/* {getAvatar({ avatar: row.original.avatar, ssc_name: row.original.ssc_username })} */}
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {row.original.description}
+              </Typography>
+            </div>
           </div>
         )
       }),
-      columnHelper.accessor('ssc_code', {
+      columnHelper.accessor('user_training_resources', {
+        header: 'Shared With',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-2'>
+            {/* <Typography className='capitalize' color='text.primary'> */}
+              {/* {row.original.user_training_resources} */}
+              <div className='flex items-start gap-1'>
+                {row.original.user_training_resources?.map((resources, index) => (
+                  <Chip
+                  key={index}
+                    variant='tonal'
+                    className='capitalize'
+                    label={`${resources.user.first_name} ${resources.user.last_name}`}
+                    color='info'
+                    size='small'
+                  />
+                ))}
+              </div>
+            {/* </Typography> */}
+          </div>
+        )
+      }),
+      columnHelper.accessor('file', {
         header: 'Download',
         cell: ({ row }) => (
           <div className='flex items-center gap-2'>
-            <Typography className='capitalize' color='text.primary'>
-              {row.original.ssc_code}
-            </Typography>
+            {row.original.file ? (
+              <CustomIconButton size='small' aria-label='Reload' color='success' variant='tonal' onClick={() => downloadFile(row.original.id, row.original.file || "")}>
+                <i className='tabler-download' />
+              </CustomIconButton>
+            ) : (
+              <CustomIconButton size='small' aria-label='Reload' color='error' disabled={true} variant='tonal'>
+                <i className='tabler-download-off' />
+              </CustomIconButton>
+            )}
+            {/* <Typography className='capitalize' color='text.primary'>
+              {row.original.file}
+            </Typography> */}
           </div>
         )
       }),
@@ -227,7 +285,7 @@ const TrainingResourcesListTable = ({ tableData, updateSSCList }: { tableData?: 
             {/* <IconButton>
               <i className='tabler-eye text-[22px] text-textSecondary' />
             </IconButton> */}
-            <IconButton onClick={() => { setEditUserOpen(!editUserOpen); setSSCId(row.original.id); setSSCName(row.original.ssc_name); setSscCode(row.original.ssc_code); setUsername(row.original.ssc_username); setStatus(row.original.status.toString()) }}>
+            <IconButton onClick={() => { setEditTrainingResourceOpen(!editTrainingResourceOpen); setTrainingResourceId(row.original.id)}}>
               <i className='tabler-edit text-[22px] text-textSecondary' />
             </IconButton>
           </div>
@@ -241,7 +299,7 @@ const TrainingResourcesListTable = ({ tableData, updateSSCList }: { tableData?: 
   )
 
   const table = useReactTable({
-    data: data as SSCType[],
+    data: data as training_resources[],
     columns,
     filterFns: {
       fuzzy: fuzzyFilter
@@ -269,15 +327,15 @@ const TrainingResourcesListTable = ({ tableData, updateSSCList }: { tableData?: 
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  const getAvatar = (params: Pick<SSCType, 'avatar' | 'ssc_name'>) => {
-    const { avatar, ssc_name } = params
+  // const getAvatar = (params: Pick<SSCType, 'avatar' | 'ssc_name'>) => {
+  //   const { avatar, ssc_name } = params
 
-    if (avatar) {
-      return <CustomAvatar src={avatar} size={34} />
-    } else {
-      return <CustomAvatar size={34}>{getInitials(ssc_name as string)}</CustomAvatar>
-    }
-  }
+  //   if (avatar) {
+  //     return <CustomAvatar src={avatar} size={34} />
+  //   } else {
+  //     return <CustomAvatar size={34}>{getInitials(ssc_name as string)}</CustomAvatar>
+  //   }
+  // }
 
   return (
     <>
@@ -318,7 +376,7 @@ const TrainingResourcesListTable = ({ tableData, updateSSCList }: { tableData?: 
             <Button
               variant='contained'
               startIcon={<i className='tabler-plus' />}
-              onClick={() => setAddUserOpen(!addUserOpen)}
+              onClick={() => setAddTrainingResourceOpen(!addTrainingResourceOpen)}
               className='is-full sm:is-auto'
             >
               Add New
@@ -390,8 +448,9 @@ const TrainingResourcesListTable = ({ tableData, updateSSCList }: { tableData?: 
           }}
         />
       </Card>
-      {/* <AddUserDrawer open={addUserOpen} updateSSCList={updateSSCList} handleClose={() => setAddUserOpen(!addUserOpen)} />
-      <EditUserDrawer sscId={sscId} open={editUserOpen} handleClose={() => setEditUserOpen(!editUserOpen)} updateSSCList={updateSSCList} sscName={sscName} sscCode={sscCode} username={username} sscStatus={sscStatus} /> */}
+      <AddEditTrainingResourcesDialog open={addTrainingResourceOpen} updateTrainingResourceList={updateTrainingResourceList} handleClose={() => setAddTrainingResourceOpen(!addTrainingResourceOpen)} />
+      <AddEditTrainingResourcesDialog open={editTrainingResourceOpen} trainingResourceId={trainingResourceId} updateTrainingResourceList={updateTrainingResourceList} handleClose={() => setEditTrainingResourceOpen(!editTrainingResourceOpen)} />
+      {/* <EditUserDrawer sscId={sscId} open={editTrainingResourceOpen} handleClose={() => setEditTrainingResourceOpen(!editTrainingResourceOpen)} updateSSCList={updateSSCList} sscName={sscName} sscCode={sscCode} username={username} sscStatus={sscStatus} /> */}
     </>
   )
 }

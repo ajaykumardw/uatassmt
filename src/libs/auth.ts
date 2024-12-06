@@ -1,10 +1,17 @@
 // Third-party Imports
 import CredentialProvider from 'next-auth/providers/credentials'
+
 import GoogleProvider from 'next-auth/providers/google'
+
 import { PrismaAdapter } from '@auth/prisma-adapter'
+
 import { PrismaClient } from '@prisma/client'
+
 import type { NextAuthOptions } from 'next-auth'
+
 import type { Adapter } from 'next-auth/adapters'
+
+import { generateSessionId } from '@/utils/generateSessionId'
 
 const prisma = new PrismaClient()
 
@@ -50,6 +57,9 @@ export const authOptions: NextAuthOptions = {
 
             const data = await res.json()
 
+            const isStudent = true;
+            const sessionId = generateSessionId();
+
             if (res.status === 401) {
               throw new Error(JSON.stringify(data))
             }
@@ -60,7 +70,11 @@ export const authOptions: NextAuthOptions = {
                * user data below. Below return statement will set the user object in the token and the same is set in
                * the session which will be accessible all over the app.
                */
-              return data
+              return {
+                ...data,
+                is_student: isStudent,
+                sessionId: sessionId
+              }
             }
           }else{
 
@@ -73,6 +87,7 @@ export const authOptions: NextAuthOptions = {
             })
 
             const data = await res.json()
+            const sessionId = generateSessionId();
 
             if (res.status === 401) {
               throw new Error(JSON.stringify(data))
@@ -84,7 +99,10 @@ export const authOptions: NextAuthOptions = {
               * user data below. Below return statement will set the user object in the token and the same is set in
               * the session which will be accessible all over the app.
               */
-              return data
+              return {
+                ...data,
+                sessionId: sessionId
+              }
             }
 
             return null
@@ -139,6 +157,7 @@ export const authOptions: NextAuthOptions = {
          * For adding custom parameters to user in session, we first need to add those parameters
          * in token which then will be available in the `session()` callback
          */
+        token.sessionId = user.sessionId
         token.id = user.id
         token.name = user.company_name
         token.email = user.email
@@ -147,6 +166,7 @@ export const authOptions: NextAuthOptions = {
         token.is_master = user.is_master
         token.agency_id = user.is_master ? user.id : user.master_id
         token.role_id = user.role_id
+        token.is_student = user.is_student
       }
 
       return token
@@ -154,6 +174,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         // ** Add custom params to user in session which are added in `jwt()` callback via `token` parameter
+        session.user.sessionId = token.sessionId
         session.user.id = token.id
         session.user.user_type = token.user_type
         session.user.name = token.name
@@ -162,6 +183,7 @@ export const authOptions: NextAuthOptions = {
         session.user.is_master = token.is_master
         session.user.agency_id = token.agency_id
         session.user.role_id = token.role_id
+        session.user.is_student = token.is_student
       }
 
       return session
@@ -173,7 +195,11 @@ export const authOptions: NextAuthOptions = {
     async signIn(message) {
 
       const userId = Number(message.user.id);
+      const sessionId = message.user.sessionId;
+      const isStudent = message.user.is_student;
       const action = 'login';
+
+      console.log("sessionId:", sessionId);
 
       if(userId){
         await fetch(`${process.env.API_URL}/log-sessions`, {
@@ -181,7 +207,7 @@ export const authOptions: NextAuthOptions = {
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ "userId": userId, "action": action })
+          body: JSON.stringify({ "userId": userId, "sessionId": sessionId, "isStudent": isStudent, "action": action })
         })
       }
 
@@ -190,7 +216,10 @@ export const authOptions: NextAuthOptions = {
     async signOut(message) {
 
       const userId = Number(message.token.id);
+      const sessionId = message.token.sessionId;
       const action = 'logout';
+
+      console.log("logout time sessionId:", sessionId);
 
       if(userId){
 
@@ -199,7 +228,7 @@ export const authOptions: NextAuthOptions = {
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ "userId": userId, "action": action })
+          body: JSON.stringify({ "userId": userId, "sessionId": sessionId, "action": action })
         })
 
       }

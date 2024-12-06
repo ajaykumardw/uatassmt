@@ -2,21 +2,21 @@
 import classnames from 'classnames'
 
 // Type Imports
-// import type { ShortcutsType } from '@components/admin-layout/shared/ShortcutsDropdown'
-// import type { NotificationsType } from '@components/admin-layout/shared/NotificationsDropdown'
+// import type { ShortcutsType } from '@components/student-layout/shared/ShortcutsDropdown'
+// import type { NotificationsType } from '@components/student-layout/shared/NotificationsDropdown'
 
 // Component Imports
 import NavToggle from './NavToggle'
 
-// import NavSearch from '@components/admin-layout/shared/search'
-// import LanguageDropdown from '@components/admin-layout/shared/LanguageDropdown'
+// import NavSearch from '@components/student-layout/shared/search'
+// import LanguageDropdown from '@components/student-layout/shared/LanguageDropdown'
 
-import ModeDropdown from '@components/admin-layout/shared/ModeDropdown'
+import ModeDropdown from '@components/student-layout/shared/ModeDropdown'
 
-// import ShortcutsDropdown from '@components/admin-layout/shared/ShortcutsDropdown'
-// import NotificationsDropdown from '@components/admin-layout/shared/NotificationsDropdown'
+// import ShortcutsDropdown from '@components/student-layout/shared/ShortcutsDropdown'
+// import NotificationsDropdown from '@components/student-layout/shared/NotificationsDropdown'
 
-import UserDropdown from '@components/admin-layout/shared/UserDropdown'
+import UserDropdown from '@components/student-layout/shared/UserDropdown'
 
 // Util Imports
 import { verticalLayoutClasses } from '@layouts/utils/layoutClasses'

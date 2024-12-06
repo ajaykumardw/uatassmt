@@ -6,6 +6,8 @@ import CardContent from '@mui/material/CardContent';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 
+import { Typography } from '@mui/material';
+
 // Type Imports
 import type { NOSType } from '@/types/nos/nosType';
 import type { SSCType } from '@/types/sectorskills/sscType';
@@ -15,9 +17,10 @@ import type { PCType } from '@/types/pc/pcType';
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField';
+
 import { removeDuplicates } from '@/utils/removeDuplicates';
+
 import { MenuProps } from '@/configs/customDataConfig';
-import { Typography } from '@mui/material';
 
 // Utility function to remove duplicates based on a specific key
 // const removeDuplicates = <T, K extends keyof T>(data: T[], key: K): T[] => {

@@ -78,7 +78,7 @@ const UserDropdown = () => {
       await signOut({ redirect: false })
 
       // Redirect to login page
-      router.push(getLocalizedUrl('/login', locale as Locale))
+      router.push(getLocalizedUrl('/student-login', locale as Locale))
     } catch (error) {
       console.error(error)
 

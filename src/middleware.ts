@@ -126,7 +126,7 @@ export default withAuth(
     // Assessor routes
     const assessorPaths = ['/assessor'];
 
-    const studentPaths = ['/student-dashboard'];
+    const studentPaths = ['/student-dashboard', '/capture'];
 
 
     // Private routes (All routes except guest and shared routes that can only be accessed by logged in users)
@@ -179,6 +179,23 @@ export default withAuth(
       return localizedRedirect(HOME_PAGE_URL, locale, request)
     }
 
+    const isStudent = token?.is_student;
+
+    if(isStudent && !studentPaths.some(path => pathname.includes(`${locale}${path}`))){
+      // const studentImage = localStorage.getItem("studentImage");
+      // if(studentImage){
+        // console.log("middleware session:",session);
+
+        return localizedRedirect('/student-dashboard', locale, request);
+
+        // }else{
+      //   return localizedRedirect('/capture', locale, request);
+      // }
+    }
+
+    if(!isStudent && studentPaths.some(path => pathname.includes(`${locale}${path}`))){
+      return localizedRedirect(HOME_PAGE_URL,locale,request)
+    }
 
     if (user_type === 'SA' && !superAdminPaths.some(path => pathname.includes(`${locale}${path}`)) ) {
 
@@ -191,6 +208,14 @@ export default withAuth(
 
     if(user_type === 'U' && Number(token?.role_id) === 2 && !trainingPartnerPaths.some(path => pathname.includes(`${locale}${path}`)) ) {
       return localizedRedirect('/training-partner', locale, request);
+    }
+
+    if(user_type !== 'U' && Number(token?.role_id) !== 1 && assessorPaths.some(path => pathname.includes(`${locale}${path}`))) {
+      return localizedRedirect(HOME_PAGE_URL,locale,request)
+    }
+
+    if(user_type !== 'U' && Number(token?.role_id) !== 2 && trainingPartnerPaths.some(path => pathname.includes(`${locale}${path}`))) {
+      return localizedRedirect(HOME_PAGE_URL,locale,request)
     }
 
     if(user_type !== 'SA' && superAdminPaths.some(path => pathname.includes(`${locale}${path}`)) ){

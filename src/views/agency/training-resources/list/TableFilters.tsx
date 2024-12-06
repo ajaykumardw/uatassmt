@@ -9,16 +9,18 @@ import MenuItem from '@mui/material/MenuItem'
 // Type Imports
 // import type { UsersType } from '@/types/apps/userTypes'
 
+import type { training_resources } from '@prisma/client'
+
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
-import type { SSCType } from '@/types/sectorskills/sscType'
+
 import { MenuProps } from '@/configs/customDataConfig'
 
-const TableFilters = ({ setData, tableData }: { setData: any; tableData?: SSCType[] }) => {
+const TableFilters = ({ setData, tableData }: { setData: any; tableData?: training_resources[] }) => {
   // States
   // const [role, setRole] = useState<UsersType['role']>('')
   // const [plan, setPlan] = useState<UsersType['currentPlan']>('')
-  const [status, setStatus] = useState<SSCType['status']>(-1)
+  const [status, setStatus] = useState<training_resources['status']>(-1)
 
   useEffect(() => {
     const filteredData = tableData?.filter(user => {

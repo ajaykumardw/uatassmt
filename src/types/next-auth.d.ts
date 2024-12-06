@@ -5,6 +5,7 @@ import type { DefaultSession } from 'next-auth';
 
 declare module 'next-auth' {
   interface User{
+    sessionId?: string | null;
     id?: string | null;
     user_type?: string | null;
     company_name?: string | null;
@@ -14,10 +15,15 @@ declare module 'next-auth' {
     master_id?: string | null;
     agency_id?: string | null;
     role_id?: string | null;
+    is_student?: boolean;
+    user_name?: string | null;
+    candidate_name?: string | null;
   }
   interface Session{
+    studentImage?: string | null,
     user: {
       id?: string | null;
+      sessionId?: string | null;
       is_master?: boolean;
       agency_id?: string | null;
       user_type?: string | null;
@@ -25,6 +31,9 @@ declare module 'next-auth' {
       email?: string | null;
       image?: string | null;
       role_id?: string | null;
+      is_student?: boolean;
+      user_name?: string | null;
+      candidate_name?: string | null;
     } & DefaultSession['user']
   }
 }
@@ -32,6 +41,7 @@ declare module 'next-auth' {
 declare module 'next-auth/jwt' {
   interface JWT {
     id?: string | null;
+    sessionId?: string | null;
     is_master?: boolean;
     agency_id?: string | null;
     user_type?: string | null;
@@ -39,5 +49,8 @@ declare module 'next-auth/jwt' {
     email?: string | null;
     image?: string | null;
     role_id?: string | null;
+    is_student?: boolean;
+    user_name?: string | null;
+    candidate_name?: string | null;
   }
 }

@@ -2,9 +2,9 @@
 import { NextResponse } from 'next/server'
 
 // Data Imports
-import { getServerSession } from 'next-auth';
+// import { getServerSession } from 'next-auth';
 
-import { authOptions } from '@/libs/auth';
+// import { authOptions } from '@/libs/auth';
 
 import prisma from '@/libs/prisma';
 
@@ -26,6 +26,7 @@ export async function GET(
         pc_id: id
       }
     })
+
     return NextResponse.json(pc);
   }
 

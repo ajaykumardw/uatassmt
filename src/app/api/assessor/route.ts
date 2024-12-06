@@ -17,136 +17,26 @@ import prisma from '@/libs/prisma';
 
 import { authOptions } from '@/libs/auth';
 
+export async function GET(req: Request) {
 
+  const url = new URL(await req.url);
+  const sscId = url.searchParams.get('sscId');
 
-
-// export async function GET(req: NextRequest) {
-
-//   // const {image} = await req.json();
-
-//   const formData = await req.formData();
-//   const body = Object.fromEntries(formData);
-
-//   const file = (body.image as Blob);
-
-//   const name = formData.get("name");
-
-//   const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'agency', 'users', '1');
-
-//   if (file) {
-//     const buffer = Buffer.from(await file.arrayBuffer());
-
-//     // if (!fs.existsSync(uploadDir)) {
-//     //   fs.mkdirSync(uploadDir);
-//     // }
-
-//     if (!fs.existsSync(uploadDir)) {
-//       try {
-//         fs.mkdirSync(uploadDir, { recursive: true });
-//       } catch (err) {
-//         console.error('Error creating upload directory:', err);
-//         throw new Error('Failed to create upload directory');
-//       }
-//     }
-
-//     fs.writeFileSync(
-//       path.resolve(uploadDir, (body.image as File).name),
-//       buffer
-//     );
-//   } else {
-//     return NextResponse.json({
-//       success: false,
-//     });
-//   }
-
-
-//   // if (!fs.existsSync(uploadDir)) {
-//   //   try {
-//   //     fs.mkdirSync(uploadDir, { recursive: true });
-//   //   } catch (err) {
-//   //     console.error('Error creating upload directory:', err);
-//   //     throw new Error('Failed to create upload directory');
-//   //   }
-//   // }
-//   return NextResponse.json({"folder": uploadDir, "formData": formData, "name": name, "image": { "type": (body.image as File).type}})
-// }
-
-export async function GET() {
   const session = await getServerSession(authOptions);
   const agencyId = Number(session?.user?.agency_id);
 
+  const whereCondition = {
+    master_id: agencyId,
+    role_id: 1,
+    ...(sscId ? { ssc_id: Number(sscId) } : {}),
+  };
+
   const assessors = await prisma.users.findMany({
-    where: {
-      master_id: agencyId,
-      role_id: 1
-    },
+    where: whereCondition,
     include: {
       user_additional_data: true
     }
   })
-
-  // const batches = await prisma.batches.findMany({
-  //   where: {
-  //     agency_id: agencyId
-  //   },
-  //   select: {
-  //     id: true,
-  //     batch_name: true,
-  //     batch_size: true,
-  //     assessment_start_datetime: true,
-  //     assessment_end_datetime: true,
-  //     assessor_id: true,
-  //     qualification_pack: {
-  //       select: {
-  //         qualification_pack_id: true,
-  //         qualification_pack_name: true,
-  //         ssc: {
-  //           select: {
-  //             ssc_code: true
-  //           }
-  //         }
-  //       }
-  //     },
-  //     training_partner: {
-  //       select: {
-  //         first_name: true,
-  //         last_name: true
-  //       }
-  //     },
-  //     training_center: {
-  //       select: {
-  //         user_name: true
-  //       }
-  //     },
-  //     assessor: {
-  //       select: {
-  //         id: true,
-  //         first_name: true,
-  //         last_name: true
-  //       }
-  //     },
-  //     scheme: {
-  //       select: {
-  //         id: true,
-  //         scheme_name: true,
-  //         scheme_code: true
-  //       }
-  //     },
-  //     sub_scheme: {
-  //       select:{
-  //         id: true,
-  //         scheme_name: true,
-  //         scheme_code: true
-  //       }
-  //     },
-  //     students: true
-  //   },
-  //   orderBy: {
-  //     assessment_start_datetime: "desc"
-  //   }
-  // });
-
-  // console.log(batches)
 
   return NextResponse.json(assessors);
 }
@@ -164,6 +54,7 @@ export async function POST(req: NextRequest) {
     email,
     password,
     employeeId,
+    sscId,
     jobRoles,
     jobValidUpto,
     firstName,
@@ -233,23 +124,16 @@ export async function POST(req: NextRequest) {
   const cancelCheckBlob = cancelCheck as Blob;
   const cancelCheckName = cancelCheck ? getTime(new Date())+"_"+(cancelCheck as File).name : "";
 
-
-
-  // const { user_name, email, password, companyName, FirstName, LastName, phoneNumber, state, city, pincode, address } = await req.json()
-
   const hashPassword = await hash((password as string), 10)
   const userType = 'U'
   const session = await getServerSession(authOptions)
   const agency_id = Number(session?.user?.agency_id)
   const createdBy = Number(session?.user.id)
 
-  // const uploadDir = path.join(process.cwd(), 'public', 'uploads'); // Example upload directory
-  // const filePath = path.join(uploadDir, (profile as File).name);
-
-
   const result = await prisma.users.create({
     data: {
       user_name: username.toString(),
+      ssc_id: Number(sscId),
       email: email as string,
       password: hashPassword,
       user_type: userType,
@@ -283,7 +167,6 @@ export async function POST(req: NextRequest) {
 
     if(avatarBlob){
       const buffer = Buffer.from(await avatarBlob.arrayBuffer());
-
 
       fs.writeFileSync(
         path.resolve(uploadDir, avatarName),
@@ -398,9 +281,6 @@ export async function POST(req: NextRequest) {
         buffer
       )
     }
-
-    // console.log("console from api: ",body)
-
 
     await prisma.users_additional_data.create({
       data: {

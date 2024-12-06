@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+
 // Next Imports
 import { NextResponse } from 'next/server'
 
@@ -6,13 +9,15 @@ import { NextResponse } from 'next/server'
 // Data Imports
 import { getServerSession } from 'next-auth';
 
+import { getTime } from 'date-fns';
+
 import prisma from '@/libs/prisma';
 
 import { authOptions } from '@/libs/auth';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  
+
   // const agency_id = Number(session?.user?.agency_id);
 
   const createdBy = Number(session?.user.id)
@@ -31,6 +36,13 @@ export async function GET() {
   const trainingResources = await prisma.training_resources.findMany({
     where: {
       created_by: createdBy
+    },
+    include: {
+      user_training_resources: {
+        include: {
+          user: true
+        }
+      }
     }
   })
 
@@ -43,62 +55,61 @@ export async function POST(req: Request) {
   // return NextResponse.json({success: false, message: "User not created"}, {status: 500})
 
   // const { username, email, password, firstName, lastName, phoneNumber, state, city, pinCode, address, panCardNumber, gstNumber } = await req.json()
-  const {file, description, selectUsers} = await req.json();
+  const formData = await req.formData();
+  const body = Object.fromEntries(formData);
+  const {sscId, resourceName, file, description, assessor} = body;
 
-  // const hashPassword = await hash(password, 10)
-  // const userType = 'U'
-  const session = await getServerSession(authOptions)
-
-  // const agency_id = Number(session?.user?.agency_id)
+  const session = await getServerSession(authOptions);
   const createdBy = Number(session?.user.id)
 
-  // const result = await prisma.users.create({
-  //   data: {
-  //     user_name: username.toString(),
-  //     email: email as string,
-  //     password: hashPassword,
-  //     user_type: userType,
-  //     first_name: firstName.toString(),
-  //     last_name: lastName.toString(),
-  //     mobile_no: phoneNumber.toString(),
-  //     is_master: false,
-  //     master_id: agency_id,
-  //     role_id: 2,
-  //     state_id: Number(state),
-  //     city_id: Number(city),
-  //     pin_code: pinCode.toString(),
-  //     address: address.toString(),
-  //     created_by: createdBy
-  //   }
-  // })
+  const fileBlob = file as Blob;
+  const fileName = file ? getTime(new Date())+"."+(file as File).name.split('.').pop() : "";
+
+  const assessorArray = JSON.parse(assessor as string);
+
+  // console.log("training resources data from api:", body)
+  // console.log("training resources assessor from api:", JSON.parse(assessor as string))
 
   const result = await prisma.training_resources.create({
     data: {
-      file: file,
-      description: description,
+      ssc_id: Number(sscId),
+      name: resourceName.toString(),
+      description: description.toString(),
+      file: fileName,
       created_by: createdBy,
-      user_training_resources: {
-        connect: selectUsers.map((userId: any) => ({user_id: userId}))
-      }
+      user_training_resources: assessorArray.length > 0 ? {
+        create: assessorArray.map((assessorId: string) => ({
+          user: {
+            connect: {
+              id: assessorId,
+            },
+          },
+        })),
+      } : undefined,
     }
-  })
+  });
 
   if(result){
 
-    // await prisma.users_additional_data.create({
-    //   data: {
-    //     user_id: result.id,
-    //     gst_no: gstNumber,
-    //     pan_card_no: panCardNumber
-    //   }
-    // })
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'agency', 'training-resources', result.id.toString());
 
-    // await prisma.user_training_resources.create({
-    //   data: {
-    //     user_id: 1,
-    //     training_resource_id: result.id
-    //   }
-    // })
+    if (!fs.existsSync(uploadDir)) {
+      try {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      } catch (err) {
+        console.error('Error creating upload directory:', err);
+        throw new Error('Failed to create upload directory');
+      }
+    }
+
+    if(fileBlob){
+      const buffer = Buffer.from(await fileBlob.arrayBuffer());
+
+      fs.writeFileSync(
+        path.resolve(uploadDir, fileName),
+        buffer
+      )
+    }
 
     return NextResponse.json({ success: true, message: "Training Resource created successfully." })
   }

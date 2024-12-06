@@ -16,13 +16,17 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
 
-  const { userId, action } = await req.json();
+  const { userId, sessionId, isStudent, action } = await req.json();
+
+  console.log("log sessionId data api:", sessionId);
 
   if(action == 'login'){
 
     await prisma.log_sessions.create({
       data: {
         user_id: userId,
+        unique_session_id: sessionId,
+        user_type: isStudent ? 'S' : 'U',
         status: 'IN',
         ip_address: req.headers.get('x-forwarded-for') || req.ip,
         user_agent: req.headers.get('user-agent'),
@@ -37,6 +41,7 @@ export async function POST(req: NextRequest) {
     const session = await prisma.log_sessions.findFirst({
       where: {
         user_id: userId,
+        unique_session_id: sessionId,
         logout_at: null
       },
       select: {
@@ -48,6 +53,7 @@ export async function POST(req: NextRequest) {
       await prisma.log_sessions.update({
         where: {
           id: session.id,
+          unique_session_id: sessionId,
           logout_at: null
         },
         data: {

@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 // MUI Imports
 import Grid from '@mui/material/Grid'
@@ -10,9 +10,7 @@ import Button from '@mui/material/Button'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
-import MenuItem from '@mui/material/MenuItem'
-import Switch from '@mui/material/Switch'
-import { Alert, AlertTitle, Avatar, CircularProgress, FormControlLabel, FormHelperText, IconButton, InputAdornment, LinearProgress, List, ListItem, TablePagination, Typography } from '@mui/material'
+import { Alert, AlertTitle, Avatar, CircularProgress, IconButton, LinearProgress, List, ListItem, TablePagination, Typography } from '@mui/material'
 
 import * as XLSX from 'xlsx';
 
@@ -28,13 +26,10 @@ import classnames from 'classnames'
 import { toast } from 'react-toastify'
 
 
-import { Controller, useForm } from 'react-hook-form'
 
-import type { SubmitHandler } from 'react-hook-form'
 
-import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, string, trim, minLength, optional, check, array, number, pipe, safeParse, regex, custom, pipeAsync, checkAsync, objectAsync, safeParseAsync, maxLength, optionalAsync } from "valibot"
+import { string, trim, minLength, optional, check, pipe, pipeAsync, checkAsync, objectAsync, safeParseAsync, maxLength, optionalAsync } from "valibot"
 
 import type { InferInput } from 'valibot'
 
@@ -42,7 +37,9 @@ import { useDropzone } from 'react-dropzone'
 
 import tableStyles from '@core/styles/table.module.css';
 import DialogCloseButton from '@components/dialogs/DialogCloseButton'
-import CustomTextField from '@core/components/mui/TextField'
+
+// import CustomTextField from '@core/components/mui/TextField'
+
 import AppReactDropzone from '@/libs/styles/AppReactDropzone'
 import TablePaginationComponent from '@/components/TablePaginationComponent'
 
@@ -99,6 +96,7 @@ import { ExpectedNOSExcelHeaders } from '@/configs/customDataConfig'
 type NOSTypeWithError = {
   [key: string]: { value: string, error: string }
 }
+
 // type NOSTypeWithError = {
 //   [K in typeof ExpectedNOSExcelHeaders[number]]:
 //     K extends 'NOS_ID' | 'NOS_Name' ? { value: string; error: string } : string;
@@ -114,6 +112,7 @@ type BulkUploadNOSDialogProps = {
   // setOpen: (open: boolean) => void
 
   handleClose: () => void
+
   // data?: AddQPDialogData
   updateNOSList: () => void
 }
@@ -157,35 +156,35 @@ type BulkUploadNOSDialogProps = {
 //   // weightedMarks: ''
 // }
 
-const questionType = [
-  {
-    value: 'theory',
-    name: 'Theory'
-  },
-  {
-    value: 'viva',
-    name: 'Viva'
-  },
-  {
-    value: 'practical',
-    name: 'Practical'
-  }
-];
+// const questionType = [
+//   {
+//     value: 'theory',
+//     name: 'Theory'
+//   },
+//   {
+//     value: 'viva',
+//     name: 'Viva'
+//   },
+//   {
+//     value: 'practical',
+//     name: 'Practical'
+//   }
+// ];
 
-const questionLevel = [
-  {
-    value: 'E',
-    name: 'Easy'
-  },
-  {
-    value: 'M',
-    name: 'Medium'
-  },
-  {
-    value: 'H',
-    name: 'Hard'
-  }
-];
+// const questionLevel = [
+//   {
+//     value: 'E',
+//     name: 'Easy'
+//   },
+//   {
+//     value: 'M',
+//     name: 'Medium'
+//   },
+//   {
+//     value: 'H',
+//     name: 'Hard'
+//   }
+// ];
 
 const checkExistPCId = async (input: any) => {
 
@@ -209,11 +208,13 @@ const schema = objectAsync(
     // selectPC: array(string(), 'This field is required'),
     QP_ID: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'),),
     NOS_ID: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), check(value => !/\s/.test(value.toString()), 'NOS ID should not contain any spaces.')),
+
     // questionType: pipe(string(), trim() , minLength(1, 'This field is required')),
     // Question_Level: pipe(string('This field is required'), trim(), minLength(1, 'This field is required')),
     NOS_Name: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), minLength(3, 'NOS name must be at least 3 characters long'), maxLength(255, 'The max length for this field is 255.')),
     PC_ID: optionalAsync(pipeAsync(string('This field should be string'), trim(), checkAsync(checkExistPCId, "PC ID already exist."), check(value => !value || !/\s/.test(value.toString()), 'PC ID should not contain any spaces.'))),
     PC_Name: optional(pipe(string('This field should be string'), trim(), maxLength(255, 'The max length for this field is 255.'))),
+
     // Question_Explanation: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), minLength(3, 'Question name must be at least 3 characters long')),
     // Marks: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), check((value) => !value || /^(?:[1-9]|1\d|2[0-5])(\.\d+)?$/.test(value), 'Marks must be between 1 and 25.'),),
     // Option1: pipe(string('This field is required'), trim(), minLength(1, 'This field is required')),
@@ -252,7 +253,7 @@ const mapKeys = (data: any[]) => data.map((item: any) => ({
 
 const columnHelper = createColumnHelper<NOSTypeWithError>()
 
-const BulkUploadNOSDialog = ({ open, sscID, qpID, handleClose, updateNOSList }: BulkUploadNOSDialogProps) => {
+const BulkUploadNOSDialog = ({ open, sscID, handleClose, updateNOSList }: BulkUploadNOSDialogProps) => {
 
   // States
   // const [userData, setUserData] = useState<BulkUploadNOSDialogProps['data']>(data || initialData)
@@ -319,16 +320,19 @@ const BulkUploadNOSDialog = ({ open, sscID, qpID, handleClose, updateNOSList }: 
               // setProgress(0); // Reset progress
               // setUploadData([]);
               // setData([]);
+
               return;
             }
 
             const mappedData = mapKeys(jsonData);
 
             const pcIds = mappedData.map((item: any) => item.PC_ID);
+
             // const duplicatePCIds = pcIds.filter((id: any, index: number) => pcIds.indexOf(id) !== index);
             // Create a frequency map to count occurrences of each PC_ID
             const frequencyMap = pcIds.reduce((acc, id) => {
               acc[id] = (acc[id] || 0) + 1; // Increment the count for each PC_ID
+
               return acc;
             }, {});
 
@@ -340,6 +344,9 @@ const BulkUploadNOSDialog = ({ open, sscID, qpID, handleClose, updateNOSList }: 
             const validatedData = [];
 
             for (const [index, item] of mappedData.entries()) {
+
+              console.log("index", index);
+
               // const pcIds = item.PC_ID.toString().split(',').map((id: string) => id.trim());
               // const duplicatePCIds = pcIds.filter((id: any, index: number) => pcIds.indexOf(id) !== index && pcIds.lastIndexOf(id) === index);
 
@@ -450,6 +457,7 @@ const BulkUploadNOSDialog = ({ open, sscID, qpID, handleClose, updateNOSList }: 
                 qpIDError,
                 pcIdPCNameError,
                 pcIdError
+
                 // nosIDError
                 // pcIdsError,
                 // duplicatePCError,
@@ -473,6 +481,7 @@ const BulkUploadNOSDialog = ({ open, sscID, qpID, handleClose, updateNOSList }: 
                 }
               });
             }
+
             console.log("validatedData", validatedData);
 
             // Transform data
@@ -531,6 +540,7 @@ const BulkUploadNOSDialog = ({ open, sscID, qpID, handleClose, updateNOSList }: 
         if (event.loaded && event.total) {
 
           const percentCompleted = Math.round((event.loaded / event.total) * 100);
+
           setProgress(percentCompleted); // Update progress
 
         }
@@ -583,6 +593,7 @@ const BulkUploadNOSDialog = ({ open, sscID, qpID, handleClose, updateNOSList }: 
     setData([]);
     setFileInput(null)
     setUploadData([]);
+
     // handleClose();
   }
 

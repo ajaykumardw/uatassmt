@@ -19,6 +19,7 @@ import VerticalFooter from '@components/student-layout/vertical/Footer'
 import HorizontalFooter from '@components/student-layout/horizontal/Footer'
 import Customizer from '@core/components/customizer'
 import ScrollToTop from '@core/components/scroll-to-top'
+import ImageGuard from '@/hocs/ImageGuard'
 
 // Config Imports
 import { i18n } from '@configs/i18n'
@@ -36,29 +37,31 @@ const Layout = async ({ children, params }: ChildrenType & { params: { lang: Loc
 
   return (
     <Providers direction={direction}>
-      <LayoutWrapper
-        systemMode={systemMode}
-        verticalLayout={
-          <VerticalLayout
-            navigation={<Navigation dictionary={dictionary} mode={mode} systemMode={systemMode} />}
-            navbar={<Navbar />}
-            footer={<VerticalFooter />}
-          >
-            {children}
-          </VerticalLayout>
-        }
-        horizontalLayout={
-          <HorizontalLayout header={<Header dictionary={dictionary} />} footer={<HorizontalFooter />}>
-            {children}
-          </HorizontalLayout>
-        }
-      />
-      <ScrollToTop className='mui-fixed'>
-        <Button variant='contained' className='is-10 bs-10 rounded-full p-0 min-is-0 flex items-center justify-center'>
-          <i className='tabler-arrow-up' />
-        </Button>
-      </ScrollToTop>
-      <Customizer dir={direction} />
+      <ImageGuard locale={params.lang}>
+        <LayoutWrapper
+          systemMode={systemMode}
+          verticalLayout={
+            <VerticalLayout
+              navigation={<Navigation dictionary={dictionary} mode={mode} systemMode={systemMode} />}
+              navbar={<Navbar />}
+              footer={<VerticalFooter />}
+            >
+              {children}
+            </VerticalLayout>
+          }
+          horizontalLayout={
+            <HorizontalLayout header={<Header dictionary={dictionary} />} footer={<HorizontalFooter />}>
+              {children}
+            </HorizontalLayout>
+          }
+        />
+        <ScrollToTop className='mui-fixed'>
+          <Button variant='contained' className='is-10 bs-10 rounded-full p-0 min-is-0 flex items-center justify-center'>
+            <i className='tabler-arrow-up' />
+          </Button>
+        </ScrollToTop>
+        <Customizer dir={direction} />
+      </ImageGuard>
     </Providers>
   )
 }

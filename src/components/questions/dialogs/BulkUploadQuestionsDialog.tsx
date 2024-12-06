@@ -1,18 +1,15 @@
 'use client'
 
 // React Imports
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 // MUI Imports
-import Grid from '@mui/material/Grid'
 import Dialog from '@mui/material/Dialog'
 import Button from '@mui/material/Button'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
-import MenuItem from '@mui/material/MenuItem'
-import Switch from '@mui/material/Switch'
-import { Alert, AlertTitle, Avatar, CircularProgress, FormControlLabel, FormHelperText, IconButton, InputAdornment, LinearProgress, List, ListItem, TablePagination, Typography } from '@mui/material'
+import { Alert, AlertTitle, Avatar, CircularProgress, IconButton, LinearProgress, List, ListItem, TablePagination, Typography } from '@mui/material'
 
 import * as XLSX from 'xlsx';
 
@@ -28,13 +25,10 @@ import classnames from 'classnames'
 import { toast } from 'react-toastify'
 
 
-import { Controller, useForm } from 'react-hook-form'
 
-import type { SubmitHandler } from 'react-hook-form'
 
-import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, string, trim, minLength, optional, check, array, number, pipe, safeParse, regex, custom, pipeAsync, checkAsync, objectAsync, safeParseAsync } from "valibot"
+import { object, string, trim, minLength, optional, check, pipe, safeParse, regex } from "valibot"
 
 import type { InferInput } from 'valibot'
 
@@ -42,7 +36,6 @@ import { useDropzone } from 'react-dropzone'
 
 import tableStyles from '@core/styles/table.module.css';
 import DialogCloseButton from '@components/dialogs/DialogCloseButton'
-import CustomTextField from '@core/components/mui/TextField'
 import AppReactDropzone from '@/libs/styles/AppReactDropzone'
 import TablePaginationComponent from '@/components/TablePaginationComponent'
 
@@ -115,6 +108,7 @@ type BulkUploadQuestionDialogProps = {
   // setOpen: (open: boolean) => void
 
   handleClose: () => void
+
   // data?: AddQPDialogData
   updateQuestionsList: () => void
 }
@@ -158,49 +152,50 @@ type BulkUploadQuestionDialogProps = {
 //   // weightedMarks: ''
 // }
 
-const questionType = [
-  {
-    value: 'theory',
-    name: 'Theory'
-  },
-  {
-    value: 'viva',
-    name: 'Viva'
-  },
-  {
-    value: 'practical',
-    name: 'Practical'
-  }
-];
+// const questionType = [
+//   {
+//     value: 'theory',
+//     name: 'Theory'
+//   },
+//   {
+//     value: 'viva',
+//     name: 'Viva'
+//   },
+//   {
+//     value: 'practical',
+//     name: 'Practical'
+//   }
+// ];
 
-const questionLevel = [
-  {
-    value: 'E',
-    name: 'Easy'
-  },
-  {
-    value: 'M',
-    name: 'Medium'
-  },
-  {
-    value: 'H',
-    name: 'Hard'
-  }
-];
+// const questionLevel = [
+//   {
+//     value: 'E',
+//     name: 'Easy'
+//   },
+//   {
+//     value: 'M',
+//     name: 'Medium'
+//   },
+//   {
+//     value: 'H',
+//     name: 'Hard'
+//   }
+// ];
 
-const checkExistPCId = async (input: any) => {
+// const checkExistPCId = async (input: any) => {
 
 
-  const pc = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pc/pc_id/${input}`).then(function (response) { return response.json() });
+//   const pc = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pc/pc_id/${input}`).then(function (response) { return response.json() });
 
-  return pc ? true : false;
+//   return pc ? true : false;
 
-}
+// }
 
 const schema = object(
   {
     // selectPC: array(string(), 'This field is required'),
     PC_ID: pipe(string('This field is required'), trim(), minLength(1, 'This field is required')),
+
     // questionType: pipe(string(), trim() , minLength(1, 'This field is required')),
     Question_Level: pipe(string('This field is required'), trim(), minLength(1, 'This field is required')),
     Question: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), minLength(3, 'Question name must be at least 3 characters long')),
@@ -315,6 +310,7 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
               // setProgress(0); // Reset progress
               // setUploadData([]);
               // setData([]);
+
               return;
             }
 
@@ -324,6 +320,9 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
             const validatedData = [];
 
             for (const [index, item] of mappedData.entries()) {
+
+              console.log("index", index);
+
               const pcIds = item.PC_ID.toString().split(',').map((id: string) => id.trim());
               const duplicatePCIds = pcIds.filter((id: any, index: number) => pcIds.indexOf(id) !== index && pcIds.lastIndexOf(id) === index);
 
@@ -351,18 +350,22 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
                 path: [{ key: `Option1` }],
                 message: 'This field is required.'
               } : null;
+
               const Option2Error = nullOrUndefinedIndices.length != 0 && nullOrUndefinedIndices.find(value => value+1 === 2) ? {
                 path: [{ key: `Option2` }],
                 message: 'This field is required.'
               } : null;
+
               const Option3Error = nullOrUndefinedIndices.length != 0 && nullOrUndefinedIndices.find(value => value+1 === 3) ? {
                 path: [{ key: `Option3` }],
                 message: 'This field is required.'
               } : null;
+
               const Option4Error = nullOrUndefinedIndices.length != 0 && nullOrUndefinedIndices.find(value => value+1 === 4) ? {
                 path: [{ key: `Option4` }],
                 message: 'This field is required.'
               } : null;
+
               const Option5Error = nullOrUndefinedIndices.length != 0 && nullOrUndefinedIndices.find(value => value+1 === 5) ? {
                 path: [{ key: `Option5` }],
                 message: 'This field is required.'
@@ -379,6 +382,7 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
                   if (!pc) {
                     return pcId; // Return the non-existing PC ID
                   }
+
                   return null; // Return null if it exists
                 })
               );
@@ -410,6 +414,7 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
                 Option4Error,
                 Option5Error,
                 answerError,
+
                 // candidateIdError,
                 // batchSizeError
               ].filter(Boolean); // Remove null values
@@ -480,6 +485,7 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
         if (event.loaded && event.total) {
 
           const percentCompleted = Math.round((event.loaded / event.total) * 100);
+
           setProgress(percentCompleted); // Update progress
 
         }
@@ -532,6 +538,7 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
     setData([]);
     setFileInput(null)
     setUploadData([]);
+
     // handleClose();
   }
 

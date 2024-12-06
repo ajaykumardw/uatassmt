@@ -9,7 +9,7 @@ import prisma from '@/libs/prisma';
 
 export async function POST(req: Request) {
 
-  const { uploadData, sscID, qpID } = await req.json();
+  const { uploadData, sscID } = await req.json();
 
   const session = await getServerSession(authOptions);
   const createdBy = Number(session?.user.id);
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   }));
 
   const createNOSandPCResult = await Promise.all(falseArray.map(async (item: any) => {
-    
+
     return await prisma.nos.create({
       data: {
         agency_id: agencyId,

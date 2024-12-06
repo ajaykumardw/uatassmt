@@ -23,9 +23,9 @@ const TrainingResourcesListApp = () => {
   // Vars
   // const data = await getData()
 
-  const[data, setSscUsers] = useState([])
+  const[data, setTrainingResources] = useState([])
 
-  const getSSCData = async () => {
+  const getTrainingResourcesData = async () => {
     // Vars
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/training-resources`)
 
@@ -33,25 +33,25 @@ const TrainingResourcesListApp = () => {
       throw new Error('Failed to fetch userData')
     }
 
-    const userData = await res.json();
+    const resourcesData = await res.json();
 
-    setSscUsers(userData);
+    setTrainingResources(resourcesData);
 
     // return res.json()
   }
 
   useEffect(() => {
 
-    getSSCData()
+    getTrainingResourcesData()
   }, []);
 
-  const updateSSCList = () => {
-    getSSCData();
+  const updateTrainingResourceList = () => {
+    getTrainingResourcesData();
   };
 
   // console.log(data);
 
-  return <TrainingResourcesList userData={data} updateSSCList={updateSSCList} />
+  return <TrainingResourcesList userData={data} updateTrainingResourceList={updateTrainingResourceList} />
 }
 
 export default TrainingResourcesListApp

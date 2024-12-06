@@ -24,7 +24,7 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import { signIn } from 'next-auth/react'
 import { Controller, useForm } from 'react-hook-form'
 import { valibotResolver } from '@hookform/resolvers/valibot'
-import { object, minLength, string, email, pipe, check } from "valibot"
+import { object, minLength, string, pipe, check } from "valibot"
 import type { SubmitHandler } from 'react-hook-form'
 import type { InferInput } from 'valibot'
 import classnames from 'classnames'
@@ -197,6 +197,7 @@ const StudentLogin = ({ mode }: { mode: SystemMode }) => {
                   {...field}
                   autoFocus
                   fullWidth
+
                   // type='email'
                   label='Candidate ID'
                   placeholder='Enter your candidate id'
