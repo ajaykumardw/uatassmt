@@ -1,8 +1,11 @@
 'use client'; // This ensures the component runs on the client side
 
 import React, { useEffect, useState } from 'react';
+
 import { useParams } from 'next/navigation';
+
 import { Card, CardHeader, CardContent, Typography, Button, CardActions } from "@mui/material";
+
 import Grid from "@mui/material/Grid";
 
 import type { Locale } from '@configs/i18n'

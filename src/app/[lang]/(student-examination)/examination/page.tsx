@@ -1,9 +1,11 @@
 'use client'; // This ensures the component runs on the client side
 
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { Card, CardHeader, CardContent, Typography, Button, CardActions, Alert, AlertTitle, ButtonGroup } from "@mui/material";
+
+import { Card, CardHeader, CardContent, Typography, Button, CardActions, Alert, AlertTitle } from "@mui/material";
+
 import Grid from "@mui/material/Grid";
+
 import CustomIconButton from '@/@core/components/mui/IconButton';
 
 
@@ -18,7 +20,6 @@ const Buttons = () => {
 }
 
 const Examination: React.FC = () => {
-  const { lang: locale } = useParams<{ lang: string }>();  // Type the params properly
 
   const [timeLeft, setTimeLeft] = useState(60 * 60); // 60 minutes in seconds (3600 seconds)
 
@@ -43,6 +44,7 @@ const Examination: React.FC = () => {
   const getColor = () => {
     if (timeLeft <= 600) return 'text-error';   // Less than 10 minutes
     if (timeLeft <= 1800) return 'text-warning'; // Between 10 to 30 minutes
+
     return 'text-success';  // More than 30 minutes
   };
 
