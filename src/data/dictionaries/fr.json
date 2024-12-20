@@ -102,6 +102,8 @@
     "examInstructions": "Instructions pour l'examen",
     "students": "Étudiantes",
     "examSets": "Ensembles d'examen",
-    "trainingResources": "Ressources de formation"
+    "trainingResources": "Ressources de formation",
+
+    "exams": "Examens"
   }
 }

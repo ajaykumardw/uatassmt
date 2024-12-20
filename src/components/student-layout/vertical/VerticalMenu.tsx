@@ -93,6 +93,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
       menuSectionStyles={menuSectionStyles(verticalNavOptions, theme)}
     >
       <MenuItem href={`/${locale}/student-dashboard`} icon={<i className='tabler-smart-home' />}>{dictionary['navigation'].dashboard}</MenuItem>
+      <MenuItem href={`/${locale}/exams`} icon={<i className='tabler-book' />}>{dictionary['navigation'].exams}</MenuItem>
 
     </Menu>
     </ScrollWrapper>

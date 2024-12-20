@@ -17,7 +17,7 @@ import ActivityTimeline from '@views/dashboards/crm/ActivityTimeline'
 // Server Action Imports
 import { getServerMode } from '@core/utils/serverHelpers'
 
-const TrainingPartnerDashboard = () => {
+const StudentDashboard = () => {
   // Vars
   const serverMode = getServerMode()
 
@@ -87,4 +87,4 @@ const TrainingPartnerDashboard = () => {
   )
 }
 
-export default TrainingPartnerDashboard
+export default StudentDashboard

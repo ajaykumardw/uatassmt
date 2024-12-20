@@ -102,6 +102,8 @@
     "examInstructions": "تعليمات الامتحان",
     "students": "طلاب",
     "examSets": "مجموعات الامتحانات",
-    "trainingResources": "موارد التدريب"
+    "trainingResources": "موارد التدريب",
+
+    "exams": "الامتحانات"
   }
 }

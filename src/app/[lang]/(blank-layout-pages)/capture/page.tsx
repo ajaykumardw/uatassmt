@@ -60,6 +60,7 @@ const CapturePage = () => {
 
       if (res.ok) {
         // After updating the session, redirect the user to the dashboard
+        console.log("redirecting to student dashboard **********************************************************")
         router.push("/student-dashboard");
       } else {
         console.error("Failed to update capture status");

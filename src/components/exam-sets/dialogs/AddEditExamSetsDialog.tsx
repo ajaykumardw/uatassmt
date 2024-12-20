@@ -140,12 +140,16 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
         totalQuestions: examSet.total_questions,
         status: examSet.status,
         easy: examSet.question_levels && examSet.question_levels.E ? examSet.question_levels.E.toString() : '0',
-        medium: examSet.question_levels && examSet.question_levels.M ? examSet.question_levels.M.toString() : '0',
+        medium: examSet.question_levels && examSet.question_levels.M ? examSet.question_levels.M.toString() : '1',
         hard: examSet.question_levels && examSet.question_levels.H ? examSet.question_levels.H.toString() : '0',
         questionRandom: examSet.question_random === 1,
         optionRandom: examSet.option_random === 1,
       })
       setMode(examSet.mode);
+
+      setEasyCount(examSet.question_levels && examSet.question_levels.E ? examSet.question_levels.E.toString() : 0)
+      setMediumCount(examSet.question_levels && examSet.question_levels.M ? examSet.question_levels.M.toString() : 0)
+      setHardCount(examSet.question_levels && examSet.question_levels.H ? examSet.question_levels.H.toString() : 0)
 
       if (examSet.exam_sets_questions.length > 0) {
 

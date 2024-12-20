@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
   const { userId, sessionId, isStudent, action } = await req.json();
 
-  console.log("log sessionId data api:", sessionId);
+  // console.log("log sessionId data api:", sessionId);
 
   if(action == 'login'){
 

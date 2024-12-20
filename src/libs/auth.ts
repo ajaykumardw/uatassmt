@@ -199,8 +199,6 @@ export const authOptions: NextAuthOptions = {
       const isStudent = message.user.is_student;
       const action = 'login';
 
-      console.log("sessionId:", sessionId);
-
       if(userId){
         await fetch(`${process.env.API_URL}/log-sessions`, {
           method: 'POST',
@@ -218,8 +216,6 @@ export const authOptions: NextAuthOptions = {
       const userId = Number(message.token.id);
       const sessionId = message.token.sessionId;
       const action = 'logout';
-
-      console.log("logout time sessionId:", sessionId);
 
       if(userId){
 

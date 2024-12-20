@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   const id = url.searchParams.get('studentId');
 
   const session = await getServerSession(authOptions);
-  
+
   // const id = session?.user.id;
   const sessionId = session?.user.sessionId;
 
@@ -63,8 +63,6 @@ export async function POST(req: Request){
   const id = Number(session?.user?.id);
   const sessionId = session?.user.sessionId;
 
-  console.log("sessionId", sessionId)
-
   const log = await prisma.log_sessions.findFirst({
     where: {
       user_id: id,
@@ -85,8 +83,6 @@ export async function POST(req: Request){
       auth_image: capturedImage
     }
   })
-
-  console.log("result from auth image api:", res);
 
   if(res){
     return NextResponse.json({message: 'Student Auth Image Added Successfully!'})

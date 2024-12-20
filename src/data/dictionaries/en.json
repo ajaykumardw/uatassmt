@@ -102,6 +102,8 @@
     "examInstructions": "Exam Instructions",
     "students": "Students",
     "examSets": "Exam Sets",
-    "trainingResources": "Training Resources"
+    "trainingResources": "Training Resources",
+
+    "exams": "Exams"
   }
 }
