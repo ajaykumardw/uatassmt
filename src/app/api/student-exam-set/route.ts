@@ -11,26 +11,63 @@ import prisma from '@/libs/prisma';
 export async function GET() {
 
   const session = await getServerSession(authOptions);
-  const agency_id = Number(session?.user?.agency_id)
 
-  const examSets = await prisma.exam_sets.findMany({
-    where:{
-      agency_id: agency_id
+  // const agency_id = Number(session?.user?.agency_id)
+
+  // const examSets = await prisma.exam_sets.findMany({
+  //   where:{
+  //     agency_id: agency_id
+  //   },
+  //   include: {
+  //     exam_sets_questions: {
+  //       include: {
+  //         questions: {
+  //           select: {
+  //             question_level: true
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // });
+
+  const exam = await prisma.students.findFirst({
+    where: {
+      id: Number(session?.user.id)
     },
-    include: {
-      exam_sets_questions: {
-        include: {
-          questions: {
-            select: {
-              question_level: true
+    select: {
+      id: true,
+      batch: {
+        select: {
+          exam_set: {
+            include: {
+              exam_sets_questions: {
+                select: {
+                  question_id: true,
+                  marks: true,
+                  questions: {
+                    select: {
+                      question: true,
+                      option1: true,
+                      option2: true,
+                      option3: true,
+                      option4: true,
+                      option5: true,
+                    }
+                  }
+
+                }
+              }
             }
           }
         }
       }
     }
-  });
+  })
 
-  return NextResponse.json(examSets);
+  // console.log("exam set data", exam)
+
+  return NextResponse.json(exam);
 }
 
 export async function POST(req: Request) {
@@ -41,7 +78,6 @@ export async function POST(req: Request) {
     mode,
     totalQuestions,
     status,
-    examDuration,
     easy,
     medium,
     hard,
@@ -86,7 +122,6 @@ export async function POST(req: Request) {
         mode: mode,
         total_questions: Number(totalQuestions),
         status: Number(status),
-        exam_duration: Number(examDuration),
         question_random: questionRandom ? 1 : 0,
         option_random: optionRandom ? 1 : 0,
         created_by: createdBy
@@ -177,7 +212,6 @@ export async function POST(req: Request) {
             mode: mode,
             total_questions: Number(totalQuestions),
             status: Number(status),
-            exam_duration: Number(examDuration),
             question_levels: {"E": easyNum, "M": mediumNum, "H": hardNum},
             question_random: questionRandom ? 1 : 0,
             option_random: optionRandom ? 1 : 0,

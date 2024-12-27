@@ -40,6 +40,7 @@ import type { QPType } from '@/types/qualification-pack/qpType'
 import { removeDuplicates } from '@/utils/removeDuplicates'
 
 import TheoryQuestionListTable from '@/views/agency/exam-sets/list/TheoryQuestionsListTable'
+import { ExamDurations } from '@/configs/customDataConfig'
 
 type AddQPDialogData = InferInput<typeof schema> & {
   selectedQuestions?: number[]
@@ -60,6 +61,7 @@ const initialData: AddQPDialogData = {
   mode: '',
   totalQuestions: '',
   status: '',
+  examDuration: '',
   easy: '0',
   medium: '0',
   hard: '0',
@@ -76,6 +78,7 @@ const schema = object(
     mode: pipe(string(), trim(), minLength(1, 'This field is required.')),
     totalQuestions: pipe(string(), trim(), minLength(1, 'This field is required.'), check((value) => !value || /^(?:[1-9]|[1-4]\d|50)$/.test(value), 'Total Questions must be between 1 and 50 and must be a number.') ),
     status: pipe(string(), trim(), minLength(1, 'This field is required.')),
+    examDuration: pipe(string(), trim(), minLength(1, 'This field is required.')),
     easy: pipe(string(), trim(), minLength(1, 'This field is required.'), check((value) => !value || /^(?:0|[1-9]|[1-4]\d|50)(\.\d+)?$/.test(value), 'Easy must be between 0 and 50 and must be a number.') ),
     medium: pipe(string(), trim(), minLength(1, 'This field is required.'), check((value) => !value || /^(?:0|[1-9]|[1-4]\d|50)(\.\d+)?$/.test(value), 'Medium must be between 0 and 50 and must be a number.') ),
     hard: pipe(string(), trim(), minLength(1, 'This field is required.'), check((value) => !value || /^(?:0|[1-9]|[1-4]\d|50)(\.\d+)?$/.test(value), 'Hard must be between 0 and 50 and must be a number.') ),
@@ -139,6 +142,7 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
         mode: examSet.mode,
         totalQuestions: examSet.total_questions,
         status: examSet.status,
+        examDuration: examSet.exam_duration,
         easy: examSet.question_levels && examSet.question_levels.E ? examSet.question_levels.E.toString() : '0',
         medium: examSet.question_levels && examSet.question_levels.M ? examSet.question_levels.M.toString() : '1',
         hard: examSet.question_levels && examSet.question_levels.H ? examSet.question_levels.H.toString() : '0',
@@ -290,6 +294,7 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
       mode: examSetData?.mode || '',
       totalQuestions: examSetData?.totalQuestions.toString() || '',
       status: examSetData?.status.toString() || '',
+      examDuration: examSetData?.examDuration || '',
       easy: examSetData?.easy || '0',
       medium: examSetData?.medium || '0',
       hard: examSetData?.hard || '0',
@@ -563,6 +568,31 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
                   >
                     <MenuItem value='1'>Publish</MenuItem>
                     <MenuItem value='0'>Unpublish</MenuItem>
+                  </CustomTextField>
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                control={control}
+                name='examDuration'
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <CustomTextField
+                    select
+                    fullWidth
+                    id='select-duration'
+                    label='Exam Duration'
+                    required={true}
+                    {...field}
+                    onChange={(e) => { field.onChange(e); }}
+                    {...(errors.examDuration && { error: true, helperText: errors.examDuration.message })}
+                  >
+                    {Object.entries(ExamDurations).map(([duration, label]) => (
+                      <MenuItem key={duration} value={duration}>
+                        {label}
+                      </MenuItem>
+                    ))}
                   </CustomTextField>
                 )}
               />

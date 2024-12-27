@@ -51,6 +51,7 @@ export async function POST(
     mode,
     totalQuestions,
     status,
+    examDuration,
 
     // easy,
     // medium,
@@ -121,6 +122,7 @@ export async function POST(
           mode: mode,
           total_questions: Number(totalQuestions),
           status: Number(status),
+          exam_duration: Number(examDuration),
           question_random: questionRandom ? 1 : 0,
           option_random: optionRandom ? 1 : 0,
         }

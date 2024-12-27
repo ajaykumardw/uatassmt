@@ -56,7 +56,7 @@ import tableStyles from '@core/styles/table.module.css'
 import AddEditExamSetsDialog from '@/components/exam-sets/dialogs/AddEditExamSetsDialog';
 
 import CustomAvatar from '@/@core/components/mui/Avatar';
-import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
+import { ExamDurations, MenuProps, TableRowLimit } from '@/configs/customDataConfig';
 
 // declare module '@tanstack/table-core' {
 //   interface FilterFns {
@@ -261,6 +261,20 @@ const ExamSetsListTable = ({ tableData, updateExamSetsList }: { tableData?: exam
               variant='tonal'
               className='capitalize'
               label={row.original.total_questions}
+              color='success'
+              size='small'
+            />
+          </div>
+        )
+      }),
+      columnHelper.accessor('exam_duration', {
+        header: 'Exam Duration',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-3'>
+            <Chip
+              variant='tonal'
+              className='capitalize'
+              label={ExamDurations[row.original.exam_duration]}
               color='success'
               size='small'
             />

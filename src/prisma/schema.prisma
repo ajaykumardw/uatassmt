@@ -19,6 +19,8 @@ model batches {
   scheme_id                 Int
   sub_scheme                schemes @relation("sub_scheme", fields: [sub_scheme_id], references: [id])
   sub_scheme_id             Int
+  exam_set_id               Int?
+  exam_set                  exam_sets? @relation(fields: [exam_set_id], references: [id])
   batch_size                String
   training_partner          users @relation("training_partner", fields: [training_partner_id], references: [id])
   training_partner_id       Int
@@ -435,6 +437,8 @@ model exam_sets {
   question_random Int           @default(0) @db.TinyInt
   option_random   Int           @default(0) @db.TinyInt
   total_questions Int
+  exam_duration   Int           @default(30)
+  instruction     String?
   question_levels Json?
   status          Int           @default(0) @db.TinyInt
   created_by      Int
@@ -442,6 +446,7 @@ model exam_sets {
   updated_at      DateTime      @default(now()) @updatedAt @db.DateTime(0)
 
   exam_sets_questions exam_sets_questions[]
+  batch               batches[]
 }
 
 model exam_sets_questions {

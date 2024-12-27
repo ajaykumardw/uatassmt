@@ -17,7 +17,7 @@ import ActivityTimeline from '@views/dashboards/crm/ActivityTimeline'
 // Server Action Imports
 import { getServerMode } from '@core/utils/serverHelpers'
 
-const StudentDashboard = () => {
+const StudentDashboard = async () => {
   // Vars
   const serverMode = getServerMode()
 

@@ -164,7 +164,7 @@ export const authOptions: NextAuthOptions = {
         token.picture = user.avatar
         token.user_type = user.user_type
         token.is_master = user.is_master
-        token.agency_id = user.is_master ? user.id : user.master_id
+        token.agency_id = user.is_student ? user.agency_id : user.is_master ? user.id : user.master_id
         token.role_id = user.role_id
         token.is_student = user.is_student
       }

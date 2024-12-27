@@ -67,3 +67,10 @@ export const TableRowLimit = {
   pageSize: 20,
   rowLimit: [20, 50, 100]
 }
+
+export const ExamDurations : { [key: number]: string } = {
+  30: "30 Minutes",
+  40: "40 Minutes",
+  50: "50 Minutes",
+  60: "60 Minutes"
+}
