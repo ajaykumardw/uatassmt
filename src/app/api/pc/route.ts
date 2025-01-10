@@ -29,7 +29,7 @@ export async function GET() {
 export async function POST(req: Request) {
 
   const data = await req.json();
-  const {nosId, pcId, pcName} = data;
+  const {nosId, pcId, pcName, theoryMarks, practicalMarks, vivaMarks} = data;
   const session = await getServerSession(authOptions);
   const createdBy = Number(session?.user.id);
   const agency_id = Number(session?.user?.agency_id);
@@ -54,6 +54,10 @@ export async function POST(req: Request) {
         nos_id: nosId,
         pc_id: pcId,
         pc_name: pcName,
+        theory_marks: Number(theoryMarks),
+        practical_marks: Number(practicalMarks),
+        viva_marks: Number(vivaMarks),
+        total_marks: (Number(theoryMarks)+Number(practicalMarks)+Number(vivaMarks)),
         created_by: createdBy
       }
     });

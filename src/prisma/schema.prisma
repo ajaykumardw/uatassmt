@@ -198,6 +198,10 @@ model pc {
   nos_id     Int
   pc_id      String    @unique @db.VarChar(100)
   pc_name    String    @db.VarChar(255)
+  theory_marks Int
+  practical_marks Int
+  viva_marks Int
+  total_marks Int
   created_by Int
   created_at DateTime? @default(now()) @db.DateTime(0)
   updated_at DateTime? @default(now()) @db.DateTime(0)

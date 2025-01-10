@@ -83,12 +83,16 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
   const [qpData, setQPData] = useState<QPType[]>([])
   const [trainingPartnerData, setTPData] = useState<users[]>(tpData || []);
   const [tcData, setTCData] = useState<users[]>(trainingCenters || []);
+  const [schemes, setSchemes] = useState<SchemesType[]>(schemesData);
   const [subSchemesData, setSubSchemesData] = useState<schemes[]>([]);
   const [loading, setLoading] = useState(false);
   const [tpLoading, setTPLoading] = useState(false);
   const [tcLoading, setTCLoading] = useState(false);
+  const [schemeLoading, setSchemeLoading] = useState(false);
   const [subSchemeLoading, setSubSchemeLoading] = useState(false);
   const [addTCOpen, setAddTCOpen] = useState(false);
+
+  // const [addSchemeOpen, setAddSchemeOpen] = useState(false);
   const [addSubSchemeOpen, setAddSubSchemeOpen] = useState(false);
   const [stateData, setStateData] = useState<state[]>([]);
 
@@ -127,7 +131,11 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
       setTPData(tpData)
     }
 
-  },[tpData]);
+    if(schemesData && schemesData.length > 0){
+      setSchemes(schemesData)
+    }
+
+  },[tpData, schemesData]);
 
   useEffect(() => {
 
@@ -161,7 +169,7 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
   const getSubSchemes = async (scheme: number) => {
     const schemeId = scheme;
 
-    const selectedScheme = schemesData.find(scheme => scheme.id === schemeId);
+    const selectedScheme = schemes.find(scheme => scheme.id === schemeId);
 
     if(selectedScheme){
 
@@ -319,6 +327,30 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
       setSubSchemesData([])
 
     }
+  }
+
+  const handleReloadScheme = async () => {
+
+    setSchemeLoading(true);
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/schemes`);
+
+
+    if(res.ok){
+      setSchemeLoading(false);
+
+      const data = await res.json();
+
+      setSchemes(data);
+
+    } else {
+
+      setSchemeLoading(false);
+
+    }
+
+    setSchemeLoading(false);
+
   }
 
   const handleReloadTP = async () => {
@@ -504,13 +536,13 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
                   )}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={6} className='flex items-end gap-4'>
                 <Controller
                   name='scheme'
                   control={control}
                   rules={{ required: true }}
                   render={({ field }) => (
-                    <CustomTextField select SelectProps={{ MenuProps }} required={true} fullWidth label='Scheme' {...field}
+                    <CustomTextField select SelectProps={{ MenuProps }} className='flex-1' required={true} fullWidth label='Scheme' {...field}
 
                       onChange={(e) => {
                         field.onChange(e); // Ensure the field value gets updated in the form state
@@ -519,8 +551,8 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
 
                       {...(errors.scheme && { error: true, helperText: errors.scheme.message })}>
                       <MenuItem value=''>Select Scheme</MenuItem>
-                      {schemesData && schemesData.length > 0 ? (
-                        schemesData.map((scheme) => (
+                      {schemes && schemes.length > 0 ? (
+                        schemes.map((scheme) => (
                           <MenuItem key={scheme.id.toString()} value={scheme.id.toString()}>
                             {scheme.scheme_name}
                           </MenuItem>
@@ -531,6 +563,17 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
                     </CustomTextField>
                   )}
                 />
+                <Tooltip title="Reload Scheme">
+                  <CustomIconButton aria-label='Reload' color='primary' variant='tonal' onClick={handleReloadScheme} disabled={schemeLoading}>
+                    {
+                      schemeLoading ?
+                      <CircularProgress size={22} color='inherit' />
+                      :
+                      <i className='tabler-reload' />
+                    }
+                  </CustomIconButton>
+                </Tooltip>
+                <Button variant='tonal' onClick={() => setAddSubSchemeOpen(true)} color='primary'>Add Scheme</Button>
               </Grid>
               <Grid item xs={12} md={6} className='flex items-end gap-4'>
                 <Controller

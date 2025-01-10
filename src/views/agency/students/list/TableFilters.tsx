@@ -120,13 +120,13 @@ const TableFilters = ({ setData, onUpdateStudent }: { setData: any, onUpdateStud
 
     if(gettedQP != null){
       if(qpData.length > 0 && qpId === -1){
-        handleQPChange('1');
+        handleQPChange(gettedQP);
       }
     }
 
     if(gettedBatch != null){
       if(batchData.length > 0 && batchId === -1){
-        handleBatchChange('1');
+        handleBatchChange(gettedBatch);
       }
     }
   }, [sscData, qpData, batchData])

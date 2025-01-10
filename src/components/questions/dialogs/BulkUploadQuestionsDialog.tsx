@@ -9,7 +9,7 @@ import Button from '@mui/material/Button'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
-import { Alert, AlertTitle, Avatar, CircularProgress, IconButton, LinearProgress, List, ListItem, TablePagination, Typography } from '@mui/material'
+import { Alert, AlertTitle, Avatar, CircularProgress, Grid, IconButton, LinearProgress, List, ListItem, TablePagination, Typography } from '@mui/material'
 
 import * as XLSX from 'xlsx';
 
@@ -830,86 +830,96 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
         Import Questions
       </DialogTitle>
       <DialogContent className='overflow-visible pbs-0 sm:pli-16'>
-        <div className="flex gap-2 flex-col">
-          <Alert severity='info'>
-            Note: It will accept only Excel files with *.xls or *.xlsx extension only.
-          </Alert>
-          {missingHeadersData.length > 0 &&
-            <Alert severity='error'
-              action={
-                <IconButton size='small' color='inherit' aria-label='close' onClick={() => setMissingHeaders([])}>
-                  <i className='tabler-x' />
-                </IconButton>
+        <Grid container spacing={6}>
+          <Grid item xs={12}>
+            <div className="flex gap-2 flex-col">
+              <Alert severity='info'>
+                Note: It will accept only Excel files with *.xls or *.xlsx extension only.
+              </Alert>
+              {missingHeadersData.length > 0 &&
+                <Alert severity='error'
+                  action={
+                    <IconButton size='small' color='inherit' aria-label='close' onClick={() => setMissingHeaders([])}>
+                      <i className='tabler-x' />
+                    </IconButton>
+                  }
+                >
+                  <AlertTitle>Missing Headers:</AlertTitle>
+                  {missingHeadersData.join(', ')}
+                </Alert>
               }
-            >
-              <AlertTitle>Missing Headers:</AlertTitle>
-              {missingHeadersData.join(', ')}
-            </Alert>
-          }
-          <Typography>Use the same format as given below :</Typography>
-        </div>
-        <div className='overflow-x-auto'>
-          <table className={tableStyles.table}>
-            <thead>
-              <tr>
-                {ExpectedTheoryQuestionExcelHeaders.map((header, index) => (
-                  <th key={index}>{header}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td colSpan={ExpectedTheoryQuestionExcelHeaders.length} className='text-center'></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <AppReactDropzone>
-          <div {...getRootProps({ className: 'dropzone' })}>
-            <input {...getInputProps()} />
-            <div className='flex items-center flex-col'>
-              <Avatar variant='rounded' className='bs-12 is-12 mbe-9'>
-                <i className='tabler-upload' />
-              </Avatar>
-              <Typography variant='h4' className='mbe-2.5'>
-                Drop files here or click to upload.
-              </Typography>
-              <Typography>Allowed *.xls, *.xlsx</Typography>
-              <Typography>Max 1 file and max size of 2 MB</Typography>
+              <Typography>Use the same format as given below :<Button className='ml-2' variant='contained' href="/uploads/sample/bulk_theory_question_sample_file.xlsx" download>Download</Button></Typography>
             </div>
-          </div>
-          {loading && (
-            <div className='flex items-center gap-3'>
-              <div className='is-full'>
-                <LinearProgress variant='determinate' value={progress} />
+          </Grid>
+          <Grid item xs={12}>
+            <div className='overflow-x-auto'>
+              <table className={tableStyles.table}>
+                <thead>
+                  <tr>
+                    {ExpectedTheoryQuestionExcelHeaders.map((header, index) => (
+                      <th key={index}>{header}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colSpan={ExpectedTheoryQuestionExcelHeaders.length} className='text-center'></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </Grid>
+          <Grid item xs={12}>
+            <AppReactDropzone>
+              <div {...getRootProps({ className: 'dropzone' })}>
+                <input {...getInputProps()} />
+                <div className='flex items-center flex-col'>
+                  <Avatar variant='rounded' className='bs-12 is-12 mbe-9'>
+                    <i className='tabler-upload' />
+                  </Avatar>
+                  <Typography variant='h4' className='mbe-2.5'>
+                    Drop files here or click to upload.
+                  </Typography>
+                  <Typography>Allowed *.xls, *.xlsx</Typography>
+                  <Typography>Max 1 file and max size of 2 MB</Typography>
+                </div>
               </div>
-              <Typography variant='body2' color='text.secondary' className='font-medium'>{`${progress}%`}</Typography>
-            </div>
-          )}
-          {fileInput ? (
-            <>
-              <List>
-                <ListItem>
-                  <div className='file-details'>
-                    <div className='file-preview'><i className='vscode-icons-file-type-excel w-6 h-6' /></div>
-                    <div>
-                      <Typography className='file-name'>{fileInput.name}</Typography>
-                      <Typography className='file-size' variant='body2'>
-                        {Math.round(fileInput.size / 100) / 10 > 1000
-                          ? `${(Math.round(fileInput.size / 100) / 10000).toFixed(1)} mb`
-                          : `${(Math.round(fileInput.size / 100) / 10).toFixed(1)} kb`}
-                      </Typography>
-                    </div>
+              {loading && (
+                <div className='flex items-center gap-3'>
+                  <div className='is-full'>
+                    <LinearProgress variant='determinate' value={progress} />
                   </div>
-                  <IconButton onClick={() => handleRemoveFile()}>
-                    <i className='tabler-x text-xl' />
-                  </IconButton>
-                </ListItem>
-              </List>
-            </>
-          ) : null}
-        </AppReactDropzone>
-        {data.length > 0 ? tableItems : ''}
+                  <Typography variant='body2' color='text.secondary' className='font-medium'>{`${progress}%`}</Typography>
+                </div>
+              )}
+              {fileInput ? (
+                <>
+                  <List>
+                    <ListItem>
+                      <div className='file-details'>
+                        <div className='file-preview'><i className='vscode-icons-file-type-excel w-6 h-6' /></div>
+                        <div>
+                          <Typography className='file-name'>{fileInput.name}</Typography>
+                          <Typography className='file-size' variant='body2'>
+                            {Math.round(fileInput.size / 100) / 10 > 1000
+                              ? `${(Math.round(fileInput.size / 100) / 10000).toFixed(1)} mb`
+                              : `${(Math.round(fileInput.size / 100) / 10).toFixed(1)} kb`}
+                          </Typography>
+                        </div>
+                      </div>
+                      <IconButton onClick={() => handleRemoveFile()}>
+                        <i className='tabler-x text-xl' />
+                      </IconButton>
+                    </ListItem>
+                  </List>
+                </>
+              ) : null}
+            </AppReactDropzone>
+          </Grid>
+          <Grid item xs={12}>
+            {data.length > 0 ? tableItems : ''}
+          </Grid>
+        </Grid>
       </DialogContent>
       <DialogActions className='justify-center pbs-0 sm:pbe-16 sm:pli-16'>
         <Button variant='contained' type='submit' onClick={handleUploadData} disabled={uploadData.length === 0}>

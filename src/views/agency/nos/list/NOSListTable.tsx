@@ -203,6 +203,9 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
     pcId: '',
 
     pcName: '',
+    theoryMarks: '',
+    practicalMarks: '',
+    vivaMarks: '',
   });
 
   const [pcEditData, setPCEditData] = useState({
@@ -210,6 +213,9 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
     pcId: '',
 
     pcName: '',
+    theoryMarks: '',
+    practicalMarks: '',
+    vivaMarks: '',
   });
 
   const [rowSelection, setRowSelection] = useState({})
@@ -251,7 +257,10 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
 
     setPCAddData({
       pcId: pc_id,
-      pcName: ''
+      pcName: '',
+      theoryMarks: '',
+      practicalMarks: '',
+      vivaMarks: '',
     });
 
     setAddPCOpen(!addPCOpen)
@@ -273,6 +282,9 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
         const editData = {
           pcId: pcData.pc_id,
           pcName: pcData.pc_name,
+          theoryMarks: pcData.theory_marks.toString(),
+          practicalMarks: pcData.practical_marks.toString(),
+          vivaMarks: pcData.viva_marks.toString(),
         }
 
         setPCEditData(editData);
@@ -538,6 +550,18 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
                                           <div>PC Name</div>
                                         </th>
                                         <th>
+                                          <div>Theory Marks</div>
+                                        </th>
+                                        <th>
+                                          <div>Practical Marks</div>
+                                        </th>
+                                        <th>
+                                          <div>Viva Marks</div>
+                                        </th>
+                                        <th>
+                                          <div>Total Marks</div>
+                                        </th>
+                                        <th>
                                           <div>Action</div>
                                         </th>
                                       </tr>
@@ -557,6 +581,10 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
                                             <td>{index + 1}</td>
                                             <td>{pc.pc_id}</td>
                                             <td>{pc.pc_name}</td>
+                                            <td>{pc.theory_marks}</td>
+                                            <td>{pc.practical_marks}</td>
+                                            <td>{pc.viva_marks}</td>
+                                            <td>{pc.total_marks}</td>
                                             <td>
                                               <div className='flex items-center'>
                                                 <IconButton onClick={() => handleOnEditPCClick(pc.id)}>

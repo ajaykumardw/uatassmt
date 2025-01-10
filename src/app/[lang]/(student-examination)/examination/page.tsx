@@ -293,6 +293,9 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardContent, Typography, Button, CardActions, Alert, AlertTitle, RadioGroup, FormControlLabel, Radio, ButtonGroup, Grid } from "@mui/material";
 
 import type { exam_sets, exam_sets_questions, questions } from '@prisma/client';
+import { Controller, useForm } from 'react-hook-form';
+import { valibotResolver } from '@hookform/resolvers/valibot';
+import { boolean, object } from 'valibot';
 
 // const Buttons = ({ total, answered, marked }: { total?: number, answered: Set<number>, marked: Set<number> }) => {
 //   return (
@@ -315,6 +318,27 @@ import type { exam_sets, exam_sets_questions, questions } from '@prisma/client';
 //   );
 // };
 
+// type FormDataType = {
+//   username: string
+//   email: string
+//   password: string
+//   isPasswordShown: boolean
+//   confirmPassword: string
+//   isConfirmPasswordShown: boolean
+//   firstName: string
+//   lastName: string
+//   country: string
+//   language: string[]
+//   twitter: string
+//   facebook: string
+//   instagram: string
+//   github: string
+// }
+
+const questionSchema = object({
+  question: boolean()
+})
+
 const Examination: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [totalTime, setTotalTime] = useState(0);
@@ -323,6 +347,7 @@ const Examination: React.FC = () => {
   const [answered, setAnswered] = useState(new Set<number>());
   const [marked, setMarked] = useState(new Set<number>());
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [activeStep, setActiveStep] = useState<number>(0);
 
   // Fetch exam data from the API
   const getExamInstructions = async () => {
@@ -352,6 +377,36 @@ const Examination: React.FC = () => {
     return () => clearInterval(intervalId);
   }, [timeLeft]);
 
+  // const [formData, setFormData] = useState<FormDataType>({
+  //   username: '',
+  //   email: '',
+  //   password: '',
+  //   isPasswordShown: false,
+  //   confirmPassword: '',
+  //   isConfirmPasswordShown: false,
+  //   firstName: '',
+  //   lastName: '',
+  //   country: '',
+  //   language: [],
+  //   twitter: '',
+  //   facebook: '',
+  //   instagram: '',
+  //   github: ''
+  // })
+
+  const {
+    control,
+    handleSubmit: handleQuestionFinish,
+    formState: {errors}
+  } = useForm({
+    resolver: valibotResolver(questionSchema),
+
+  })
+
+  const onSubmit = () => {
+    console.log("question finished");
+  }
+
   // const handleAnswerQuestion = () => {
   //   if (selectedOption) {
   //     setAnswered(prev => new Set(prev.add(currentQuestionIndex)));
@@ -363,16 +418,18 @@ const Examination: React.FC = () => {
   // };
 
   const handleNextQuestion = () => {
+    setActiveStep(prevActiveStep => prevActiveStep + 1)
+
     if (currentQuestionIndex < (examData?.exam_sets_questions.length || 0) - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setSelectedOption(null); // Reset the selected option for the next question
     }
   };
 
   const handlePreviousQuestion = () => {
+    setActiveStep(prevActiveStep => prevActiveStep - 1)
+
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
-      setSelectedOption(null); // Reset the selected option for the previous question
     }
   };
 
@@ -383,7 +440,7 @@ const Examination: React.FC = () => {
         variant="tonal"
         size="small"
         color={currentQuestionIndex === index ? 'primary' : 'secondary'}
-        onClick={() => setCurrentQuestionIndex(index)} // Set the index of the clicked question
+        onClick={() => {setCurrentQuestionIndex(index); setActiveStep(index)}} // Set the index of the clicked question
       >
         {index + 1}
       </Button>
@@ -416,139 +473,95 @@ const Examination: React.FC = () => {
         </Grid>
         <Grid item sm={12} md={7}>
           <Card>
-            <CardHeader title={`Question ${currentQuestionIndex + 1} of ${examData?.exam_sets_questions.length}`} />
+            <CardHeader title={`Question ${activeStep + 1} of ${examData?.exam_sets_questions.length}`} />
             <CardContent>
-              <form method='post' id='questionForm'>
+              <form method='post' id='questionForm' onSubmit={handleQuestionFinish(onSubmit)}>
                 {examData?.exam_sets_questions.map((question, index)=>{
-                  return (
-                    <Grid key={index} container spacing={6}>
-                      <Grid item xs={7} sm={7} md={10}>
-                        {/* Display the question text */}
-                        <Typography variant="h4">
-                          {question.questions.question}
-                        </Typography>
+
+                  switch(activeStep){
+                    case(index):
+                    return (
+                      <Grid key={index} container spacing={6}>
+                        <Grid item xs={7} sm={7} md={10}>
+                          {/* Display the question text */}
+                          <Typography variant="h4">
+                            {question.questions.question}
+                          </Typography>
+                        </Grid>
+                        <Grid item textAlign='end' xs={5} sm={5} md={2}>
+                          <Button variant='tonal'>
+                            {question.marks} Mark
+                          </Button>
+                        </Grid>
+                        <Grid item xs={12}>
+                          {/* RadioGroup for displaying options */}
+                          <RadioGroup
+                            value={selectedOption}
+                            onChange={(e) => setSelectedOption(e.target.value)}
+                          >
+                            {/* Manually create FormControlLabels for each option */}
+                            {question.questions?.option1 && (
+                              <Controller
+                                name='questionAnswer[${question.question_id}][]'
+                                control={control}
+                                render={({field: {onChange}}) => (
+                                  <FormControlLabel
+                                    value="1"
+                                    onChange={onChange}
+                                    control={<Radio id={`option-${question.question_id}-1`} />}
+                                    name={`questionAnswer[${question.question_id}][]`}
+                                    label={question.questions.option1}
+                                    {...(errors.question && { error: true, helperText: errors.question.message })}
+                                  />
+                                )}
+                              />
+                            )}
+                            {question.questions?.option2 && (
+                              <FormControlLabel
+                                value="2"
+                                name={`questionAnswer[${question.question_id}][]`}
+                                control={<Radio id={`option-${question.question_id}-2`} />}
+                                label={question.questions.option2}
+                              />
+                            )}
+                            {question.questions.option3 && (
+                              <FormControlLabel
+                                value="3"
+                                name={`questionAnswer[${question.question_id}][]`}
+                                control={<Radio id={`option-${question.question_id}-3`} />}
+                                label={question.questions.option3}
+                              />
+                            )}
+                            {question.questions.option4 && (
+                              <FormControlLabel
+                                value="4"
+                                name={`questionAnswer[${question.question_id}][]`}
+                                control={<Radio id={`option-${question.question_id}-4`} />}
+                                label={question.questions.option4}
+                              />
+                            )}
+                            {question.questions.option5 && (
+                              <FormControlLabel
+                                value="5"
+                                name={`questionAnswer[${question.question_id}][]`}
+                                control={<Radio id={`option-${question.question_id}-5`} />}
+                                label={question.questions.option5}
+                              />
+                            )}
+                          </RadioGroup>
+                        </Grid>
                       </Grid>
-                      <Grid item textAlign='end' xs={5} sm={5} md={2}>
-                        <Button variant='tonal'>
-                          {question.marks} Mark
-                        </Button>
-                      </Grid>
-                      <Grid item xs={12}>
-                        {/* RadioGroup for displaying options */}
-                        <RadioGroup
-                          value={selectedOption}
-                          onChange={(e) => setSelectedOption(e.target.value)}
-                        >
-                          {/* Manually create FormControlLabels for each option */}
-                          {question.questions?.option1 && (
-                            <FormControlLabel
-                              value="1"
-                              control={<Radio id={`option-${question.question_id}-1`} />}
-                              name={`questionAnswer[${question.question_id}][]`}
-                              label={question.questions.option1}
-                            />
-                          )}
-                          {question.questions?.option2 && (
-                            <FormControlLabel
-                              value="2"
-                              name={`questionAnswer[${question.question_id}][]`}
-                              control={<Radio id={`option-${question.question_id}-2`} />}
-                              label={question.questions.option2}
-                            />
-                          )}
-                          {question.questions.option3 && (
-                            <FormControlLabel
-                              value="3"
-                              name={`questionAnswer[${question.question_id}][]`}
-                              control={<Radio id={`option-${question.question_id}-3`} />}
-                              label={question.questions.option3}
-                            />
-                          )}
-                          {question.questions.option4 && (
-                            <FormControlLabel
-                              value="4"
-                              name={`questionAnswer[${question.question_id}][]`}
-                              control={<Radio id={`option-${question.question_id}-4`} />}
-                              label={question.questions.option4}
-                            />
-                          )}
-                          {question.questions.option5 && (
-                            <FormControlLabel
-                              value="5"
-                              name={`questionAnswer[${question.question_id}][]`}
-                              control={<Radio id={`option-${question.question_id}-5`} />}
-                              label={question.questions.option5}
-                            />
-                          )}
-                        </RadioGroup>
-                      </Grid>
-                    </Grid>
-                  )
+                    )
+                  }
+
                 })}
-                <Grid container spacing={6}>
-                  <Grid item xs={7} sm={7} md={10}>
-                    {/* Display the question text */}
-                    <Typography variant="h4">
-                      {examData?.exam_sets_questions[currentQuestionIndex]?.questions?.question}
-                    </Typography>
-                  </Grid>
-                  <Grid item textAlign='end' xs={5} sm={5} md={2}>
-                    <Button variant='tonal'>
-                      {examData?.exam_sets_questions[currentQuestionIndex].marks} Mark
-                    </Button>
-                  </Grid>
-                  <Grid item xs={12}>
-                    {/* RadioGroup for displaying options */}
-                    <RadioGroup
-                      value={selectedOption}
-                      onChange={(e) => setSelectedOption(e.target.value)}
-                    >
-                      {/* Manually create FormControlLabels for each option */}
-                      {examData?.exam_sets_questions[currentQuestionIndex]?.questions?.option1 && (
-                        <FormControlLabel
-                          value="1"
-                          control={<Radio />}
-                          label={examData.exam_sets_questions[currentQuestionIndex].questions.option1}
-                        />
-                      )}
-                      {examData?.exam_sets_questions[currentQuestionIndex]?.questions?.option2 && (
-                        <FormControlLabel
-                          value="2"
-                          control={<Radio />}
-                          label={examData.exam_sets_questions[currentQuestionIndex].questions.option2}
-                        />
-                      )}
-                      {examData?.exam_sets_questions[currentQuestionIndex]?.questions?.option3 && (
-                        <FormControlLabel
-                          value="3"
-                          control={<Radio />}
-                          label={examData.exam_sets_questions[currentQuestionIndex].questions.option3}
-                        />
-                      )}
-                      {examData?.exam_sets_questions[currentQuestionIndex]?.questions?.option4 && (
-                        <FormControlLabel
-                          value="4"
-                          control={<Radio />}
-                          label={examData.exam_sets_questions[currentQuestionIndex].questions.option4}
-                        />
-                      )}
-                      {examData?.exam_sets_questions[currentQuestionIndex]?.questions?.option5 && (
-                        <FormControlLabel
-                          value="5"
-                          control={<Radio />}
-                          label={examData.exam_sets_questions[currentQuestionIndex].questions.option5}
-                        />
-                      )}
-                    </RadioGroup>
-                  </Grid>
-                </Grid>
               </form>
             </CardContent>
             <CardActions>
               <Grid container spacing={4}>
                 <Grid item>
                   <ButtonGroup variant='contained'>
-                    <Button onClick={handlePreviousQuestion} disabled={currentQuestionIndex === 0}>Previous</Button>
+                    <Button onClick={handlePreviousQuestion} disabled={activeStep === 0}>Previous</Button>
                     <Button
                       onClick={() => {
                         // If an option is selected, mark the question as answered
@@ -561,6 +574,7 @@ const Examination: React.FC = () => {
 
                         // Proceed to the next question
                         if (currentQuestionIndex < (examData?.exam_sets_questions.length || 0) - 1) {
+                          handleNextQuestion();
                           setCurrentQuestionIndex(currentQuestionIndex + 1); // Move to the next question
                           setSelectedOption(null); // Reset the selected option for the next question
                         }

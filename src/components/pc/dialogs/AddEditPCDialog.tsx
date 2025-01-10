@@ -23,7 +23,7 @@ import type { SubmitHandler } from 'react-hook-form'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, string, trim, minLength, maxLength, pipe } from "valibot"
+import { object, string, trim, minLength, maxLength, pipe, check } from "valibot"
 
 import type { InferInput } from 'valibot'
 
@@ -103,12 +103,19 @@ const initialData: AddQPDialogData = {
   nosId: 0,
   pcId: '',
   pcName: '',
+  theoryMarks: "",
+  practicalMarks: "",
+  vivaMarks: ""
 }
 
 const schema = object(
   {
     pcId: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'PC Id must be at least 3 characters long') , maxLength(100, 'The maximum length for PC Id is 100 characters.')),
     pcName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'PC name must be at least 3 characters long') , maxLength(255, 'The maximum length for a PC name is 255 characters.')),
+    theoryMarks: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Theory_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Theory_Marks must be a valid number.'),),
+    practicalMarks: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Practical_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Practical_Marks must be a valid number.'),),
+    vivaMarks: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Viva_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Viva_Marks must be a valid number.'),),
+
   }
 )
 
@@ -300,6 +307,54 @@ const AddEditPCDialog = ({ open, nosId, pcId, handleClose, updatePCList, data }:
                     {...field}
                     {...(errors.pcName && { error: true, helperText: errors.pcName.message })}
                     label='PC Name'
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                control={control}
+                name='theoryMarks'
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <CustomTextField
+                    fullWidth
+                    {...field}
+                    placeholder='0'
+                    {...(errors.theoryMarks && { error: true, helperText: errors.theoryMarks.message })}
+                    label='Theory Marks'
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                control={control}
+                name='practicalMarks'
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <CustomTextField
+                    fullWidth
+                    {...field}
+                    placeholder='0'
+                    {...(errors.practicalMarks && { error: true, helperText: errors.practicalMarks.message })}
+                    label='Practical Marks'
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                control={control}
+                name='vivaMarks'
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <CustomTextField
+                    fullWidth
+                    {...field}
+                    placeholder='0'
+                    {...(errors.vivaMarks && { error: true, helperText: errors.vivaMarks.message })}
+                    label='Viva Marks'
                   />
                 )}
               />

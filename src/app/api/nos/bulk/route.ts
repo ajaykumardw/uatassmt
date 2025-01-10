@@ -23,6 +23,10 @@ export async function POST(req: Request) {
         agency_id: agencyId,
         pc_id: item.PC_ID,
         pc_name: item.PC_Name,
+        theory_marks: item.Theory_Marks,
+        practical_marks: item.Practical_Marks,
+        viva_marks: item.Viva_Marks,
+        total_marks: (item.Theory_Marks + item.Practical_Marks + item.Viva_Marks),
         nos: {
           connect: {
             nos_id: item.NOS_ID
@@ -55,6 +59,10 @@ export async function POST(req: Request) {
               agency_id: agencyId,
               pc_id: item.PC_ID,
               pc_name: item.PC_Name,
+              theory_marks: Number(item.Theory_Marks),
+              practical_marks: Number(item.Practical_Marks),
+              viva_marks: Number(item.Viva_Marks),
+              total_marks: (Number(item.Theory_Marks) + Number(item.Practical_Marks) + Number(item.Viva_Marks)),
               created_by: createdBy
             }
           }

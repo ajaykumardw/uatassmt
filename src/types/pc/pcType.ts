@@ -8,6 +8,10 @@ export type PCType = {
   nos: NOSType
   pc_id: string
   pc_name: string
+  theory_marks: number
+  practical_marks: number
+  viva_marks: number
+  total_marks: number
   status: number
   created_by: number
   created_at?: string

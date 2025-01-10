@@ -43,7 +43,10 @@ export const ExpectedNOSExcelHeaders = [
   'NOS_ID',
   'NOS_Name',
   'PC_ID',
-  'PC_Name'
+  'PC_Name',
+  'Theory_Marks',
+  'Practical_Marks',
+  'Viva_Marks',
 ];
 
 export const GenderMap = {

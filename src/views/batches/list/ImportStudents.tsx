@@ -926,7 +926,7 @@ const ImportStudents = ({ onBack }: { onBack: () => void }) => {
                  {missingHeadersData.join(', ')}
               </Alert>
             }
-            <Typography>Use the same format as given below :</Typography>
+            <Typography>Use the same format as given below :<Button className='ml-2' variant='contained' href="/uploads/sample/bulk_students_sample_file.xlsx" download>Download</Button></Typography>
           </div>
         </CardContent>
         <div className='overflow-x-auto'>

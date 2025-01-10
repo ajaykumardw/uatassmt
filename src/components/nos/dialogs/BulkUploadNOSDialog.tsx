@@ -214,6 +214,9 @@ const schema = objectAsync(
     NOS_Name: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), minLength(3, 'NOS name must be at least 3 characters long'), maxLength(255, 'The max length for this field is 255.')),
     PC_ID: optionalAsync(pipeAsync(string('This field should be string'), trim(), checkAsync(checkExistPCId, "PC ID already exist."), check(value => !value || !/\s/.test(value.toString()), 'PC ID should not contain any spaces.'))),
     PC_Name: optional(pipe(string('This field should be string'), trim(), maxLength(255, 'The max length for this field is 255.'))),
+    Theory_Marks: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Theory_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Theory_Marks must be a valid number.'),),
+    Practical_Marks: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Practical_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Practical_Marks must be a valid number.'),),
+    Viva_Marks: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Viva_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Viva_Marks must be a valid number.'),),
 
     // Question_Explanation: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), minLength(3, 'Question name must be at least 3 characters long')),
     // Marks: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), check((value) => !value || /^(?:[1-9]|1\d|2[0-5])(\.\d+)?$/.test(value), 'Marks must be between 1 and 25.'),),
@@ -248,7 +251,10 @@ const mapKeys = (data: any[]) => data.map((item: any) => ({
   NOS_ID: item['NOS_ID'],
   NOS_Name: item['NOS_Name'],
   PC_ID: item['PC_ID'],
-  PC_Name: item['PC_Name']
+  PC_Name: item['PC_Name'],
+  Theory_Marks: item['Theory_Marks'],
+  Practical_Marks: item['Practical_Marks'],
+  Viva_Marks: item['Viva_Marks']
 }));
 
 const columnHelper = createColumnHelper<NOSTypeWithError>()
@@ -420,6 +426,11 @@ const BulkUploadNOSDialog = ({ open, sscID, handleClose, updateNOSList }: BulkUp
                 message: `PC ID "${item.PC_ID}" is duplicated.`
               } : null;
 
+              const totalMarksError = (item.Theory_Marks + item.Practical_Marks + item.Viva_Marks ) == 0 ? {
+                path: [{ key: 'Theory_Marks' }, { key: 'Practical_Marks' }, { key: 'Viva_Marks' }],
+                message: 'Sum of the Theory_Marks, Practical_Marks and Viva_Marks must be greater then 0.'
+              } : null;
+
               const nos = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/nos/nos_id/${encodeURIComponent(item.NOS_ID)}`)
                 .then(response => response.json());
 
@@ -456,7 +467,8 @@ const BulkUploadNOSDialog = ({ open, sscID, handleClose, updateNOSList }: BulkUp
                 ...(result.issues || []),
                 qpIDError,
                 pcIdPCNameError,
-                pcIdError
+                pcIdError,
+                totalMarksError
 
                 // nosIDError
                 // pcIdsError,
@@ -663,6 +675,45 @@ const BulkUploadNOSDialog = ({ open, sscID, handleClose, updateNOSList }: BulkUp
           </div>
         )
       }),
+      columnHelper.accessor('Theory_Name.value', {
+        header: 'Theory_Marks',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' >
+                {row.original.Theory_Marks.value}
+              </Typography>
+              <Typography variant='body2' color="error">{row.original.Theory_Marks.error}</Typography>
+            </div>
+          </div>
+        )
+      }),
+      columnHelper.accessor('Practical_Marks.value', {
+        header: 'Practical_Marks',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' >
+                {row.original.Practical_Marks.value}
+              </Typography>
+              <Typography variant='body2' color="error">{row.original.Practical_Marks.error}</Typography>
+            </div>
+          </div>
+        )
+      }),
+      columnHelper.accessor('Viva_Marks.value', {
+        header: 'Viva_Marks',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' >
+                {row.original.Viva_Marks.value}
+              </Typography>
+              <Typography variant='body2' color="error">{row.original.Viva_Marks.error}</Typography>
+            </div>
+          </div>
+        )
+      }),
 
       // columnHelper.accessor('Option1.value', {
       //   header: 'Option1',
@@ -804,7 +855,7 @@ const BulkUploadNOSDialog = ({ open, sscID, handleClose, updateNOSList }: BulkUp
     <>
       <div className='overflow-x-auto'>
         <table className={tableStyles.table}>
-          <thead>
+          <thead className='capitalize'>
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map(header => (
@@ -938,13 +989,13 @@ const BulkUploadNOSDialog = ({ open, sscID, handleClose, updateNOSList }: BulkUp
                   {missingHeadersData.join(', ')}
                 </Alert>
               }
-              <Typography>Use the same format as given below :</Typography>
+              <Typography>Use the same format as given below : <Button className='ml-2' variant='contained' href="/uploads/sample/bulk_nos_pc_sample_file.xlsx" download>Download</Button></Typography>
             </div>
           </Grid>
           <Grid item xs={12}>
             <div className='overflow-x-auto'>
               <table className={tableStyles.table}>
-                <thead>
+                <thead className='capitalize'>
                   <tr>
                     {ExpectedNOSExcelHeaders.map((header, index) => (
                       <th key={index} className='first:w-52 even:w-52'>{header}</th>
