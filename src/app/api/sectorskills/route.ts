@@ -22,7 +22,13 @@ export async function GET() {
     include: {
       qualification_packs: {
         include: {
-          nos: true
+          nos: true,
+          exam_sets: {
+            select: {
+              id: true,
+              set_name: true
+            }
+          }
         }
       },
       nos: true

@@ -126,7 +126,7 @@ export default withAuth(
     // Assessor routes
     const assessorPaths = ['/assessor'];
 
-    const studentPaths = ['/student-dashboard', '/capture', '/exams', '/examination'];
+    const studentPaths = ['/student-dashboard', '/capture', '/exams', '/examination', '/feedback'];
 
 
     // Private routes (All routes except guest and shared routes that can only be accessed by logged in users)

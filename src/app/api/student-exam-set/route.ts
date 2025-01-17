@@ -12,25 +12,6 @@ export async function GET() {
 
   const session = await getServerSession(authOptions);
 
-  // const agency_id = Number(session?.user?.agency_id)
-
-  // const examSets = await prisma.exam_sets.findMany({
-  //   where:{
-  //     agency_id: agency_id
-  //   },
-  //   include: {
-  //     exam_sets_questions: {
-  //       include: {
-  //         questions: {
-  //           select: {
-  //             question_level: true
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  // });
-
   const exam = await prisma.students.findFirst({
     where: {
       id: Number(session?.user.id)
@@ -39,6 +20,8 @@ export async function GET() {
       id: true,
       batch: {
         select: {
+          assessment_start_datetime: true,
+          assessment_end_datetime: true,
           exam_set: {
             include: {
               exam_sets_questions: {
@@ -55,7 +38,6 @@ export async function GET() {
                       option5: true,
                     }
                   }
-
                 }
               }
             }
@@ -64,6 +46,12 @@ export async function GET() {
       }
     }
   })
+
+  // Check if the exam_set is random and shuffle the questions
+  if (exam?.batch?.exam_set?.question_random) {
+    // Shuffle the exam_sets_questions array
+    exam.batch.exam_set.exam_sets_questions = exam.batch.exam_set.exam_sets_questions.sort(() => Math.random() - 0.5);
+  }
 
   // console.log("exam set data", exam)
 

@@ -1,5 +1,6 @@
 // Type Imports
 
+import type { exam_sets } from "@prisma/client"
 import type { NOSType } from "../nos/nosType"
 import type { SSCType } from "../sectorskills/sscType"
 
@@ -32,4 +33,5 @@ export type QPType = {
   updated_at?: string
   deleted_at?: string
   nos: NOSType[]
+  exam_sets: exam_sets[]
 }

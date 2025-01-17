@@ -23,7 +23,16 @@ export async function GET(
       agency_id: agency_id
     },
     include: {
-      qualification_packs: true,
+      qualification_packs: {
+        include: {
+          exam_sets: {
+            select: {
+              id: true,
+              set_name: true
+            }
+          }
+        }
+      },
       nos: true
     }
   })

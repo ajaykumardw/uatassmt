@@ -164,6 +164,7 @@ model qualification_packs {
   deleted_at               DateTime?                @db.DateTime(0)
   nos                      nos[]
   batches                  batches[]
+  exam_sets                exam_sets[]
 
   @@unique([qualification_pack_id, version_id], name: "unique_qualification_pack_version")
 }
@@ -245,6 +246,20 @@ model questions {
   pc pc[]
 
   exam_sets_questions exam_sets_questions[]
+}
+
+model exam_set_results {
+  id                 Int       @id @default(autoincrement())
+  exam_set_id        Int
+  student_id         Int
+  question_id        Int
+  student_answer     Int
+  correct_answer     Int
+  attempt_time_data  String    @db.Text
+  created_by         Int
+  updated_by         Int
+  created_at         DateTime? @default(now()) @db.DateTime(0)
+  updated_at         DateTime? @default(now()) @db.DateTime(0)
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -451,6 +466,7 @@ model exam_sets {
 
   exam_sets_questions exam_sets_questions[]
   batch               batches[]
+  qp                  qualification_packs @relation(fields: [qp_id], references: [id])
 }
 
 model exam_sets_questions {

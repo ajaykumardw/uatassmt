@@ -90,7 +90,7 @@ export async function POST(req: Request) {
 
   const data = await req.json();
 
-  const {qpId, batchName, batchSize, scheme, subScheme, trainingPartner, trainingCenter, assessmentStartDate, assessmentEndDate, loginRestrictCount, modeOfAssessment, captureImage, captureImageInSeconds} = data;
+  const {qpId, examSetId, batchName, batchSize, scheme, subScheme, trainingPartner, trainingCenter, assessmentStartDate, assessmentEndDate, loginRestrictCount, modeOfAssessment, captureImage, captureImageInSeconds} = data;
 
   const session = await getServerSession(authOptions);
   const createdBy = Number(session?.user.id);
@@ -100,6 +100,7 @@ export async function POST(req: Request) {
     data: {
       batch_name: batchName,
       qp_id: Number(qpId),
+      exam_set_id: examSetId ? Number(examSetId) : null,
       scheme_id: Number(scheme),
       sub_scheme_id: Number(subScheme),
       batch_size: batchSize,

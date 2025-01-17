@@ -8,24 +8,82 @@ import { Card, CardHeader, CardContent, Typography, Button, CardActions, Divider
 
 import Grid from "@mui/material/Grid";
 
-import type { exam_sets } from '@prisma/client';
+import type { batches, exam_sets } from '@prisma/client';
+
+import { format } from 'date-fns';
 
 import type { Locale } from '@configs/i18n'
 
 import { getLocalizedUrl } from "@/utils/i18n";
+import DefaultExamInstructions from '@/components/DefaultExamInstructions';
 
 const ExamTest = () => {
   const { lang: locale } = useParams();
   const [isClient, setIsClient] = useState(false);
   const [examSet, setExamSet] = useState<exam_sets | null>(null);
+  const [batchData, setBatchData] = useState<batches | null>(null);
 
-  const getExamInstructions = async() => {
-    const data = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student-exam-set`).then(function(res){return res.json()});
+  const getExamInstructions = async () => {
+    const data = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student-exam-set`).then(function (res) { return res.json() });
 
+    setBatchData(data.batch);
     setExamSet(data.batch.exam_set);
 
-    console.log("data", data);
   }
+
+  // useEffect(() => {
+  //   const checkAssessmentStart = () => {
+  //     if (batchData?.assessment_start_datetime) {
+
+  //       // Compare dates without time component
+  //       const isSameDay = new Date() === new Date(batchData?.assessment_start_datetime);
+
+  //       if (isSameDay) {
+  //         console.log("hi");
+  //         getExamInstructions();
+  //       }
+  //     }
+  //   };
+
+  //   checkAssessmentStart();
+
+  //   var timeSlot = "";
+
+  //   // Using a timer or event-based trigger to check at regular intervals if necessary
+  //   const intervalId = setInterval(() => {
+  //     checkAssessmentStart();
+  //   }, 60000); // Check every minute
+
+  //   return () => clearInterval(intervalId); // Cleanup interval on component unmount
+  // }, [batchData]); // Depend only on batchData
+
+  const [currentTime, setCurrentTime] = useState<Date>();
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (batchData && batchData?.assessment_start_datetime) {
+        // Get the current time in Asia/Kolkata timezone
+        // const options = { timeZone: 'Asia/Kolkata', hour12: false };
+        // const indiaDate = new Date(); // Convert to India time
+
+        // Create a Date object for the current time in Asia/Kolkata timezone
+        const now = new Date();
+
+        // // Create a Date object for the assessment_start_datetime in Asia/Kolkata timezone
+        // const assessmentStartTime = new Date(batchData.assessment_start_datetime);
+
+        // // Check if both times match exactly (same date and time)
+        // if (batchData?.assessment_start_datetime && new Date(batchData?.assessment_start_datetime) == new Date()) {
+        //   console.log('Times match exactly at:', now);
+        // }
+
+        // Update the current time state
+        setCurrentTime(now); // Update current time in Asia/Kolkata timezone
+      }
+    }, 1000); // Update every second
+
+    return () => clearInterval(interval); // Clean up the interval when the component unmounts
+  }, [batchData]);
 
   // Set isClient to true once the component has mounted on the client-side
   useEffect(() => {
@@ -36,7 +94,7 @@ const ExamTest = () => {
   const handleStartExam = (url: string) => {
     if (typeof window !== "undefined") {
       // Open a new window with the given URL, and additional window options
-      const newWindow = window.open(url, '_blank', "width="+window.screen.availWidth+",height="+window.screen.availHeight+",toolbar=1,location=0,scrollbars=no,resizable=no");
+      const newWindow = window.open(url, '_blank', "width=" + window.screen.availWidth + ",height=" + window.screen.availHeight + ",toolbar=1,location=0,scrollbars=no,resizable=no");
 
       // Check if the window opened successfully
       if (newWindow) {
@@ -89,12 +147,18 @@ const ExamTest = () => {
                   </div>
                   <Typography color='text.secondary'>Exam Duration: {examSet?.exam_duration} Minutes</Typography>
                 </div>
-                {/* <div className='flex items-center gap-2.5'>
+                <div className='flex items-center gap-2.5'>
                   <div className='flex'>
-                    <i className='tabler-user text-xl text-textSecondary' />
+                    <i className='tabler-calendar-time text-xl text-textSecondary' />
                   </div>
-                  <Typography color='text.secondary'>Access all Features</Typography>
-                </div> */}
+                  <Typography color='text.secondary'>Exam Start Date Time: {batchData?.assessment_start_datetime ? format(batchData.assessment_start_datetime, 'dd-LL-yyyy HH:mm:ss') : ""}</Typography>
+                </div>
+                <div className='flex items-center gap-2.5'>
+                  <div className='flex'>
+                    <i className='tabler-calendar-time text-xl text-textSecondary' />
+                  </div>
+                  <Typography color='text.secondary'>Current Date Time: {currentTime ? format(currentTime, 'dd-LL-yyyy HH:mm:ss') : ""}</Typography>
+                </div>
               </Grid>
               <Grid item xs={12} sm={6} className='flex flex-col max-sm:mbs-[26px] sm:pis-5 sm:border-is gap-[26px]'>
                 <div className='flex items-center gap-2.5'>
@@ -103,26 +167,29 @@ const ExamTest = () => {
                   </div>
                   <Typography color='text.secondary'>Total Questions: {examSet?.total_questions}</Typography>
                 </div>
-                {/* <div className='flex items-center gap-2.5'>
+                <div className='flex items-center gap-2.5'>
                   <div className='flex'>
-                    <i className='tabler-user text-xl text-textSecondary' />
+                    <i className='tabler-calendar-time text-xl text-textSecondary' />
                   </div>
-                  <Typography color='text.secondary'>Lifetime Free Update</Typography>
-                </div> */}
+                  <Typography color='text.secondary'>Exam End Date Time: {batchData?.assessment_end_datetime ? format(batchData.assessment_end_datetime, 'dd-LL-yyyy HH:mm:ss') : ""}</Typography>
+                </div>
               </Grid>
             </Grid>
             <Divider className='mbs-7 mbe-7' />
             <Typography variant='h5' className='mbe-2'>Instruction</Typography>
-            <Typography color='text.secondary'>
-              {examSet?.instruction ? examSet?.instruction : "Here, I focus on a range of items and features that we use in life without giving them a second thought such as Coca Cola, body muscles and holding ones own breath. Though, most of these notes are not fundamentally necessary, they are such that you can use them for a good laugh, at a drinks party or for picking up women or men."}
-            </Typography>
+            <Grid item xs={12}>{examSet?.instruction || <DefaultExamInstructions /> }</Grid>
+
           </CardContent>
-          <CardActions>
-            {/* Pass the URL as a string */}
-            <Button variant="contained" onClick={() => handleStartExam(examPageUrl)}>
-              Start Exam
-            </Button>
-          </CardActions>
+          {batchData?.assessment_start_datetime && new Date(batchData?.assessment_start_datetime) <= new Date() &&
+            batchData?.assessment_end_datetime && new Date() <= new Date(batchData?.assessment_end_datetime) && (
+              <CardActions>
+                <Button variant="contained" onClick={() => handleStartExam(examPageUrl)}>
+                  Start Exam
+                </Button>
+              </CardActions>
+            )
+          }
+
         </Card>
       </Grid>
     </Grid>
