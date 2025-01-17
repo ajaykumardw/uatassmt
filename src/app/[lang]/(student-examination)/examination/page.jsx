@@ -75,13 +75,17 @@ const Examination = () => {
     document.addEventListener('contextmenu', disableRightClick); // Disable right-click
     document.addEventListener('keydown', disableReloadShortcuts); // Disable reload shortcuts
     window.addEventListener('beforeunload', preventPageReload); // Disable reload on refresh or back
+
     window.onresize = function() {
       window.resizeTo(window.screen.availWidth, window.screen.availHeight); // Resizes the window back to the original size
     };
+
     window.onfocus = function() {
       console.log('Window gained focus (likely not minimized)');
     };
+
     // Disable text selection (optional, but useful)
+
     document.body.style.userSelect = 'none'; // Disable text selection
 
     // Cleanup event listeners on component unmount
