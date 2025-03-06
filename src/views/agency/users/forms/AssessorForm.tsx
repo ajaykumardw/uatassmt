@@ -182,6 +182,8 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
   useEffect(() => {
     if(data){
 
+      console.log("user data:", data);
+
       if(data.ssc_id){
         handleSSCChange(data.ssc_id.toString())
       }
