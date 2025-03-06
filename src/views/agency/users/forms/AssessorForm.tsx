@@ -1425,7 +1425,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                   )}
                 />
                 {
-                  data?.user_additional_data.assessor_certificate && (
+                  data?.user_additional_data && data?.user_additional_data.assessor_certificate && (
                     <>
                       {isPDF(data?.user_additional_data.assessor_certificate) ? (
                         <embed
