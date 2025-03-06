@@ -1206,7 +1206,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                     onChange={e => {handle8thCertificateChange(e);}}
                   />
                   {
-                    data?.user_additional_data.certificate_8th && (
+                    data?.user_additional_data && data?.user_additional_data.certificate_8th && (
                       <>
                         {isPDF(data?.user_additional_data.certificate_8th) ? (
                           <embed
@@ -1242,7 +1242,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                     onChange={e => {handle10thCertificateChange(e);}}
                   />
                   {
-                    data?.user_additional_data.certificate_10th && (
+                    data?.user_additional_data && data?.user_additional_data.certificate_10th && (
                       <>
                         {isPDF(data?.user_additional_data.certificate_10th) ? (
                           <embed
@@ -1278,7 +1278,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                     onChange={e => {handle12thCertificateChange(e);}}
                   />
                   {
-                    data?.user_additional_data.certificate_12th && (
+                    data?.user_additional_data && data?.user_additional_data.certificate_12th && (
                       <>
                         {isPDF(data?.user_additional_data.certificate_12th) ? (
                           <embed
@@ -1313,7 +1313,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                     onChange={e => {handleDiplomaCertificateChange(e);}}
                   />
                   {
-                    data?.user_additional_data.certificate_DIPLOMA && (
+                    data?.user_additional_data && data?.user_additional_data.certificate_DIPLOMA && (
                       <>
                         {isPDF(data?.user_additional_data.certificate_DIPLOMA) ? (
                           <embed
@@ -1348,7 +1348,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                     onChange={e => {handleUGCertificateChange(e);}}
                   />
                   {
-                    data?.user_additional_data.certificate_UG && (
+                    data?.user_additional_data && data?.user_additional_data.certificate_UG && (
                       <>
                         {isPDF(data?.user_additional_data.certificate_UG) ? (
                           <embed
@@ -1383,7 +1383,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                     onChange={e => {handlePGCertificateChange(e);}}
                   />
                   {
-                    data?.user_additional_data.certificate_PG && (
+                    data?.user_additional_data && data?.user_additional_data.certificate_PG && (
                       <>
                         {isPDF(data?.user_additional_data.certificate_PG) ? (
                           <embed
@@ -1465,7 +1465,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                   )}
                 />
                 {
-                  data?.user_additional_data.agreement_copy && (
+                  data?.user_additional_data && data?.user_additional_data.agreement_copy && (
                     <>
                       {isPDF(data?.user_additional_data.agreement_copy) ? (
                         <embed
@@ -1504,7 +1504,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                   )}
                 />
                 {
-                  data?.user_additional_data.aadhaar_card && (
+                  data?.user_additional_data && data?.user_additional_data.aadhaar_card && (
                     <>
                       {isPDF(data?.user_additional_data.aadhaar_card) ? (
                         <embed
@@ -1543,7 +1543,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                   )}
                 />
                 {
-                  data?.user_additional_data.resume_cv && (
+                  data?.user_additional_data && data?.user_additional_data.resume_cv && (
                     <>
                       {isPDF(data?.user_additional_data.resume_cv) ? (
                         <embed
@@ -1581,7 +1581,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                   )}
                 />
                 {
-                  data?.user_additional_data.pan_card && (
+                  data?.user_additional_data && data?.user_additional_data.pan_card && (
                     <>
                       {isPDF(data?.user_additional_data.pan_card) ? (
                         <embed
@@ -1619,7 +1619,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                   )}
                 />
                 {
-                  data?.user_additional_data.cancel_check && (
+                  data?.user_additional_data && data?.user_additional_data.cancel_check && (
                     <>
                       {isPDF(data?.user_additional_data.cancel_check) ? (
                         <embed
