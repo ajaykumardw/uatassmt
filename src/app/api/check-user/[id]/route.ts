@@ -15,11 +15,29 @@ export async function POST(
 
   const id = Number(context.params.id);
 
-  const user = await prisma.users.findFirst({
-    where: {
-      id: id
-    }
-  })
+  const {isSSC, isStudent} = await req.json();
+
+  let user;
+
+  if(isSSC){
+    user = await prisma.sector_skill_councils.findUnique({
+      where: {
+        id: id
+      }
+    });
+  } else if(isStudent){
+    user = await prisma.students.findUnique({
+      where: {
+        id: id
+      }
+    });
+  } else {
+    user = await prisma.users.findFirst({
+      where: {
+        id: id
+      }
+    })
+  }
 
   return NextResponse.json({exists: !!user});
 }

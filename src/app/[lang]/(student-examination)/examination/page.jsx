@@ -37,67 +37,89 @@ const Examination = () => {
   const [markedQuestions, setMarkedQuestions] = useState({});
   const [isLoading, setLoading] = useState(true);
   const [ipAddress, setIpAddress] = useState('');
+  const [captureImageInSeconds, setCaptureImageInSeconds] = useState(null);
   const webcamRef = useRef(null);
 
   const router = useRouter();
   const { lang: locale } = useParams();
 
 
-  useEffect(() => {
-    // Disable right-click (context menu)
-    const disableRightClick = (e) => {
-      e.preventDefault();
-    };
+  // useEffect(() => {
+  //   // Disable right-click (context menu)
+  //   const disableRightClick = (e) => {
+  //     e.preventDefault();
+  //   };
 
-    // Disable F5, Ctrl+R, Cmd+R, and other reload shortcuts
-    const disableReloadShortcuts = (e) => {
-      // Detect F5, Ctrl+R, Cmd+R, and others
-      if (
-        e.key === 'F5' ||
-        e.key === 'F12' || // Disable F12 (DevTools)
-        (e.ctrlKey && e.key === 'r') ||
-        (e.metaKey && e.key === 'r') ||
-        (e.ctrlKey && e.key === 'R') ||
-        (e.metaKey && e.key === 'R') ||
-        (e.ctrlKey && e.shiftKey && e.key === 'I') // Disable Ctrl+Shift+I (DevTools)
-      ) {
-        e.preventDefault();
-      }
-    };
+  //   // Disable F5, Ctrl+R, Cmd+R, and other reload shortcuts
+  //   const disableReloadShortcuts = (e) => {
+  //     // Detect F5, Ctrl+R, Cmd+R, and others
+  //     if (
+  //       e.key === 'F5' ||
+  //       e.key === 'F12' || // Disable F12 (DevTools)
+  //       (e.ctrlKey && e.key === 'r') ||
+  //       (e.metaKey && e.key === 'r') ||
+  //       (e.ctrlKey && e.key === 'R') ||
+  //       (e.metaKey && e.key === 'R') ||
+  //       (e.ctrlKey && e.shiftKey && e.key === 'I') // Disable Ctrl+Shift+I (DevTools)
+  //     ) {
+  //       e.preventDefault();
+  //     }
+  //   };
 
-    // Prevent page reload via the "beforeunload" event (in most browsers)
-    const preventPageReload = (e) => {
-      e.preventDefault();
-      e.returnValue = ''; // Chrome requires this for blocking the action
-    };
+  //   // Prevent page reload via the "beforeunload" event (in most browsers)
+  //   const preventPageReload = (e) => {
+  //     e.preventDefault();
+  //     e.returnValue = ''; // Chrome requires this for blocking the action
+  //   };
 
-    // Add event listeners
-    document.addEventListener('contextmenu', disableRightClick); // Disable right-click
-    document.addEventListener('keydown', disableReloadShortcuts); // Disable reload shortcuts
-    window.addEventListener('beforeunload', preventPageReload); // Disable reload on refresh or back
+  //   // Add event listeners
+  //   document.addEventListener('contextmenu', disableRightClick); // Disable right-click
+  //   document.addEventListener('keydown', disableReloadShortcuts); // Disable reload shortcuts
+  //   window.addEventListener('beforeunload', preventPageReload); // Disable reload on refresh or back
 
-    window.onresize = function() {
-      window.resizeTo(window.screen.availWidth, window.screen.availHeight); // Resizes the window back to the original size
-    };
+  //   window.onresize = function() {
+  //     window.resizeTo(window.screen.availWidth, window.screen.availHeight); // Resizes the window back to the original size
+  //   };
 
-    window.onfocus = function() {
-      console.log('Window gained focus (likely not minimized)');
-    };
+  //   window.onfocus = function() {
+  //     console.log('Window gained focus (likely not minimized)');
+  //   };
+  //   // window.addEventListener("focus", function() {
+  //   //   // Create a new div element
+  //   //   const d = document.createElement('div');
+  //   //   // Set the text content of the new div
+  //   //   d.textContent = "Window gained focus!!!";
+  //   //   // Append the div to the document body
+  //   //   document.body.appendChild(d);
+  //   // });
+  //   // window.addEventListener("blur", function() {
+  //   //   // Create a new div element
+  //   //   const d = document.createElement('div');
+  //   //   // Set the text content of the new div
+  //   //   d.textContent = "Window lost focus!!!";
+  //   //   // Append the div to the document body
+  //   //   document.body.appendChild(d);
+  //   // });
 
-    // Disable text selection (optional, but useful)
 
-    document.body.style.userSelect = 'none'; // Disable text selection
+  //   // window.addEventListener("blur", function(){
+  //   //   alert("window focus lost");
+  //   // });
 
-    // Cleanup event listeners on component unmount
-    return () => {
-      document.removeEventListener('contextmenu', disableRightClick);
-      document.removeEventListener('keydown', disableReloadShortcuts);
-      window.removeEventListener('beforeunload', preventPageReload);
+  //   // Disable text selection (optional, but useful)
 
-      // Re-enable text selection when component is unmounted
-      document.body.style.userSelect = 'initial';
-    };
-  }, []);
+  //   document.body.style.userSelect = 'none'; // Disable text selection
+
+  //   // Cleanup event listeners on component unmount
+  //   return () => {
+  //     document.removeEventListener('contextmenu', disableRightClick);
+  //     document.removeEventListener('keydown', disableReloadShortcuts);
+  //     window.removeEventListener('beforeunload', preventPageReload);
+
+  //     // Re-enable text selection when component is unmounted
+  //     document.body.style.userSelect = 'initial';
+  //   };
+  // }, []);
 
   const getIp = async () => {
 
@@ -106,6 +128,8 @@ const Examination = () => {
     const data = await res.text();
 
     setIpAddress(data);
+
+    return data
   }
 
   const handleUserMediaError = (error) => {
@@ -129,20 +153,64 @@ const Examination = () => {
   }, [ipAddress])
 
   // Fetch exam data from the API
-  const getExamInstructions = async () => {
+  const getExamData = async () => {
     const data = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student-exam-set`).then(res => res.json());
 
     setExamData(data.batch.exam_set);
+    setCaptureImageInSeconds(data.batch.capture_image_in_seconds);
   };
 
   useEffect(() => {
-    getExamInstructions();
+    // Start capturing images as soon as the component mounts
+    const interval = setInterval(() => {
+      if (webcamRef.current) {
+        const imageSrc = webcamRef.current.getScreenshot();
+
+        if (imageSrc) {
+          // Send the base64 image data to the API route
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/student-capture-image`, {
+            method: 'POST',
+            body: JSON.stringify({ captured_image: imageSrc }),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
+            .then((res) => res.json())
+            .then((data) => console.log('Image saved:', data))
+            .catch((error) => console.error('Error saving image:', error));
+        }
+      }
+    }, captureImageInSeconds * 1000); // Capture every "captureImageInSeconds" seconds
+
+    // Clean up interval on component unmount
+    return () => clearInterval(interval);
+  }, [captureImageInSeconds]);
+
+  const setStudentExamResult = async () => {
+
+    const ip = await getIp();
+
+    const data = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student-exam-result`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json' // Assuming you're sending JSON data
+      },
+      body: JSON.stringify({"examSetId": examData.id, "examDurations": examData.exam_duration, "totalQuestions": examData.total_questions, "ip": ip, "userAgent": navigator.userAgent})
+    }).then(res => res.json());
+
+    console.log("data in frontend:", data);
+  }
+
+  useEffect(() => {
+    getExamData();
   }, []);
 
   useEffect(() => {
     if (examData) {
       setTotalTime(examData.exam_duration * 60); // Total time in seconds
       setTimeLeft(examData.exam_duration * 60);
+      console.log("hi from examData");
+      setStudentExamResult();
       setLoading(false);
     }
   }, [examData]);
@@ -160,11 +228,13 @@ const Examination = () => {
   useEffect(() => {
     if (timeLeft === 0) {
       const endTime = getFormattedTime();
-      const submitData = [examData?.id, examData?.exam_sets_questions[currentQuestionIndex].question_id, selectedOption[currentQuestionIndex], [startTime, endTime]];
+      const submitData = [examData?.id, examData?.exam_sets_questions[currentQuestionIndex].question_id, selectedOption[currentQuestionIndex], [selectedOption[currentQuestionIndex] ? 1 : 0 , startTime, endTime]];
 
-      if (answerData.hasOwnProperty(currentQuestionIndex)) {
+      // if (answerData.hasOwnProperty(currentQuestionIndex)) {
+
         submitQuestion(submitData);
-      }
+
+      // }
 
       router.push(getLocalizedUrl('/feedback', locale));
     }
@@ -180,11 +250,13 @@ const Examination = () => {
 
   const onSubmit = async () => {
     const endTime = getFormattedTime();
-    const submitData = [examData?.id, examData?.exam_sets_questions[currentQuestionIndex].question_id, selectedOption[currentQuestionIndex], [startTime, endTime]];
+    const submitData = [examData?.id, examData?.exam_sets_questions[currentQuestionIndex].question_id, selectedOption[currentQuestionIndex], [selectedOption[currentQuestionIndex] ? 1 : 0 , startTime, endTime]];
 
-    if (answerData.hasOwnProperty(currentQuestionIndex)) {
+    // if (answerData.hasOwnProperty(currentQuestionIndex)) {
+
       await submitQuestion(submitData);
-    }
+
+    // }
 
     router.push(getLocalizedUrl('/feedback', locale));
 
@@ -243,11 +315,13 @@ const Examination = () => {
     }
 
     const endTime = getFormattedTime();
-    const submitData = [examData?.id, examData?.exam_sets_questions[currentQuestionIndex].question_id, selectedOption[currentQuestionIndex], [startTime, endTime]];
+    const submitData = [examData?.id, examData?.exam_sets_questions[currentQuestionIndex].question_id, selectedOption[currentQuestionIndex], [selectedOption[currentQuestionIndex] ? 1 : 0 , startTime, endTime]];
 
-    if (answerData.hasOwnProperty(currentQuestionIndex)) {
+    // if (answerData.hasOwnProperty(currentQuestionIndex)) {
+
       await submitQuestion(submitData);
-    }
+
+    // }
 
     if (currentQuestionIndex < (examData?.exam_sets_questions.length || 0) - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
@@ -271,12 +345,14 @@ const Examination = () => {
       });
     }
 
-    if (answerData.hasOwnProperty(currentQuestionIndex)) {
+    // if (answerData.hasOwnProperty(currentQuestionIndex)) {
+
       const endTime = getFormattedTime();
-      const submitData = [examData?.id, examData?.exam_sets_questions[currentQuestionIndex].question_id, selectedOption[currentQuestionIndex], [startTime, endTime]];
+      const submitData = [examData?.id, examData?.exam_sets_questions[currentQuestionIndex].question_id, selectedOption[currentQuestionIndex], [selectedOption[currentQuestionIndex] ? 1 : 0 , startTime, endTime]];
 
       await submitQuestion(submitData);
-    }
+
+    // }
 
     setVisitedQuestions((prev) => ({ ...prev, [currentQuestionIndex]: currentQuestionIndex }));
 
@@ -300,11 +376,13 @@ const Examination = () => {
     }
 
     const endTime = getFormattedTime();
-    const submitData = [examData?.id, examData?.exam_sets_questions[currentQuestionIndex].question_id, selectedOption[currentQuestionIndex], [startTime, endTime]];
+    const submitData = [examData?.id, examData?.exam_sets_questions[currentQuestionIndex].question_id, selectedOption[currentQuestionIndex], [ selectedOption[currentQuestionIndex] ? 1 : 0 , startTime, endTime]];
 
-    if (answerData.hasOwnProperty(currentQuestionIndex)) {
+    // if (answerData.hasOwnProperty(currentQuestionIndex)) {
+
       await submitQuestion(submitData);
-    }
+
+    // }
 
     setCurrentQuestionIndex(index);
     setActiveStep(index);
@@ -577,7 +655,9 @@ const Examination = () => {
               audio={false}
               ref={webcamRef}
               screenshotFormat="image/jpeg"
+              screenshotQuality={1}
               height={100}
+              minScreenshotHeight={500}
               mirrored={false}
               videoConstraints={{
                 facingMode: "user",

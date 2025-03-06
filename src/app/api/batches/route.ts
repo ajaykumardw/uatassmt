@@ -24,6 +24,7 @@ export async function GET(req: Request) {
     where: whereCondition,
     select: {
       id: true,
+      status: true,
       batch_name: true,
       batch_size: true,
       assessment_start_datetime: true,

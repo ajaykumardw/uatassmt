@@ -1,6 +1,8 @@
 // React Imports
 import { useState } from 'react'
 
+import type { ChangeEvent } from 'react'
+
 // MUI Imports
 import Button from '@mui/material/Button'
 import Drawer from '@mui/material/Drawer'
@@ -12,7 +14,7 @@ import Divider from '@mui/material/Divider'
 // Component Imports
 import { toast } from 'react-toastify'
 
-import { InputAdornment } from '@mui/material'
+import { Avatar, InputAdornment } from '@mui/material'
 
 import { Controller,  useForm } from 'react-hook-form'
 
@@ -41,7 +43,9 @@ type Props = {
 //   status: string
 // }
 
-type FormDataType = InferInput<typeof schema>
+type FormDataType = InferInput<typeof schema> & {
+  profileImage: File | string
+}
 
 // Vars
 // const initialData = {
@@ -78,6 +82,8 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
 
   const [isPasswordShown, setIsPasswordShown] = useState(false)
   const [isConfirmPasswordShown, setIsConfirmPasswordShown] = useState(false)
+  const [imgSrc, setImgSrc] = useState<string | null>(null);
+  const [fileInput, setSSCImageInput] = useState<File | string>('');
 
   // Hooks
   const {
@@ -93,7 +99,8 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
       username: '',
       password: '',
       confirmPassword: '',
-      status: '1'
+      status: '1',
+      profileImage: ''
     }
   })
 
@@ -103,17 +110,29 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
   const onSubmit: SubmitHandler<FormDataType> = async (data: FormDataType) => {
     // e.preventDefault()
 
+    data.profileImage = fileInput as File;
+
+    const formData = new FormData();
+
+    formData.append('sscName', data.sscName);
+    formData.append('sscCode', data.sscCode);
+    formData.append('username', data.username);
+    formData.append('password', data.password);
+    formData.append('confirmPassword', data.confirmPassword);
+    formData.append('status', data.status);
+    formData.append('profileImage', data.profileImage);
+
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sectorskills`, {
 
       method: 'POST',
 
-      headers: {
+      // headers: {
 
-        'Content-Type': 'application/json' // Assuming you're sending JSON data
+      //   'Content-Type': 'application/json' // Assuming you're sending JSON data
 
-      },
+      // },
 
-      body: JSON.stringify(data)
+      body: formData
 
     });
 
@@ -137,6 +156,7 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
 
     handleClose()
     reset()
+    handleReset();
 
     // setFormData(initialData)
   }
@@ -144,7 +164,8 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
   const handleReset = () => {
     handleClose()
     reset()
-
+    handleFileInputReset()
+    
     // setFormData({
     //   sscName: '',
     //   sscCode: '',
@@ -153,6 +174,25 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
     //   confirmPassword: '',
     //   status: '1'
     // })
+  }
+
+  const handleFileInputChange = (file: ChangeEvent) => {
+    const reader = new FileReader()
+    const { files } = file.target as HTMLInputElement
+
+    if (files && files.length !== 0) {
+      reader.onload = () => setImgSrc(reader.result as string)
+      reader.readAsDataURL(files[0])
+      setSSCImageInput(files[0])
+
+    }
+  }
+
+  const handleFileInputReset = () => {
+
+    setSSCImageInput('')
+
+    setImgSrc(null);
   }
 
   return (
@@ -173,6 +213,31 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
       <Divider />
       <div>
         <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-6 p-6'>
+          <div className='flex flex-col items-center gap-6'>
+            {imgSrc ? (
+              <img width={100} className='rounded' src={imgSrc} alt='Profile' />
+            ) : (
+              <Avatar />
+            )}
+            <div className='flex flex-grow flex-col gap-4'>
+              <div className='flex flex-col sm:flex-row gap-4'>
+                <Button component='label' variant='contained' htmlFor='account-settings-upload-image'>
+                  Upload New Photo
+                  <input
+                    hidden
+                    type='file'
+                    accept='image/png, image/jpeg'
+                    onChange={handleFileInputChange}
+                    id='account-settings-upload-image'
+                  />
+                </Button>
+                <Button variant='tonal' color='secondary' onClick={handleFileInputReset}>
+                  Reset
+                </Button>
+              </div>
+              <Typography>Allowed JPG, GIF or PNG. Max size of 800K</Typography>
+            </div>
+          </div>
           <Controller
             name='sscName'
             control={control}

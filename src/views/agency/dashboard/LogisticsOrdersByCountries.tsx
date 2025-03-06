@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import type { SyntheticEvent } from 'react'
 
 // MUI Imports
@@ -25,7 +25,13 @@ import MuiTimeline from '@mui/lab/Timeline'
 import type { TimelineProps } from '@mui/lab/Timeline'
 
 // Components Imports
+import type { batches } from '@prisma/client'
+
+import { isBefore, isToday, isTomorrow } from 'date-fns'
+
 import OptionMenu from '@core/components/option-menu'
+
+import type { QPType } from '@/types/qualification-pack/qpType'
 
 // type TimelineItemData = {
 //   name: string
@@ -213,13 +219,100 @@ const data: Data = {
   ]
 }
 
+// Define the possible categories in the result object
+type BatchCategory = 'today' | 'tomorrow' | 'completed';
+
+type BatchesType = batches & {
+  qualification_pack: QPType
+}
+
+// Define the structure of the result object
+interface BatchResult {
+  today: { batch_name: string; batch_size: number; ssc_code: string }[];
+  tomorrow: { batch_name: string; batch_size: number; ssc_code: string }[];
+  completed: { batch_name: string; batch_size: number; ssc_code: string }[];
+}
+
 const LogisticsOrdersByCountries = () => {
   // States
   const [value, setValue] = useState<string>('today')
+  const [batches, setBatches] = useState<BatchesType[]>([]);
+  const [resultData, setResultData] = useState<Data>();
 
   const handleChange = (event: SyntheticEvent, newValue: string) => {
     setValue(newValue)
   }
+
+  const getBatches = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches`)
+
+      if (!res.ok) {
+        setBatches([]);
+        console.error('Failed to fetch batches data');
+      }
+
+      const batchData = await res.json();
+
+      setBatches(batchData);
+
+    } catch (error) {
+      console.error("Failed to fetch Batches data with error:", error);
+      setBatches([]);
+    }
+
+  }
+
+  useEffect(()=>{
+    getBatches();
+  }, [])
+
+  useEffect(() => {
+
+    if(batches.length > 0){
+
+      // console.log("batches:", batches);
+
+      const today = new Date();
+      const tomorrow = new Date();
+
+      tomorrow.setDate(today.getDate() + 1);
+
+      const result: BatchResult = {
+        today: [],
+        tomorrow: [],
+        completed: [],
+      };
+
+      batches.forEach((batch) => {
+        const startDate = batch.assessment_start_datetime ? batch.assessment_start_datetime : '';
+        const endDate = batch.assessment_end_datetime ? batch.assessment_end_datetime : '' ;
+
+        let targetCategory: BatchCategory | null = null;
+
+        // Classify batches based on the start date and end date
+        if (isToday(startDate)) {
+          targetCategory = "today";
+        } else if (isTomorrow(startDate)) {
+          targetCategory = "tomorrow";
+        } else if (isBefore(endDate, today)) {
+          targetCategory = "completed";
+        }
+
+        if (targetCategory) {
+          result[targetCategory].push({
+            batch_name: batch.batch_name ? batch.batch_name : '',
+            batch_size: Number(batch.batch_size),
+            ssc_code: batch.qualification_pack.ssc.ssc_code,
+          });
+        }
+      });
+
+      setResultData(result);
+
+      // return result;
+    }
+  }, [batches])
 
   // Define icons and colors based on the tab
   const getIconAndColor = (tab: string) => {
@@ -246,7 +339,7 @@ const LogisticsOrdersByCountries = () => {
     <Card>
       <CardHeader
         title='Batches'
-        
+
         // subheader='62 batches in progress'
         action={<OptionMenu options={['Show all orders', 'Share', 'Refresh']} />}
         className='pbe-4'
@@ -259,7 +352,7 @@ const LogisticsOrdersByCountries = () => {
         </TabList>
         <TabPanel value={value} className='pbs-0'>
           <CardContent>
-            {data[value as keyof Data].map((item: TimelineItemData, index: number) => {
+            {resultData ? resultData[value as keyof Data].map((item: TimelineItemData, index: number) => {
               const { icon, color } = getIconAndColor(value); // Get icon and color based on the current tab
 
               return (
@@ -303,7 +396,7 @@ const LogisticsOrdersByCountries = () => {
                   {index !== data[value as keyof Data].length - 1 && <Divider className='mlb-4 border-dashed' />}
                 </Fragment>
               )
-            })}
+            }) : ''}
           </CardContent>
         </TabPanel>
       </TabContext>

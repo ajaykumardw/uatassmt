@@ -7,7 +7,7 @@ import Grid from '@mui/material/Grid'
 import MenuItem from '@mui/material/MenuItem'
 
 // Type Imports
-import type { users } from '@prisma/client'
+import type { role, users } from '@prisma/client'
 
 // import type { UsersType } from '@/types/apps/userTypes'
 
@@ -15,13 +15,18 @@ import type { users } from '@prisma/client'
 import CustomTextField from '@core/components/mui/TextField'
 import { MenuProps } from '@/configs/customDataConfig'
 
-const TableFilters = ({ setData, tableData }: { setData: any; tableData?: users[] }) => {
+const TableFilters = ({ setData, roles, tableData }: { setData: any, roles:role[], tableData?: users[] }) => {
   // States
   const [role, setRole] = useState<users['role_id']>(-1)
+  const [rolesData, setRoles] = useState<role[]>(roles || [])
 
   // const [plan, setPlan] = useState<UsersType['currentPlan']>('')
 
   const [status, setStatus] = useState<users['status']>(-1)
+
+  useEffect(() => {
+    if (roles) setRoles(roles)
+  }, [roles])
 
   useEffect(() => {
     const filteredData = tableData?.filter(user => {
@@ -51,26 +56,11 @@ const TableFilters = ({ setData, tableData }: { setData: any; tableData?: users[
             SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value='-1'>Select Role</MenuItem>
-            <MenuItem value='1'>Assessor</MenuItem>
-            <MenuItem value='2'>TP</MenuItem>
+            {rolesData.map((role, index) => (
+              <MenuItem key={index} value={role.id.toString()}>{role.name}</MenuItem>
+            ))}
           </CustomTextField>
         </Grid>
-        {/* <Grid item xs={12} sm={4}>
-          <CustomTextField
-            select
-            fullWidth
-            id='select-plan'
-            value={plan}
-            onChange={e => setPlan(e.target.value)}
-            SelectProps={{ displayEmpty: true }}
-          >
-            <MenuItem value=''>Select Plan</MenuItem>
-            <MenuItem value='basic'>Basic</MenuItem>
-            <MenuItem value='company'>Company</MenuItem>
-            <MenuItem value='enterprise'>Enterprise</MenuItem>
-            <MenuItem value='team'>Team</MenuItem>
-          </CustomTextField>
-        </Grid> */}
         <Grid item xs={12} sm={4}>
           <CustomTextField
             select

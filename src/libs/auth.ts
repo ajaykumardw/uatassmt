@@ -87,6 +87,8 @@ export const authOptions: NextAuthOptions = {
             })
 
             const data = await res.json()
+
+            console.log("data", data);
             const sessionId = generateSessionId();
 
             if (res.status === 401) {
@@ -101,6 +103,7 @@ export const authOptions: NextAuthOptions = {
               */
               return {
                 ...data,
+                is_ssc: !!data.ssc_username,
                 sessionId: sessionId
               }
             }
@@ -164,9 +167,10 @@ export const authOptions: NextAuthOptions = {
         token.picture = user.avatar
         token.user_type = user.user_type
         token.is_master = user.is_master
-        token.agency_id = user.is_student ? user.agency_id : user.is_master ? user.id : user.master_id
+        token.agency_id = user.is_student ? user.agency_id : user.is_ssc ? user.agency_id : user.is_master ? user.id : user.master_id
         token.role_id = user.role_id
         token.is_student = user.is_student
+        token.is_ssc = user.is_ssc
       }
 
       return token
@@ -184,6 +188,7 @@ export const authOptions: NextAuthOptions = {
         session.user.agency_id = token.agency_id
         session.user.role_id = token.role_id
         session.user.is_student = token.is_student
+        session.user.is_ssc = token.is_ssc
       }
 
       return session

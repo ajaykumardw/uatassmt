@@ -11,6 +11,7 @@ import type { UsersType } from '@/types/users/usersType';
 import AssessorForm from '@/views/agency/users/forms/AssessorForm';
 
 import TPForm from '@/views/agency/users/forms/TPForm';
+import UserForm from '@/views/agency/users/forms/UserForm';
 
 // Component Imports
 
@@ -97,13 +98,17 @@ const UserEdit = ({ params }: { params: { id: string, role: string } }) => {
   if(data){
 
     if(data?.role.id === 1){
-      return <AssessorForm />
+      return <AssessorForm data={data} assessorId={data.id} />
     }else if(data?.role.id === 2){
       if(cityData.length > 0){
         return <TPForm id={Number(params.id)} data={data} stateData={stateData} citiesData={cityData} />
       }else{
         return <SkeletonForm />
       }
+    } else if(data?.role.id === 3){
+      return <UserForm id={Number(params.id)} roleId={Number(data.role_id)} data={data} />
+    } else if(data?.role.id === 4){
+      return <UserForm id={Number(params.id)} roleId={Number(data.role_id)} data={data} />
     }
   }else{
     return <SkeletonForm />

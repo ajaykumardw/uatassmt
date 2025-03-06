@@ -8,7 +8,7 @@ import { Card, CardHeader, CardContent, Typography, Button, CardActions, Divider
 
 import Grid from "@mui/material/Grid";
 
-import type { batches, exam_sets } from '@prisma/client';
+import type { batches, exam_sets, student_exam_set_results } from '@prisma/client';
 
 import { format } from 'date-fns';
 
@@ -22,60 +22,39 @@ const ExamTest = () => {
   const [isClient, setIsClient] = useState(false);
   const [examSet, setExamSet] = useState<exam_sets | null>(null);
   const [batchData, setBatchData] = useState<batches | null>(null);
+  const [studentExamResults, setStudentExamResults] = useState< student_exam_set_results | null>(null);
+  const [remainingAttempts, setRemainingAttempts] = useState<number>(0)
 
   const getExamInstructions = async () => {
     const data = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student-exam-set`).then(function (res) { return res.json() });
 
     setBatchData(data.batch);
+    setStudentExamResults(
+      data.exam_set_results ?
+        data.exam_set_results.find((studentResult: student_exam_set_results) => studentResult.exam_set_id === data.batch.exam_set.id)
+        : null
+    );
+
     setExamSet(data.batch.exam_set);
 
   }
 
-  // useEffect(() => {
-  //   const checkAssessmentStart = () => {
-  //     if (batchData?.assessment_start_datetime) {
+  useEffect(() => {
 
-  //       // Compare dates without time component
-  //       const isSameDay = new Date() === new Date(batchData?.assessment_start_datetime);
+    if(batchData?.login_restrict && studentExamResults?.total_attempts){
+      setRemainingAttempts(batchData.login_restrict - studentExamResults.total_attempts <= 0 ? 0 : batchData.login_restrict - studentExamResults.total_attempts)
+    } else if(batchData?.login_restrict) {
+      setRemainingAttempts(batchData.login_restrict)
+    }
 
-  //       if (isSameDay) {
-  //         console.log("hi");
-  //         getExamInstructions();
-  //       }
-  //     }
-  //   };
-
-  //   checkAssessmentStart();
-
-  //   var timeSlot = "";
-
-  //   // Using a timer or event-based trigger to check at regular intervals if necessary
-  //   const intervalId = setInterval(() => {
-  //     checkAssessmentStart();
-  //   }, 60000); // Check every minute
-
-  //   return () => clearInterval(intervalId); // Cleanup interval on component unmount
-  // }, [batchData]); // Depend only on batchData
+  }, [batchData, studentExamResults])
 
   const [currentTime, setCurrentTime] = useState<Date>();
 
   useEffect(() => {
     const interval = setInterval(() => {
       if (batchData && batchData?.assessment_start_datetime) {
-        // Get the current time in Asia/Kolkata timezone
-        // const options = { timeZone: 'Asia/Kolkata', hour12: false };
-        // const indiaDate = new Date(); // Convert to India time
-
-        // Create a Date object for the current time in Asia/Kolkata timezone
         const now = new Date();
-
-        // // Create a Date object for the assessment_start_datetime in Asia/Kolkata timezone
-        // const assessmentStartTime = new Date(batchData.assessment_start_datetime);
-
-        // // Check if both times match exactly (same date and time)
-        // if (batchData?.assessment_start_datetime && new Date(batchData?.assessment_start_datetime) == new Date()) {
-        //   console.log('Times match exactly at:', now);
-        // }
 
         // Update the current time state
         setCurrentTime(now); // Update current time in Asia/Kolkata timezone
@@ -173,18 +152,24 @@ const ExamTest = () => {
                   </div>
                   <Typography color='text.secondary'>Exam End Date Time: {batchData?.assessment_end_datetime ? format(batchData.assessment_end_datetime, 'dd-LL-yyyy HH:mm:ss') : ""}</Typography>
                 </div>
+                <div className='flex items-center gap-2.5'>
+                  <div className='flex'>
+                    <i className='tabler-calendar-time text-xl text-textSecondary' />
+                  </div>
+                  <Typography color='text.secondary'>Remaining Attempts: {remainingAttempts}</Typography>
+                </div>
               </Grid>
             </Grid>
             <Divider className='mbs-7 mbe-7' />
-            <Typography variant='h5' className='mbe-2'>Instruction</Typography>
+            <Typography variant='h5' className='mbe-2'>Instructions</Typography>
             <Grid item xs={12}>{examSet?.instruction || <DefaultExamInstructions /> }</Grid>
 
           </CardContent>
-          {batchData?.assessment_start_datetime && new Date(batchData?.assessment_start_datetime) <= new Date() &&
+          {examSet && remainingAttempts > 0 && batchData?.assessment_start_datetime && new Date(batchData?.assessment_start_datetime) <= new Date() &&
             batchData?.assessment_end_datetime && new Date() <= new Date(batchData?.assessment_end_datetime) && (
               <CardActions>
                 <Button variant="contained" onClick={() => handleStartExam(examPageUrl)}>
-                  Start Exam
+                  {batchData.login_restrict && remainingAttempts < batchData.login_restrict ? 'Resume Exam' : 'Start Exam'}
                 </Button>
               </CardActions>
             )

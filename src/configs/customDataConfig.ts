@@ -77,3 +77,23 @@ export const ExamDurations : { [key: number]: string } = {
   50: "50 Minutes",
   60: "60 Minutes"
 }
+
+type UserRoleType = {
+  [key: string]: { icon: string; color: string }
+}
+
+export const userRoleObj: UserRoleType = {
+  1: { icon: 'tabler-school', color: 'info' },
+  2: { icon: 'tabler-heart-handshake', color: 'warning' },
+  3: { icon: 'tabler-heart-rate-monitor', color: 'success' },
+  4: { icon: 'tabler-calculator', color: 'error' },
+}
+
+export const routes = {
+  SA: [
+    '/super-admin',
+    '/agency/list',
+    `/agency/*`,
+    '/agency/create'
+  ]
+}

@@ -60,12 +60,120 @@ export async function POST(req: Request) {
         question_id: Number(data[1]),
         student_answer: Number(data[2]),
         correct_answer: Number(questionData?.answer),
-        attempt_time_data: JSON.stringify(data[3]),
+        attempt_time_data: JSON.stringify([data[3]]),
         created_by: createdBy,
         updated_by: createdBy,
       }
     });
   }
+
+  const attemptQuestionsData = await prisma.exam_set_results.findMany({
+    where: {
+      exam_set_id: data[0],
+      student_id: createdBy,
+    }
+  });
+
+  let correctCount = 0;
+  let incorrectCount = 0;
+
+  // let totalSpentTimeInMil = 0;
+
+  let earliestStartTime: Date | null = null;
+  let latestEndTime: Date | null = null;
+
+  let formattedSpentTime;
+
+  if(attemptQuestionsData.length > 0) {
+
+    attemptQuestionsData.forEach((attempt) => {
+      if (attempt.student_answer === attempt.correct_answer) {
+        correctCount++;
+      } else {
+        incorrectCount++;
+      }
+
+      const timeIntervals = JSON.parse(attempt.attempt_time_data);
+
+      console.log("Time interval", timeIntervals);
+
+
+      timeIntervals.forEach((interval: string[]) => {
+        const startTime = new Date(interval[1]);
+        const endTime = new Date(interval[2]);
+
+        console.log("startTime and endTime:", startTime, endTime, interval[1], interval[2]);
+
+        // Update earliest start time if necessary
+        if (!earliestStartTime || startTime < earliestStartTime) {
+          earliestStartTime = startTime;
+        }
+
+        // Update latest end time if necessary
+        if (!latestEndTime || endTime > latestEndTime) {
+          latestEndTime = endTime;
+        }
+      });
+
+    });
+
+    console.log('earliestStartTime && latestEndTime', earliestStartTime , latestEndTime);
+
+    if (earliestStartTime && latestEndTime) {
+      // Calculate the total time in milliseconds
+      const totalTimeInMilliseconds = (latestEndTime as Date).getTime() - (earliestStartTime as Date).getTime();
+
+      // Convert milliseconds to total seconds
+      const totalTimeInSeconds = totalTimeInMilliseconds / 1000;
+
+      // Calculate hours, minutes, and seconds
+      const hours = Math.floor(totalTimeInSeconds / 3600);
+      const minutes = Math.floor((totalTimeInSeconds % 3600) / 60);
+      const seconds = Math.floor(totalTimeInSeconds % 60);
+
+      // Format the result into hh:mm:ss format
+      formattedSpentTime = `${padZero(hours)}:${padZero(minutes)}:${padZero(seconds)}`;
+    } else {
+      formattedSpentTime = "00:00:00";
+    }
+
+
+    // attemptQuestionsData.forEach((attempt) => {
+    // });
+
+    // return totalTime; // Return the total time in milliseconds
+
+  }
+
+  // const formattedSpentTime = formatTime(totalSpentTimeInMil);
+
+
+  console.log("attemptQuestionsData:", attemptQuestionsData, correctCount, incorrectCount, formattedSpentTime);
+
+
+  const studentExamResult = await prisma.student_exam_set_results.findUnique({
+    where: {
+      student_id_exam_set_id: {
+        exam_set_id: data[0],
+        student_id: createdBy
+      }
+    }
+  })
+
+  if(studentExamResult){
+    await prisma.student_exam_set_results.update({
+      where: {
+        id: studentExamResult.id
+      },
+      data: {
+        exam_spent_time: formattedSpentTime,
+        attempt_questions: attemptQuestionsData.length,
+        correct: correctCount,
+        incorrect: incorrectCount
+      }
+    })
+  }
+
 
 
   // if(result){
@@ -75,6 +183,11 @@ export async function POST(req: Request) {
   // else{
   //   return NextResponse.json({message: 'Student question attempt not created!'},{status: 500})
   // }
+}
+
+// Function to pad single digits with a leading zero
+const padZero = (value: number): string => {
+  return value < 10 ? `0${value}` : `${value}`;
 }
 
 
@@ -101,3 +214,18 @@ const formatTimeData = (data: (string | [string, string])[]): [string, string][]
 
   return formattedData;
 }
+
+// // Function to convert milliseconds to HH:MM:SS format
+// const formatTime = (ms: number): string => {
+//   const hours = Math.floor(ms / (1000 * 60 * 60));
+//   const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+//   const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+
+//   // Format the time components to ensure two digits (e.g., 05 for minutes or seconds)
+//   const formattedHours = hours.toString().padStart(2, '0');
+//   const formattedMinutes = minutes.toString().padStart(2, '0');
+//   const formattedSeconds = seconds.toString().padStart(2, '0');
+
+//   return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+// }
+

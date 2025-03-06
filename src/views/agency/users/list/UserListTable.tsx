@@ -65,7 +65,7 @@ import tableStyles from '@core/styles/table.module.css'
 import AddUsersDialog from '@/components/users/dialogs/AddUsersDialog'
 
 import { formatDate } from '@/utils/formateDate'
-import { MenuProps, TableRowLimit } from '@/configs/customDataConfig'
+import { MenuProps, TableRowLimit, userRoleObj } from '@/configs/customDataConfig'
 
 // declare module '@tanstack/table-core' {
 //   interface FilterFns {
@@ -81,9 +81,9 @@ type UsersTypeWithAction = users & {
   role: role
 }
 
-type UserRoleType = {
-  [key: string]: { icon: string; color: string }
-}
+// type UserRoleType = {
+//   [key: string]: { icon: string; color: string }
+// }
 
 type UserStatusType = {
   [key: string]: ThemeColor
@@ -146,10 +146,12 @@ const DebouncedInput = ({
 //   'Assessor': { icon: 'tabler-chart-pie', color: 'success' },
 //   subscriber: { icon: 'tabler-user', color: 'primary' }
 // }
-const userRoleObj: UserRoleType = {
-  1: { icon: 'tabler-school', color: 'info' },
-  2: { icon: 'tabler-heart-handshake', color: 'warning' },
-}
+// const userRoleObj: UserRoleType = {
+//   1: { icon: 'tabler-school', color: 'info' },
+//   2: { icon: 'tabler-heart-handshake', color: 'warning' },
+//   3: { icon: 'tabler-heart-rate-monitor', color: 'success' },
+//   4: { icon: 'tabler-calculator', color: 'error' },
+// }
 
 const userStatusObj: UserStatusType = {
   1: 'success',
@@ -177,9 +179,23 @@ const UserListTable = ({ tableData }: { tableData?: users[]}) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [data, setData] = useState(...[tableData])
   const [globalFilter, setGlobalFilter] = useState('')
+  const [roles, setRoles] = useState<role[]>([]);
 
   // Hooks
   const { lang: locale } = useParams()
+
+  const getRoles = async () => {
+    // Vars
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/roles`)
+
+    if (!res.ok) {
+      throw new Error('Failed to fetch roles')
+    }
+
+    const rolesData = await res.json();
+
+    setRoles(rolesData);
+  }
 
   useEffect(() => {
 
@@ -192,6 +208,9 @@ const UserListTable = ({ tableData }: { tableData?: users[]}) => {
       });
       localStorage.removeItem('formSubmitMessage');
     }
+
+    getRoles();
+
   }, []);
 
   const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
@@ -348,7 +367,7 @@ const UserListTable = ({ tableData }: { tableData?: users[]}) => {
     <>
       <Card>
         <CardHeader title='Filters' className='pbe-4' />
-        <TableFilters setData={setData} tableData={tableData} />
+        <TableFilters setData={setData} roles={roles} tableData={tableData} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
             select
@@ -452,7 +471,7 @@ const UserListTable = ({ tableData }: { tableData?: users[]}) => {
         />
       </Card>
       {/* <AddUserDrawer open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} /> */}
-      <AddUsersDialog open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} />
+      <AddUsersDialog rolesData={roles} open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} />
     </>
   )
 }
