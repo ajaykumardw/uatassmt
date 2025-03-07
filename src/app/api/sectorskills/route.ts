@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
 
   if(result){
 
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'ssc', result.id.toString());
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'ssc');
 
     if (!fs.existsSync(uploadDir)) {
       try {
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({message: 'SSC created successfully!'})
   }
   else{
-    
+
     return NextResponse.json({message: 'SSC not created!'},{status: 500})
   }
 }

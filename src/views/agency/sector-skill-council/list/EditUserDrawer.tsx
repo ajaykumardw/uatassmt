@@ -185,7 +185,7 @@ const EditUserDrawer = ({ open, handleClose, sscId, sscName, sscCode, username, 
             {imgSrc ? (
               <img width={100} className='rounded' src={imgSrc} alt='Profile' />
             ) : (sscImage ? (
-              <img width={100} className='rounded' src={`/uploads/ssc/${sscId}/${sscImage}`} alt='Profile' />
+              <img width={100} className='rounded' src={`/uploads/ssc/${sscImage}`} alt='Profile' />
             ) : (
               <Avatar />
             ))}
