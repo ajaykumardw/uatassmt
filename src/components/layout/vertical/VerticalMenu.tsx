@@ -127,8 +127,9 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
         </MenuItem>
         <SubMenu label={dictionary['navigation'].batches} icon={<i className='tabler-stack-2' />}>
           <MenuItem href={`/${locale}/batches/list`}>{dictionary['navigation'].list}</MenuItem>
-          <MenuItem href={`/${locale}/batches/unassigned`}>{dictionary['navigation'].unassignedBatches}</MenuItem>
-          <MenuItem href={`/${locale}/batches/allocated`}>{dictionary['navigation'].allocatedBatches}</MenuItem>
+          <MenuItem href={`/${locale}/batches/today`}>{dictionary['navigation'].today}</MenuItem>
+          <MenuItem href={`/${locale}/batches/pending`}>{dictionary['navigation'].pending}</MenuItem>
+          <MenuItem href={`/${locale}/batches/completed`}>{dictionary['navigation'].completed}</MenuItem>
         </SubMenu>
         <MenuItem href={`/${locale}/students`} icon={<i className='tabler-school' />}>
           {dictionary['navigation'].students}

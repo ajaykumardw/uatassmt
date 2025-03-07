@@ -180,7 +180,7 @@ const DebouncedInput = ({
 // Column Definitions
 const columnHelper = createColumnHelper<BatchesTypeWithAction>()
 
-const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesWithQP[], updateBatchList: () => void }) => {
+const CompletedBatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesWithQP[], updateBatchList: () => void }) => {
 
   // States
   // const [addUserOpen, setAddUserOpen] = useState(false)
@@ -693,4 +693,4 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
   )
 }
 
-export default BatchesListTable
+export default CompletedBatchesListTable

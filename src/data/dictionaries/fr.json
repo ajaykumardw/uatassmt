@@ -105,6 +105,9 @@
     "trainingResources": "Ressources de formation",
 
     "exams": "Examens",
-    "assessmentMonitoring": "Suivi des évaluations"
+    "assessmentMonitoring": "Suivi des évaluations",
+    "today": "Today",
+    "pending": "Pending",
+    "completed": "Completed"
   }
 }

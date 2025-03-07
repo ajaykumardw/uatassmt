@@ -105,6 +105,9 @@
     "trainingResources": "موارد التدريب",
 
     "exams": "الامتحانات",
-    "assessmentMonitoring": "مراقبة التقييم"
+    "assessmentMonitoring": "مراقبة التقييم",
+    "today": "Today",
+    "pending": "Pending",
+    "completed": "Completed"
   }
 }

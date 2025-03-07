@@ -35,6 +35,7 @@ model batches {
   assessment_mode           Int?
   capture_image_in_seconds  Int?
   status                    Int       @default(1) @db.TinyInt
+  batch_completed           Int       @default(0) @db.TinyInt
   agency_id                 Int
   created_by                Int
   deleted_at                DateTime? @db.DateTime(0)
@@ -315,7 +316,7 @@ model sector_skill_councils {
   ssc_code     String?   @db.VarChar(60)
   ssc_username String?   @db.VarChar(100)
   ssc_pwd      String?   @db.VarChar(100)
-  ssc_image    String?   
+  ssc_image    String?
   status       Int       @default(1) @db.TinyInt
   created_by   Int?
   deleted_at   DateTime? @db.DateTime(0)
