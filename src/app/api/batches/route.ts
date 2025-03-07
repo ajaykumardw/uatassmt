@@ -11,6 +11,8 @@ export async function GET(req: Request) {
 
   const url = new URL(await req.url);
   const qpId = url.searchParams.get('qpId');
+  const isToday = url.searchParams.get('today');
+  const isCompleted = url.searchParams.get('completed');
 
   const session = await getServerSession(authOptions);
   const agencyId = Number(session?.user?.agency_id);
@@ -18,12 +20,21 @@ export async function GET(req: Request) {
   const whereCondition = {
     agency_id: agencyId,
     ...(qpId ? { qp_id: Number(qpId) } : {}),
+    ...(isToday && isToday == 'true' ? {
+      assessment_start_datetime: {
+        gte: new Date(new Date().setHours(0, 0, 0, 0)),
+        lte: new Date(new Date().setHours(23, 59, 59, 999))
+      }
+    } : {}),
+    ...(isCompleted ? (isCompleted == 'true' ? { batch_completed: 1 } : { batch_completed: 0 }) : {})
   };
 
   const batches = await prisma.batches.findMany({
     where: whereCondition,
     select: {
       id: true,
+      status: true,
+      batch_completed: true,
       batch_name: true,
       batch_size: true,
       assessment_start_datetime: true,
@@ -90,7 +101,7 @@ export async function POST(req: Request) {
 
   const data = await req.json();
 
-  const {qpId, batchName, batchSize, scheme, subScheme, trainingPartner, trainingCenter, assessmentStartDate, assessmentEndDate, loginRestrictCount, modeOfAssessment, captureImage, captureImageInSeconds} = data;
+  const {qpId, examSetId, batchName, batchSize, scheme, subScheme, trainingPartner, trainingCenter, assessmentStartDate, assessmentEndDate, loginRestrictCount, modeOfAssessment, captureImage, captureImageInSeconds} = data;
 
   const session = await getServerSession(authOptions);
   const createdBy = Number(session?.user.id);
@@ -100,6 +111,7 @@ export async function POST(req: Request) {
     data: {
       batch_name: batchName,
       qp_id: Number(qpId),
+      exam_set_id: examSetId ? Number(examSetId) : null,
       scheme_id: Number(scheme),
       sub_scheme_id: Number(subScheme),
       batch_size: batchSize,

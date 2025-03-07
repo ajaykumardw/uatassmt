@@ -25,10 +25,13 @@ import MuiTimeline from '@mui/lab/Timeline'
 import type { TimelineProps } from '@mui/lab/Timeline'
 
 // Components Imports
-import OptionMenu from '@core/components/option-menu'
-import { batches } from '@prisma/client'
+import type { batches } from '@prisma/client'
+
 import { isBefore, isToday, isTomorrow } from 'date-fns'
-import { QPType } from '@/types/qualification-pack/qpType'
+
+import OptionMenu from '@core/components/option-menu'
+
+import type { QPType } from '@/types/qualification-pack/qpType'
 
 // type TimelineItemData = {
 //   name: string
@@ -243,20 +246,19 @@ const LogisticsOrdersByCountries = () => {
   const getBatches = async () => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches`)
-  
       if (!res.ok) {
         setBatches([]);
         console.error('Failed to fetch batches data');
       }
-  
+
       const batchData = await res.json();
+
       setBatches(batchData);
-      
+
     } catch (error) {
       console.error("Failed to fetch Batches data with error:", error);
       setBatches([]);
     }
-    
   }
 
   useEffect(()=>{
@@ -264,25 +266,28 @@ const LogisticsOrdersByCountries = () => {
   }, [])
 
   useEffect(() => {
-    
+
     if(batches.length > 0){
-      console.log("batches:", batches);
+
+      // console.log("batches:", batches);
+
       const today = new Date();
       const tomorrow = new Date();
+
       tomorrow.setDate(today.getDate() + 1);
-    
+
       const result: BatchResult = {
         today: [],
         tomorrow: [],
         completed: [],
       };
-    
+
       batches.forEach((batch) => {
         const startDate = batch.assessment_start_datetime ? batch.assessment_start_datetime : '';
         const endDate = batch.assessment_end_datetime ? batch.assessment_end_datetime : '' ;
-    
+
         let targetCategory: BatchCategory | null = null;
-    
+
         // Classify batches based on the start date and end date
         if (isToday(startDate)) {
           targetCategory = "today";
@@ -291,7 +296,6 @@ const LogisticsOrdersByCountries = () => {
         } else if (isBefore(endDate, today)) {
           targetCategory = "completed";
         }
-    
         if (targetCategory) {
           result[targetCategory].push({
             batch_name: batch.batch_name ? batch.batch_name : '',
@@ -302,7 +306,6 @@ const LogisticsOrdersByCountries = () => {
       });
 
       setResultData(result);
-    
       // return result;
     }
   }, [batches])
@@ -332,7 +335,7 @@ const LogisticsOrdersByCountries = () => {
     <Card>
       <CardHeader
         title='Batches'
-        
+
         // subheader='62 batches in progress'
         action={<OptionMenu options={['Show all orders', 'Share', 'Refresh']} />}
         className='pbe-4'

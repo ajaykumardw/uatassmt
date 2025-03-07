@@ -6,11 +6,15 @@ import Grid from '@mui/material/Grid'
 // Component Imports
 import type { batches } from '@prisma/client'
 
+import type { QPType } from '@/types/qualification-pack/qpType';
+
 import BatchesListTable from './BatchesListTable'
+
+type BatchesWithQP = batches & {qualification_pack: QPType};
 
 // import BatchesListCards from './BatchesListCards'
 
-const BatchesList = ({ tableData, updateBatchList }: { tableData?: batches[], updateBatchList: () => void }) => {
+const BatchesList = ({ tableData, updateBatchList }: { tableData?: BatchesWithQP[], updateBatchList: () => void }) => {
   return (
     <Grid container spacing={6}>
       {/* <Grid item xs={12}>

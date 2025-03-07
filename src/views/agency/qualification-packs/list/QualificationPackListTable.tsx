@@ -382,7 +382,7 @@ const QualificationPackListTable = ({ tableData, updateQPList }: { tableData?: Q
         cell: ({ row }) => (
           <div className='flex items-center gap-2'>
             <Typography className='capitalize' color='text.primary'>
-              {row.original.theory_cutoff_marks}
+              {row.original.theory_cutoff_marks}%
             </Typography>
           </div>
         )
@@ -392,7 +392,7 @@ const QualificationPackListTable = ({ tableData, updateQPList }: { tableData?: Q
         cell: ({ row }) => (
           <div className='flex items-center gap-2'>
             <Typography className='capitalize' color='text.primary'>
-              {row.original.practical_cutoff_marks}
+              {row.original.practical_cutoff_marks}%
             </Typography>
           </div>
         )
@@ -402,7 +402,7 @@ const QualificationPackListTable = ({ tableData, updateQPList }: { tableData?: Q
         cell: ({ row }) => (
           <div className='flex items-center gap-2'>
             <Typography className='capitalize' color='text.primary'>
-              {row.original.viva_cutoff_marks}
+              {row.original.viva_cutoff_marks}%
             </Typography>
           </div>
         )
@@ -412,7 +412,7 @@ const QualificationPackListTable = ({ tableData, updateQPList }: { tableData?: Q
         cell: ({ row }) => (
           <div className='flex items-center gap-2'>
             <Typography className='capitalize' color='text.primary'>
-              {row.original.overall_cutoff_marks}
+              {row.original.overall_cutoff_marks}%
             </Typography>
           </div>
         )
@@ -422,7 +422,7 @@ const QualificationPackListTable = ({ tableData, updateQPList }: { tableData?: Q
         cell: ({ row }) => (
           <div className='flex items-center gap-2'>
             <Typography className='capitalize' color='text.primary'>
-              {row.original.nos_cutoff_marks}
+              {row.original.nos_cutoff_marks}%
             </Typography>
           </div>
         )

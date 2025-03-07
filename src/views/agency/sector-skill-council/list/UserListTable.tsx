@@ -159,6 +159,7 @@ const UserListTable = ({ tableData, updateSSCList }: { tableData?: SSCType[], up
   const [sscCode, setSscCode] = useState('');
   const [username, setUsername] = useState('');
   const [sscStatus, setStatus] = useState('0');
+  const [sscImage, setSSCImage] = useState('');
   const [rowSelection, setRowSelection] = useState({})
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -227,7 +228,7 @@ const UserListTable = ({ tableData, updateSSCList }: { tableData?: SSCType[], up
             {/* <IconButton>
               <i className='tabler-eye text-[22px] text-textSecondary' />
             </IconButton> */}
-            <IconButton onClick={() => { setEditUserOpen(!editUserOpen); setSSCId(row.original.id); setSSCName(row.original.ssc_name); setSscCode(row.original.ssc_code); setUsername(row.original.ssc_username); setStatus(row.original.status.toString()) }}>
+            <IconButton onClick={() => { setEditUserOpen(!editUserOpen); setSSCId(row.original.id); setSSCName(row.original.ssc_name); setSscCode(row.original.ssc_code); setUsername(row.original.ssc_username); setStatus(row.original.status.toString()); setSSCImage(row.original.ssc_image); }}>
               <i className='tabler-edit text-[22px] text-textSecondary' />
             </IconButton>
           </div>
@@ -391,7 +392,7 @@ const UserListTable = ({ tableData, updateSSCList }: { tableData?: SSCType[], up
         />
       </Card>
       <AddUserDrawer open={addUserOpen} updateSSCList={updateSSCList} handleClose={() => setAddUserOpen(!addUserOpen)} />
-      <EditUserDrawer sscId={sscId} open={editUserOpen} handleClose={() => setEditUserOpen(!editUserOpen)} updateSSCList={updateSSCList} sscName={sscName} sscCode={sscCode} username={username} sscStatus={sscStatus} />
+      <EditUserDrawer sscId={sscId} open={editUserOpen} handleClose={() => setEditUserOpen(!editUserOpen)} updateSSCList={updateSSCList} sscName={sscName} sscCode={sscCode} username={username} sscStatus={sscStatus} sscImage={sscImage} />
     </>
   )
 }

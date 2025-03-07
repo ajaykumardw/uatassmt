@@ -9,6 +9,7 @@ export type SSCType = {
   ssc_name: string
   ssc_code: string
   ssc_username: string
+  ssc_image: string
   password: string
   status: number
   avatar: string

@@ -63,7 +63,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts"
-  ],
+, "src/app/[lang]/(student-examination)/examination/page.jsx"  ],
   "exclude": [
     "node_modules"
   ]

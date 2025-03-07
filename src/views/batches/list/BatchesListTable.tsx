@@ -49,6 +49,8 @@ import { toast } from 'react-toastify'
 
 import { format } from 'date-fns'
 
+import { Chip, CircularProgress, Tooltip } from '@mui/material'
+
 import type { Locale } from '@configs/i18n'
 
 // Component Imports
@@ -68,7 +70,14 @@ import { formatDate } from '@/utils/formateDate'
 import type { QPType } from '@/types/qualification-pack/qpType'
 
 import ImportStudents from './ImportStudents'
+
 import { MenuProps, TableRowLimit } from '@/configs/customDataConfig'
+
+import type { UsersType } from '@/types/users/usersType'
+
+import AssignAssessorDialog from '@/components/batches/dialogs/AssignAssessorDialog'
+
+import CustomIconButton from '@/@core/components/mui/IconButton'
 
 
 // declare module '@tanstack/table-core' {
@@ -88,10 +97,12 @@ type BatchesTypeWithAction = batches & {
   scheme: schemes
   sub_scheme: schemes
   students?: students[]
-  assessor: users
+  assessor: UsersType
 
   // role: role
 }
+
+type BatchesWithQP = batches & { qualification_pack: QPType }
 
 // Styled Components
 // const Icon = styled('i')({})
@@ -169,7 +180,7 @@ const DebouncedInput = ({
 // Column Definitions
 const columnHelper = createColumnHelper<BatchesTypeWithAction>()
 
-const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: batches[], updateBatchList: () => void }) => {
+const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesWithQP[], updateBatchList: () => void }) => {
 
   // States
   // const [addUserOpen, setAddUserOpen] = useState(false)
@@ -182,6 +193,10 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: batches[
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [data, setData] = useState(...[tableData])
   const [globalFilter, setGlobalFilter] = useState('')
+  const [assignAssessorOpen, setAssignAssessorOpen] = useState(false);
+  const [singleBatch, setSingleBatch] = useState<BatchesTypeWithAction | null>(null);
+  const [assessorData, setAssessorsData] = useState<UsersType[]>([]);
+  const [loadingId, setLoadingId] = useState<number | null>(null);
 
   // Hooks
   const { lang: locale } = useParams()
@@ -205,6 +220,70 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: batches[
     localStorage.setItem("batch_id", row.id.toString());
 
     router.push(getLocalizedUrl(`students`, locale as Locale))
+
+  }
+
+  const handleAssignAssessor = async (batch: any) => {
+
+    setSingleBatch(batch);
+
+    const allAssessors = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/assessor`).then(function (response) { return response.json() });
+
+    setAssessorsData(allAssessors);
+
+    setAssignAssessorOpen(!assignAssessorOpen);
+
+  }
+
+  const handleRemoveAssessor = async (batchId: any) => {
+
+    setLoadingId(batchId)
+
+    try {
+
+      if (batchId) {
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches/${batchId}/remove-assessor`, {
+
+          method: 'POST',
+
+          headers: {
+
+            'Content-Type': 'application/json'
+
+          },
+
+          body: JSON.stringify(data)
+
+        });
+
+        if (res.ok) {
+          // reset();
+          updateBatchList();
+          toast.success('Assessor has been removed successfully!', {
+            hideProgressBar: false
+          });
+          setLoadingId(null);
+        } else {
+          toast.error('Assessor not removed. Something went wrong here!', {
+            hideProgressBar: false
+          });
+          setLoadingId(null);
+        }
+
+      }else{
+        toast.error('Batch ID not found!', {
+          hideProgressBar: false
+        });
+        setLoadingId(null);
+      }
+
+    } catch (error) {
+      toast.error('Something went wrong!', {
+        hideProgressBar: false
+      });
+      setLoadingId(null);
+    }
 
   }
 
@@ -314,9 +393,37 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: batches[
       columnHelper.accessor('assessor.first_name', {
         header: 'Assessor',
         cell: ({ row }) => (
-          <Typography color='text.primary' >
-            {row.original.assessor?.first_name} {row.original.assessor?.last_name}
-          </Typography>
+          <>
+            <Typography color='text.primary' >
+              {row.original.assessor?.first_name} {row.original.assessor?.last_name}
+            </Typography>
+            {row.original.assessor && row.original.assessor.id ? (
+              <Tooltip title='Remove Assessor'>
+                <CustomIconButton
+                  variant='tonal'
+                  size='small'
+                  color='error'
+                  onClick={() => handleRemoveAssessor(row.original.id)}
+                  className='is-full sm:is-auto'
+                  disabled={loadingId === row.original.id}
+                >
+                  {loadingId === row.original.id ? <CircularProgress size={20} color='inherit' /> : <i className='tabler-trash' />}
+                </CustomIconButton>
+              </Tooltip>
+            ) :
+            (
+              <Button
+                variant='tonal'
+                size='small'
+                startIcon={<i className='tabler-plus' />}
+                onClick={() => handleAssignAssessor(row.original)}
+                className='is-full sm:is-auto'
+              >
+                Assign
+              </Button>
+            )}
+
+          </>
         )
       }),
 
@@ -346,13 +453,12 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: batches[
           </Typography>
         )
       }),
-      columnHelper.accessor('sub_scheme', {
-        header: 'Sub Scheme',
+      columnHelper.accessor('batch_completed', {
+        header: 'Status',
         cell: ({ row }) => (
-          <Typography color='text.primary' >
-            {row.original.sub_scheme.scheme_name}
-          </Typography>
-        )
+          <Chip label={ row.original.batch_completed === 1 ? 'Completed' : 'Pending'} color={ row.original.batch_completed === 1 ? 'success' : 'warning'} variant='tonal' />
+        ),
+        enableSorting: false
       }),
 
       // columnHelper.accessor('email', {
@@ -426,7 +532,7 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: batches[
   )
 
   const table = useReactTable({
-    data: data as batches[],
+    data: data as BatchesWithQP[],
     columns,
     filterFns: {
       fuzzy: fuzzyFilter
@@ -580,6 +686,7 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: batches[
           }}
         />
       </Card>
+      <AssignAssessorDialog batch={singleBatch} open={assignAssessorOpen} handleClose={() => {setAssignAssessorOpen(!assignAssessorOpen); setSingleBatch(null)}} updateBatchList={updateBatchList} data={assessorData}/>
       {/* <AddUserDrawer open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} /> */}
       {/* <AddUsersDialog open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} /> */}
     </>

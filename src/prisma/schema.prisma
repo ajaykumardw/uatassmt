@@ -35,6 +35,7 @@ model batches {
   assessment_mode           Int?
   capture_image_in_seconds  Int?
   status                    Int       @default(1) @db.TinyInt
+  batch_completed           Int       @default(0) @db.TinyInt
   agency_id                 Int
   created_by                Int
   deleted_at                DateTime? @db.DateTime(0)
@@ -164,6 +165,7 @@ model qualification_packs {
   deleted_at               DateTime?                @db.DateTime(0)
   nos                      nos[]
   batches                  batches[]
+  exam_sets                exam_sets[]
 
   @@unique([qualification_pack_id, version_id], name: "unique_qualification_pack_version")
 }
@@ -247,6 +249,50 @@ model questions {
   exam_sets_questions exam_sets_questions[]
 }
 
+model exam_set_results {
+  id                 Int       @id @default(autoincrement())
+  exam_set_id        Int
+  student_id         Int
+  question_id        Int
+  student_answer     Int
+  correct_answer     Int
+  attempt_time_data  String    @db.Text
+  created_by         Int
+  updated_by         Int
+  created_at         DateTime? @default(now()) @db.DateTime(0)
+  updated_at         DateTime? @default(now()) @db.DateTime(0)
+}
+
+model student_exam_set_results {
+  id Int @id @default(autoincrement())
+  language_id Int
+  student_id Int
+  exam_set_id Int
+  total_questions Int
+  attempt_questions Int
+  total_attempts Int
+  exam_total_time DateTime @db.Time()
+  exam_spent_time String? @db.VarChar(20)
+  correct Int?
+  incorrect Int?
+  exam_appear_date DateTime
+  ip_address String @db.VarChar(60)
+  user_agent String @db.Text
+  is_active Int @default(1) @db.TinyInt
+
+  student students @relation(fields: [student_id], references: [id])
+
+  @@unique([student_id, exam_set_id])
+}
+
+model student_captured_images {
+  id Int @id @default(autoincrement())
+  student_id Int
+  student_exam_set_result_id Int
+  captured_image String @db.Text
+  captured_time DateTime
+}
+
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model questionpapers {
   ques_id        Int                           @id @default(autoincrement())
@@ -270,6 +316,7 @@ model sector_skill_councils {
   ssc_code     String?   @db.VarChar(60)
   ssc_username String?   @db.VarChar(100)
   ssc_pwd      String?   @db.VarChar(100)
+  ssc_image    String?
   status       Int       @default(1) @db.TinyInt
   created_by   Int?
   deleted_at   DateTime? @db.DateTime(0)
@@ -402,6 +449,8 @@ model students {
   created_by     Int
   created_at     DateTime           @default(now()) @db.DateTime(0)
   updated_at     DateTime           @default(now()) @updatedAt @db.DateTime(0)
+
+  exam_set_results student_exam_set_results[]
 }
 
 model exam_instructions {
@@ -451,6 +500,7 @@ model exam_sets {
 
   exam_sets_questions exam_sets_questions[]
   batch               batches[]
+  qp                  qualification_packs @relation(fields: [qp_id], references: [id])
 }
 
 model exam_sets_questions {

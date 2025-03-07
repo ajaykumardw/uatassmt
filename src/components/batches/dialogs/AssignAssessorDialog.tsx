@@ -27,7 +27,7 @@ import { object, string, trim, minLength, pipe } from "valibot"
 
 import type { InferInput } from 'valibot'
 
-import type { batches, schemes, students } from '@prisma/client'
+import type { batches, schemes, students, users } from '@prisma/client'
 
 import DialogCloseButton from '@components/dialogs/DialogCloseButton'
 
@@ -44,13 +44,16 @@ type AddQPDialogProps = {
   open: boolean
   batchId?: number
   batch: batches & {
+    action?: string
     qualification_pack: QPType
-    training_partner: UsersType
-    training_center: UsersType
+    training_partner: users
+    training_center: users
     scheme: schemes
     sub_scheme: schemes
     students?: students[]
     assessor: UsersType
+
+    // role: role
   } | null
 
   // setOpen: (open: boolean) => void
@@ -82,7 +85,7 @@ const AssignAssessorDialog = ({ open, batchId, batch, handleClose, updateBatchLi
 
   useEffect(()=>{
 
-    if(batch){
+    if(batch && data){
 
       const filteredAssessorData = data?.filter(assessor => {
         const batchStartDate = batch.assessment_start_datetime;
@@ -105,7 +108,7 @@ const AssignAssessorDialog = ({ open, batchId, batch, handleClose, updateBatchLi
 
     }
 
-  },[batch]);
+  },[batch, data]);
 
 
   // const getSSCData = async () => {

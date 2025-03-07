@@ -93,11 +93,11 @@ const schema = object(
     isOverallCutoff: optional(boolean()),
     isNOSCutoff: optional(boolean()),
     isWeightedAvailable: optional(boolean()),
-    theoryCutoffMarks: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]+$/.test(value), 'Theory cutoff marks must contain only numbers') , maxLength(10, 'Max length is 10 digits'))),
-    vivaCutoffMarks: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]+$/.test(value), 'Viva cutoff marks must contain only numbers') , maxLength(10, 'Max length is 10 digits'))),
-    practicalCutoffMarks: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]+$/.test(value), 'Practical cutoff marks must contain only numbers') , maxLength(10, 'Max length is 10 digits'))),
-    overallCutoffMarks: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]+(?:\.[0-9]+)?$/.test(value), 'Overall cutoff marks must contain only numbers') , maxLength(10, 'Max length is 10 digits'))),
-    nosCutoffMarks: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]+(?:\.[0-9]+)?$/.test(value), 'Overall cutoff marks must contain only numbers') , maxLength(10, 'Max length is 10 digits'))),
+    theoryCutoffMarks: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]{1,3}(\.[0-9]+)?$/.test(value), 'Theory cutoff marks must be a number between 0 and 100, and may contain a decimal point'), maxLength(10, 'Max length is 10 digits'), check((value) => !value || (parseFloat(value) >= 0 && parseFloat(value) <= 100), 'Theory cutoff marks cannot be greater than 100'))),
+    vivaCutoffMarks: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]{1,3}(\.[0-9]+)?$/.test(value), 'Viva cutoff marks must be a number between 0 and 100, and may contain a decimal point'), maxLength(10, 'Max length is 10 digits'), check((value) => !value || (parseFloat(value) >= 0 && parseFloat(value) <= 100), 'Viva cutoff marks cannot be greater than 100'))),
+    practicalCutoffMarks: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]{1,3}(\.[0-9]+)?$/.test(value), 'Practical cutoff marks must be a number between 0 and 100, and may contain a decimal point'), maxLength(10, 'Max length is 10 digits'), check((value) => !value || (parseFloat(value) >= 0 && parseFloat(value) <= 100), 'Practical cutoff marks cannot be greater than 100'))),
+    overallCutoffMarks: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]{1,3}(\.[0-9]+)?$/.test(value), 'Overall cutoff marks must be a number between 0 and 100, and may contain a decimal point'), maxLength(10, 'Max length is 10 digits'), check((value) => !value || (parseFloat(value) >= 0 && parseFloat(value) <= 100), 'Overall cutoff marks cannot be greater than 100'))),
+    nosCutoffMarks: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]{1,3}(\.[0-9]+)?$/.test(value), 'NOS cutoff marks must be a number between 0 and 100, and may contain a decimal point'), maxLength(10, 'Max length is 10 digits'), check((value) => !value || (parseFloat(value) >= 0 && parseFloat(value) <= 100), 'NOS cutoff marks cannot be greater than 100'))),
     weightedAvailable: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]+(?:\.[0-9]+)?$/.test(value), 'Overall cutoff marks must contain only numbers') , maxLength(10, 'Max length is 10 digits'))),
   }
 )
@@ -515,7 +515,7 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
                   <FormControlLabel
                     {...field}
                     control={<Switch checked={isTheoryCutoff} onChange={e => setIsTheoryCutoff(e.target.checked)} />}
-                    label='Is theory cutoff available?'
+                    label='Is theory cutoff available? (%)'
                   />
                 )}
               />
@@ -536,7 +536,7 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
             <Grid item xs={12} sm={6}>
               <FormControlLabel
                 control={<Switch checked={isVivaCutoff} onChange={e => setIsVivaCutoff(e.target.checked)} />}
-                label='Is viva cutoff available?'
+                label='Is viva cutoff available? (%)'
               />
               <Controller
                 control={control}
@@ -554,7 +554,7 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
             <Grid item xs={12} sm={6}>
               <FormControlLabel
                 control={<Switch checked={isPracticalCutoff} onChange={e => setIsPracticalCutoff(e.target.checked)} />}
-                label='Is practical cutoff available?'
+                label='Is practical cutoff available? (%)'
               />
               <Controller
                 control={control}
@@ -572,7 +572,7 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
             <Grid item xs={12} sm={6}>
               <FormControlLabel
                 control={<Switch checked={isOverallCutoff} onChange={e => setIsOverallCutoff(e.target.checked)} />}
-                label='Is overall cutoff available?'
+                label='Is overall cutoff available? (%)'
               />
               <Controller
                 control={control}
@@ -590,7 +590,7 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
             <Grid item xs={12} sm={6}>
               <FormControlLabel
                 control={<Switch checked={isNOSCutoff} onChange={e => setIsNOSCutoff(e.target.checked)} />}
-                label='Is NOS cutoff available?'
+                label='Is NOS cutoff available? (%)'
               />
               <Controller
                 control={control}

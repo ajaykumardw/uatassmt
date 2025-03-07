@@ -64,10 +64,11 @@ const localizedRedirect = (url: string, locale: string | undefined, request: Nex
 }
 
 // Function to check if user exists in the database
-const checkUserExists = async (userId: string): Promise<boolean> => {
+const checkUserExists = async (userId: string, isSSC?: boolean, isStudent?: boolean): Promise<boolean> => {
 
   const response = await fetch(`${process.env.API_URL}/check-user/${userId}`, {
-    method: "POST"
+    method: "POST",
+    body: JSON.stringify({isSSC, isStudent})
   });
 
   const data = await response.json();
@@ -126,8 +127,17 @@ export default withAuth(
     // Assessor routes
     const assessorPaths = ['/assessor'];
 
-    const studentPaths = ['/student-dashboard', '/capture', '/exams', '/examination'];
+    // Student routes
+    const studentPaths = ['/student-dashboard', '/capture', '/exams', '/examination', '/feedback'];
 
+    // SSC routes
+    const sscPaths = ['/ssc-dashboard'];
+
+    // monitoring team routes
+    const monitoringTeamPaths = ['/monitoring-team/*'];
+
+    // accounts routes
+    const accountsPaths = ['/accounts/*'];
 
     // Private routes (All routes except guest and shared routes that can only be accessed by logged in users)
     const privateRoute = ![...guestRoutes, ...sharedRoutes].some(route => pathname.endsWith(route))
@@ -147,8 +157,12 @@ export default withAuth(
 
     if(isUserLoggedIn) {
       const userId = token.id?.toString();
+      const isSSC = token.is_ssc;
+      const isStudent = token.is_student;
 
-      const userExist = await checkUserExists(userId || '0');
+      // console.log("login in user details from token in middleware.ts:", token);
+
+      const userExist = await checkUserExists(userId || '0', isSSC, isStudent);
 
       if(!userExist){
 
@@ -197,6 +211,24 @@ export default withAuth(
       return localizedRedirect(HOME_PAGE_URL,locale,request)
     }
 
+    const isSSC = token?.is_ssc;
+
+    if(isSSC && !sscPaths.some(path => pathname.includes(`${locale}${path}`))){
+      // const studentImage = localStorage.getItem("studentImage");
+      // if(studentImage){
+        // console.log("middleware session:",session);
+
+        return localizedRedirect('/ssc-dashboard', locale, request);
+
+        // }else{
+      //   return localizedRedirect('/capture', locale, request);
+      // }
+    }
+
+    if(!isSSC && sscPaths.some(path => pathname.includes(`${locale}${path}`))){
+      return localizedRedirect(HOME_PAGE_URL,locale,request)
+    }
+
     if (user_type === 'SA' && !superAdminPaths.some(path => pathname.includes(`${locale}${path}`)) ) {
 
       return localizedRedirect('/super-admin', locale, request);
@@ -210,11 +242,31 @@ export default withAuth(
       return localizedRedirect('/training-partner', locale, request);
     }
 
+    // console.log('redirected to monitoring team 1', !monitoringTeamPaths.some(path => new RegExp(`^/${locale}${path.replace('*', '.*')}$`).test(pathname)), pathname );
+    if(user_type === 'U' && Number(token?.role_id) === 3 && !monitoringTeamPaths.some(path => new RegExp(`^/${locale}${path.replace('*', '.*')}$`).test(pathname)) ) {
+      // console.log('redirected to monitoring team 2', !monitoringTeamPaths.some(path => !pathname.startsWith(path.replace('*', ''))), pathname );
+      return localizedRedirect('/monitoring-team/dashboard', locale, request);
+    }
+
+    // console.log('redirected to monitoring team 1', !monitoringTeamPaths.some(path => new RegExp(`^/${locale}${path.replace('*', '.*')}$`).test(pathname)), pathname );
+    if(user_type === 'U' && Number(token?.role_id) === 4 && !accountsPaths.some(path => new RegExp(`^/${locale}${path.replace('*', '.*')}$`).test(pathname)) ) {
+      // console.log('redirected to monitoring team 2', !monitoringTeamPaths.some(path => !pathname.startsWith(path.replace('*', ''))), pathname );
+      return localizedRedirect('/accounts/dashboard', locale, request);
+    }
+
     if(user_type !== 'U' && Number(token?.role_id) !== 1 && assessorPaths.some(path => pathname.includes(`${locale}${path}`))) {
       return localizedRedirect(HOME_PAGE_URL,locale,request)
     }
 
     if(user_type !== 'U' && Number(token?.role_id) !== 2 && trainingPartnerPaths.some(path => pathname.includes(`${locale}${path}`))) {
+      return localizedRedirect(HOME_PAGE_URL,locale,request)
+    }
+
+    if(user_type !== 'U' && Number(token?.role_id) !== 3 && monitoringTeamPaths.some(path => new RegExp(`^/${locale}${path.replace('*', '.*')}$`).test(pathname)) ) {
+      return localizedRedirect(HOME_PAGE_URL,locale,request)
+    }
+
+    if(user_type !== 'U' && Number(token?.role_id) !== 4 && accountsPaths.some(path => new RegExp(`^/${locale}${path.replace('*', '.*')}$`).test(pathname)) ) {
       return localizedRedirect(HOME_PAGE_URL,locale,request)
     }
 

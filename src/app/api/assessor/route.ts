@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server'
 
 import type { NextRequest } from 'next/server';
 
-import {hash} from 'bcrypt'
+import { hash } from 'bcrypt'
 
 // Data Imports
 import { getServerSession } from 'next-auth';
@@ -85,44 +85,57 @@ export async function POST(req: NextRequest) {
     cancelCheck,
   } = body;
 
+  const assessorExists = await prisma.users.findFirst({
+    where: {
+      OR: [
+        { user_name: username.toString() },
+        { email: email.toString() }
+      ]
+    }
+  });
+
+  if (assessorExists) {
+    return NextResponse.json({ success: false, message: "Assessor already exists." }, { status: 400 })
+  }
+
   const avatarBlob = profile as Blob;
-  const avatarName = profile ? getTime(new Date())+"_"+(profile as File).name : "";
+  const avatarName = profile ? getTime(new Date()) + "_" + (profile as File).name : "";
 
   const certificate8thBlob = certificate_8th as Blob;
-  const certificate8thName = certificate_8th ? getTime(new Date())+"_"+(certificate_8th as File).name : "";
+  const certificate8thName = certificate_8th ? getTime(new Date()) + "_" + (certificate_8th as File).name : "";
 
   const certificate10thBlob = certificate_10th as Blob;
-  const certificate10thName = certificate_10th ? getTime(new Date())+"_"+(certificate_10th as File).name : "";
+  const certificate10thName = certificate_10th ? getTime(new Date()) + "_" + (certificate_10th as File).name : "";
 
   const certificate12thBlob = certificate_12th as Blob;
-  const certificate12thName = certificate_12th ? getTime(new Date())+"_"+(certificate_12th as File).name : "";
+  const certificate12thName = certificate_12th ? getTime(new Date()) + "_" + (certificate_12th as File).name : "";
 
   const certificateDiplomaBlob = certificate_DIPLOMA as Blob;
-  const certificateDiplomaName = certificate_DIPLOMA ? getTime(new Date())+"_"+(certificate_DIPLOMA as File).name : "";
+  const certificateDiplomaName = certificate_DIPLOMA ? getTime(new Date()) + "_" + (certificate_DIPLOMA as File).name : "";
 
   const certificateUGBlob = certificate_UG as Blob;
-  const certificateUGName = certificate_UG ? getTime(new Date())+"_"+(certificate_UG as File).name : "";
+  const certificateUGName = certificate_UG ? getTime(new Date()) + "_" + (certificate_UG as File).name : "";
 
   const certificatePGBlob = certificate_PG as Blob;
-  const certificatePGName = certificate_PG ? getTime(new Date())+"_"+(certificate_PG as File).name : "";
+  const certificatePGName = certificate_PG ? getTime(new Date()) + "_" + (certificate_PG as File).name : "";
 
   const assessorCertificateBlob = assessorCertificate as Blob;
-  const assessorCertificateName = assessorCertificate ? getTime(new Date())+"_"+(assessorCertificate as File).name : "";
+  const assessorCertificateName = assessorCertificate ? getTime(new Date()) + "_" + (assessorCertificate as File).name : "";
 
   const agreementCopyBlob = agreementCopy as Blob;
-  const agreementCopyName = agreementCopy ? getTime(new Date())+"_"+(agreementCopy as File).name : "";
+  const agreementCopyName = agreementCopy ? getTime(new Date()) + "_" + (agreementCopy as File).name : "";
 
   const aadhaarCardImageBlob = aadhaarCardImage as Blob;
-  const aadhaarCardImageName = aadhaarCardImage ? getTime(new Date())+"_"+(aadhaarCardImage as File).name : "";
+  const aadhaarCardImageName = aadhaarCardImage ? getTime(new Date()) + "_" + (aadhaarCardImage as File).name : "";
 
   const resumeCVBlob = resumeCV as Blob;
-  const resumeCVName = resumeCV ? getTime(new Date())+"_"+(resumeCV as File).name : "";
+  const resumeCVName = resumeCV ? getTime(new Date()) + "_" + (resumeCV as File).name : "";
 
   const panCardImageBlob = panCardImage as Blob;
-  const panCardImageName = panCardImage ? getTime(new Date())+"_"+(panCardImage as File).name : "";
+  const panCardImageName = panCardImage ? getTime(new Date()) + "_" + (panCardImage as File).name : "";
 
   const cancelCheckBlob = cancelCheck as Blob;
-  const cancelCheckName = cancelCheck ? getTime(new Date())+"_"+(cancelCheck as File).name : "";
+  const cancelCheckName = cancelCheck ? getTime(new Date()) + "_" + (cancelCheck as File).name : "";
 
   const hashPassword = await hash((password as string), 10)
   const userType = 'U'
@@ -152,7 +165,7 @@ export async function POST(req: NextRequest) {
     }
   })
 
-  if(result){
+  if (result) {
 
     const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'agency', 'users', result.id.toString());
 
@@ -165,7 +178,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if(avatarBlob){
+    if (avatarBlob) {
       const buffer = Buffer.from(await avatarBlob.arrayBuffer());
 
       fs.writeFileSync(
@@ -174,7 +187,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if(certificate8thBlob){
+    if (certificate8thBlob) {
       const buffer = Buffer.from(await certificate8thBlob.arrayBuffer());
 
       fs.writeFileSync(
@@ -183,7 +196,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if(certificate10thBlob){
+    if (certificate10thBlob) {
       const buffer = Buffer.from(await certificate10thBlob.arrayBuffer());
 
       fs.writeFileSync(
@@ -192,7 +205,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if(certificate12thBlob){
+    if (certificate12thBlob) {
       const buffer = Buffer.from(await certificate12thBlob.arrayBuffer());
 
       fs.writeFileSync(
@@ -201,7 +214,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if(certificateDiplomaBlob){
+    if (certificateDiplomaBlob) {
       const buffer = Buffer.from(await certificateDiplomaBlob.arrayBuffer());
 
       fs.writeFileSync(
@@ -210,7 +223,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if(certificateUGBlob){
+    if (certificateUGBlob) {
       const buffer = Buffer.from(await certificateUGBlob.arrayBuffer());
 
       fs.writeFileSync(
@@ -219,7 +232,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if(certificatePGBlob){
+    if (certificatePGBlob) {
       const buffer = Buffer.from(await certificatePGBlob.arrayBuffer());
 
       fs.writeFileSync(
@@ -228,7 +241,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if(assessorCertificateBlob){
+    if (assessorCertificateBlob) {
       const buffer = Buffer.from(await assessorCertificateBlob.arrayBuffer());
 
       fs.writeFileSync(
@@ -237,7 +250,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if(agreementCopyBlob){
+    if (agreementCopyBlob) {
       const buffer = Buffer.from(await agreementCopyBlob.arrayBuffer());
 
       fs.writeFileSync(
@@ -246,7 +259,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if(aadhaarCardImageBlob){
+    if (aadhaarCardImageBlob) {
       const buffer = Buffer.from(await aadhaarCardImageBlob.arrayBuffer());
 
       fs.writeFileSync(
@@ -255,7 +268,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if(resumeCVBlob){
+    if (resumeCVBlob) {
       const buffer = Buffer.from(await resumeCVBlob.arrayBuffer());
 
       fs.writeFileSync(
@@ -264,7 +277,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if(panCardImageBlob){
+    if (panCardImageBlob) {
       const buffer = Buffer.from(await panCardImageBlob.arrayBuffer());
 
       fs.writeFileSync(
@@ -273,7 +286,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if(cancelCheckBlob){
+    if (cancelCheckBlob) {
       const buffer = Buffer.from(await cancelCheckBlob.arrayBuffer());
 
       fs.writeFileSync(

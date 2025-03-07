@@ -104,6 +104,10 @@
     "examSets": "Ensembles d'examen",
     "trainingResources": "Ressources de formation",
 
-    "exams": "Examens"
+    "exams": "Examens",
+    "assessmentMonitoring": "Suivi des évaluations",
+    "today": "Today",
+    "pending": "Pending",
+    "completed": "Completed"
   }
 }

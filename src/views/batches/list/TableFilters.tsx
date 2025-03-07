@@ -17,18 +17,41 @@ import { format } from 'date-fns'
 import CustomTextField from '@core/components/mui/TextField'
 
 import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
+
 import { MenuProps } from '@/configs/customDataConfig'
 
-const TableFilters = ({ setData, tableData }: { setData: any; tableData?: batches[] }) => {
+import type { SSCType } from '@/types/sectorskills/sscType'
+
+import type { QPType } from '@/types/qualification-pack/qpType'
+
+type BatchesWithQP = batches & {qualification_pack: QPType};
+
+const TableFilters = ({ setData, tableData }: { setData: any; tableData?: BatchesWithQP[] }) => {
   // States
   // const [role, setRole] = useState<users['role_id']>(-1)
 
   // const [plan, setPlan] = useState<UsersType['currentPlan']>('')
 
   const [status, setStatus] = useState<users['status']>(-1)
+  const [ssc, setSSC] = useState<number>(-1)
   const [month, setMonth] = useState<Date>(new Date())
+  const [sscData, setSSCData] = useState<SSCType[]>([])
 
-  // console.log("selected month", format(month, 'MM-yyyy'));
+
+  const getSSCData = async () => {
+    // Vars
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sectorskills`)
+
+    if (!res.ok) {
+      throw new Error('Failed to fetch sector skills council')
+    }
+
+    const data = await res.json();
+
+    setSSCData(data);
+
+  }
+
 
   useEffect(() => {
     const filteredData = tableData?.filter( (batch) => {
@@ -38,7 +61,8 @@ const TableFilters = ({ setData, tableData }: { setData: any; tableData?: batche
       // if (plan && user.currentPlan !== plan) return false
       // if (status && user.status !== status) return false
 
-      // if (status !== -1 && user.status !== status) return false;
+      if (status !== -1 && batch.batch_completed !== status) return false;
+      if (ssc !== -1 && batch.qualification_pack.ssc.id !== ssc) return false;
 
       if(month && batch.assessment_start_datetime && format(batch.assessment_start_datetime, 'MM-yyyy') !== format(month, 'MM-yyyy')) return false
 
@@ -46,7 +70,8 @@ const TableFilters = ({ setData, tableData }: { setData: any; tableData?: batche
     })
 
     setData(filteredData)
-  }, [status, month, tableData, setData])
+    getSSCData();
+  }, [status, month, ssc, tableData, setData])
 
   return (
     <CardContent>
@@ -82,6 +107,24 @@ const TableFilters = ({ setData, tableData }: { setData: any; tableData?: batche
           </CustomTextField>
         </Grid> */}
         <Grid item xs={12} sm={4}>
+          <CustomTextField
+            select
+            fullWidth
+            id='select-ssc'
+            value={ssc}
+            label='Select SSC'
+            onChange={e => setSSC(parseInt(e.target.value))}
+            SelectProps={{ MenuProps, displayEmpty: true }}
+          >
+            <MenuItem value='-1'>All</MenuItem>
+            {sscData.map((ssc, index) => (
+              <MenuItem key={index} value={ssc.id.toString()}>
+                {ssc.ssc_name}
+              </MenuItem>
+            ))}
+          </CustomTextField>
+        </Grid>
+        <Grid item xs={12} sm={4}>
           <AppReactDatepicker
             selected={month}
             id='month-picker'
@@ -102,8 +145,8 @@ const TableFilters = ({ setData, tableData }: { setData: any; tableData?: batche
             SelectProps={{ MenuProps, displayEmpty: true }}
           >
             <MenuItem value='-1'>All</MenuItem>
-            <MenuItem value='1'>Active</MenuItem>
-            <MenuItem value='0'>Inactive</MenuItem>
+            <MenuItem value='0'>Pending</MenuItem>
+            <MenuItem value='1'>Completed</MenuItem>
           </CustomTextField>
         </Grid>
       </Grid>

@@ -30,7 +30,7 @@ import type { InferInput } from 'valibot'
 // Components Imports
 import { CircularProgress, FormControlLabel, Switch, Tooltip } from '@mui/material'
 
-import type { batches, schemes, state, users } from '@prisma/client'
+import type { batches, exam_sets, schemes, state, users } from '@prisma/client'
 
 import CustomIconButton from '@/@core/components/mui/IconButton'
 
@@ -58,6 +58,7 @@ const schema = object(
   {
     sscId: pipe(string(), trim() , minLength(1, 'This field is required')),
     qpId: pipe(string(), trim() , minLength(1, 'This field is required')),
+    examSetId: optional(pipe(string(), trim())),
     batchName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'First Name must be at least 3 characters long') , maxLength(191, 'The max length for this field is 191 characters.')),
     batchSize: pipe(string(), trim() , minLength(1, 'This field is required') , maxLength(191, 'The max length for this field is 191 characters.')),
     scheme: pipe(string(), trim() , minLength(1, 'This field is required')),
@@ -81,6 +82,7 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
   // States
   const [isCaptureImage, setIsCaptureImage] = useState(!!data?.capture_image_in_seconds || false)
   const [qpData, setQPData] = useState<QPType[]>([])
+  const [examSetData, setExamSetData] = useState<exam_sets[]>([])
   const [trainingPartnerData, setTPData] = useState<users[]>(tpData || []);
   const [tcData, setTCData] = useState<users[]>(trainingCenters || []);
   const [schemes, setSchemes] = useState<SchemesType[]>(schemesData);
@@ -110,6 +112,7 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
     defaultValues: {
       sscId: data?.qualification_pack.ssc_id.toString() || '',
       qpId: '',
+      examSetId: '',
       batchName: data?.batch_name || '',
       batchSize: data?.batch_size || '',
       scheme: data?.scheme_id.toString() || '',
@@ -148,6 +151,14 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
     }
   },[data]);
 
+  useEffect(() => {
+
+    if(qpData.length > 0 && data?.qp_id){
+      getExamSetData(data?.qp_id)
+    }
+
+  },[data, qpData]);
+
   const getQPData = async (ssc: number) => {
     const sscId = Number(ssc);
 
@@ -164,6 +175,24 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
     }
 
     setValue("qpId", data?.qp_id.toString() || '');
+  }
+
+  const getExamSetData = async (qp: number) => {
+    const qpId = Number(qp);
+
+    const selectedQP = qpData.find(qp => qp.id === qpId);
+
+    if (selectedQP) {
+
+      setExamSetData(selectedQP.exam_sets || []);
+
+    } else {
+
+      setExamSetData([]);
+
+    }
+
+    setValue("examSetId", data?.exam_set_id ? data?.exam_set_id.toString() : '' );
   }
 
   const getSubSchemes = async (scheme: number) => {
@@ -188,8 +217,6 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
     data.captureImage = isCaptureImage;
 
     if(id){
-
-      console.log(data);
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches/${id}`, {
 
@@ -263,6 +290,7 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
   const handleReset = () => {
     reset();
     setValue("qpId", data?.qp_id.toString() || '');
+    setValue("examSetId", data?.exam_set_id ? data?.exam_set_id.toString() : '');
     setValue("scheme", data?.scheme_id.toString() || '');
     setValue("subScheme", data?.sub_scheme_id.toString() || '');
     setValue("trainingPartner", data?.training_partner_id.toString() || '');
@@ -287,6 +315,27 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
     } else {
 
       setQPData([]);
+
+    }
+  }
+
+  const handleQPChange = async (qp: string) => {
+
+    resetField("examSetId", {defaultValue: ""})
+
+    const qpId = Number(qp);
+
+    // setSSC(sscId);
+
+    const selectedQP = qpData.find(qp => qp.id === qpId);
+
+    if (selectedQP) {
+
+      setExamSetData(selectedQP.exam_sets || []);
+
+    } else {
+
+      setExamSetData([]);
 
     }
   }
@@ -488,6 +537,10 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
                   rules={{ required: true }}
                   render={({ field }) => (
                     <CustomTextField select SelectProps={{ MenuProps }} required={true} fullWidth label='Qualification Pack' {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        handleQPChange(e.target.value);
+                      }}
                       {...(errors.qpId && { error: true, helperText: errors.qpId.message })}>
                       <MenuItem value=''>Select Qualification Pack</MenuItem>
                       {qpData && qpData.length > 0 ? (
@@ -809,6 +862,32 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
                         ))
                       ) : (
                         <MenuItem value="2">No Mode found</MenuItem>
+                      )}
+                    </CustomTextField>
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='examSetId'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomTextField
+                      select
+                      required={true}
+                      fullWidth
+                      label='Exam Set'
+                      {...field}
+                      {...(errors.examSetId && { error: true, helperText: errors.examSetId.message })}
+                    >
+                      <MenuItem value=''>Select Exam Set</MenuItem>
+                      {examSetData && examSetData.length > 0 ? (
+                        examSetData.map((examSet) => (
+                          <MenuItem key={examSet.id.toString()} value={examSet.id.toString()}>{examSet.set_name}</MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem disabled>No Exam Set Found</MenuItem>
                       )}
                     </CustomTextField>
                   )}

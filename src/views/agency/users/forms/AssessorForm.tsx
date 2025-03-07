@@ -56,6 +56,10 @@ import { generateRandomPassword } from '@/utils/passwordGenerator'
 
 import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
 
+import { MenuProps } from '@/configs/customDataConfig'
+
+import type { UsersType } from '@/types/users/usersType'
+
 // import type { UsersType } from '@/types/users/usersType'
 
 // import type { UsersType } from '@/types/users/usersType'
@@ -145,9 +149,9 @@ const initialData = {
 
 
 
-const AssessorForm = () => {
+const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number}) => {
   // States
-  const [formData] = useState<FormDataType>(initialData);
+  const [formData, setFormData] = useState<FormDataType>(initialData);
 
   // console.log(data);
 
@@ -177,6 +181,78 @@ const AssessorForm = () => {
   const [loading, setLoading] = useState(false);
 
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
+
+  useEffect(() => {
+    if(data){
+
+      // console.log("user data:", data);
+
+      if(data.ssc_id){
+        handleSSCChange(data.ssc_id.toString())
+      }
+
+      if(data.state_id){
+        handleStateChange(data.state_id.toString());
+      }
+
+      if(data.user_additional_data && data.user_additional_data.job_roles){
+        setJobRolesLength(JSON.parse(data.user_additional_data.job_roles));
+
+        const jobRolesOld = JSON.parse(data.user_additional_data.job_roles);
+        const jobValidUptoOld = data.user_additional_data.job_valid_upto ? JSON.parse(data.user_additional_data.job_valid_upto) : [];
+        const result:{ [key: number]: Date } = {};
+
+        if(jobRolesOld.length > 0 && jobValidUptoOld.length > 0){
+          jobRolesOld.forEach((job:string, index:number) => {
+            result[parseInt(job)] = new Date(jobValidUptoOld[index]);
+          });
+        }
+
+        setJobValidUpto(result);
+      }
+
+      setFormData({
+        profile: data.avatar || '',
+        username: data.user_name || '',
+        email: data.email || '',
+        password: 'null',
+        employeeId: data.user_additional_data && data.user_additional_data.employee_id?.toString() || '',
+        sscId: sscData.length > 0 && data.ssc_id ? data.ssc_id?.toString() : '',
+        jobRoles: data.user_additional_data && data.user_additional_data.job_roles && data.user_additional_data.job_roles?.length > 0 ? JSON.parse(data.user_additional_data.job_roles) : [],
+        jobValidUpto: [],
+        firstName: data.first_name || '',
+        lastName: data.last_name || '',
+        state: stateData.length > 0 && data.state_id ? data.state_id?.toString() : '',
+        city: cityData.length > 0 && data.city_id ? data.city_id?.toString() : '',
+        pinCode:  data.pin_code || '',
+        address: data.address || '',
+        phoneNumber: data.mobile_no || '',
+        aadhaarNumber: data.user_additional_data && data.user_additional_data.aadhaar_no || '',
+        panCardNumber: data.user_additional_data && data.user_additional_data.pan_card_no || '',
+        toa_nomination: data.user_additional_data && data.user_additional_data.toa_nomination?.toString() || '',
+        lastQualification: data.user_additional_data && data.user_additional_data.last_qualification || '',
+        bankName: data.user_additional_data && data.user_additional_data.bank_name || '',
+        accountNumber: data.user_additional_data && data.user_additional_data.account_no?.toString() || '',
+        ifscCode: data.user_additional_data && data.user_additional_data.ifsc_code?.toString() || '',
+        certificate_8th: '',
+        certificate_10th: '',
+        certificate_12th: '',
+        certificate_DIPLOMA: '',
+        certificate_UG: '',
+        certificate_PG: '',
+        assessorCertificate: '',
+        agreementCopy: '',
+        aadhaarCardImage: '',
+        resumeCV: '',
+        panCardImage: '',
+        cancelCheck: '',
+      })
+
+      setCountEducationCertificates(data.user_additional_data && data.user_additional_data.last_qualification || '')
+
+      // console.log("assessor data:", data);
+    }
+  }, [data, sscData])
 
   const getSSCData = async () => {
 
@@ -216,6 +292,8 @@ const AssessorForm = () => {
   const handleSSCChange = async (ssc: string) => {
 
     resetField("jobRoles")
+    setJobValidUpto({});
+    setJobRolesLength([]);
 
     // setFormData({ ...formData, sscId: ssc, jobRoles: [] as string[]  })
 
@@ -245,7 +323,8 @@ const AssessorForm = () => {
     resetField,
     handleSubmit,
 
-    // setValue,
+    setValue,
+
     // setError,
     // clearErrors,
 
@@ -255,106 +334,141 @@ const AssessorForm = () => {
     values: formData
   })
 
-  const onSubmit: SubmitHandler<FormDataType> = async (data: FormDataType) => {
+  // useEffect(() => {
+
+  //   if(jobRolesLength){
+  //     console.log("jobRolesLength:", jobRolesLength, jobValidUpto);
+  //   }
+
+  // }, [jobRolesLength, jobValidUpto]);
+
+  const onSubmit: SubmitHandler<FormDataType> = async (reqData: FormDataType) => {
 
     setLoading(true);
 
-    data.profile = fileInput;
-    data.jobValidUpto = Object.values(jobValidUpto);
+    reqData.profile = fileInput;
+    reqData.jobValidUpto = Object.values(jobValidUpto);
 
-    data.certificate_8th = certificate8thInput;
-    data.certificate_10th = certificate10thInput;
-    data.certificate_12th = certificate12thInput;
-    data.certificate_DIPLOMA = certificateDiplomaInput;
-    data.certificate_UG = certificateUGInput;
-    data.certificate_PG = certificatePGInput;
-    data.assessorCertificate = assessorCertificateInput;
-    data.agreementCopy = agreementCopyInput;
-    data.aadhaarCardImage = aadhaarCardInput;
-    data.resumeCV = resumeCVInput;
-    data.panCardImage = panCardInput;
-    data.cancelCheck = cancelCheckInput;
+    reqData.certificate_8th = certificate8thInput;
+    reqData.certificate_10th = certificate10thInput;
+    reqData.certificate_12th = certificate12thInput;
+    reqData.certificate_DIPLOMA = certificateDiplomaInput;
+    reqData.certificate_UG = certificateUGInput;
+    reqData.certificate_PG = certificatePGInput;
+    reqData.assessorCertificate = assessorCertificateInput;
+    reqData.agreementCopy = agreementCopyInput;
+    reqData.aadhaarCardImage = aadhaarCardInput;
+    reqData.resumeCV = resumeCVInput;
+    reqData.panCardImage = panCardInput;
+    reqData.cancelCheck = cancelCheckInput;
 
-    console.log(data.aadhaarNumber);
+    // console.log(data.aadhaarNumber);
 
     const formData = new FormData();
 
-    formData.append("profile", data.profile as File);
-    formData.append("jobValidUpto", JSON.stringify(data.jobValidUpto));
-    formData.append("username", data.username);
-    formData.append("email", data.email);
-    formData.append("password", data.password);
-    formData.append("employeeId", data.employeeId || "");
-    formData.append("sscId", data.sscId);
-    formData.append("jobRoles", JSON.stringify(data.jobRoles));
-    formData.append("firstName", data.firstName || "");
-    formData.append("lastName", data.lastName || "");
-    formData.append("state", data.state?.toString() || "");
-    formData.append("city", data.city?.toString() || "");
-    formData.append("pinCode", data.pinCode?.toString() || "");
-    formData.append("address", data.address?.toString() || "");
-    formData.append("phoneNumber", data.phoneNumber);
-    formData.append("aadhaarNumber", data.aadhaarNumber);
-    formData.append("panCardNumber", data.panCardNumber || "");
-    formData.append("toa_nomination", data.toa_nomination || "");
-    formData.append("lastQualification", data.lastQualification);
-    formData.append("bankName", data.bankName || "");
-    formData.append("accountNumber", data.accountNumber || "");
-    formData.append("ifscCode", data.ifscCode || "");
+    formData.append("profile", reqData.profile as File);
+    formData.append("jobValidUpto", JSON.stringify(reqData.jobValidUpto));
+    formData.append("username", reqData.username);
+    formData.append("email", data?.email || reqData.email);
+    formData.append("password", reqData.password);
+    formData.append("employeeId", reqData.employeeId || "");
+    formData.append("sscId", data?.ssc_id?.toString() || reqData.sscId);
+    formData.append("jobRoles", JSON.stringify(reqData.jobRoles));
+    formData.append("firstName", reqData.firstName || "");
+    formData.append("lastName", reqData.lastName || "");
+    formData.append("state", reqData.state?.toString() || "");
+    formData.append("city", reqData.city?.toString() || "");
+    formData.append("pinCode", reqData.pinCode?.toString() || "");
+    formData.append("address", reqData.address?.toString() || "");
+    formData.append("phoneNumber", reqData.phoneNumber);
+    formData.append("aadhaarNumber", reqData.aadhaarNumber);
+    formData.append("panCardNumber", reqData.panCardNumber || "");
+    formData.append("toa_nomination", reqData.toa_nomination || "");
+    formData.append("lastQualification", reqData.lastQualification);
+    formData.append("bankName", reqData.bankName || "");
+    formData.append("accountNumber", reqData.accountNumber || "");
+    formData.append("ifscCode", reqData.ifscCode || "");
 
     // documents
 
-    formData.append("certificate_8th", data.certificate_8th as File);
-    formData.append("certificate_10th", data.certificate_10th as File);
-    formData.append("certificate_12th", data.certificate_12th as File);
-    formData.append("certificate_DIPLOMA", data.certificate_DIPLOMA as File);
-    formData.append("certificate_UG", data.certificate_UG as File);
-    formData.append("certificate_PG", data.certificate_PG as File);
+    formData.append("certificate_8th", reqData.certificate_8th as File);
+    formData.append("certificate_10th", reqData.certificate_10th as File);
+    formData.append("certificate_12th", reqData.certificate_12th as File);
+    formData.append("certificate_DIPLOMA", reqData.certificate_DIPLOMA as File);
+    formData.append("certificate_UG", reqData.certificate_UG as File);
+    formData.append("certificate_PG", reqData.certificate_PG as File);
 
-    formData.append("assessorCertificate", data.assessorCertificate as File);
-    formData.append("agreementCopy", data.agreementCopy as File);
-    formData.append("aadhaarCardImage", data.aadhaarCardImage as File);
-    formData.append("resumeCV", data.resumeCV as File);
-    formData.append("panCardImage", data.panCardImage as File);
-    formData.append("cancelCheck", data.cancelCheck as File);
+    formData.append("assessorCertificate", reqData.assessorCertificate as File);
+    formData.append("agreementCopy", reqData.agreementCopy as File);
+    formData.append("aadhaarCardImage", reqData.aadhaarCardImage as File);
+    formData.append("resumeCV", reqData.resumeCV as File);
+    formData.append("panCardImage", reqData.panCardImage as File);
+    formData.append("cancelCheck", reqData.cancelCheck as File);
 
     // for(let key in data){
     //   formData.append(key, (data as any)[key])
     // }
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/assessor`, {
+    if(assessorId){
 
-      method: 'POST',
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/assessor/${assessorId}`, {
 
-      // headers: {
-      //   'Content-Type': 'multipart/form-data',
-      // },
+        method: 'POST',
+        body: formData
 
-      // body: JSON.stringify(data)
-
-      body: formData
-
-    });
-
-
-    if (res.ok) {
-      setLoading(false)
-      reset();
-
-      toast.success('New Assessor has been created successfully!', {
-        hideProgressBar: false
       });
 
-      // updateNOSList();
 
+      if (res.ok) {
+        setLoading(false)
+        reset();
+
+        toast.success('Assessor has been Updated successfully!', {
+          hideProgressBar: false
+        });
+
+
+      } else {
+        setLoading(false)
+        toast.error('Something went wrong!', {
+          hideProgressBar: false
+        });
+
+
+      }
     } else {
-      setLoading(false)
-      toast.error('Something went wrong!', {
-        hideProgressBar: false
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/assessor`, {
+
+        method: 'POST',
+        body: formData
+
       });
 
 
+      if (res.ok) {
+        setLoading(false)
+        handleReset();
+
+        toast.success('New Assessor has been created successfully!', {
+          hideProgressBar: false
+        });
+
+      } else {
+
+        handleReset();
+        const resp = await res.json();
+
+        console.log("error:", resp);
+        setLoading(false)
+        toast.error(resp.message || 'Something went wrong!', {
+          hideProgressBar: false
+        });
+
+      }
     }
+
+    setLoading(false)
 
     handleReset();
   }
@@ -525,7 +639,21 @@ const AssessorForm = () => {
   // Hooks
 
   const handleReset = () => {
-
+    console.log("resetting form");
+    setFileInput('')
+    setCertificate8thInput('')
+    setCertificate10thInput('')
+    setCertificate12thInput('')
+    setCertificateDiplomaInput('')
+    setCertificateUGInput('')
+    setCertificatePGInput('')
+    setAssessorCertificateInput('')
+    setAgreementCopyFileInput('')
+    setAadhaarCardFileInput('')
+    setResumeCVFileInput('')
+    setPanCardFileInput('')
+    setCancelCheckFileInput('')
+    setCountEducationCertificates(data?.user_additional_data.last_qualification || '')
     reset();
   }
 
@@ -559,6 +687,10 @@ const AssessorForm = () => {
 
           setCityData(cities)
 
+          if(data?.city_id){
+            setValue('city', data.city_id.toString())
+          }
+
         } else {
 
           setCityData([])
@@ -576,10 +708,13 @@ const AssessorForm = () => {
 
   }
 
+  const isPDF = (filename:string) => {
+    return filename.toLowerCase().endsWith('.pdf');
+  }
 
   return (
     <Card>
-      <CardHeader title="Edit Assessor" />
+      <CardHeader title={`${assessorId ? 'Edit' : 'Add'} Assessor`} />
       <Divider />
         <form onSubmit={handleSubmit(onSubmit)} encType='multipart/form-data'>
           <CardContent>
@@ -637,6 +772,7 @@ const AssessorForm = () => {
                     <CustomTextField
                       fullWidth
                       required={true}
+                      disabled={data && data.email ? true : false}
                       type='email'
                       label='Email'
                       {...field}
@@ -646,6 +782,8 @@ const AssessorForm = () => {
                   )}
                 />
               </Grid>
+              {data ? null
+              : (
               <Grid item xs={12} sm={6} className='flex items-end gap-4'>
                 <Controller
                   control={control}
@@ -680,6 +818,7 @@ const AssessorForm = () => {
                 />
                 <Button variant='tonal' onClick={handleGeneratePassword}>Generate</Button>
               </Grid>
+              )}
               <Grid item xs={12} sm={6}>
                 <Controller
                   control={control}
@@ -704,6 +843,7 @@ const AssessorForm = () => {
                     <CustomTextField
                       select
                       required={true}
+                      disabled={data && data.ssc_id ? true : false}
                       fullWidth
                       label='Select SSC'
                       {...field}
@@ -712,6 +852,7 @@ const AssessorForm = () => {
                         handleSSCChange(e.target.value)
                         field.onChange(e)
                       }}
+                      SelectProps={{ MenuProps, displayEmpty: true }}
                     >
                       {sscData && sscData.length > 0 ? (
                         sscData.map((ssc, index) => (
@@ -739,6 +880,7 @@ const AssessorForm = () => {
                       label='Select Job Roles (can be multiple)'
                       {...field}
                       SelectProps={{
+                        MenuProps,
                         multiple: true,
                         onChange: e => {setJobRolesLength(e.target.value as string[]); field.onChange(e)}
                       }}
@@ -746,7 +888,7 @@ const AssessorForm = () => {
                     >
                       {qpData && qpData.length > 0 ? (
                         qpData.map((qualificationPack) => (
-                          <MenuItem key={qualificationPack.id.toString()} value={qualificationPack.id.toString()}>
+                          <MenuItem key={qualificationPack.id.toString()} disabled={data && data.user_additional_data.job_roles && JSON.parse(data.user_additional_data.job_roles).includes(qualificationPack.id.toString()) ? true : false} value={qualificationPack.id.toString()}>
                             {qualificationPack.qualification_pack_name}
                           </MenuItem>
                         ))
@@ -838,6 +980,7 @@ const AssessorForm = () => {
                         handleStateChange(e.target.value)
                         field.onChange(e)
                       }}
+                      SelectProps={{ MenuProps}}
                     >
                       <MenuItem value=''>Select State</MenuItem>
                       {stateData?.map((state, index) => (
@@ -858,6 +1001,7 @@ const AssessorForm = () => {
                       label='City'
                       {...field}
                       {...(errors.city && { error: true, helperText: errors.city.message })}
+                      SelectProps={{ MenuProps}}
                     >
                       <MenuItem value=''>Select City</MenuItem>
                       {cityData && cityData.length > 0 ? (
@@ -993,6 +1137,7 @@ const AssessorForm = () => {
                         field.onChange(e)
 
                       }}
+                      SelectProps={{ MenuProps}}
                     >
                       <MenuItem value=''>Select Last Qualification</MenuItem>
                       <MenuItem value='8th'>8th</MenuItem>
@@ -1062,12 +1207,33 @@ const AssessorForm = () => {
                 <Grid item xs={12} sm={6} md={3}>
                   <CustomTextField
                     fullWidth
-                    required={true}
+                    required={data?.user_additional_data && data?.user_additional_data.certificate_8th ? false : true}
                     type='file'
                     label='8th Certificate'
                     inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
                     onChange={e => {handle8thCertificateChange(e);}}
                   />
+                  {
+                    data?.user_additional_data && data?.user_additional_data.certificate_8th && (
+                      <>
+                        {isPDF(data?.user_additional_data.certificate_8th) ? (
+                          <embed
+                            src={`/uploads/agency/users/${data.id}/${data.user_additional_data.certificate_8th}`}
+                            width="100%"
+                            height='200px'
+                            type="application/pdf"
+                            style={{ aspectRatio: '1/1' }}
+                          />
+                        ) :
+                          <Card variant='outlined' sx={{ maxWidth: '200px', margin: 'auto', marginTop: '20px' }}>
+                            <CardContent>
+                              <img width={'100%'} src={`/uploads/agency/users/${data.id}/${data.user_additional_data.certificate_8th}`} alt="8th Certificate" />
+                            </CardContent>
+                          </Card>
+                        }
+                      </>
+                    )
+                  }
                 </Grid>
               ) : null}
 
@@ -1077,12 +1243,33 @@ const AssessorForm = () => {
                 <Grid item xs={12} sm={6} md={3}>
                   <CustomTextField
                     fullWidth
-                    required={true}
+                    required={data?.user_additional_data && data?.user_additional_data.certificate_10th ? false : true}
                     type='file'
                     label='10th Certificate'
                     inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
                     onChange={e => {handle10thCertificateChange(e);}}
                   />
+                  {
+                    data?.user_additional_data && data?.user_additional_data.certificate_10th && (
+                      <>
+                        {isPDF(data?.user_additional_data.certificate_10th) ? (
+                          <embed
+                            src={`/uploads/agency/users/${data.id}/${data.user_additional_data.certificate_10th}`}
+                            width="100%"
+                            height='200px'
+                            type="application/pdf"
+                            style={{ aspectRatio: '1/1' }}
+                          />
+                        ) :
+                        <Card variant='outlined' sx={{ maxWidth: '200px', margin: 'auto', marginTop: '20px' }}>
+                          <CardContent>
+                            <img width={'100%'} height={100} src={`/uploads/agency/users/${data.id}/${data.user_additional_data.certificate_10th}`} alt="10th Certificate" />
+                          </CardContent>
+                        </Card>
+                      }
+                    </>
+                    )
+                  }
                 </Grid>
               ) : null}
 
@@ -1091,13 +1278,34 @@ const AssessorForm = () => {
                 <Grid item xs={12} sm={6} md={3}>
                   <CustomTextField
                     fullWidth
-                    required={true}
+                    required={data?.user_additional_data && data?.user_additional_data.certificate_12th ? false : true}
                     type='file'
                     label='12th Certificate'
                     name='certificate_12th'
                     inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
                     onChange={e => {handle12thCertificateChange(e);}}
                   />
+                  {
+                    data?.user_additional_data && data?.user_additional_data.certificate_12th && (
+                      <>
+                        {isPDF(data?.user_additional_data.certificate_12th) ? (
+                          <embed
+                            src={`/uploads/agency/users/${data.id}/${data.user_additional_data.certificate_12th}`}
+                            width="100%"
+                            height='200px'
+                            type="application/pdf"
+                            style={{ aspectRatio: '1/1' }}
+                          />
+                        ) :
+                          <Card variant='outlined' sx={{ maxWidth: '200px', margin: 'auto', marginTop: '20px' }}>
+                            <CardContent>
+                              <img width={'100%'} height={100} src={`/uploads/agency/users/${data.id}/${data.user_additional_data.certificate_12th}`} alt="12th Certificate" />
+                            </CardContent>
+                          </Card>
+                        }
+                      </>
+                    )
+                  }
                 </Grid>
               ) : null}
 
@@ -1105,13 +1313,34 @@ const AssessorForm = () => {
                 <Grid item xs={12} sm={6} md={3}>
                   <CustomTextField
                     fullWidth
-                    required={true}
+                    required={data?.user_additional_data && data?.user_additional_data.certificate_DIPLOMA ? false : true}
                     type='file'
                     label='Diploma Certificate'
                     name='certificate_DIPLOMA'
                     inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
                     onChange={e => {handleDiplomaCertificateChange(e);}}
                   />
+                  {
+                    data?.user_additional_data && data?.user_additional_data.certificate_DIPLOMA && (
+                      <>
+                        {isPDF(data?.user_additional_data.certificate_DIPLOMA) ? (
+                          <embed
+                            src={`/uploads/agency/users/${data.id}/${data.user_additional_data.certificate_DIPLOMA}`}
+                            width="100%"
+                            height='200px'
+                            type="application/pdf"
+                            style={{ aspectRatio: '1/1' }}
+                          />
+                        ) :
+                          <Card variant='outlined' sx={{ maxWidth: '200px', margin: 'auto', marginTop: '20px' }}>
+                            <CardContent>
+                              <img width={'100%'} height={100} src={`/uploads/agency/users/${data.id}/${data.user_additional_data.certificate_DIPLOMA}`} alt="Diploma Certificate" />
+                            </CardContent>
+                          </Card>
+                        }
+                      </>
+                    )
+                  }
                 </Grid>
               ) : null}
 
@@ -1119,13 +1348,34 @@ const AssessorForm = () => {
                 <Grid item xs={12} sm={6} md={3}>
                   <CustomTextField
                     fullWidth
-                    required={true}
+                    required={data?.user_additional_data && data?.user_additional_data.certificate_UG ? false : true}
                     type='file'
                     label='UG Certificate'
                     name='certificate_UG'
                     inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
                     onChange={e => {handleUGCertificateChange(e);}}
                   />
+                  {
+                    data?.user_additional_data && data?.user_additional_data.certificate_UG && (
+                      <>
+                        {isPDF(data?.user_additional_data.certificate_UG) ? (
+                          <embed
+                            src={`/uploads/agency/users/${data.id}/${data.user_additional_data.certificate_UG}`}
+                            width="100%"
+                            height='200px'
+                            type="application/pdf"
+                            style={{ aspectRatio: '1/1' }}
+                          />
+                        ) :
+                          <Card variant='outlined' sx={{ maxWidth: '200px', margin: 'auto', marginTop: '20px' }}>
+                            <CardContent>
+                              <img width={'100%'} height={100} src={`/uploads/agency/users/${data.id}/${data.user_additional_data.certificate_UG}`} alt="UG Certificate" />
+                            </CardContent>
+                          </Card>
+                        }
+                      </>
+                    )
+                  }
                 </Grid>
               ) : null}
 
@@ -1133,13 +1383,34 @@ const AssessorForm = () => {
                 <Grid item xs={12} sm={6} md={3}>
                   <CustomTextField
                     fullWidth
-                    required={true}
+                    required={data?.user_additional_data && data?.user_additional_data.certificate_PG ? false : true}
                     type='file'
                     label='PG Certificate'
                     name='certificate_PG'
                     inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
                     onChange={e => {handlePGCertificateChange(e);}}
                   />
+                  {
+                    data?.user_additional_data && data?.user_additional_data.certificate_PG && (
+                      <>
+                        {isPDF(data?.user_additional_data.certificate_PG) ? (
+                          <embed
+                            src={`/uploads/agency/users/${data.id}/${data.user_additional_data.certificate_PG}`}
+                            width="100%"
+                            height='200px'
+                            type="application/pdf"
+                            style={{ aspectRatio: '1/1' }}
+                          />
+                        ) :
+                          <Card variant='outlined' sx={{ maxWidth: '200px', margin: 'auto', marginTop: '20px' }}>
+                            <CardContent>
+                              <img width={'100%'} height={100} src={`/uploads/agency/users/${data.id}/${data.user_additional_data.certificate_PG}`} alt="PG Certificate" />
+                            </CardContent>
+                          </Card>
+                        }
+                      </>
+                    )
+                  }
                 </Grid>
               ) : null}
 
@@ -1151,7 +1422,7 @@ const AssessorForm = () => {
                   render={({ field }) => (
                     <CustomTextField
                       fullWidth
-                      required={true}
+                      required={data?.user_additional_data && data?.user_additional_data.assessor_certificate ? false : true}
                       type='file'
                       label='Assessor Certificate'
                       inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
@@ -1161,6 +1432,27 @@ const AssessorForm = () => {
                     />
                   )}
                 />
+                {
+                  data?.user_additional_data && data?.user_additional_data.assessor_certificate && (
+                    <>
+                      {isPDF(data?.user_additional_data.assessor_certificate) ? (
+                        <embed
+                          src={`/uploads/agency/users/${data.id}/${data.user_additional_data.assessor_certificate}`}
+                          width="100%"
+                          height='200px'
+                          type="application/pdf"
+                          style={{ aspectRatio: '1/1' }}
+                        />
+                      ) :
+                        <Card variant='outlined' sx={{ maxWidth: '200px', margin: 'auto', marginTop: '20px' }}>
+                        <CardContent>
+                          <img width={'100%'} height={100} src={`/uploads/agency/users/${data.id}/${data.user_additional_data.assessor_certificate}`} alt="Assessor Certificate" />
+                        </CardContent>
+                      </Card>
+                      }
+                    </>
+                  )
+                }
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <Controller
@@ -1170,7 +1462,7 @@ const AssessorForm = () => {
                   render={({ field }) => (
                     <CustomTextField
                       fullWidth
-                      required={true}
+                      required={data?.user_additional_data && data?.user_additional_data.assessor_certificate ? false : true}
                       type='file'
                       label='Agreement Copy'
                       inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
@@ -1180,6 +1472,27 @@ const AssessorForm = () => {
                     />
                   )}
                 />
+                {
+                  data?.user_additional_data && data?.user_additional_data.agreement_copy && (
+                    <>
+                      {isPDF(data?.user_additional_data.agreement_copy) ? (
+                        <embed
+                          src={`/uploads/agency/users/${data.id}/${data.user_additional_data.agreement_copy}`}
+                          width="100%"
+                          height='200px'
+                          type="application/pdf"
+                          style={{ aspectRatio: '1/1' }}
+                        />
+                      ) :
+                        <Card variant='outlined' sx={{ maxWidth: '200px', margin: 'auto', marginTop: '20px' }}>
+                        <CardContent>
+                          <img width={'100%'} height={100} src={`/uploads/agency/users/${data.id}/${data.user_additional_data.agreement_copy}`} alt="Agreement Copy" />
+                        </CardContent>
+                      </Card>
+                      }
+                    </>
+                  )
+                }
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <Controller
@@ -1189,7 +1502,7 @@ const AssessorForm = () => {
                     <CustomTextField
                       fullWidth
                       type='file'
-                      required={true}
+                      required={data?.user_additional_data && data?.user_additional_data.aadhaar_card ? false : true}
                       label='Aadhaar Card'
                       inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
                       {...field}
@@ -1198,6 +1511,27 @@ const AssessorForm = () => {
                     />
                   )}
                 />
+                {
+                  data?.user_additional_data && data?.user_additional_data.aadhaar_card && (
+                    <>
+                      {isPDF(data?.user_additional_data.aadhaar_card) ? (
+                        <embed
+                          src={`/uploads/agency/users/${data.id}/${data.user_additional_data.aadhaar_card}`}
+                          width="100%"
+                          height='200px'
+                          type="application/pdf"
+                          style={{ aspectRatio: '1/1' }}
+                        />
+                      ) :
+                        <Card variant='outlined' sx={{ maxWidth: '200px', margin: 'auto', marginTop: '20px' }}>
+                        <CardContent>
+                          <img width={'100%'} height={100} src={`/uploads/agency/users/${data.id}/${data.user_additional_data.aadhaar_card}`} alt="Aadhaar Card" />
+                        </CardContent>
+                      </Card>
+                      }
+                    </>
+                  )
+                }
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <Controller
@@ -1207,7 +1541,7 @@ const AssessorForm = () => {
                     <CustomTextField
                       fullWidth
                       type='file'
-                      required={true}
+                      required={data?.user_additional_data && data?.user_additional_data.resume_cv ? false : true}
                       label='Resume/ CV'
                       inputProps={{ accept: 'application/pdf' }}
                       {...field}
@@ -1216,6 +1550,27 @@ const AssessorForm = () => {
                     />
                   )}
                 />
+                {
+                  data?.user_additional_data && data?.user_additional_data.resume_cv && (
+                    <>
+                      {isPDF(data?.user_additional_data.resume_cv) ? (
+                        <embed
+                          src={`/uploads/agency/users/${data.id}/${data.user_additional_data.resume_cv}`}
+                          width="100%"
+                          height='200px'
+                          type="application/pdf"
+                          style={{ aspectRatio: '1/1' }}
+                        />
+                      ) :
+                        <Card variant='outlined' sx={{ maxWidth: '200px', margin: 'auto', marginTop: '20px' }}>
+                        <CardContent>
+                          <img width={'100%'} height={100} src={`/uploads/agency/users/${data.id}/${data.user_additional_data.resume_cv}`} alt="Resume CV" />
+                        </CardContent>
+                      </Card>
+                      }
+                    </>
+                  )
+                }
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <Controller
@@ -1233,6 +1588,27 @@ const AssessorForm = () => {
                     />
                   )}
                 />
+                {
+                  data?.user_additional_data && data?.user_additional_data.pan_card && (
+                    <>
+                      {isPDF(data?.user_additional_data.pan_card) ? (
+                        <embed
+                          src={`/uploads/agency/users/${data.id}/${data.user_additional_data.pan_card}`}
+                          width="100%"
+                          height='200px'
+                          type="application/pdf"
+                          style={{ aspectRatio: '1/1' }}
+                        />
+                      ) :
+                        <Card variant='outlined' sx={{ maxWidth: '200px', margin: 'auto', marginTop: '20px' }}>
+                        <CardContent>
+                          <img width={'100%'} height={100} src={`/uploads/agency/users/${data.id}/${data.user_additional_data.pan_card}`} alt="Pan Card" />
+                        </CardContent>
+                      </Card>
+                      }
+                    </>
+                  )
+                }
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <Controller
@@ -1250,6 +1626,27 @@ const AssessorForm = () => {
                     />
                   )}
                 />
+                {
+                  data?.user_additional_data && data?.user_additional_data.cancel_check && (
+                    <>
+                      {isPDF(data?.user_additional_data.cancel_check) ? (
+                        <embed
+                          src={`/uploads/agency/users/${data.id}/${data.user_additional_data.cancel_check}`}
+                          width="100%"
+                          height='200px'
+                          type="application/pdf"
+                          style={{ aspectRatio: '1/1' }}
+                        />
+                      ) :
+                        <Card variant='outlined' sx={{ maxWidth: '200px', margin: 'auto', marginTop: '20px' }}>
+                        <CardContent>
+                          <img width={'100%'} height={100} src={`/uploads/agency/users/${data.id}/${data.user_additional_data.cancel_check}`} alt="Cancel Check" />
+                        </CardContent>
+                      </Card>
+                      }
+                    </>
+                  )
+                }
               </Grid>
             </Grid>
           </CardContent>
