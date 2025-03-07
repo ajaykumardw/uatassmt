@@ -55,6 +55,9 @@ import CustomTextField from '@core/components/mui/TextField'
 import { generateRandomPassword } from '@/utils/passwordGenerator'
 
 import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
+
+import { MenuProps } from '@/configs/customDataConfig'
+
 import type { UsersType } from '@/types/users/usersType'
 
 // import type { UsersType } from '@/types/users/usersType'
@@ -182,7 +185,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
   useEffect(() => {
     if(data){
 
-      console.log("user data:", data);
+      // console.log("user data:", data);
 
       if(data.ssc_id){
         handleSSCChange(data.ssc_id.toString())
@@ -192,7 +195,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
         handleStateChange(data.state_id.toString());
       }
 
-      if(data.user_additional_data.job_roles){
+      if(data.user_additional_data && data.user_additional_data.job_roles){
         setJobRolesLength(JSON.parse(data.user_additional_data.job_roles));
 
         const jobRolesOld = JSON.parse(data.user_additional_data.job_roles);
@@ -213,9 +216,9 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
         username: data.user_name || '',
         email: data.email || '',
         password: 'null',
-        employeeId: data.user_additional_data.employee_id?.toString() || '',
+        employeeId: data.user_additional_data && data.user_additional_data.employee_id?.toString() || '',
         sscId: sscData.length > 0 && data.ssc_id ? data.ssc_id?.toString() : '',
-        jobRoles: data.user_additional_data.job_roles && data.user_additional_data.job_roles?.length > 0 ? JSON.parse(data.user_additional_data.job_roles) : [],
+        jobRoles: data.user_additional_data && data.user_additional_data.job_roles && data.user_additional_data.job_roles?.length > 0 ? JSON.parse(data.user_additional_data.job_roles) : [],
         jobValidUpto: [],
         firstName: data.first_name || '',
         lastName: data.last_name || '',
@@ -224,13 +227,13 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
         pinCode:  data.pin_code || '',
         address: data.address || '',
         phoneNumber: data.mobile_no || '',
-        aadhaarNumber: data.user_additional_data.aadhaar_no || '',
-        panCardNumber: data.user_additional_data.pan_card_no || '',
-        toa_nomination: data.user_additional_data.toa_nomination?.toString() || '',
-        lastQualification: data.user_additional_data.last_qualification || '',
-        bankName: data.user_additional_data.bank_name || '',
-        accountNumber: data.user_additional_data.account_no?.toString() || '',
-        ifscCode: data.user_additional_data.ifsc_code?.toString() || '',
+        aadhaarNumber: data.user_additional_data && data.user_additional_data.aadhaar_no || '',
+        panCardNumber: data.user_additional_data && data.user_additional_data.pan_card_no || '',
+        toa_nomination: data.user_additional_data && data.user_additional_data.toa_nomination?.toString() || '',
+        lastQualification: data.user_additional_data && data.user_additional_data.last_qualification || '',
+        bankName: data.user_additional_data && data.user_additional_data.bank_name || '',
+        accountNumber: data.user_additional_data && data.user_additional_data.account_no?.toString() || '',
+        ifscCode: data.user_additional_data && data.user_additional_data.ifsc_code?.toString() || '',
         certificate_8th: '',
         certificate_10th: '',
         certificate_12th: '',
@@ -245,9 +248,9 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
         cancelCheck: '',
       })
 
-      setCountEducationCertificates(data.user_additional_data.last_qualification || '')
+      setCountEducationCertificates(data.user_additional_data && data.user_additional_data.last_qualification || '')
 
-      console.log("assessor data:", data);
+      // console.log("assessor data:", data);
     }
   }, [data, sscData])
 
@@ -331,13 +334,13 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
     values: formData
   })
 
-  useEffect(() => {
+  // useEffect(() => {
 
-    if(jobRolesLength){
-      console.log("jobRolesLength:", jobRolesLength, jobValidUpto);
-    }
+  //   if(jobRolesLength){
+  //     console.log("jobRolesLength:", jobRolesLength, jobValidUpto);
+  //   }
 
-  }, [jobRolesLength, jobValidUpto]);
+  // }, [jobRolesLength, jobValidUpto]);
 
   const onSubmit: SubmitHandler<FormDataType> = async (reqData: FormDataType) => {
 
@@ -849,6 +852,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                         handleSSCChange(e.target.value)
                         field.onChange(e)
                       }}
+                      SelectProps={{ MenuProps, displayEmpty: true }}
                     >
                       {sscData && sscData.length > 0 ? (
                         sscData.map((ssc, index) => (
@@ -876,6 +880,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                       label='Select Job Roles (can be multiple)'
                       {...field}
                       SelectProps={{
+                        MenuProps,
                         multiple: true,
                         onChange: e => {setJobRolesLength(e.target.value as string[]); field.onChange(e)}
                       }}
@@ -975,6 +980,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                         handleStateChange(e.target.value)
                         field.onChange(e)
                       }}
+                      SelectProps={{ MenuProps}}
                     >
                       <MenuItem value=''>Select State</MenuItem>
                       {stateData?.map((state, index) => (
@@ -995,6 +1001,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                       label='City'
                       {...field}
                       {...(errors.city && { error: true, helperText: errors.city.message })}
+                      SelectProps={{ MenuProps}}
                     >
                       <MenuItem value=''>Select City</MenuItem>
                       {cityData && cityData.length > 0 ? (
@@ -1130,6 +1137,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                         field.onChange(e)
 
                       }}
+                      SelectProps={{ MenuProps}}
                     >
                       <MenuItem value=''>Select Last Qualification</MenuItem>
                       <MenuItem value='8th'>8th</MenuItem>
@@ -1199,7 +1207,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                 <Grid item xs={12} sm={6} md={3}>
                   <CustomTextField
                     fullWidth
-                    required={data?.user_additional_data.certificate_8th ? false : true}
+                    required={data?.user_additional_data && data?.user_additional_data.certificate_8th ? false : true}
                     type='file'
                     label='8th Certificate'
                     inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
@@ -1235,7 +1243,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                 <Grid item xs={12} sm={6} md={3}>
                   <CustomTextField
                     fullWidth
-                    required={data?.user_additional_data.certificate_10th ? false : true}
+                    required={data?.user_additional_data && data?.user_additional_data.certificate_10th ? false : true}
                     type='file'
                     label='10th Certificate'
                     inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
@@ -1270,7 +1278,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                 <Grid item xs={12} sm={6} md={3}>
                   <CustomTextField
                     fullWidth
-                    required={data?.user_additional_data.certificate_12th ? false : true}
+                    required={data?.user_additional_data && data?.user_additional_data.certificate_12th ? false : true}
                     type='file'
                     label='12th Certificate'
                     name='certificate_12th'
@@ -1305,7 +1313,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                 <Grid item xs={12} sm={6} md={3}>
                   <CustomTextField
                     fullWidth
-                    required={data?.user_additional_data.certificate_DIPLOMA ? false : true}
+                    required={data?.user_additional_data && data?.user_additional_data.certificate_DIPLOMA ? false : true}
                     type='file'
                     label='Diploma Certificate'
                     name='certificate_DIPLOMA'
@@ -1340,7 +1348,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                 <Grid item xs={12} sm={6} md={3}>
                   <CustomTextField
                     fullWidth
-                    required={data?.user_additional_data.certificate_UG ? false : true}
+                    required={data?.user_additional_data && data?.user_additional_data.certificate_UG ? false : true}
                     type='file'
                     label='UG Certificate'
                     name='certificate_UG'
@@ -1375,7 +1383,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                 <Grid item xs={12} sm={6} md={3}>
                   <CustomTextField
                     fullWidth
-                    required={data?.user_additional_data.certificate_PG ? false : true}
+                    required={data?.user_additional_data && data?.user_additional_data.certificate_PG ? false : true}
                     type='file'
                     label='PG Certificate'
                     name='certificate_PG'
@@ -1414,7 +1422,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                   render={({ field }) => (
                     <CustomTextField
                       fullWidth
-                      required={data?.user_additional_data.assessor_certificate ? false : true}
+                      required={data?.user_additional_data && data?.user_additional_data.assessor_certificate ? false : true}
                       type='file'
                       label='Assessor Certificate'
                       inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
@@ -1454,7 +1462,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                   render={({ field }) => (
                     <CustomTextField
                       fullWidth
-                      required={data?.user_additional_data.assessor_certificate ? false : true}
+                      required={data?.user_additional_data && data?.user_additional_data.assessor_certificate ? false : true}
                       type='file'
                       label='Agreement Copy'
                       inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
@@ -1494,7 +1502,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                     <CustomTextField
                       fullWidth
                       type='file'
-                      required={data?.user_additional_data.aadhaar_card ? false : true}
+                      required={data?.user_additional_data && data?.user_additional_data.aadhaar_card ? false : true}
                       label='Aadhaar Card'
                       inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}
                       {...field}
@@ -1533,7 +1541,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                     <CustomTextField
                       fullWidth
                       type='file'
-                      required={data?.user_additional_data.resume_cv ? false : true}
+                      required={data?.user_additional_data && data?.user_additional_data.resume_cv ? false : true}
                       label='Resume/ CV'
                       inputProps={{ accept: 'application/pdf' }}
                       {...field}
