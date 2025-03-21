@@ -50,6 +50,9 @@ export async function GET(req: Request) {
                   id: true,
                   pc_id: true,
                   pc_name: true,
+                  theory_marks: true,
+                  practical_marks: true,
+                  viva_marks: true,
                   questions: {
                     include: {
                       pc: {

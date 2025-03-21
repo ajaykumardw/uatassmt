@@ -24,6 +24,21 @@ export const ExpectedStudentExcelHeaders = [
   'Mobile No'
 ];
 
+export const ExpectedStudentExcelHeadersWithoutBatchId = [
+  'Candidate ID',
+  'Password',
+  'Candidate Name',
+  'Gender(M/F/T)',
+  'Category(Gen/SC/ST/BC/OBC/OC)',
+  'DOB',
+  "Father's name",
+  "Mother's name",
+  'Address',
+  'City',
+  'State',
+  'Mobile No'
+];
+
 export const ExpectedTheoryQuestionExcelHeaders = [
   'Question',
   'Option1',

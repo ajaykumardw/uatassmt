@@ -33,6 +33,8 @@ import DialogCloseButton from '@components/dialogs/DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
 import type { PCType } from '@/types/pc/pcType'
 
+import { MenuProps } from '@/configs/customDataConfig';
+
 // import type { PCType } from '@/types/pc/pcType'
 
 // type AddQPDialogData = {
@@ -272,6 +274,10 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
 
   }, [data]);
 
+  useEffect(() => {
+    console.log("allPC", allPC);
+  }, [allPC])
+
 
   // Hooks
   const {
@@ -280,12 +286,13 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
     handleSubmit,
     setValue,
     setError,
+    getValues,
     clearErrors,
     formState: { errors },
   } = useForm<AddQPDialogData>({
     resolver: valibotResolver(schema),
     values: {
-      selectPC: userData?.selectPC || [],
+      selectPC: pcID ? [pcID.toString()] : userData?.selectPC || [],
       questionType: userData?.questionType || '',
       questionLevel: userData?.questionLevel || '',
       questionName: userData?.questionName || '',
@@ -302,6 +309,23 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
   useEffect(() => {
     isCorrectAnswer !== 0 ? clearErrors('correctAnswer') : setError('correctAnswer',{type: 'custom', message: 'Please check any one option field for the correct answer'});
   }, [isCorrectAnswer, clearErrors, setError])
+
+  useEffect(() => {
+
+
+    const selectedPC = getValues('selectPC');
+
+    console.log("selectedPC:", selectedPC);
+
+    if(selectedPC.length > 0)
+    {
+      const pcMarks = allPC?.find(pc => pc.id.toString() === selectedPC[0])?.theory_marks;
+
+      console.log("pcMarks:", pcMarks);
+    }
+
+
+  }, [getValues ])
 
   const onSubmit: SubmitHandler<AddQPDialogData> = async (data: AddQPDialogData) => {
     // e.preventDefault();
@@ -423,7 +447,7 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent className='overflow-visible pbs-0 sm:pli-16'>
           <Grid container spacing={5}>
-            { questionId && <Grid item xs={12}>
+            <Grid item xs={12}>
               <Controller
                 control={control}
                 name='selectPC'
@@ -435,6 +459,7 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
                     label='PC'
                     required={true}
                     SelectProps={{
+                      MenuProps,
                       multiple: true,
                       renderValue: selected => (
                         <div className='flex flex-wrap gap-1'>
@@ -453,14 +478,15 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
                     {...(errors.pcId && { error: true, helperText: errors.pcId.message })}
                   >
                     {allPC?.map((pc, index) => (
-                      <MenuItem key={index} value={pc.id.toString()}>
+                      <MenuItem className='justify-between gap-2' key={index} value={pc.id.toString()}>
                         {pc.pc_name}
+                        <Chip key={index} label={pc?.theory_marks} variant='tonal' color={ pc?.theory_marks <= 0 ? 'error' : 'success'} size='small' />
                       </MenuItem>
                     ))}
                   </CustomTextField>
                 )}
               />
-            </Grid>}
+            </Grid>
             <Grid item xs={12} sm={6}>
               <Controller
                 control={control}

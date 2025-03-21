@@ -566,7 +566,7 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
           }}
         />
       </Card>
-      <AddEditQuestionsDialog open={addQuestionOpen} sscID={sscID} qpID={qpID} pcID={pcID} updateQuestionsList={updateQuestionsList} handleClose={() => setAddQuestionOpen(!addQuestionOpen)} />
+      <AddEditQuestionsDialog open={addQuestionOpen} sscID={sscID} qpID={qpID} allPC={allPC} pcID={pcID} updateQuestionsList={updateQuestionsList} handleClose={() => setAddQuestionOpen(!addQuestionOpen)} />
       <BulkUploadQuestionsDialog open={bulkUploadQuestionsOpen} sscID={sscID} qpID={qpID} updateQuestionsList={updateQuestionsList} handleClose={() => setBulkUploadQuestionsOpen(!bulkUploadQuestionsOpen)} />
 
       <AddEditQuestionsDialog open={editQuestionOpen} sscID={sscID} qpID={qpID} allPC={allPC} questionId={questionId} updateQuestionsList={updateQuestionsList} handleClose={() => setEditQuestionOpen(!editQuestionOpen)} data={editQuestionData} />
