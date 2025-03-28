@@ -237,6 +237,7 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
 
   const [count, setCount] = useState(0)
   const [isCorrectAnswer, setCorrectAnswer] = useState<number>(0)
+  const [totalPCMarks, setTotalPCMarks] = useState<number>(0);
 
   // const [pcData] = useState<PCType[]>([])
 
@@ -274,9 +275,9 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
 
   }, [data]);
 
-  useEffect(() => {
-    console.log("allPC", allPC);
-  }, [allPC])
+  // useEffect(() => {
+  //   console.log("allPC", allPC);
+  // }, [allPC])
 
 
   // Hooks
@@ -286,7 +287,6 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
     handleSubmit,
     setValue,
     setError,
-    getValues,
     clearErrors,
     formState: { errors },
   } = useForm<AddQPDialogData>({
@@ -305,27 +305,48 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
     }
   })
 
+  const handlePCSelectionChange = (value: string[]) => {
+    if (value.length > 0) {
+      // Calculate the sum of theory_marks for all selected PCs
+      const totalMarks = value.reduce((sum: number, pcId: string) => {
+        const pc = allPC?.find((pc) => pc.id.toString() === pcId);
+
+        // Ensure theory_marks is treated as a number
+
+        return sum + (Number(pc?.theory_marks) || 0); // Convert to number and default to 0 if not found
+      }, 0);
+
+      setTotalPCMarks(totalMarks);
+      console.log("Total Marks from function:", totalMarks); // Logs the sum of all selected PC marks
+    } else {
+      setTotalPCMarks(0);
+    }
+  }
+
+  useEffect(() => {
+    if(pcID) {
+      handlePCSelectionChange([pcID.toString()]);
+    }
+
+  }, [pcID, open]);
+
+  useEffect(() => {
+
+    if(totalPCMarks ){
+      
+      setError('questionMarks', {type: 'custom', message: 'Please enter marks equal to '+ totalPCMarks})
+    } else {
+      clearErrors('questionMarks');
+    }
+
+  }, [totalPCMarks, setError])
+
 
   useEffect(() => {
     isCorrectAnswer !== 0 ? clearErrors('correctAnswer') : setError('correctAnswer',{type: 'custom', message: 'Please check any one option field for the correct answer'});
   }, [isCorrectAnswer, clearErrors, setError])
 
-  useEffect(() => {
 
-
-    const selectedPC = getValues('selectPC');
-
-    console.log("selectedPC:", selectedPC);
-
-    if(selectedPC.length > 0)
-    {
-      const pcMarks = allPC?.find(pc => pc.id.toString() === selectedPC[0])?.theory_marks;
-
-      console.log("pcMarks:", pcMarks);
-    }
-
-
-  }, [getValues ])
 
   const onSubmit: SubmitHandler<AddQPDialogData> = async (data: AddQPDialogData) => {
     // e.preventDefault();
@@ -475,6 +496,27 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
                       )
                     }}
                     {...field}
+                    onChange={(e) => {
+                      const value = e.target.value as unknown as string[];
+
+                      handlePCSelectionChange(value);
+
+                      if (value.length > 0) {
+                        // Calculate the sum of theory_marks for all selected PCs
+                        const totalMarks = value.reduce((sum, pcId) => {
+                          const pc = allPC?.find((pc) => pc.id.toString() === pcId);
+
+                          // Ensure theory_marks is treated as a number
+
+                          return sum + (Number(pc?.theory_marks) || 0); // Convert to number and default to 0 if not found
+
+                        }, 0);
+
+                        console.log("Total Marks:", totalMarks); // Logs the sum of all selected PC marks
+                      }
+
+                      field.onChange(e.target.value);
+                    }}
                     {...(errors.pcId && { error: true, helperText: errors.pcId.message })}
                   >
                     {allPC?.map((pc, index) => (

@@ -43,12 +43,14 @@ import Chip from '@mui/material/Chip';
 
 // import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
-import type { exam_sets } from '@prisma/client';
+import type { batches, exam_sets, schemes } from '@prisma/client';
 
 // Type Imports
 // import type { ThemeColor } from '@core/types'
 
 import XLSX from 'xlsx';
+
+import { format } from 'date-fns';
 
 // Component Imports
 import TableFilters from './TableFilters'
@@ -61,6 +63,8 @@ import TableFilters from './TableFilters'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
+
+import type { QPType } from '@/types/qualification-pack/qpType';
 
 // import AddEditExamSetsDialog from '@/components/exam-sets/dialogs/AddEditExamSetsDialog';
 
@@ -173,13 +177,14 @@ const PCWiseReportTable = () => {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [data, setData] = useState<exam_sets[]>([]);
+  const [batchReportData, setBatchReportData] = useState<batches & {qualification_pack: QPType, scheme: schemes, sub_scheme: schemes} | null>(null);
 
   // const [globalFilter, setGlobalFilter] = useState('');
   // const [examSetId, setExamSetId] = useState(0);
 
   const [selectedBatch, setBatch] = useState<number | null>(null);
 
-  console.log(data);
+  // console.log(data);
 
   // const handleOnEditClick = async (id: number) => {
 
@@ -216,6 +221,12 @@ const PCWiseReportTable = () => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches/${selectedBatch}`).then(function (response) { return response.json() })
 
     console.log("data:", res);
+
+    if (res) {
+      setBatchReportData(res);
+    } else {
+      setBatchReportData(null);
+    }
 
   }
 
@@ -497,18 +508,18 @@ const PCWiseReportTable = () => {
               </tr>
               <tr>
                 <td colSpan={3} className='aliceblue'>Scheme Name :</td>
-                <td colSpan={4}>0</td>
-                <td colSpan={4} className='aliceblue'>Batch ID :</td>
-                <td colSpan={8}>0</td>
+                <td colSpan={4}>{batchReportData?.scheme ? batchReportData.scheme.scheme_name : '0'}</td>
+                <td colSpan={4} className='aliceblue'>Batch Name :</td>
+                <td colSpan={8}>{batchReportData ? batchReportData.batch_name : '0'}</td>
                 <td className='green'>Absent</td>
                 <td className='green'>0</td>
                 <td className='green'>0</td>
               </tr>
               <tr>
                 <td colSpan={3} className='aliceblue'>Sub Scheme :</td>
-                <td colSpan={4}>0</td>
+                <td colSpan={4}>{batchReportData?.sub_scheme ? batchReportData.sub_scheme.scheme_name : '0'}</td>
                 <td colSpan={4} className='aliceblue'>Assessment Date :</td>
-                <td colSpan={8}>0-Jan-00</td>
+                <td colSpan={8}>{batchReportData?.assessment_start_datetime ? format(batchReportData.assessment_start_datetime, 'd-MMM-y') : '0'}</td>
                 <td className='green'>Drop out</td>
                 <td className='green'>0</td>
                 <td className='green'>0</td>
@@ -517,33 +528,33 @@ const PCWiseReportTable = () => {
                 <td colSpan={3} className='aliceblue'>No. of Candidates present :</td>
                 <td colSpan={4}>30</td>
                 <td colSpan={4} className='aliceblue'>Job role, Level, Version :</td>
-                <td colSpan={8}>0-Jan-00</td>
+                <td colSpan={8}>{batchReportData && batchReportData.qualification_pack ? batchReportData.qualification_pack.qualification_pack_name + ', ' + batchReportData.qualification_pack.nsqf_level + ', ' + batchReportData.qualification_pack.version.version_number : '0'}</td>
                 <td colSpan={3} className='text-center gold'>30</td>
               </tr>
               <tr className='light-gray'>
                 <td rowSpan={3}>S No.</td>
                 <td rowSpan={3}>Student Unique Id</td>
-                <td rowSpan={3}>Name of the<br/> Candidate (fullName)</td>
-                <td colSpan={2}>
-                  MES/N1801 Identify Hair & make up Requirements
+                <td className='text-wrap' rowSpan={3}>Name of the Candidate (fullName)</td>
+                <td className='text-wrap' colSpan={2}>
+                  MES/N1801 <br /> Identify Hair & make up Requirements
                 </td>
-                <td colSpan={2}>
-                  MES/N1801 Identify Hair & make up Requirements
+                <td className='text-wrap' colSpan={2}>
+                  MES/N1801 <br /> Identify Hair & make up Requirements
                 </td>
-                <td colSpan={2}>
-                  MES/N1801 Identify Hair & make up Requirements
+                <td className='text-wrap' colSpan={2}>
+                  MES/N1801 <br /> Identify Hair & make up Requirements
                 </td>
-                <td colSpan={2}>
-                  MES/N1801 Identify Hair & make up Requirements
+                <td className='text-wrap' colSpan={2}>
+                  MES/N1801 <br /> Identify Hair & make up Requirements
                 </td>
-                <td colSpan={2}>
-                  MES/N1801 Identify Hair & make up Requirements
+                <td className='text-wrap' colSpan={2}>
+                  MES/N1801 <br /> Identify Hair & make up Requirements
                 </td>
-                <td colSpan={2}>
-                  MES/N1801 Identify Hair & make up Requirements
+                <td className='text-wrap' colSpan={2}>
+                  MES/N1801 <br /> Identify Hair & make up Requirements
                 </td>
-                <td colSpan={2}>
-                  DGT/VSQ/N0102 Employability Skills
+                <td className='text-wrap' colSpan={2}>
+                  DGT/VSQ/N0102 <br /> Employability Skills
                 </td>
                 <td rowSpan={2}>Total Theory</td>
                 <td rowSpan={2}>Total Practical</td>

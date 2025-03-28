@@ -85,7 +85,9 @@ export async function POST(req: Request) {
 
   const reqData = await req.json();
 
-  const {sscId, qpId, pcId, questionLevel, questionName, questionExplanation, option1, option2, option, correctAnswer, questionMarks} = reqData;
+  // const {selectPC, sscId, qpId, pcId, questionLevel, questionName, questionExplanation, option1, option2, option, correctAnswer, questionMarks} = reqData;
+
+  const {selectPC, sscId, qpId, questionLevel, questionName, questionExplanation, option1, option2, option, correctAnswer, questionMarks} = reqData;
   const session = await getServerSession(authOptions);
   const createdBy = Number(session?.user.id);
   const agency_id = Number(session?.user?.agency_id);
@@ -126,9 +128,7 @@ export async function POST(req: Request) {
         marks: Number(questionMarks),
         created_by: createdBy,
         pc: {
-          connect: {
-            id: Number(pcId)
-          }
+          connect: selectPC.map((pcId: any) => ({ id: Number(pcId) }))
         }
       }
     });

@@ -286,7 +286,7 @@ const TableFilters = ({ setSSCID, setQPID, setPCID, setAllPC, setData, tableData
             {pcData.length > 0 ? (
               pcData.map((pc) => (
                 <MenuItem key={pc.id.toString()} value={pc.id.toString()}>
-                  <Typography variant='inherit' noWrap>{pc.pc_id + "" + pc.theory_marks}</Typography>
+                  <Typography variant='inherit' noWrap>{pc.pc_id}</Typography>
                 </MenuItem>
               ))
             ) : (
