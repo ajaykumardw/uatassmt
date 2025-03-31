@@ -87,7 +87,7 @@ export async function POST(req: Request) {
 
   // const {selectPC, sscId, qpId, pcId, questionLevel, questionName, questionExplanation, option1, option2, option, correctAnswer, questionMarks} = reqData;
 
-  const {selectPC, sscId, qpId, questionLevel, questionName, questionExplanation, option1, option2, option, correctAnswer, questionMarks} = reqData;
+  const {selectPC, sscId, qpId, questionLevel, questionName, questionExplanation, option1, option2, option, correctAnswer} = reqData;
   const session = await getServerSession(authOptions);
   const createdBy = Number(session?.user.id);
   const agency_id = Number(session?.user?.agency_id);
@@ -109,6 +109,17 @@ export async function POST(req: Request) {
   //   return NextResponse.json({message: 'PC already exist.'}, {status: 409});
   // }else{
 
+    const pcsTotalMarks = await prisma.pc.aggregate({
+      _sum: {
+        theory_marks: true
+      },
+      where: {
+        id: {
+          in: selectPC.map((value: string) => Number(value))
+        }
+      }
+    });
+
     const result = await prisma.questions.create({
       data: {
         agency_id: agency_id,
@@ -125,7 +136,7 @@ export async function POST(req: Request) {
         option4: filterOption[1],
         option5: filterOption[2],
         answer: Number(correctAnswer),
-        marks: Number(questionMarks),
+        marks: Number(pcsTotalMarks._sum.theory_marks),
         created_by: createdBy,
         pc: {
           connect: selectPC.map((pcId: any) => ({ id: Number(pcId) }))

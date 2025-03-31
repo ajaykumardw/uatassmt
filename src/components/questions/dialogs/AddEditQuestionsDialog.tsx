@@ -286,6 +286,7 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
     reset,
     handleSubmit,
     setValue,
+    resetField,
     setError,
     clearErrors,
     formState: { errors },
@@ -333,10 +334,14 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
   useEffect(() => {
 
     if(totalPCMarks ){
-      
-      setError('questionMarks', {type: 'custom', message: 'Please enter marks equal to '+ totalPCMarks})
+
+      setValue('questionMarks', totalPCMarks.toString());
+
+      // setError('questionMarks', {type: 'custom', message: 'Please enter marks equal to '+ totalPCMarks})
     } else {
-      clearErrors('questionMarks');
+
+      // clearErrors('questionMarks');
+      resetField('questionMarks');
     }
 
   }, [totalPCMarks, setError])
@@ -616,6 +621,7 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
                 rules={{ required: true }}
                 render={({ field }) => (
                   <CustomTextField
+                    disabled
                     fullWidth
                     required={true}
                     {...field}
