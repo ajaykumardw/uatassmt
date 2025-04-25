@@ -1,6 +1,8 @@
 const { createServer } = require('http')
 const { parse } = require('url')
+const path = require('path')
 const next = require('next')
+const fs = require('fs');
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = process.env.NODE_ENV !== 'production' ? 'localhost' : 'uatassmt.learningink.com'
@@ -24,6 +26,22 @@ app.prepare().then(() => {
       const parsedUrl = parse(req.url, true)
 
       const { pathname, query } = parsedUrl
+
+      // Serve files from the 'uploads/' folder
+      if (pathname.startsWith('/uploads/')) {
+        const filePath = path.join(process.cwd(), pathname); // Construct the full file path
+
+        fs.exists(filePath, (exists) => {
+          if (exists) {
+            // Pipe the file from the filesystem to the response
+            fs.createReadStream(filePath).pipe(res);
+          } else {
+            res.statusCode = 404;
+            res.end('File not found');
+          }
+        });
+        return; // Exit here as we've handled the request
+      }
 
       if (pathname === '/a') {
 

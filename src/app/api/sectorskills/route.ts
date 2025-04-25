@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
 
   if(result){
 
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'ssc');
+    const uploadDir = path.join(process.cwd(), 'uploads', 'ssc');
 
     if (!fs.existsSync(uploadDir)) {
       try {

@@ -43,7 +43,7 @@ import Chip from '@mui/material/Chip';
 
 // import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
-import type { batches, exam_sets, schemes } from '@prisma/client';
+import type { batches, exam_sets, schemes, students } from '@prisma/client';
 
 // Type Imports
 // import type { ThemeColor } from '@core/types'
@@ -177,7 +177,7 @@ const PCWiseReportTable = () => {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [data, setData] = useState<exam_sets[]>([]);
-  const [batchReportData, setBatchReportData] = useState<batches & {qualification_pack: QPType, scheme: schemes, sub_scheme: schemes} | null>(null);
+  const [batchReportData, setBatchReportData] = useState<batches & {qualification_pack: QPType, scheme: schemes, sub_scheme: schemes, students: students[]} | null>(null);
 
   // const [globalFilter, setGlobalFilter] = useState('');
   // const [examSetId, setExamSetId] = useState(0);
@@ -238,6 +238,8 @@ const PCWiseReportTable = () => {
 
 
       // setBatchData(res);
+    } else {
+      setBatchReportData(null);
     }
   }, [selectedBatch])
 
@@ -526,7 +528,7 @@ const PCWiseReportTable = () => {
               </tr>
               <tr>
                 <td colSpan={3} className='aliceblue'>No. of Candidates present :</td>
-                <td colSpan={4}>30</td>
+                <td colSpan={4}>{batchReportData?.students.length ?? 0}</td>
                 <td colSpan={4} className='aliceblue'>Job role, Level, Version :</td>
                 <td colSpan={8}>{batchReportData && batchReportData.qualification_pack ? batchReportData.qualification_pack.qualification_pack_name + ', ' + batchReportData.qualification_pack.nsqf_level + ', ' + batchReportData.qualification_pack.version.version_number : '0'}</td>
                 <td colSpan={3} className='text-center gold'>30</td>
@@ -600,7 +602,39 @@ const PCWiseReportTable = () => {
                 <td>650</td>
                 <td></td>
               </tr>
-              <tr>
+              { batchReportData && batchReportData.students && batchReportData.students.length > 0 ? batchReportData.students.map((student, index) => {
+                return (
+                  <tr key={index}>
+                    <td>{index + 1}</td>
+                    <td>{student.candidate_id}</td>
+                    <td>{student.candidate_name}</td>
+                    <td>28</td>
+                    <td>49</td>
+                    <td>32</td>
+                    <td>45</td>
+                    <td>28</td>
+                    <td>47</td>
+                    <td>32</td>
+                    <td>46</td>
+                    <td>31</td>
+                    <td>47</td>
+                    <td>36</td>
+                    <td>41</td>
+                    <td>17</td>
+                    <td>23</td>
+                    <td>204</td>
+                    <td>298</td>
+                    <td>502</td>
+                    <td>77.23</td>
+                    <td><Chip color='success' variant='tonal' label="Pass" /></td>
+                  </tr>
+                )
+              }) : (
+                <tr>
+                  <td colSpan={100}>No Records Found!</td>
+                </tr>
+              )}
+              {/* <tr>
                 <td>1</td>
                 <td>0</td>
                 <td>0</td>
@@ -623,7 +657,7 @@ const PCWiseReportTable = () => {
                 <td>502</td>
                 <td>77.23</td>
                 <td><Chip color='success' variant='tonal' label="Pass" /></td>
-              </tr>
+              </tr> */}
             </tbody>
           </table>
           {/* <table className={tableStyles.table}>

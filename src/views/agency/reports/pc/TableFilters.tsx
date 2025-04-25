@@ -50,6 +50,9 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
 
     setQPData([]);
 
+    setBatchId(-1)
+    setBatchData([]);
+
     const sscId = Number(ssc);
 
     setSSC(sscId);
@@ -102,7 +105,7 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
 
   // Effect to handle data fetching and setting
   useEffect(() => {
-    
+
     // const filteredData = tableData?.filter(question => {
     //   if (ssc !== -1 && question.ssc_id !== ssc) return false;
     //   if (qp !== -1 && question.qp_id !== qp) return false;
@@ -112,6 +115,8 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
 
     if(batchId > 0){
       setBatch(batchId);
+    } else {
+      setBatch(null);
     }
 
     // setData(filteredData)
