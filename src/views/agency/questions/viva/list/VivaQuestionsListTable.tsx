@@ -214,6 +214,23 @@ const VivaQuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?
           </div>
         )
       }),
+      columnHelper.accessor('pc', {
+        header: 'PC',
+        cell: ({ row }) => (
+          <div className='flex flex-col items-start gap-1'>
+            {row.original.pc?.map((pc, index) => (
+              <Chip
+              key={index}
+                variant='tonal'
+                className='capitalize'
+                label={pc.pc_id}
+                color='info'
+                size='small'
+              />
+            ))}
+          </div>
+        )
+      }),
       columnHelper.accessor('marks', {
         header: 'Marks',
         cell: ({ row }) => (

@@ -23,6 +23,9 @@ export async function GET(
       id: id,
       agency_id: agency_id,
       question_type: 'viva'
+    },
+    include: {
+      pc: true
     }
   })
 
@@ -38,7 +41,7 @@ export async function POST(
   const session = await getServerSession(authOptions);
   const agency_id = Number(session?.user?.agency_id);
 
-  const {sscId, qpId, questionName, questionMarks} = await req.json();
+  const {sscId, qpId, nosId, selectPC, questionName} = await req.json();
 
   const questionExist = await prisma.questions.findUnique({
     where: {
@@ -52,6 +55,26 @@ export async function POST(
 
   if (questionExist) {
 
+    const newPCToConnect = selectPC.filter((pcId: any) => {
+      return !questionExist.pc.some(existingPC => existingPC.id === Number(pcId));
+    });
+
+    // Find nos to disconnect (those present in DB but not in selectedNos)
+    const pcToDisconnect = questionExist.pc.filter(existingPC => {
+      return !selectPC.includes(existingPC.id.toString());
+    });
+
+    const pcsTotalMarks = await prisma.pc.aggregate({
+      _sum: {
+        practical_marks: true
+      },
+      where: {
+        id: {
+          in: selectPC.map((value: string) => Number(value))
+        }
+      }
+    });
+
     const result = await prisma.questions.update({
       where: {
         id: id,
@@ -60,8 +83,13 @@ export async function POST(
       data: {
         ssc_id: Number(sscId),
         qp_id: Number(qpId),
+        nos_id: Number(nosId),
         question: questionName,
-        marks: Number(questionMarks)
+        marks: Number(pcsTotalMarks._sum.practical_marks),
+        pc: {
+          connect: newPCToConnect.map((pcId: any) => ({ id: Number(pcId)})),
+          disconnect: pcToDisconnect.map((pc) => ({ id: pc.id}))
+        }
       }
     });
 
