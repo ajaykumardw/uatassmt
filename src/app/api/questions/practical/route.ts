@@ -18,6 +18,15 @@ export async function GET() {
     where:{
       agency_id: agencyId,
       question_type: 'practical'
+    },
+    include: {
+      pc: {
+        select: {
+          id: true,
+          pc_id: true,
+          pc_name: true,
+        }
+      }
     }
   })
 
@@ -28,11 +37,22 @@ export async function GET() {
 
 export async function POST(req: Request) {
 
-  const {sscId, qpId, nosId, questionName, questionMarks} = await req.json();
+  const {sscId, qpId, nosId, selectPC, questionName} = await req.json();
 
   const session = await getServerSession(authOptions);
   const createdBy = Number(session?.user.id);
   const agencyId = Number(session?.user?.agency_id);
+
+  const pcsTotalMarks = await prisma.pc.aggregate({
+    _sum: {
+      practical_marks: true
+    },
+    where: {
+      id: {
+        in: selectPC.map((value: string) => Number(value))
+      }
+    }
+  });
 
   const result = await prisma.questions.create({
     data: {
@@ -40,9 +60,12 @@ export async function POST(req: Request) {
       ssc_id: Number(sscId),
       qp_id: Number(qpId),
       nos_id: Number(nosId),
+      pc: {
+        connect: selectPC.map((pcId: any) => ({ id: Number(pcId)}))
+      },
       language_id: 1,
       question: questionName,
-      marks: Number(questionMarks),
+      marks: Number(pcsTotalMarks._sum.practical_marks),
       question_type: 'practical',
       created_by: createdBy
     }

@@ -33,6 +33,8 @@ import DialogCloseButton from '@components/dialogs/DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
 import type { PCType } from '@/types/pc/pcType'
 
+import { MenuProps } from '@/configs/customDataConfig';
+
 // import type { PCType } from '@/types/pc/pcType'
 
 // type AddQPDialogData = {
@@ -235,6 +237,7 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
 
   const [count, setCount] = useState(0)
   const [isCorrectAnswer, setCorrectAnswer] = useState<number>(0)
+  const [totalPCMarks, setTotalPCMarks] = useState<number>(0);
 
   // const [pcData] = useState<PCType[]>([])
 
@@ -272,6 +275,10 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
 
   }, [data]);
 
+  // useEffect(() => {
+  //   console.log("allPC", allPC);
+  // }, [allPC])
+
 
   // Hooks
   const {
@@ -279,13 +286,14 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
     reset,
     handleSubmit,
     setValue,
+    resetField,
     setError,
     clearErrors,
     formState: { errors },
   } = useForm<AddQPDialogData>({
     resolver: valibotResolver(schema),
     values: {
-      selectPC: userData?.selectPC || [],
+      selectPC: pcID ? [pcID.toString()] : userData?.selectPC || [],
       questionType: userData?.questionType || '',
       questionLevel: userData?.questionLevel || '',
       questionName: userData?.questionName || '',
@@ -298,10 +306,52 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
     }
   })
 
+  const handlePCSelectionChange = (value: string[]) => {
+    if (value.length > 0) {
+      // Calculate the sum of theory_marks for all selected PCs
+      const totalMarks = value.reduce((sum: number, pcId: string) => {
+        const pc = allPC?.find((pc) => pc.id.toString() === pcId);
+
+        // Ensure theory_marks is treated as a number
+
+        return sum + (Number(pc?.theory_marks) || 0); // Convert to number and default to 0 if not found
+      }, 0);
+
+      setTotalPCMarks(totalMarks);
+      console.log("Total Marks from function:", totalMarks); // Logs the sum of all selected PC marks
+    } else {
+      setTotalPCMarks(0);
+    }
+  }
+
+  useEffect(() => {
+    if(pcID) {
+      handlePCSelectionChange([pcID.toString()]);
+    }
+
+  }, [pcID, open]);
+
+  useEffect(() => {
+
+    if(totalPCMarks ){
+
+      setValue('questionMarks', totalPCMarks.toString());
+
+      // setError('questionMarks', {type: 'custom', message: 'Please enter marks equal to '+ totalPCMarks})
+    } else {
+
+      // clearErrors('questionMarks');
+      resetField('questionMarks');
+    }
+
+  }, [totalPCMarks, setError])
+
 
   useEffect(() => {
     isCorrectAnswer !== 0 ? clearErrors('correctAnswer') : setError('correctAnswer',{type: 'custom', message: 'Please check any one option field for the correct answer'});
   }, [isCorrectAnswer, clearErrors, setError])
+
+
 
   const onSubmit: SubmitHandler<AddQPDialogData> = async (data: AddQPDialogData) => {
     // e.preventDefault();
@@ -423,7 +473,7 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent className='overflow-visible pbs-0 sm:pli-16'>
           <Grid container spacing={5}>
-            { questionId && <Grid item xs={12}>
+            <Grid item xs={12}>
               <Controller
                 control={control}
                 name='selectPC'
@@ -435,6 +485,7 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
                     label='PC'
                     required={true}
                     SelectProps={{
+                      MenuProps,
                       multiple: true,
                       renderValue: selected => (
                         <div className='flex flex-wrap gap-1'>
@@ -450,17 +501,39 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
                       )
                     }}
                     {...field}
+                    onChange={(e) => {
+                      const value = e.target.value as unknown as string[];
+
+                      handlePCSelectionChange(value);
+
+                      if (value.length > 0) {
+                        // Calculate the sum of theory_marks for all selected PCs
+                        const totalMarks = value.reduce((sum, pcId) => {
+                          const pc = allPC?.find((pc) => pc.id.toString() === pcId);
+
+                          // Ensure theory_marks is treated as a number
+
+                          return sum + (Number(pc?.theory_marks) || 0); // Convert to number and default to 0 if not found
+
+                        }, 0);
+
+                        console.log("Total Marks:", totalMarks); // Logs the sum of all selected PC marks
+                      }
+
+                      field.onChange(e.target.value);
+                    }}
                     {...(errors.pcId && { error: true, helperText: errors.pcId.message })}
                   >
                     {allPC?.map((pc, index) => (
-                      <MenuItem key={index} value={pc.id.toString()}>
+                      <MenuItem className='justify-between gap-2' key={index} value={pc.id.toString()}>
                         {pc.pc_name}
+                        <Chip key={index} label={pc?.theory_marks} variant='tonal' color={ pc?.theory_marks <= 0 ? 'error' : 'success'} size='small' />
                       </MenuItem>
                     ))}
                   </CustomTextField>
                 )}
               />
-            </Grid>}
+            </Grid>
             <Grid item xs={12} sm={6}>
               <Controller
                 control={control}
@@ -548,6 +621,7 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
                 rules={{ required: true }}
                 render={({ field }) => (
                   <CustomTextField
+                    disabled
                     fullWidth
                     required={true}
                     {...field}

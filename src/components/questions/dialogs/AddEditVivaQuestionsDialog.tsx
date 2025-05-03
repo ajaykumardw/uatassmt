@@ -11,7 +11,7 @@ import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import MenuItem from '@mui/material/MenuItem'
-import { CircularProgress } from '@mui/material'
+import { Chip, CircularProgress } from '@mui/material'
 
 // Component Imports
 import { toast } from 'react-toastify'
@@ -23,7 +23,7 @@ import type { SubmitHandler } from 'react-hook-form'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, string, trim, minLength, check, pipe } from "valibot"
+import { object, string, trim, minLength, check, pipe, array } from "valibot"
 
 import type { InferInput } from 'valibot'
 
@@ -33,6 +33,9 @@ import CustomTextField from '@core/components/mui/TextField'
 import type { SSCType } from '@/types/sectorskills/sscType'
 import type { QPType } from '@/types/qualification-pack/qpType'
 import { removeDuplicates } from '@/utils/removeDuplicates'
+import { PCType } from '@/types/pc/pcType'
+import { NOSType } from '@/types/nos/nosType'
+import { MenuProps } from '@/configs/customDataConfig';
 
 type AddQPDialogData = InferInput<typeof schema>
 
@@ -60,6 +63,8 @@ type AddQPDialogProps = {
 const initialData: AddQPDialogData = {
   sscId: '',
   qpId: '',
+  nosId: '',
+  selectPC: [],
   questionName: '',
   questionMarks: '',
 }
@@ -69,6 +74,8 @@ const schema = object(
   {
     sscId: pipe(string(), trim() , minLength(1, 'This field is required')),
     qpId: pipe(string(), trim() , minLength(1, 'This field is required')),
+    nosId: pipe(string(), trim() , minLength(1, 'This field is required')),
+    selectPC: array(string(), 'This field is required'),
     questionName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Question name must be at least 3 characters long')),
     questionMarks: pipe(string(), trim() , minLength(1, 'This field is required') , check((value) => !value || /^(?:[1-9]|1\d|2[0-5])(\.\d+)?$/.test(value), 'Marks must be between 1 and 25.') ,),
   }
@@ -81,6 +88,9 @@ const AddEditVivaQuestionsDialog = ({ open, questionId, handleClose, updateQuest
   const [loading, setLoading] = useState(false);
   const [sscData, setSscUsers] = useState<SSCType[]>([])
   const [qpData, setQPData] = useState<QPType[]>([]);
+  const [nosData, setNOSData] = useState<NOSType[]>([]);
+  const [pcData, setPCData] = useState<PCType[]>([]);
+  const [totalPCMarks, setTotalPCMarks] = useState<number>(0);
 
   // const [nosData, setNOSData] = useState<NOSType[]>([]);
 
@@ -109,11 +119,13 @@ const AddEditVivaQuestionsDialog = ({ open, questionId, handleClose, updateQuest
 
     if(viva){
 
-      fetchAllData(viva.ssc_id);
+      fetchAllData(viva.ssc_id, viva.qp_id, viva.nos_id);
 
       setVivaQuestionData({
         sscId: viva?.ssc_id ? viva?.ssc_id.toString() : '',
         qpId: viva?.qp_id ? viva?.qp_id.toString() : '',
+        nosId: viva?.nos_id ? viva?.nos_id.toString() : '',
+        selectPC: viva.pc.map((item: PCType) => (item.id.toString())) || [],
         questionName: viva.question,
         questionMarks: viva?.marks ? viva?.marks.toString() : ''
       })
@@ -121,23 +133,29 @@ const AddEditVivaQuestionsDialog = ({ open, questionId, handleClose, updateQuest
     }
   }
 
-  const fetchAllData = async (sscId: number) => {
+  const fetchAllData = async (sscId: number, qpId: number, nosId: number) => {
     const selectedSSC = sscData.find(ssc => ssc.id === sscId);
 
     if (selectedSSC) {
 
       setQPData(removeDuplicates(selectedSSC.qualification_packs || [], 'id'));
 
-      // const selectedQP = selectedSSC.qualification_packs.find(qp => qp.id === qpId);
+      const selectedQP = selectedSSC.qualification_packs.find(qp => qp.id === qpId);
 
-      // if (selectedQP) {
+      if (selectedQP) {
 
-      //   setNOSData(removeDuplicates(selectedQP.nos || [], 'id'));
+        setNOSData(removeDuplicates(selectedQP.nos || [], 'id'));
 
-      // } else {
+        const selectedNOS = selectedQP.nos.find(nos => nos.id === nosId);
 
-      //   setNOSData([]);
-      // }
+        if(selectedNOS){
+          setPCData(removeDuplicates(selectedNOS.pc || [], 'id'));
+        }
+
+      } else {
+
+        setNOSData([]);
+      }
 
     } else {
       setQPData([]);
@@ -158,8 +176,12 @@ const AddEditVivaQuestionsDialog = ({ open, questionId, handleClose, updateQuest
   const handleSSCChange = async (ssc: string) => {
 
     resetField("qpId", {defaultValue: ""})
+    resetField("nosId", {defaultValue: ""})
+    resetField("selectPC", {defaultValue: []})
 
     setQPData([]);
+    setNOSData([]);
+    setPCData([]);
 
     // setNOSData([]);
 
@@ -175,24 +197,63 @@ const AddEditVivaQuestionsDialog = ({ open, questionId, handleClose, updateQuest
   };
 
   // Function to handle QP change
-  // const handleQPChange = async (qp: string) => {
+  const handleQPChange = async (qp: string) => {
 
-  //   // resetField("nosId", {defaultValue: ""})
+    resetField("nosId", {defaultValue: ""})
+    resetField("selectPC", {defaultValue: []})
 
-  //   // setNOSData([]);
+    setNOSData([]);
+    setPCData([]);
 
-  //   const qpId = Number(qp);
+    const qpId = Number(qp);
 
-  //   const selectedQP = qpData.find(qp => qp.id === qpId);
+    const selectedQP = qpData.find(qp => qp.id === qpId);
 
-  //   if (selectedQP) {
+    if (selectedQP) {
 
-  //     setNOSData(selectedQP.nos || []);
-  //   } else {
+      setNOSData(selectedQP.nos || []);
+    } else {
 
-  //     setNOSData([]);
-  //   }
-  // };
+      setNOSData([]);
+    }
+  };
+
+  const handleNOSChange = async (nos: string) => {
+    resetField("selectPC", {defaultValue: []})
+
+    setPCData([]);
+
+    const nosId = Number(nos);
+    const selectedNOS = nosData.find(nos => nos.id === nosId);
+
+    console.log("Selected NOS:", selectedNOS);
+
+    if(selectedNOS){
+      setPCData(selectedNOS.pc || []);
+    }else {
+      setPCData([]);
+    }
+  }
+
+  const handlePCSelectionChange = (value: string[]) => {
+
+    if (value.length > 0) {
+      // Calculate the sum of theory_marks for all selected PCs
+      const totalMarks = value.reduce((sum: number, pcId: string) => {
+        const pc = pcData?.find((pc) => pc.id.toString() === pcId);
+
+        // Ensure theory_marks is treated as a number
+
+        return sum + (Number(pc?.viva_marks) || 0); // Convert to number and default to 0 if not found
+      }, 0);
+
+      setTotalPCMarks(totalMarks);
+      console.log("Total Marks from function:", totalMarks); // Logs the sum of all selected PC marks
+    } else {
+      setTotalPCMarks(0);
+    }
+  }
+
 
   // Hooks
   const {
@@ -200,12 +261,15 @@ const AddEditVivaQuestionsDialog = ({ open, questionId, handleClose, updateQuest
     reset,
     handleSubmit,
     resetField,
+    setError,
     formState: { errors },
   } = useForm<AddQPDialogData>({
     resolver: valibotResolver(schema),
     values: {
       sscId: vivaQuestionData?.sscId || '',
       qpId: vivaQuestionData?.qpId || '',
+      nosId: vivaQuestionData?.nosId || '',
+      selectPC: vivaQuestionData?.selectPC || [],
       questionName: vivaQuestionData?.questionName || '',
       questionMarks: vivaQuestionData?.questionMarks || '',
     }
@@ -213,6 +277,15 @@ const AddEditVivaQuestionsDialog = ({ open, questionId, handleClose, updateQuest
 
   const onSubmit: SubmitHandler<AddQPDialogData> = async (data: AddQPDialogData) => {
     // e.preventDefault();
+
+    if(Number(data.questionMarks) !== totalPCMarks){
+      setError('questionMarks', {
+        type: 'custom',
+        message: `Total marks of selected PCs is ${totalPCMarks}. Please update the marks accordingly.`
+      })
+      return;
+    }
+
 
     setLoading(true)
 
@@ -320,7 +393,7 @@ const AddEditVivaQuestionsDialog = ({ open, questionId, handleClose, updateQuest
                 rules={{ required: true }}
                 render={({ field }) => (
                   <CustomTextField select required={true} fullWidth label='SSC' id='select-ssc'
-                  SelectProps={{  }}
+                    SelectProps={{ MenuProps }}
                     {...field}
                     onChange={(e) => {
                       field.onChange(e); // Ensure the field value gets updated in the form state
@@ -353,7 +426,8 @@ const AddEditVivaQuestionsDialog = ({ open, questionId, handleClose, updateQuest
                     label='Qualification Pack'
                     required={true}
                     {...field}
-                    onChange={(e) => { field.onChange(e); }}
+                    SelectProps={{ MenuProps }}
+                    onChange={(e) => { field.onChange(e); handleQPChange(e.target.value);}}
                     {...(errors.qpId && { error: true, helperText: errors.qpId.message })}
                   >
                     <MenuItem value=''>Select Qualification Pack</MenuItem>
@@ -365,6 +439,88 @@ const AddEditVivaQuestionsDialog = ({ open, questionId, handleClose, updateQuest
                       ))
                     ) : (
                       <MenuItem disabled>No Qualification pack found</MenuItem>
+                    )}
+                  </CustomTextField>
+                )}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Controller
+                control={control}
+                name='nosId'
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <CustomTextField
+                    select
+                    fullWidth
+                    id='select-nos'
+                    label='NOS'
+                    required={true}
+                    {...field}
+                    onChange={(e) =>{ field.onChange(e); handleNOSChange(e.target.value)}}
+                    SelectProps={{ MenuProps }}
+                    {...(errors.nosId && { error: true, helperText: errors.nosId.message })}
+                  >
+                    <MenuItem value=''>Select NOS</MenuItem>
+                    {nosData.length > 0 ? (
+                      nosData.map((nos) => (
+                        <MenuItem key={nos.id.toString()} value={nos.id.toString()}>
+                          {nos.nos_name}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>No NOS found</MenuItem>
+                    )}
+                  </CustomTextField>
+                )}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Controller
+                control={control}
+                name='selectPC'
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <CustomTextField
+                    fullWidth
+                    select
+                    label='PC'
+                    required={true}
+                    SelectProps={{
+                      MenuProps,
+                      multiple: true,
+                      renderValue: selected => (
+                        <div className='flex flex-wrap gap-1'>
+                          {(selected as unknown as string[]).map(value => {
+
+                            const pc = pcData?.find(pc => pc.id.toString() === value);
+
+                            return (
+                              <Chip key={value} label={pc?.pc_id} size='small' />
+                            );
+                          })}
+                        </div>
+                      )
+                    }}
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value as unknown as string[];
+
+                      handlePCSelectionChange(value);
+
+                      field.onChange(e.target.value);
+                    }}
+                    {...(errors.selectPC && { error: true, helperText: errors.selectPC.message })}
+                  >
+                    {pcData.length > 0 ? (
+                      pcData?.map((pc, index) => (
+                        <MenuItem className='justify-between gap-2' key={index} value={pc.id.toString()}>
+                          {pc.pc_id}
+                          <Chip key={index} label={pc?.viva_marks} variant='tonal' color={ pc?.viva_marks <= 0 ? 'error' : 'success'} size='small' />
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>No PC Found</MenuItem>
                     )}
                   </CustomTextField>
                 )}

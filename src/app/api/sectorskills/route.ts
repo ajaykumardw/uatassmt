@@ -29,7 +29,11 @@ export async function GET() {
     include: {
       qualification_packs: {
         include: {
-          nos: true,
+          nos: {
+            include: {
+              pc: true
+            }
+          },
           exam_sets: {
             select: {
               id: true,
@@ -79,7 +83,7 @@ export async function POST(req: NextRequest) {
 
   if(result){
 
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'ssc');
+    const uploadDir = path.join(process.cwd(), 'uploads', 'ssc');
 
     if (!fs.existsSync(uploadDir)) {
       try {

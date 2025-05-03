@@ -11,7 +11,7 @@ import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import MenuItem from '@mui/material/MenuItem'
-import { CircularProgress } from '@mui/material'
+import { Chip, CircularProgress } from '@mui/material'
 
 // Component Imports
 import { toast } from 'react-toastify'
@@ -23,7 +23,7 @@ import type { SubmitHandler } from 'react-hook-form'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, string, trim, minLength, check, pipe } from "valibot"
+import { object, string, trim, minLength, check, pipe, array } from "valibot"
 
 import type { InferInput } from 'valibot'
 
@@ -34,6 +34,9 @@ import type { SSCType } from '@/types/sectorskills/sscType'
 import type { QPType } from '@/types/qualification-pack/qpType'
 import type { NOSType } from '@/types/nos/nosType'
 import { removeDuplicates } from '@/utils/removeDuplicates'
+import { PCType } from '@/types/pc/pcType'
+
+import { MenuProps } from '@/configs/customDataConfig';
 
 type AddQPDialogData = InferInput<typeof schema>
 
@@ -62,6 +65,7 @@ const initialData: AddQPDialogData = {
   sscId: '',
   qpId: '',
   nosId: '',
+  selectPC: [],
   questionName: '',
   questionMarks: '',
 }
@@ -72,6 +76,7 @@ const schema = object(
     sscId: pipe(string(), trim() , minLength(1, 'This field is required')),
     qpId: pipe(string(), trim() , minLength(1, 'This field is required')),
     nosId: pipe(string(), trim() , minLength(1, 'This field is required')),
+    selectPC: array(string(), 'This field is required'),
     questionName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Question name must be at least 3 characters long')),
     questionMarks: pipe(string(), trim() , minLength(1, 'This field is required') , check((value) => !value || /^(?:[1-9]|1\d|2[0-5])(\.\d+)?$/.test(value), 'Marks must be between 1 and 25.') ,),
   }
@@ -80,11 +85,13 @@ const schema = object(
 const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, updateQuestionsList }: AddQPDialogProps) => {
 
   // States
-  const [userData, setUserData] = useState<AddQPDialogProps['data']>(initialData)
+  const [practicalData, setPracticalData] = useState<AddQPDialogProps['data']>(initialData)
   const [loading, setLoading] = useState(false);
   const [sscData, setSscUsers] = useState<SSCType[]>([])
   const [qpData, setQPData] = useState<QPType[]>([]);
   const [nosData, setNOSData] = useState<NOSType[]>([]);
+  const [pcData, setPCData] = useState<PCType[]>([]);
+  const [totalPCMarks, setTotalPCMarks] = useState<number>(0);
 
   const getSSCData = async () => {
     // Vars
@@ -94,9 +101,9 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
       throw new Error('Failed to fetch sector skills council')
     }
 
-    const userData = await res.json();
+    const practicalData = await res.json();
 
-    setSscUsers(userData);
+    setSscUsers(practicalData);
 
   }
 
@@ -111,20 +118,23 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
 
     if(practical){
 
-      fetchAllData(practical.ssc_id, practical.qp_id);
+      fetchAllData(practical.ssc_id, practical.qp_id, practical.nos_id);
 
-      setUserData({
+      setPracticalData({
         sscId: practical?.ssc_id ? practical?.ssc_id.toString() : '',
         qpId: practical?.qp_id ? practical?.qp_id.toString() : '',
         nosId: practical?.nos_id ? practical?.nos_id.toString() : '',
+        selectPC: practical.pc.map((item: PCType) => (item.id.toString())) || [],
         questionName: practical.question,
         questionMarks: practical?.marks ? practical?.marks.toString() : ''
       })
 
+      setTotalPCMarks(practical.marks);
+
     }
   }
 
-  const fetchAllData = async (sscId: number, qpId: number) => {
+  const fetchAllData = async (sscId: number, qpId: number, nosId: number) => {
     const selectedSSC = sscData.find(ssc => ssc.id === sscId);
 
     if (selectedSSC) {
@@ -136,6 +146,12 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
       if (selectedQP) {
 
         setNOSData(removeDuplicates(selectedQP.nos || [], 'id'));
+
+        const selectedNOS = selectedQP.nos.find(nos => nos.id === nosId);
+
+        if(selectedNOS){
+          setPCData(removeDuplicates(selectedNOS.pc || [], 'id'));
+        }
 
       } else {
 
@@ -161,9 +177,11 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
 
     resetField("qpId", {defaultValue: ""})
     resetField("nosId", {defaultValue: ""})
+    resetField("selectPC", {defaultValue: []})
 
     setQPData([]);
     setNOSData([]);
+    setPCData([]);
 
     const sscId = Number(ssc);
 
@@ -180,8 +198,10 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
   const handleQPChange = async (qp: string) => {
 
     resetField("nosId", {defaultValue: ""})
+    resetField("selectPC", {defaultValue: []})
 
     setNOSData([]);
+    setPCData([]);
 
     const qpId = Number(qp);
 
@@ -195,6 +215,42 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
       setNOSData([]);
     }
   };
+
+  const handleNOSChange = async (nos: string) => {
+    resetField("selectPC", {defaultValue: []})
+
+    setPCData([]);
+
+    const nosId = Number(nos);
+    const selectedNOS = nosData.find(nos => nos.id === nosId);
+
+    console.log("Selected NOS:", selectedNOS);
+
+    if(selectedNOS){
+      setPCData(selectedNOS.pc || []);
+    }else {
+      setPCData([]);
+    }
+  }
+
+  const handlePCSelectionChange = (value: string[]) => {
+
+    if (value.length > 0) {
+      // Calculate the sum of theory_marks for all selected PCs
+      const totalMarks = value.reduce((sum: number, pcId: string) => {
+        const pc = pcData?.find((pc) => pc.id.toString() === pcId);
+
+        // Ensure theory_marks is treated as a number
+
+        return sum + (Number(pc?.practical_marks) || 0); // Convert to number and default to 0 if not found
+      }, 0);
+
+      setTotalPCMarks(totalMarks);
+      console.log("Total Marks from function:", totalMarks); // Logs the sum of all selected PC marks
+    } else {
+      setTotalPCMarks(0);
+    }
+  }
 
   // Function to handle NOS change
   // const handleNOSChange = async (nos: string) => {
@@ -213,20 +269,30 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
     reset,
     handleSubmit,
     resetField,
+    setError,
     formState: { errors },
   } = useForm<AddQPDialogData>({
     resolver: valibotResolver(schema),
     values: {
-      sscId: userData?.sscId || '',
-      qpId: userData?.qpId || '',
-      nosId: userData?.nosId || '',
-      questionName: userData?.questionName || '',
-      questionMarks: userData?.questionMarks || '',
+      sscId: practicalData?.sscId || '',
+      qpId: practicalData?.qpId || '',
+      nosId: practicalData?.nosId || '',
+      selectPC: practicalData?.selectPC || [],
+      questionName: practicalData?.questionName || '',
+      questionMarks: practicalData?.questionMarks || '',
     }
   })
 
   const onSubmit: SubmitHandler<AddQPDialogData> = async (data: AddQPDialogData) => {
     // e.preventDefault();
+
+    if(Number(data.questionMarks) !== totalPCMarks){
+      setError('questionMarks', {
+        type: 'custom',
+        message: `Total marks of selected PCs is ${totalPCMarks}. Please update the marks accordingly.`
+      })
+      return;
+    }
 
     setLoading(true)
 
@@ -304,7 +370,7 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
 
   const handleReset = () => {
     reset();
-    setUserData(initialData);
+    setPracticalData(initialData);
 
     handleClose();
   }
@@ -334,7 +400,7 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
                 rules={{ required: true }}
                 render={({ field }) => (
                   <CustomTextField select required={true} fullWidth label='SSC' id='select-ssc'
-                  SelectProps={{  }}
+                  SelectProps={{ MenuProps }}
                     {...field}
                     onChange={(e) => {
                       field.onChange(e); // Ensure the field value gets updated in the form state
@@ -367,6 +433,7 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
                     label='Qualification Pack'
                     required={true}
                     {...field}
+                    SelectProps={{ MenuProps }}
                     onChange={(e) => { field.onChange(e); handleQPChange(e.target.value)}}
                     {...(errors.qpId && { error: true, helperText: errors.qpId.message })}
                   >
@@ -397,7 +464,8 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
                     label='NOS'
                     required={true}
                     {...field}
-                    onChange={(e) =>{ field.onChange(e); }}
+                    onChange={(e) =>{ field.onChange(e); handleNOSChange(e.target.value)}}
+                    SelectProps={{ MenuProps }}
                     {...(errors.nosId && { error: true, helperText: errors.nosId.message })}
                   >
                     <MenuItem value=''>Select NOS</MenuItem>
@@ -409,6 +477,57 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
                       ))
                     ) : (
                       <MenuItem disabled>No NOS found</MenuItem>
+                    )}
+                  </CustomTextField>
+                )}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Controller
+                control={control}
+                name='selectPC'
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <CustomTextField
+                    fullWidth
+                    select
+                    label='PC'
+                    required={true}
+                    SelectProps={{
+                      MenuProps,
+                      multiple: true,
+                      renderValue: selected => (
+                        <div className='flex flex-wrap gap-1'>
+                          {(selected as unknown as string[]).map(value => {
+
+                            const pc = pcData?.find(pc => pc.id.toString() === value);
+
+                            return (
+                              <Chip key={value} label={pc?.pc_id} size='small' />
+                            );
+                          })}
+                        </div>
+                      )
+                    }}
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value as unknown as string[];
+
+                      handlePCSelectionChange(value);
+
+                      field.onChange(e.target.value);
+                    }}
+                    {...(errors.selectPC && { error: true, helperText: errors.selectPC.message })}
+                  >
+                    {pcData.length > 0 ? (
+                      pcData?.map((pc, index) => (
+                        <MenuItem className='justify-between gap-2' key={index} value={pc.id.toString()}>
+                          {pc.pc_id}
+                          <Chip key={index} label={pc?.practical_marks} variant='tonal' color={ pc?.practical_marks <= 0 ? 'error' : 'success'} size='small' />
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>No PC Found</MenuItem>
                     )}
                   </CustomTextField>
                 )}

@@ -132,6 +132,7 @@ const TableFilters = ({ setSSCID, setQPID, setPCID, setAllPC, setData, tableData
     const selectedNOS = nosData.find(nos => nos.id === nosId);
 
     if (selectedNOS) {
+      console.log(removeDuplicates(selectedNOS.pc, 'id'));
       setPCData(removeDuplicates(selectedNOS.pc || [], 'id'));
     } else {
       setPCData([]);

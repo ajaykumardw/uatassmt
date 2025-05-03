@@ -40,7 +40,7 @@ export async function POST(
   const session = await getServerSession(authOptions);
   const agency_id = Number(session?.user?.agency_id);
 
-  const {selectPC, questionType, questionLevel, questionName, questionExplanation, option1, option2, option, correctAnswer, questionMarks} = await req.json();
+  const {selectPC, questionType, questionLevel, questionName, questionExplanation, option1, option2, option, correctAnswer} = await req.json();
 
   const filterOption = option.filter((opt: string) => {
     return opt !== ''
@@ -72,6 +72,24 @@ export async function POST(
       return !selectPC.includes(existingPC.id.toString());
     });
 
+
+    const pcsTotalMarks = await prisma.pc.aggregate({
+      _sum: {
+        theory_marks: true
+      },
+      where: {
+        id: {
+          in: selectPC.map((value: string) => Number(value))
+        }
+      }
+    });
+
+    console.log(pcsTotalMarks._sum.theory_marks); // This will directly give you the sum of theory_marks
+
+
+    console.log("pcsTotalMarks: ", pcsTotalMarks);
+
+
     const result = await prisma.questions.update({
       where: {
         id: id,
@@ -88,7 +106,7 @@ export async function POST(
         option4: filterOption[1],
         option5: filterOption[2],
         answer: Number(correctAnswer),
-        marks: Number(questionMarks),
+        marks: Number(pcsTotalMarks._sum.theory_marks),
         pc: {
           connect: newPCToConnect.map((pcId: any) => ({ id: Number(pcId) })),
           disconnect: pcToDisconnect.map(pc => ({ id: pc.id }))

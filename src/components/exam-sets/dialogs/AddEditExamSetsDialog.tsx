@@ -107,6 +107,8 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
   const [easyCount, setEasyCount] = useState('');
   const [mediumCount, setMediumCount] = useState('');
   const [hardCount, setHardCount] = useState('');
+  const [totalTheoryMarks, setTotalTheoryMarks] = useState(0);
+  const [sumOfSelectedQuestionsMarks, setSumOfSelectedQuestionsMarks] = useState(0);
 
   const getSSCData = async () => {
     // Vars
@@ -181,7 +183,11 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
 
       const selectedQP = selectedSSC.qualification_packs.find(qp => qp.id === qpId);
 
+
       if (selectedQP) {
+        console.log('selectedQP?.total_theory_marks: ', selectedQP?.total_theory_marks);
+
+        setTotalTheoryMarks(selectedQP.total_theory_marks);
 
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions?qpId=${qpId}`);
 
@@ -202,6 +208,8 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
         setTheoryQuestions(theory);
 
       } else {
+
+        setTotalTheoryMarks(0);
 
         setEasyQuestions([]);
         setMediumQuestions([]);
@@ -253,6 +261,17 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
     setMode('');
 
     const qpId = Number(qp);
+
+    // const selectedSSC = sscData.find(ssc => ssc.id === Number(getValues("sscId")));
+    const selectedQP = qpData.find(qp => qp.id === qpId);
+
+    console.log('total marks: ', selectedQP?.total_theory_marks);
+
+    if(selectedQP){
+      setTotalTheoryMarks(selectedQP.total_theory_marks);
+    }else {
+      setTotalTheoryMarks(0);
+    }
 
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions?qpId=${qpId}`);
 
@@ -321,6 +340,20 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
     }
 
   }, [changedMode, easyCount, mediumCount, hardCount, getValues]);
+
+  useEffect(() => {
+    if(totalTheoryMarks && sumOfSelectedQuestionsMarks){
+
+      const isEqual = totalTheoryMarks === sumOfSelectedQuestionsMarks;
+
+      if(isEqual){
+        clearErrors(['totalQuestions']);
+      } else {
+        setError('totalQuestions', {type: 'custom', message: 'The sum of selected questions marks must equal to Total Theory Marks.'});
+      }
+
+    }
+  }, [totalTheoryMarks, sumOfSelectedQuestionsMarks])
 
   const onSubmit: SubmitHandler<AddQPDialogData> = async (data: AddQPDialogData) => {
     // e.preventDefault();
@@ -693,7 +726,7 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
             }
             {changedMode === 'Manual' &&
               <Grid item xs={12}>
-                <TheoryQuestionListTable tableData={theoryQuestions} selectedQuestion={selectedQuestion} setSelectedQuestions={setSelectedQuestions} />
+                <TheoryQuestionListTable setSumOfSelectedQuestionsMarks={setSumOfSelectedQuestionsMarks} tableData={theoryQuestions} selectedQuestion={selectedQuestion} setSelectedQuestions={setSelectedQuestions} />
               </Grid>
             }
           </Grid>

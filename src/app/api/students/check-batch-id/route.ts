@@ -11,14 +11,23 @@ export async function GET(req: Request) {
 
   const url = new URL(await req.url);
   const id = url.searchParams.get('batchId');
+  const isId = url.searchParams.get('isId');
 
   // const session = await getServerSession(authOptions);
   // const agencyId = Number(session?.user?.agency_id);
 
-  const batchExist = await prisma.batches.findUnique({
-    where: {
+  const whereCondition = {
+    ...(isId && isId == 'true' ? {
+      id: Number(id)
+    } : {
       batch_name: id?.toString()
-    },
+    }),
+  }
+
+  if(isId === 'true'){}
+
+  const batchExist = await prisma.batches.findUnique({
+    where: whereCondition,
     select: {
       id: true,
       batch_size: true,

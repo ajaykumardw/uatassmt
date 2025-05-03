@@ -122,9 +122,14 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
           <MenuItem href={`/${locale}/questions/practical`}>{dictionary['navigation'].practical}</MenuItem>
           <MenuItem href={`/${locale}/questions/viva`}>{dictionary['navigation'].viva}</MenuItem>
         </SubMenu>
-        <MenuItem href={`/${locale}/exam-sets`} icon={<i className='tabler-brand-stackoverflow' />}>
+        {/* <MenuItem href={`/${locale}/exam-sets`} icon={<i className='tabler-brand-stackoverflow' />}>
           {dictionary['navigation'].examSets}
-        </MenuItem>
+        </MenuItem> */}
+        <SubMenu label={dictionary['navigation'].examSets} icon={<i className='tabler-stack-2' />}>
+          <MenuItem href={`/${locale}/exam-sets`}>Theory Set</MenuItem>
+          <MenuItem href={`/${locale}/batches/today`}>Practical Set</MenuItem>
+          <MenuItem href={`/${locale}/batches/pending`}>Viva Set</MenuItem>
+        </SubMenu>
         <SubMenu label={dictionary['navigation'].batches} icon={<i className='tabler-stack-2' />}>
           <MenuItem href={`/${locale}/batches/list`}>{dictionary['navigation'].list}</MenuItem>
           <MenuItem href={`/${locale}/batches/today`}>{dictionary['navigation'].today}</MenuItem>
@@ -143,6 +148,9 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
         <MenuItem href={`/${locale}/training-resources`} icon={<i className='tabler-git-merge' />}>
           {dictionary['navigation'].trainingResources}
         </MenuItem>
+        <SubMenu label={dictionary['navigation'].reports} icon={<i className='tabler-report' />}>
+          <MenuItem href={`/${locale}/reports/pc`}>{dictionary['navigation'].pcWise}</MenuItem>
+        </SubMenu>
         {/* <MenuSection label={dictionary['navigation'].appsPages}>
           <MenuItem href={`/${locale}/apps/calendar`} icon={<i className='tabler-calendar' />}>
             {dictionary['navigation'].calendar}

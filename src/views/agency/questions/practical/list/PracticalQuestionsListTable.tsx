@@ -233,6 +233,23 @@ const PracticalQuestionsListTable = ({ tableData, updateQuestionsList }: { table
           </div>
         )
       }),
+      columnHelper.accessor('pc', {
+        header: 'PC',
+        cell: ({ row }) => (
+          <div className='flex flex-col items-start gap-1'>
+            {row.original.pc?.map((pc, index) => (
+              <Chip
+              key={index}
+                variant='tonal'
+                className='capitalize'
+                label={pc.pc_id}
+                color='info'
+                size='small'
+              />
+            ))}
+          </div>
+        )
+      }),
       columnHelper.accessor('status', {
         header: 'Status',
         cell: ({ row }) => (

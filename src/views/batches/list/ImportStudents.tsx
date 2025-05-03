@@ -25,7 +25,7 @@ import AppReactDropzone from '@/libs/styles/AppReactDropzone';
 
 import TablePaginationComponent from '@/components/TablePaginationComponent';
 
-import { ExpectedStudentExcelHeaders } from '@/configs/customDataConfig';
+import { ExpectedStudentExcelHeaders, ExpectedStudentExcelHeadersWithoutBatchId } from '@/configs/customDataConfig';
 
 type StudentsTypeWithError = {
   BatchName: {value: string, error: string}
@@ -140,6 +140,56 @@ const studentSchema = v.objectAsync(
   }
 )
 
+const studentSchemaWithoutBatch = v.objectAsync(
+  {
+    CandidateId: v.unionAsync([
+      v.pipeAsync(
+        v.number('Candidate ID is required.'),
+        v.minValue(1, 'Candidate ID is required.'),
+        v.checkAsync(checkUnique, 'Candidate ID should be unique.'),
+        v.check(value => !/\s/.test(value.toString()), 'Candidate ID should not contain any spaces.')
+      ),
+      v.pipeAsync(
+        v.string('Candidate ID is required.'),
+        v.trim(),
+        v.minLength(1, 'Candidate ID is required.'),
+        v.maxLength(60, 'The max length for this field is 60 characters.'),
+        v.checkAsync(checkUnique, 'Candidate ID should be unique.'),
+        v.check(value => !/\s/.test(value.toString()), 'Candidate ID should not contain any spaces.')
+      )
+    ], 'Candidate ID is required.'),
+    Password: v.union([
+      v.pipe(
+        v.string(),
+        v.trim(),
+        v.minLength(1, 'Password field is required.'),
+        v.minLength(4, 'Your password is too short.'),
+        v.maxLength(30, 'Your password is too long. Should be max 30 characters.'),
+        v.check(value => !/\s/.test(value), 'Password should not contain any spaces.')
+      ),
+      v.pipe(
+        v.number(),
+        v.check(value => value.toString().length >= 4, 'This field is required and must be at least 4 characters.'),
+        v.check(value => value.toString().length <= 191, 'Your password is too long. Should be max 30 characters.'),
+        v.check(value => !/\s/.test(value.toString()), 'Password should not contain any spaces.')
+      ),
+    ]),
+    CandidateName: v.pipe(v.string(), v.trim() , v.minLength(1, 'This field is required') , v.maxLength(191, 'The max length for this field is 191 characters.')),
+    Gender: v.pipe(v.string(), v.trim() , v.minLength(1, 'This field is required') , v.check(value => ['M', 'F', 'T'].includes(value), 'Gender must be M, F, or T')),
+    Category: v.pipe(v.string(), v.trim() , v.minLength(1, 'This field is required') , v.check(value => ['Gen', 'SC', 'ST', 'BC', 'OBC', 'OC'].includes(value), 'Category must be Gen, SC, ST, OC, or OBC')),
+    DOB: v.pipe(v.string(), v.trim() , v.minLength(1, 'DOB is required') ,),
+    FatherName: v.optional(v.pipe(v.string('Father\'s name type should be string'), v.trim() , v.maxLength(191, 'The max length for Father Name is 191 characters.'))),
+    MotherName: v.optional(v.pipe(v.string('Mother\'s name type should be string'), v.trim() , v.maxLength(191, 'The max length for Mother Name is 191 characters.'))),
+    Address: v.optional(v.pipe(v.string(), v.trim() , v.maxLength(191, 'The max length for Address is 191 characters.'))),
+    City: v.optional(v.pipe(v.string('City should be type of string'), v.trim() , v.maxLength(100, 'The max length for City is 100 characters.'))),
+    State: v.optional(v.pipe(v.string('State should be type of string'), v.trim() , v.maxLength(100, 'The max length for State is 100 characters.'))),
+    MobileNo: v.pipe(
+      v.number('Mobile No. is required and should be number only'),
+      v.check(value => value.toString().length == 10, 'Mobile No. must be 10 digits.'),
+    )
+  }
+)
+
 const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   // Rank the item
   const itemRank = rankItem(row.getValue(columnId), value)
@@ -176,7 +226,7 @@ const mapKeys = (data: any[]) => data.map((item: any) => ({
 
 const columnHelper = createColumnHelper<StudentsTypeWithError>()
 
-const ImportStudents = ({ onBack }: { onBack: () => void }) => {
+const ImportStudents = ({ batch, onBack }: { batch: number | null, onBack: () => void }) => {
 
   const [data, setData] = useState<any[]>([]);
   const [uploadData, setUploadData] = useState<any[]>([]);
@@ -190,6 +240,10 @@ const ImportStudents = ({ onBack }: { onBack: () => void }) => {
       // console.log(data);
     }
   }, [data]);
+
+  useEffect(() => {
+    console.log('batch', batch);
+  }, [])
 
   const { getRootProps, getInputProps } = useDropzone({
     // maxFiles: 1,
@@ -223,7 +277,7 @@ const ImportStudents = ({ onBack }: { onBack: () => void }) => {
             const headers = jsonDataWithHeader[0] as string[]; // Assuming first row is headers
 
             // const expectedHeaders = ['Batch Name', 'Enrollment No', 'Name of Training Agency', 'Name of the Trainee', 'Gender(M/F/T)', 'Category(Gen/SC/ST/BC/OBC/OC)', 'DOB', "Father's name", "Mother's name", 'Address of the trainee', 'City', 'State', 'Mobile No']; // Replace with your expected headers
-            const expectedHeaders = ExpectedStudentExcelHeaders; // Replace with your expected headers
+            const expectedHeaders = batch ? ExpectedStudentExcelHeadersWithoutBatchId : ExpectedStudentExcelHeaders; // Replace with your expected headers
 
             // Validate headers
 
@@ -340,10 +394,10 @@ const ImportStudents = ({ onBack }: { onBack: () => void }) => {
 
             // Fetch existing student counts and initialize batchCounts
             await Promise.all(mappedData.map(async (item) => {
-              const batchName = item.BatchName.toString();
+              const batchName = batch ? batch : item.BatchName.toString();
 
               // Fetch batch details from the database
-              const { batchId, batchSize, existingStudentsCount } = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/check-batch-id?batchId=${batchName}`)
+              const { batchId, batchSize, existingStudentsCount } = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/check-batch-id?batchId=${batchName}${batch ? '&isId=true' : ''}`)
                 .then(response => response.json());
 
               // Check if batchId exists and has not been initialized yet
@@ -361,10 +415,10 @@ const ImportStudents = ({ onBack }: { onBack: () => void }) => {
             const validatedData = [];
 
             for (const [index, item] of mappedData.entries()) {
-              const batchName = item.BatchName.toString();
+              const batchName = batch ? batch : item.BatchName.toString();
 
               // Fetch batch details from the database
-              const { batchId } = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/check-batch-id?batchId=${batchName}`)
+              const { batchId } = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/check-batch-id?batchId=${batchName}${batch ? '&isId=true' : ''}`)
                 .then(response => response.json());
 
               // Only proceed if the batchId exists in batchCounts
@@ -389,7 +443,7 @@ const ImportStudents = ({ onBack }: { onBack: () => void }) => {
               const remainingCapacity = batchDetail.batchSize - batchDetail.currentCount;
 
               // Validate student data using your existing schema
-              const result = await v.safeParseAsync(studentSchema, item);
+              const result = batch ? await v.safeParseAsync(studentSchemaWithoutBatch, item) : await v.safeParseAsync(studentSchema, item);
 
               // Check for duplicate Candidate IDs
               const candidateIdError = duplicates.has(item.CandidateId) ? {
@@ -926,16 +980,22 @@ const ImportStudents = ({ onBack }: { onBack: () => void }) => {
                  {missingHeadersData.join(', ')}
               </Alert>
             }
-            <Typography>Use the same format as given below :<Button className='ml-2' variant='contained' href="/uploads/sample/bulk_students_sample_file.xlsx" download>Download</Button></Typography>
+            <Typography>Use the same format as given below :<Button className='ml-2' variant='contained' href={batch ? "/uploads/sample/bulk_students_sample_file_without_batch.xlsx" : "/uploads/sample/bulk_students_sample_file.xlsx"} download="Student Sample File">Download</Button></Typography>
           </div>
         </CardContent>
         <div className='overflow-x-auto'>
           <table className={tableStyles.table}>
             <thead>
               <tr>
-                {ExpectedStudentExcelHeaders.map((header, index) => (
-                  <th key={index}>{header}</th>
-                ))}
+                {batch ?
+                  ExpectedStudentExcelHeadersWithoutBatchId.map((header, index) => (
+                    <th key={index}>{header}</th>
+                  ))
+                  :
+                  ExpectedStudentExcelHeaders.map((header, index) => (
+                    <th key={index}>{header}</th>
+                  ))
+                }
               </tr>
             </thead>
             <tbody>

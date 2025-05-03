@@ -197,6 +197,7 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
   const [singleBatch, setSingleBatch] = useState<BatchesTypeWithAction | null>(null);
   const [assessorData, setAssessorsData] = useState<UsersType[]>([]);
   const [loadingId, setLoadingId] = useState<number | null>(null);
+  const [selectedBatch, setSelectedBatch] = useState<number | null>(null);
 
   // Hooks
   const { lang: locale } = useParams()
@@ -354,22 +355,39 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
         cell: ({ row }) => {
           if(row.original.students?.length && row.original.students?.length > 0){
             return (
-              <Button
-                variant='tonal'
-                size='small'
-                startIcon={row.original.students?.length}
+              <div className='flex items-center gap-1.5'>
+                {row.original.students && row.original.students.length === Number(row.original.batch_size) ? (
+                  null
+                ) : (
+                  <Tooltip title='Add Students'>
+                    <CustomIconButton
+                      variant='tonal'
+                      size='small'
+                      color='success'
+                      onClick={() => {setSelectedBatch(row.original.id); setShowImportStudents(true)}}
+                      className='is-full sm:is-auto'
+                    >
+                      <i className='tabler-user-plus' />
+                    </CustomIconButton>
+                  </Tooltip>
+                )}
+                <Button
+                  variant='tonal'
+                  size='small'
+                  startIcon={row.original.students?.length}
 
-                // onClick={() => {
-                //   localStorage.setItem("ssc_id", '1');
-                //   localStorage.setItem("qp_id", '1');
-                //   localStorage.setItem("batch_id", '1');
-                // }}
+                  // onClick={() => {
+                  //   localStorage.setItem("ssc_id", '1');
+                  //   localStorage.setItem("qp_id", '1');
+                  //   localStorage.setItem("batch_id", '1');
+                  // }}
 
-                onClick={() => handleViewStudentsClick(row.original)}
-                className='is-full sm:is-auto'
-              >
-                View
-              </Button>
+                  onClick={() => handleViewStudentsClick(row.original)}
+                  className='is-full sm:is-auto'
+                >
+                  View
+                </Button>
+              </div>
             );
           }
         }
@@ -531,6 +549,10 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
     []
   )
 
+  useEffect(() => {
+    console.log("selectedBatch", selectedBatch);
+  }, [selectedBatch]);
+
   const table = useReactTable({
     data: data as BatchesWithQP[],
     columns,
@@ -561,7 +583,7 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
   })
 
   if (showImportStudents) {
-    return <ImportStudents onBack={() => {setShowImportStudents(false); updateBatchList()}} />;
+    return <ImportStudents batch={selectedBatch} onBack={() => {setShowImportStudents(false); updateBatchList(); setSelectedBatch(null);}} />;
   }
 
   return (

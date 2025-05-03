@@ -153,7 +153,7 @@ const userStatusObj: UserStatusType = {
 // Column Definitions
 const columnHelper = createColumnHelper<UsersTypeWithAction>()
 
-const TheoryQuestionListTable = ({ tableData, selectedQuestion, setSelectedQuestions }: { tableData?: questions[], selectedQuestion?: {}, setSelectedQuestions: any }) => {
+const TheoryQuestionListTable = ({ tableData, selectedQuestion, setSelectedQuestions, setSumOfSelectedQuestionsMarks }: { tableData?: questions[], selectedQuestion?: {}, setSelectedQuestions: any, setSumOfSelectedQuestionsMarks: any }) => {
   // States
   const [rowSelection, setRowSelection] = useState<RowSelectionState>(selectedQuestion || {})
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -174,8 +174,23 @@ const TheoryQuestionListTable = ({ tableData, selectedQuestion, setSelectedQuest
       const filteredSelection = Object.entries(rowSelection).filter(([, value]) => value === true).map(([key]) => Number(key));
 
       setSelectedQuestions(filteredSelection);
+
+      if(data){
+
+        console.log(data);
+
+        const totalMarks = filteredSelection.reduce((sum, id) => {
+          const question = data.find(q => q.id === id); // questions is an object: { [id]: { id, mark } }
+
+          return sum + (question?.marks || 0);
+        }, 0);
+
+        setSumOfSelectedQuestionsMarks(totalMarks);
+      }
+
     }else{
       setSelectedQuestions([]);
+      setSumOfSelectedQuestionsMarks(0);
     }
   },[rowSelection]);
 

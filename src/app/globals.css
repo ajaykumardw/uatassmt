@@ -194,3 +194,34 @@ table tbody tr:hover {
       background-position: 0 50%
   }
 }
+
+
+.report-table {
+  margin: 0 24px;
+  margin-bottom: 10px;
+}
+
+.report-table td, .report-table th {
+  border: 1px solid;
+  border-color: inherit;
+}
+
+.report-table .light-gray {
+  background: var(--mui-palette-action-hover);
+}
+
+.report-table .gold {
+  background: gold;
+}
+
+.report-table .green {
+  background: #89cd60;
+}
+
+.report-table .aliceblue {
+  background: aliceblue;
+}
+
+.report-table .pass {
+  background: var(--mui-palette-success-lightOpacity);
+}

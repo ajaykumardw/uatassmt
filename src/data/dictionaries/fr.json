@@ -108,6 +108,8 @@
     "assessmentMonitoring": "Suivi des évaluations",
     "today": "Today",
     "pending": "Pending",
-    "completed": "Completed"
+    "completed": "Completed",
+    "reports": "Reports",
+    "pcWise": "PC Wise"
   }
 }

@@ -25,8 +25,26 @@ export async function GET(
       agency_id: agencyId
     },
     include: {
-      qualification_pack: true,
-      students: true
+      qualification_pack: {
+        include: {
+          version: true
+        }
+      },
+      students: true,
+      scheme: {
+        select: {
+          id: true,
+          scheme_name: true,
+          scheme_code: true
+        }
+      },
+      sub_scheme: {
+        select:{
+          id: true,
+          scheme_name: true,
+          scheme_code: true
+        }
+      },
     }
   })
 
