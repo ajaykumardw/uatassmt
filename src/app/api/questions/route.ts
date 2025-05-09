@@ -11,12 +11,15 @@ export async function GET(req: Request) {
 
   const url = new URL(await req.url);
   const qpId = url.searchParams.get('qpId');
+  const qType = url.searchParams.get('qType');
+
+  console.log('qType', qType);
 
   if(qpId){
     const questions = await prisma.questions.findMany({
       where: {
         qp_id: Number(qpId),
-        question_type: 'theory'
+        question_type: qType == 'practical' ? 'practical' : qType == 'viva' ? 'viva' : 'theory'
       },
       include: {
         pc: true

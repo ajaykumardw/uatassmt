@@ -47,7 +47,8 @@ export async function POST(req: Request) {
     hard,
     questionRandom,
     optionRandom,
-    selectedQuestions
+    selectedQuestions,
+    set_type
   } = await req.json();
 
   const session = await getServerSession(authOptions);
@@ -83,6 +84,7 @@ export async function POST(req: Request) {
         ssc_id: Number(sscId),
         qp_id: Number(qpId),
         set_name: setName,
+        set_type: set_type,
         mode: mode,
         total_questions: Number(totalQuestions),
         status: Number(status),

@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react"
 
-import ExamSetsList from "@views/agency/exam-sets/list"
+import PracticalExamSetsList from "@/views/agency/exam-sets/practical"
 import SkeletonTable from '@/components/skeleton/SkeletonTable'
 
 const ExamSets = () => {
@@ -37,7 +37,7 @@ const ExamSets = () => {
   };
 
   if(!loading){
-    return <ExamSetsList questionsData={data} updateExamSetsList={updateExamSetsList} />
+    return <PracticalExamSetsList questionsData={data} updateExamSetsList={updateExamSetsList} />
   }else{
     return <SkeletonTable />
   }

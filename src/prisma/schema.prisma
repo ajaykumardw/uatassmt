@@ -486,6 +486,7 @@ model exam_sets {
   ssc_id          Int
   qp_id           Int
   set_name        String
+  set_type        exam_set_type @default(T)
   mode            exam_set_mode @default(Manual)
   question_random Int           @default(0) @db.TinyInt
   option_random   Int           @default(0) @db.TinyInt
@@ -597,4 +598,10 @@ enum exam_set_mode {
 enum log_user_type {
   U
   S
+}
+
+enum exam_set_type {
+  T
+  P
+  V
 }
