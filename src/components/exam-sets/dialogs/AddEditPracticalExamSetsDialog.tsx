@@ -12,7 +12,7 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import MenuItem from '@mui/material/MenuItem'
 
-import { Checkbox, CircularProgress, FormControl, FormControlLabel, FormHelperText, Typography } from '@mui/material'
+import { CircularProgress, Typography } from '@mui/material'
 
 // Component Imports
 import { toast } from 'react-toastify'
@@ -23,7 +23,7 @@ import type { SubmitHandler } from 'react-hook-form'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, string, trim, minLength, optional, check, pipe, boolean } from "valibot"
+import { object, string, trim, minLength, check, pipe } from "valibot"
 
 import type { InferInput } from 'valibot'
 
@@ -89,15 +89,9 @@ const AddEditPracticalExamSetsDialog = ({ open, examSetId, handleClose, updateEx
   const [qpData, setQPData] = useState<QPType[]>([]);
   const [changedMode, setMode] = useState<string>('');
   const [theoryQuestions, setTheoryQuestions] = useState<questions[]>([]);
-  const [easyQuestions, setEasyQuestions] = useState<questions[]>([]);
-  const [mediumQuestions, setMediumQuestions] = useState<questions[]>([]);
-  const [hardQuestions, setHardQuestions] = useState<questions[]>([]);
   const [selectedQuestions, setSelectedQuestions] = useState([]);
   const [selectedQuestion, setSelectedQuestion] = useState<{ [key: string]: boolean }>({});
 
-  const [easyCount, setEasyCount] = useState('');
-  const [mediumCount, setMediumCount] = useState('');
-  const [hardCount, setHardCount] = useState('');
   const [totalPracticalMarks, setTotalPracticalMarks] = useState(0);
   const [sumOfSelectedQuestionsMarks, setSumOfSelectedQuestionsMarks] = useState(0);
 
@@ -179,13 +173,13 @@ const AddEditPracticalExamSetsDialog = ({ open, examSetId, handleClose, updateEx
 
         const theory:questions[] = await res.json();
 
-        const easyQuestions = theory.filter(q => q.question_level === 'E');
-        const mediumQuestions = theory.filter(q => q.question_level === 'M');
-        const hardQuestions = theory.filter(q => q.question_level === 'H');
+        // const easyQuestions = theory.filter(q => q.question_level === 'E');
+        // const mediumQuestions = theory.filter(q => q.question_level === 'M');
+        // const hardQuestions = theory.filter(q => q.question_level === 'H');
 
-        setEasyQuestions(easyQuestions);
-        setMediumQuestions(mediumQuestions);
-        setHardQuestions(hardQuestions);
+        // setEasyQuestions(easyQuestions);
+        // setMediumQuestions(mediumQuestions);
+        // setHardQuestions(hardQuestions);
 
         setTheoryQuestions(theory);
 
@@ -193,9 +187,10 @@ const AddEditPracticalExamSetsDialog = ({ open, examSetId, handleClose, updateEx
 
         setTotalPracticalMarks(0);
 
-        setEasyQuestions([]);
-        setMediumQuestions([]);
-        setHardQuestions([]);
+        // setEasyQuestions([]);
+        // setMediumQuestions([]);
+        // setHardQuestions([]);
+
         setTheoryQuestions([]);
       }
     } else {
@@ -263,13 +258,13 @@ const AddEditPracticalExamSetsDialog = ({ open, examSetId, handleClose, updateEx
 
     const theory: questions[] = await res.json();
 
-    const easyQuestions = theory.filter(q => q.question_level === 'E');
-    const mediumQuestions = theory.filter(q => q.question_level === 'M');
-    const hardQuestions = theory.filter(q => q.question_level === 'H');
+    // const easyQuestions = theory.filter(q => q.question_level === 'E');
+    // const mediumQuestions = theory.filter(q => q.question_level === 'M');
+    // const hardQuestions = theory.filter(q => q.question_level === 'H');
 
-    setEasyQuestions(easyQuestions);
-    setMediumQuestions(mediumQuestions);
-    setHardQuestions(hardQuestions);
+    // setEasyQuestions(easyQuestions);
+    // setMediumQuestions(mediumQuestions);
+    // setHardQuestions(hardQuestions);
 
     setTheoryQuestions(theory);
 
@@ -280,7 +275,6 @@ const AddEditPracticalExamSetsDialog = ({ open, examSetId, handleClose, updateEx
     control,
     reset,
     handleSubmit,
-    setValue,
     setError,
     clearErrors,
     getValues,

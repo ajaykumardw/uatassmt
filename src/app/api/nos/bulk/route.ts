@@ -53,7 +53,10 @@ export async function POST(req: Request) {
         pc: {
           connectOrCreate: {
             where: {
-              pc_id: item.PC_ID
+              pc_id_nos_id: {
+                pc_id: item.PC_ID,
+                nos_id: item.NOS_ID
+              }
             },
             create: {
               agency_id: agencyId,
