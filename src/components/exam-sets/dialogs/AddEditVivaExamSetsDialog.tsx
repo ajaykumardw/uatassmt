@@ -63,11 +63,6 @@ const initialData: AddQPDialogData = {
   totalQuestions: '',
   status: '',
   examDuration: '',
-  easy: '0',
-  medium: '0',
-  hard: '0',
-  questionRandom: false,
-  optionRandom: false,
 }
 
 
@@ -80,11 +75,6 @@ const schema = object(
     totalQuestions: pipe(string(), trim(), minLength(1, 'This field is required.'), check((value) => !value || /^(?:[1-9]|[1-4]\d|50)$/.test(value), 'Total Questions must be between 1 and 50 and must be a number.') ),
     status: pipe(string(), trim(), minLength(1, 'This field is required.')),
     examDuration: pipe(string(), trim(), minLength(1, 'This field is required.')),
-    easy: pipe(string(), trim(), minLength(1, 'This field is required.'), check((value) => !value || /^(?:0|[1-9]|[1-4]\d|50)(\.\d+)?$/.test(value), 'Easy must be between 0 and 50 and must be a number.') ),
-    medium: pipe(string(), trim(), minLength(1, 'This field is required.'), check((value) => !value || /^(?:0|[1-9]|[1-4]\d|50)(\.\d+)?$/.test(value), 'Medium must be between 0 and 50 and must be a number.') ),
-    hard: pipe(string(), trim(), minLength(1, 'This field is required.'), check((value) => !value || /^(?:0|[1-9]|[1-4]\d|50)(\.\d+)?$/.test(value), 'Hard must be between 0 and 50 and must be a number.') ),
-    questionRandom: optional(boolean()),
-    optionRandom: optional(boolean()),
   }
 );
 
@@ -105,9 +95,6 @@ const AddEditVivaExamSetsDialog = ({ open, examSetId, handleClose, updateExamSet
   const [selectedQuestions, setSelectedQuestions] = useState([]);
   const [selectedQuestion, setSelectedQuestion] = useState<{ [key: string]: boolean }>({});
 
-  const [easyCount, setEasyCount] = useState('');
-  const [mediumCount, setMediumCount] = useState('');
-  const [hardCount, setHardCount] = useState('');
   const [totalVivaMarks, setTotalVivaMarks] = useState(0);
   const [sumOfSelectedQuestionsMarks, setSumOfSelectedQuestionsMarks] = useState(0);
 
@@ -146,17 +133,8 @@ const AddEditVivaExamSetsDialog = ({ open, examSetId, handleClose, updateExamSet
         totalQuestions: examSet.total_questions,
         status: examSet.status,
         examDuration: examSet.exam_duration,
-        easy: examSet.question_levels && examSet.question_levels.E ? examSet.question_levels.E.toString() : '0',
-        medium: examSet.question_levels && examSet.question_levels.M ? examSet.question_levels.M.toString() : '1',
-        hard: examSet.question_levels && examSet.question_levels.H ? examSet.question_levels.H.toString() : '0',
-        questionRandom: examSet.question_random === 1,
-        optionRandom: examSet.option_random === 1,
       })
       setMode(examSet.mode);
-
-      setEasyCount(examSet.question_levels && examSet.question_levels.E ? examSet.question_levels.E.toString() : 0)
-      setMediumCount(examSet.question_levels && examSet.question_levels.M ? examSet.question_levels.M.toString() : 0)
-      setHardCount(examSet.question_levels && examSet.question_levels.H ? examSet.question_levels.H.toString() : 0)
 
       if (examSet.exam_sets_questions.length > 0) {
 
@@ -315,32 +293,27 @@ const AddEditVivaExamSetsDialog = ({ open, examSetId, handleClose, updateExamSet
       totalQuestions: examSetData?.totalQuestions.toString() || '',
       status: examSetData?.status.toString() || '',
       examDuration: examSetData?.examDuration || '',
-      easy: examSetData?.easy || '0',
-      medium: examSetData?.medium || '0',
-      hard: examSetData?.hard || '0',
-      questionRandom: examSetData?.questionRandom,
-      optionRandom: examSetData?.optionRandom,
     }
   })
 
-  useEffect(() => {
+  // useEffect(() => {
 
-    if(changedMode === 'Auto'){
+  //   if(changedMode === 'Auto'){
 
-      const totalCounts = Number(easyCount || 0) + Number(mediumCount || 0) + Number(hardCount || 0);
-      const totalQuestions = Number(getValues("totalQuestions")) || 0;
+  //     const totalCounts = Number(easyCount || 0) + Number(mediumCount || 0) + Number(hardCount || 0);
+  //     const totalQuestions = Number(getValues("totalQuestions")) || 0;
 
-      const isEqual = totalCounts === totalQuestions;
+  //     const isEqual = totalCounts === totalQuestions;
 
-      isEqual ? clearErrors(['easy', 'medium', 'hard']) : (setError('easy', {type: 'custom', message: 'The sum of Easy, Medium, and Hard questions must equal Total Questions.'}), setValue('easy', ''), setValue('medium', ''), setValue('hard', ''), setError('medium', {type: 'custom', message: 'The sum of Easy, Medium, and Hard questions must equal Total Questions.'}), setError('hard', {type: 'custom', message: 'The sum of Easy, Medium, and Hard questions must equal Total Questions.'}))
-    }else{
-      clearErrors(['easy', 'medium', 'hard']);
-      setValue('easy', '0');
-      setValue('medium', '0');
-      setValue('hard', '0');
-    }
+  //     isEqual ? clearErrors(['easy', 'medium', 'hard']) : (setError('easy', {type: 'custom', message: 'The sum of Easy, Medium, and Hard questions must equal Total Questions.'}), setValue('easy', ''), setValue('medium', ''), setValue('hard', ''), setError('medium', {type: 'custom', message: 'The sum of Easy, Medium, and Hard questions must equal Total Questions.'}), setError('hard', {type: 'custom', message: 'The sum of Easy, Medium, and Hard questions must equal Total Questions.'}))
+  //   }else{
+  //     clearErrors(['easy', 'medium', 'hard']);
+  //     setValue('easy', '0');
+  //     setValue('medium', '0');
+  //     setValue('hard', '0');
+  //   }
 
-  }, [changedMode, easyCount, mediumCount, hardCount, getValues]);
+  // }, [changedMode, easyCount, mediumCount, hardCount, getValues]);
 
   useEffect(() => {
     if(totalVivaMarks && sumOfSelectedQuestionsMarks){
@@ -578,7 +551,6 @@ const AddEditVivaExamSetsDialog = ({ open, examSetId, handleClose, updateExamSet
                       onChange={(e) => { field.onChange(e); setMode(e.target.value)}}
                       {...(errors.mode && { error: true, helperText: errors.mode.message })}
                     >
-                      <MenuItem value='Auto'>Auto</MenuItem>
                       <MenuItem value='Manual'>Manual</MenuItem>
                     </CustomTextField>
                   )}
@@ -632,106 +604,18 @@ const AddEditVivaExamSetsDialog = ({ open, examSetId, handleClose, updateExamSet
                 )}
               />
             </Grid>
-            {changedMode === 'Auto'  &&
-              <>
-                <Grid item xs={12} sm={4}>
-                  <Controller
-                    control={control}
-                    name='easy'
-                    rules={{ required: true }}
-                    render={({ field }) => (
-                      <CustomTextField
-                        multiline
-                        fullWidth
-                        required={true}
-                        {...field}
-                        onChange={e => { field.onChange(e); Number(e.target.value) > easyQuestions.length ? (setValue('easy', '0'), setEasyCount('0')) : setEasyCount(e.target.value) }}
-                        {...(errors.easy && { error: true, helperText: errors.easy.message })}
-                        label={`Easy (Available ${easyQuestions.length})`}
-                        placeholder='0'
-                      />
-                    )}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Controller
-                    control={control}
-                    name='medium'
-                    rules={{ required: true }}
-                    render={({ field }) => (
-                      <CustomTextField
-                        multiline
-                        fullWidth
-                        required={true}
-                        {...field}
-                        onChange={e => { field.onChange(e); Number(e.target.value) > mediumQuestions.length ? (setValue('medium', '0'), setMediumCount('0')) : setMediumCount(e.target.value) }}
-                        {...(errors.medium && { error: true, helperText: errors.medium.message })}
-                        label={`Medium (Available ${mediumQuestions.length})`}
-                        placeholder='0'
-                      />
-                    )}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Controller
-                    control={control}
-                    name='hard'
-                    rules={{ required: true }}
-                    render={({ field }) => (
-                      <CustomTextField
-                        multiline
-                        fullWidth
-                        required={true}
-                        {...field}
-                        onChange={e => { field.onChange(e); Number(e.target.value) > hardQuestions.length ? (setValue('hard', '0'), setHardCount('0')) : setHardCount(e.target.value)}}
-                        {...(errors.hard && { error: true, helperText: errors.hard.message })}
-                        label={`Hard (Available ${hardQuestions.length})`}
-                        placeholder='0'
-                      />
-                    )}
-                  />
-                </Grid>
-              </>
-            }
-            <Grid item xs={12}>
-              <div className="flex flex-wrap">
-                <FormControl error={Boolean(errors.questionRandom)}>
-                  <Controller
-                    name='questionRandom'
-                    control={control}
-                    rules={{ required: true }}
-                    render={({ field }) => (
-                      <FormControlLabel control={<Checkbox {...field} checked={field.value} />} label='Questions Random' />
-                    )}
-                  />
-                  {errors.questionRandom && <FormHelperText error>This field is required.</FormHelperText>}
-                </FormControl>
-                <FormControl error={Boolean(errors.optionRandom)}>
-                  <Controller
-                    name='optionRandom'
-                    control={control}
-                    rules={{ required: true }}
-                    render={({ field }) => (
-                      <FormControlLabel control={<Checkbox {...field} checked={field.value} />} label='Option Random' />
-                    )}
-                  />
-                  {errors.optionRandom && <FormHelperText error>This field is required.</FormHelperText>}
-                </FormControl>
-              </div>
-            </Grid>
-            {getValues('qpId') !== '' &&
+            {getValues('qpId') !== '' && <>
               <Grid item xs={12}>
                 <Typography color={theoryQuestions.length > 0 ? "primary" : "error"}>
                   Available Questions {theoryQuestions.length}
                 </Typography>
               </Grid>
-            }
-            {getValues('qpId') !== '' &&
               <Grid item xs={12}>
                 <Typography color={totalVivaMarks > 0 ? "primary" : "error"}>
                   Total Viva Marks {totalVivaMarks}
                 </Typography>
               </Grid>
+              </>
             }
             {changedMode === 'Manual' &&
               <Grid item xs={12}>

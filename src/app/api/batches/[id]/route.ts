@@ -68,7 +68,7 @@ export async function POST(
 
   const data = await req.json();
 
-  const {qpId, examSetId, batchName, batchSize, scheme, subScheme, trainingPartner, trainingCenter, assessmentStartDate, assessmentEndDate, loginRestrictCount, modeOfAssessment, captureImage, captureImageInSeconds} = data;
+  const {qpId, theoryExamSetId, practicalExamSetId, vivaExamSetId, batchName, batchSize, scheme, subScheme, trainingPartner, trainingCenter, assessmentStartDate, assessmentEndDate, loginRestrictCount, modeOfAssessment, captureImage, captureImageInSeconds} = data;
 
   const session = await getServerSession(authOptions);
 
@@ -93,7 +93,9 @@ export async function POST(
       data: {
         batch_name: batchName,
         qp_id: Number(qpId),
-        exam_set_id: examSetId ? Number(examSetId) : null,
+        theory_exam_set_id: theoryExamSetId ? Number(theoryExamSetId) : null,
+        practical_exam_set_id: practicalExamSetId ? Number(practicalExamSetId) : null,
+        viva_exam_set_id: vivaExamSetId ? Number(vivaExamSetId) : null,
         scheme_id: Number(scheme),
         sub_scheme_id: Number(subScheme),
         batch_size: batchSize,

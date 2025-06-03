@@ -34,7 +34,7 @@ import type { SSCType } from '@/types/sectorskills/sscType'
 import type { QPType } from '@/types/qualification-pack/qpType'
 import type { NOSType } from '@/types/nos/nosType'
 import { removeDuplicates } from '@/utils/removeDuplicates'
-import { PCType } from '@/types/pc/pcType'
+import type { PCType } from '@/types/pc/pcType'
 
 import { MenuProps } from '@/configs/customDataConfig';
 
@@ -291,6 +291,7 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
         type: 'custom',
         message: `Total marks of selected PCs is ${totalPCMarks}. Please update the marks accordingly.`
       })
+
       return;
     }
 

@@ -58,7 +58,9 @@ const schema = object(
   {
     sscId: pipe(string(), trim() , minLength(1, 'This field is required')),
     qpId: pipe(string(), trim() , minLength(1, 'This field is required')),
-    examSetId: optional(pipe(string(), trim())),
+    theoryExamSetId: optional(pipe(string(), trim())),
+    practicalExamSetId: optional(pipe(string(), trim())),
+    vivaExamSetId: optional(pipe(string(), trim())),
     batchName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'First Name must be at least 3 characters long') , maxLength(191, 'The max length for this field is 191 characters.')),
     batchSize: pipe(string(), trim() , minLength(1, 'This field is required') , maxLength(191, 'The max length for this field is 191 characters.')),
     scheme: pipe(string(), trim() , minLength(1, 'This field is required')),
@@ -82,7 +84,9 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
   // States
   const [isCaptureImage, setIsCaptureImage] = useState(!!data?.capture_image_in_seconds || false)
   const [qpData, setQPData] = useState<QPType[]>([])
-  const [examSetData, setExamSetData] = useState<exam_sets[]>([])
+  const [theoryExamSetData, setTheoryExamSetData] = useState<exam_sets[]>([])
+  const [practicalExamSetData, setPracticalExamSetData] = useState<exam_sets[]>([])
+  const [vivaExamSetData, setVivaExamSetData] = useState<exam_sets[]>([])
   const [trainingPartnerData, setTPData] = useState<users[]>(tpData || []);
   const [tcData, setTCData] = useState<users[]>(trainingCenters || []);
   const [schemes, setSchemes] = useState<SchemesType[]>(schemesData);
@@ -112,7 +116,9 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
     defaultValues: {
       sscId: data?.qualification_pack.ssc_id.toString() || '',
       qpId: '',
-      examSetId: '',
+      theoryExamSetId: '',
+      practicalExamSetId: '',
+      vivaExamSetId: '',
       batchName: data?.batch_name || '',
       batchSize: data?.batch_size || '',
       scheme: data?.scheme_id.toString() || '',
@@ -184,15 +190,22 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
 
     if (selectedQP) {
 
-      setExamSetData(selectedQP.exam_sets || []);
+      // setTheoryExamSetData(selectedQP.exam_sets || []);
+      setTheoryExamSetData((selectedQP.exam_sets || []).filter(set => set.set_type === 'T'));
+      setPracticalExamSetData((selectedQP.exam_sets || []).filter(set => set.set_type === 'P'));
+      setVivaExamSetData((selectedQP.exam_sets || []).filter(set => set.set_type === 'V'));
 
     } else {
 
-      setExamSetData([]);
+      setTheoryExamSetData([]);
+      setPracticalExamSetData([]);
+      setVivaExamSetData([]);
 
     }
 
-    setValue("examSetId", data?.exam_set_id ? data?.exam_set_id.toString() : '' );
+    setValue("theoryExamSetId", data?.theory_exam_set_id ? data?.theory_exam_set_id.toString() : '' );
+    setValue("practicalExamSetId", data?.practical_exam_set_id ? data?.practical_exam_set_id.toString() : '' );
+    setValue("vivaExamSetId", data?.viva_exam_set_id ? data?.viva_exam_set_id.toString() : '' );
   }
 
   const getSubSchemes = async (scheme: number) => {
@@ -290,7 +303,9 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
   const handleReset = () => {
     reset();
     setValue("qpId", data?.qp_id.toString() || '');
-    setValue("examSetId", data?.exam_set_id ? data?.exam_set_id.toString() : '');
+    setValue("theoryExamSetId", data?.theory_exam_set_id ? data?.theory_exam_set_id.toString() : '');
+    setValue("practicalExamSetId", data?.practical_exam_set_id ? data?.practical_exam_set_id.toString() : '');
+    setValue("vivaExamSetId", data?.viva_exam_set_id ? data?.viva_exam_set_id.toString() : '');
     setValue("scheme", data?.scheme_id.toString() || '');
     setValue("subScheme", data?.sub_scheme_id.toString() || '');
     setValue("trainingPartner", data?.training_partner_id.toString() || '');
@@ -321,7 +336,7 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
 
   const handleQPChange = async (qp: string) => {
 
-    resetField("examSetId", {defaultValue: ""})
+    resetField("theoryExamSetId", {defaultValue: ""})
 
     const qpId = Number(qp);
 
@@ -331,11 +346,11 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
 
     if (selectedQP) {
 
-      setExamSetData(selectedQP.exam_sets || []);
+      setTheoryExamSetData(selectedQP.exam_sets || []);
 
     } else {
 
-      setExamSetData([]);
+      setTheoryExamSetData([]);
 
     }
   }
@@ -869,7 +884,7 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
               </Grid>
               <Grid item xs={12} sm={6}>
                 <Controller
-                  name='examSetId'
+                  name='theoryExamSetId'
                   control={control}
                   rules={{ required: true }}
                   render={({ field }) => (
@@ -877,17 +892,69 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
                       select
                       required={true}
                       fullWidth
-                      label='Exam Set'
+                      label='Theory Exam Set'
                       {...field}
-                      {...(errors.examSetId && { error: true, helperText: errors.examSetId.message })}
+                      {...(errors.theoryExamSetId && { error: true, helperText: errors.theoryExamSetId.message })}
                     >
                       <MenuItem value=''>Select Exam Set</MenuItem>
-                      {examSetData && examSetData.length > 0 ? (
-                        examSetData.map((examSet) => (
+                      {theoryExamSetData && theoryExamSetData.length > 0 ? (
+                        theoryExamSetData.map((examSet) => (
                           <MenuItem key={examSet.id.toString()} value={examSet.id.toString()}>{examSet.set_name}</MenuItem>
                         ))
                       ) : (
-                        <MenuItem disabled>No Exam Set Found</MenuItem>
+                        <MenuItem disabled>No Theory Exam Set Found</MenuItem>
+                      )}
+                    </CustomTextField>
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='practicalExamSetId'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomTextField
+                      select
+                      required={true}
+                      fullWidth
+                      label='Practical Exam Set'
+                      {...field}
+                      {...(errors.practicalExamSetId && { error: true, helperText: errors.practicalExamSetId.message })}
+                    >
+                      <MenuItem value=''>Select Exam Set</MenuItem>
+                      {practicalExamSetData && practicalExamSetData.length > 0 ? (
+                        practicalExamSetData.map((examSet) => (
+                          <MenuItem key={examSet.id.toString()} value={examSet.id.toString()}>{examSet.set_name}</MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem disabled>No Practical Exam Set Found</MenuItem>
+                      )}
+                    </CustomTextField>
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='vivaExamSetId'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomTextField
+                      select
+                      required={true}
+                      fullWidth
+                      label='Viva Exam Set'
+                      {...field}
+                      {...(errors.vivaExamSetId && { error: true, helperText: errors.vivaExamSetId.message })}
+                    >
+                      <MenuItem value=''>Select Exam Set</MenuItem>
+                      {vivaExamSetData && vivaExamSetData.length > 0 ? (
+                        vivaExamSetData.map((examSet) => (
+                          <MenuItem key={examSet.id.toString()} value={examSet.id.toString()}>{examSet.set_name}</MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem disabled>No Viva Exam Set Found</MenuItem>
                       )}
                     </CustomTextField>
                   )}

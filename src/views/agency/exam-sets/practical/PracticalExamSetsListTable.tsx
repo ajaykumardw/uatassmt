@@ -53,7 +53,7 @@ import CustomTextField from '@core/components/mui/TextField'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 
-import AddEditExamSetsDialog from '@/components/exam-sets/dialogs/AddEditExamSetsDialog';
+// import AddEditExamSetsDialog from '@/components/exam-sets/dialogs/AddEditExamSetsDialog';
 
 import CustomAvatar from '@/@core/components/mui/Avatar';
 import { ExamDurations, MenuProps, TableRowLimit } from '@/configs/customDataConfig';
@@ -220,40 +220,26 @@ const PracticalExamSetsListTable = ({ tableData, updateExamSetsList }: { tableDa
           </div>
         )
       }),
-      columnHelper.accessor('question_random', {
-        header: 'Question Random',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-3'>
-            {/* <Chip
-              variant='tonal'
-              className='capitalize'
-              label='Question Random'
-              color='success'
-              size='small'
-            /> */}
-            <CustomAvatar skin='light' color={row.original.question_random === 1 ? 'success' : 'error'} size={28}>
-              <i className={classnames('bs-4 is-4', row.original.question_random == 1 ? 'tabler-check' : 'tabler-x')} />
-            </CustomAvatar>
-          </div>
-        )
-      }),
-      columnHelper.accessor('option_random', {
-        header: 'Option Random',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-3'>
-            {/* <Chip
-              variant='tonal'
-              className='capitalize'
-              label='Option Random'
-              color='success'
-              size='small'
-            /> */}
-            <CustomAvatar skin='light' color={row.original.option_random === 1 ? 'success' : 'error'} size={28}>
-              <i className={classnames('bs-4 is-4', row.original.option_random === 1 ? 'tabler-check' : 'tabler-x')} />
-            </CustomAvatar>
-          </div>
-        )
-      }),
+      // columnHelper.accessor('question_random', {
+      //   header: 'Question Random',
+      //   cell: ({ row }) => (
+      //     <div className='flex items-center gap-3'>
+      //       <CustomAvatar skin='light' color={row.original.question_random === 1 ? 'success' : 'error'} size={28}>
+      //         <i className={classnames('bs-4 is-4', row.original.question_random == 1 ? 'tabler-check' : 'tabler-x')} />
+      //       </CustomAvatar>
+      //     </div>
+      //   )
+      // }),
+      // columnHelper.accessor('option_random', {
+      //   header: 'Option Random',
+      //   cell: ({ row }) => (
+      //     <div className='flex items-center gap-3'>
+      //       <CustomAvatar skin='light' color={row.original.option_random === 1 ? 'success' : 'error'} size={28}>
+      //         <i className={classnames('bs-4 is-4', row.original.option_random === 1 ? 'tabler-check' : 'tabler-x')} />
+      //       </CustomAvatar>
+      //     </div>
+      //   )
+      // }),
       columnHelper.accessor('total_questions', {
         header: 'Total Questions',
         cell: ({ row }) => (
@@ -282,35 +268,35 @@ const PracticalExamSetsListTable = ({ tableData, updateExamSetsList }: { tableDa
           </div>
         )
       }),
-      columnHelper.accessor('question_levels', {
-        header: 'Question Levels',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-2'>
-            {row.original.question_levels && <>
-            <Chip
-              variant='tonal'
-              className='capitalize'
-              label={`Easy: ${(row.original.question_levels as QuestionLevels).E || 0}`}
-              color='success'
-              size='small'
-            />
-            <Chip
-              variant='tonal'
-              className='capitalize'
-              label={`Medium: ${(row.original.question_levels as QuestionLevels).M || 0}`}
-              color='warning'
-              size='small'
-            />
-            <Chip
-              variant='tonal'
-              className='capitalize'
-              label={`Hard: ${(row.original.question_levels as QuestionLevels).H || 0}`}
-              color='error'
-              size='small'
-            /> </>}
-          </div>
-        )
-      }),
+      // columnHelper.accessor('question_levels', {
+      //   header: 'Question Levels',
+      //   cell: ({ row }) => (
+      //     <div className='flex items-center gap-2'>
+      //       {row.original.question_levels && <>
+      //       <Chip
+      //         variant='tonal'
+      //         className='capitalize'
+      //         label={`Easy: ${(row.original.question_levels as QuestionLevels).E || 0}`}
+      //         color='success'
+      //         size='small'
+      //       />
+      //       <Chip
+      //         variant='tonal'
+      //         className='capitalize'
+      //         label={`Medium: ${(row.original.question_levels as QuestionLevels).M || 0}`}
+      //         color='warning'
+      //         size='small'
+      //       />
+      //       <Chip
+      //         variant='tonal'
+      //         className='capitalize'
+      //         label={`Hard: ${(row.original.question_levels as QuestionLevels).H || 0}`}
+      //         color='error'
+      //         size='small'
+      //       /> </>}
+      //     </div>
+      //   )
+      // }),
       columnHelper.accessor('action', {
         header: 'Action',
         cell: ({ row }) => (

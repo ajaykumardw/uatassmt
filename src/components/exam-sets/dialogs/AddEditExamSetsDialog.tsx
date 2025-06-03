@@ -717,12 +717,18 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
                 </FormControl>
               </div>
             </Grid>
-            {getValues('qpId') !== '' &&
+            {getValues('qpId') !== '' && <>
               <Grid item xs={12}>
                 <Typography color={theoryQuestions.length > 0 ? "primary" : "error"}>
                   Available Questions {theoryQuestions.length}
                 </Typography>
               </Grid>
+              <Grid item xs={12}>
+                <Typography color={totalTheoryMarks > 0 ? "primary" : "error"}>
+                  Total Theory Marks {totalTheoryMarks}
+                </Typography>
+              </Grid>
+              </>
             }
             {changedMode === 'Manual' &&
               <Grid item xs={12}>

@@ -29,7 +29,7 @@ import { toast } from 'react-toastify'
 
 
 
-import { string, trim, minLength, optional, check, pipe, pipeAsync, checkAsync, objectAsync, safeParseAsync, maxLength, optionalAsync } from "valibot"
+import { string, trim, minLength, optional, check, pipe, pipeAsync, checkAsync, objectAsync, safeParseAsync, maxLength, optionalAsync, number, union } from "valibot"
 
 import type { InferInput } from 'valibot'
 
@@ -214,9 +214,18 @@ const schema = objectAsync(
     NOS_Name: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), minLength(3, 'NOS name must be at least 3 characters long'), maxLength(255, 'The max length for this field is 255.')),
     PC_ID: optionalAsync(pipeAsync(string('This field should be string'), trim(), checkAsync(checkExistPCId, "PC ID already exist."), check(value => !value || !/\s/.test(value.toString()), 'PC ID should not contain any spaces.'))),
     PC_Name: optional(pipe(string('This field should be string'), trim(), maxLength(255, 'The max length for this field is 255.'))),
-    Theory_Marks: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Theory_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Theory_Marks must be a valid number.'),),
-    Practical_Marks: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Practical_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Practical_Marks must be a valid number.'),),
-    Viva_Marks: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Viva_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Viva_Marks must be a valid number.'),),
+    Theory_Marks: union([
+      number('This field is required'),
+      pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Theory_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Theory_Marks must be a valid number.')),
+    ]),
+    Practical_Marks: union([
+      number('This field is required'),
+      pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Practical_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Practical_Marks must be a valid number.'),)
+    ]),
+    Viva_Marks: union([
+      number('This field is required'),
+      pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Viva_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Viva_Marks must be a valid number.'),)
+    ]),
 
     // Question_Explanation: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), minLength(3, 'Question name must be at least 3 characters long')),
     // Marks: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), check((value) => !value || /^(?:[1-9]|1\d|2[0-5])(\.\d+)?$/.test(value), 'Marks must be between 1 and 25.'),),
@@ -332,19 +341,40 @@ const BulkUploadNOSDialog = ({ open, sscID, handleClose, updateNOSList }: BulkUp
 
             const mappedData = mapKeys(jsonData);
 
-            const pcIds = mappedData.map((item: any) => item.PC_ID);
+            // Assuming `combinedKeys` is an array of strings
+            const combinedKeys: string[] = mappedData.map((item: any) => `${item.NOS_ID}_${item.PC_ID}`);
+
+            // Create a frequency map to count occurrences of each combined key (nos_id + pc_id)
+            const frequencyMapNew: { [key: string]: number } = combinedKeys.reduce((acc, key) => {
+              acc[key] = (acc[key] || 0) + 1; // Increment the count for each combined key
+
+              return acc;
+            }, {} as { [key: string]: number }); // Explicitly type the accumulator
+
+            // Find the duplicates: Keys that appear more than once
+            const duplicates: string[] = Object.entries(frequencyMapNew)
+              .filter(([, count]) => count > 1)  // Find keys with more than 1 occurrence
+              .map(([key]) => key);  // Get the list of duplicate keys
+
+            const duplicateNosPC = new Set(duplicates);
+
+            // console.log("duplicate pc id with nos_id:", duplicates, duplicateNosPC);
+
+            // const pcIds = mappedData.map((item: any) => item.PC_ID);
 
             // const duplicatePCIds = pcIds.filter((id: any, index: number) => pcIds.indexOf(id) !== index);
             // Create a frequency map to count occurrences of each PC_ID
-            const frequencyMap = pcIds.reduce((acc, id) => {
-              acc[id] = (acc[id] || 0) + 1; // Increment the count for each PC_ID
+            // const frequencyMap = pcIds.reduce((acc, id) => {
+            //   acc[id] = (acc[id] || 0) + 1; // Increment the count for each PC_ID
 
-              return acc;
-            }, {});
+            //   return acc;
+            // }, {});
 
             // Filter to get only the duplicates
-            const duplicatePCIds = Object.keys(frequencyMap).filter(id => frequencyMap[id] > 1);
-            const duplicatesPC = new Set(duplicatePCIds);
+            // const duplicatePCIds = Object.keys(frequencyMap).filter(id => frequencyMap[id] > 1);
+            // const duplicatesPC = new Set(duplicatePCIds);
+
+            // console.log("duplicate pc:", duplicatePCIds, duplicatesPC);
 
             // Process questions
             const validatedData = [];
@@ -421,9 +451,17 @@ const BulkUploadNOSDialog = ({ open, sscID, handleClose, updateNOSList }: BulkUp
               } : null;
 
               // Check for duplicate Candidate IDs
-              const pcIdError = duplicatesPC.has(item.PC_ID) ? {
+              // const pcIdError = duplicatesPC.has(item.PC_ID) ? {
+              //   path: [{ key: 'PC_ID' }],
+              //   message: `PC ID "${item.PC_ID}" is duplicated.`
+              // } : null;
+
+              const combinedKey = `${item.NOS_ID}_${item.PC_ID}`;
+
+              // Check for duplicate Candidate IDs
+              const pcIdError = duplicateNosPC.has(combinedKey) ? {
                 path: [{ key: 'PC_ID' }],
-                message: `PC ID "${item.PC_ID}" is duplicated.`
+                message: `PC ID "${item.PC_ID}" is duplicated with same NOS ID.`
               } : null;
 
               const totalMarksError = (item.Theory_Marks + item.Practical_Marks + item.Viva_Marks ) == 0 ? {

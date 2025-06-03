@@ -19,8 +19,12 @@ model batches {
   scheme_id                 Int
   sub_scheme                schemes @relation("sub_scheme", fields: [sub_scheme_id], references: [id])
   sub_scheme_id             Int
-  exam_set_id               Int?
-  exam_set                  exam_sets? @relation(fields: [exam_set_id], references: [id])
+  theory_exam_set_id        Int?
+  theory_exam_set           exam_sets? @relation("theory_exam_set", fields: [theory_exam_set_id], references: [id])
+  practical_exam_set_id     Int?
+  practical_exam_set        exam_sets? @relation("practical_exam_set", fields: [practical_exam_set_id], references: [id])
+  viva_exam_set_id          Int?
+  viva_exam_set             exam_sets? @relation("viva_exam_set", fields: [viva_exam_set_id], references: [id])
   batch_size                String
   training_partner          users @relation("training_partner", fields: [training_partner_id], references: [id])
   training_partner_id       Int
@@ -198,7 +202,7 @@ model pc {
   agency_id  Int
   nos        nos       @relation(fields: [nos_id], references: [id])
   nos_id     Int
-  pc_id      String    @unique @db.VarChar(100)
+  pc_id      String    @db.VarChar(100)
   pc_name    String    @db.VarChar(255)
   theory_marks    Decimal @db.Decimal(10, 2)
   practical_marks Decimal @db.Decimal(10, 2)
@@ -209,6 +213,8 @@ model pc {
   updated_at DateTime? @default(now()) @db.DateTime(0)
 
   questions questions[]
+
+  @@unique([pc_id, nos_id])
 }
 
 // model pc_questions {
@@ -500,7 +506,9 @@ model exam_sets {
   updated_at      DateTime      @default(now()) @updatedAt @db.DateTime(0)
 
   exam_sets_questions exam_sets_questions[]
-  batch               batches[]
+  batch               batches[] @relation("theory_exam_set")
+  practical_batch     batches[] @relation("practical_exam_set")
+  viva_batch          batches[] @relation("viva_exam_set")
   qp                  qualification_packs @relation(fields: [qp_id], references: [id])
 }
 
