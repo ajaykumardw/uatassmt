@@ -25,7 +25,7 @@ export async function GET() {
           assessment_end_datetime: true,
           login_restrict: true,
           capture_image_in_seconds: true,
-          exam_set: {
+          theory_exam_set: {
             include: {
               exam_sets_questions: {
                 select: {
@@ -44,16 +44,56 @@ export async function GET() {
                 }
               }
             }
-          }
+          },
+          practical_exam_set: {
+            include: {
+              exam_sets_questions: {
+                select: {
+                  question_id: true,
+                  marks: true,
+                  questions: {
+                    select: {
+                      question: true,
+                      option1: true,
+                      option2: true,
+                      option3: true,
+                      option4: true,
+                      option5: true,
+                    }
+                  }
+                }
+              }
+            }
+          },
+          viva_exam_set: {
+            include: {
+              exam_sets_questions: {
+                select: {
+                  question_id: true,
+                  marks: true,
+                  questions: {
+                    select: {
+                      question: true,
+                      option1: true,
+                      option2: true,
+                      option3: true,
+                      option4: true,
+                      option5: true,
+                    }
+                  }
+                }
+              }
+            }
+          },
         }
       }
     }
   })
 
   // Check if the exam_set is random and shuffle the questions
-  if (exam?.batch?.exam_set?.question_random) {
+  if (exam?.batch?.theory_exam_set?.question_random) {
     // Shuffle the exam_sets_questions array
-    exam.batch.exam_set.exam_sets_questions = exam.batch.exam_set.exam_sets_questions.sort(() => Math.random() - 0.5);
+    exam.batch.theory_exam_set.exam_sets_questions = exam.batch.theory_exam_set.exam_sets_questions.sort(() => Math.random() - 0.5);
   }
 
   // console.log("exam set data", exam)

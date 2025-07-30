@@ -78,13 +78,13 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
     <ScrollWrapper
       {...(isBreakpointReached
         ? {
-            className: 'bs-full overflow-y-auto overflow-x-hidden',
-            onScroll: container => scrollMenu(container, false)
-          }
+          className: 'bs-full overflow-y-auto overflow-x-hidden',
+          onScroll: container => scrollMenu(container, false)
+        }
         : {
-            options: { wheelPropagation: false, suppressScrollX: true },
-            onScrollY: container => scrollMenu(container, true)
-          })}
+          options: { wheelPropagation: false, suppressScrollX: true },
+          onScrollY: container => scrollMenu(container, true)
+        })}
     >
       {/* Incase you also want to scroll NavHeader to scroll with Vertical Menu, remove NavHeader from above and paste it below this comment */}
       {/* Vertical Menu */}
@@ -104,7 +104,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
 
         >
           <MenuItem href={`/${locale}/dashboards/crm`}>{dictionary['navigation'].crm}</MenuItem> */}
-          {/* <MenuItem href={`/${locale}/dashboards/analytics`}>{dictionary['navigation'].analytics}</MenuItem>
+        {/* <MenuItem href={`/${locale}/dashboards/analytics`}>{dictionary['navigation'].analytics}</MenuItem>
           <MenuItem href={`/${locale}/dashboards/ecommerce`}>{dictionary['navigation'].eCommerce}</MenuItem> */}
         {/* </SubMenu> */}
         <MenuItem href={`/${locale}/dashboards/crm`} icon={<i className='tabler-smart-home' />}>
@@ -127,8 +127,8 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
         </MenuItem> */}
         <SubMenu label={dictionary['navigation'].examSets} icon={<i className='tabler-stack-2' />}>
           <MenuItem href={`/${locale}/exam-sets`}>Theory Set</MenuItem>
-          <MenuItem href={`/${locale}/batches/today`}>Practical Set</MenuItem>
-          <MenuItem href={`/${locale}/batches/pending`}>Viva Set</MenuItem>
+          <MenuItem href={`/${locale}/exam-sets/practical`}>Practical Set</MenuItem>
+          <MenuItem href={`/${locale}/exam-sets/viva`}>Viva Set</MenuItem>
         </SubMenu>
         <SubMenu label={dictionary['navigation'].batches} icon={<i className='tabler-stack-2' />}>
           <MenuItem href={`/${locale}/batches/list`}>{dictionary['navigation'].list}</MenuItem>

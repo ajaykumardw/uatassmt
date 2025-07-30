@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react"
 
-import ExamSetsList from "@views/agency/exam-sets/list"
+import VivaExamSetsList from "@/views/agency/exam-sets/viva"
 import SkeletonTable from '@/components/skeleton/SkeletonTable'
 
 const ExamSets = () => {
@@ -14,7 +14,7 @@ const ExamSets = () => {
 
   const getExamSetsData = async () => {
     // Vars
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/exam-sets`)
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/exam-sets?setType=V`)
 
     if (!res.ok) {
       throw new Error('Failed to fetch Exam Sets')
@@ -37,7 +37,7 @@ const ExamSets = () => {
   };
 
   if(!loading){
-    return <ExamSetsList questionsData={data} updateExamSetsList={updateExamSetsList} />
+    return <VivaExamSetsList questionsData={data} updateExamSetsList={updateExamSetsList} />
   }else{
     return <SkeletonTable />
   }

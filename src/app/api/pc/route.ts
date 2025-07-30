@@ -36,8 +36,10 @@ export async function POST(req: Request) {
 
   const pcExist = await prisma.pc.findUnique({
     where: {
-      nos_id: nosId,
-      pc_id: pcId,
+      pc_id_nos_id: {
+        nos_id: nosId,
+        pc_id: pcId,
+      },
       agency_id: agency_id
     }
   })

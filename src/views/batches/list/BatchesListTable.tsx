@@ -43,7 +43,7 @@ import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 // import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
-import type { batches, schemes, students, users } from '@prisma/client'
+import type { batches, exam_sets, schemes, students, users } from '@prisma/client'
 
 import { toast } from 'react-toastify'
 
@@ -98,6 +98,9 @@ type BatchesTypeWithAction = batches & {
   sub_scheme: schemes
   students?: students[]
   assessor: UsersType
+  theory_exam_set: exam_sets
+  practical_exam_set: exam_sets
+  viva_exam_set: exam_sets
 
   // role: role
 }
@@ -441,6 +444,62 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
               </Button>
             )}
 
+          </>
+        )
+      }),
+      columnHelper.accessor('theory_exam_set.set_name', {
+        header: 'Theory Exam Set',
+        cell: ({ row }) => (
+          <>
+            <Typography color='text.primary' >
+              {row.original.theory_exam_set?.set_name}
+            </Typography>
+            {/* {row.original.theory_exam_set && row.original.theory_exam_set.id ? (
+              <Tooltip title='Remove Exam Set'>
+                <CustomIconButton
+                  variant='tonal'
+                  size='small'
+                  color='error'
+                  onClick={() => handleRemoveAssessor(row.original.id)}
+                  className='is-full sm:is-auto'
+                  disabled={loadingId === row.original.id}
+                >
+                  {loadingId === row.original.id ? <CircularProgress size={20} color='inherit' /> : <i className='tabler-trash' />}
+                </CustomIconButton>
+              </Tooltip>
+            ) :
+            (
+              <Button
+                variant='tonal'
+                size='small'
+                startIcon={<i className='tabler-plus' />}
+                onClick={() => handleAssignAssessor(row.original)}
+                className='is-full sm:is-auto'
+              >
+                Assign
+              </Button>
+            )} */}
+
+          </>
+        )
+      }),
+      columnHelper.accessor('practical_exam_set.set_name', {
+        header: 'Practical Exam Set',
+        cell: ({ row }) => (
+          <>
+            <Typography color='text.primary' >
+              {row.original.practical_exam_set?.set_name}
+            </Typography>
+          </>
+        )
+      }),
+      columnHelper.accessor('viva_exam_set.set_name', {
+        header: 'Viva Exam Set',
+        cell: ({ row }) => (
+          <>
+            <Typography color='text.primary' >
+              {row.original.viva_exam_set?.set_name}
+            </Typography>
           </>
         )
       }),

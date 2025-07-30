@@ -33,8 +33,8 @@ import CustomTextField from '@core/components/mui/TextField'
 import type { SSCType } from '@/types/sectorskills/sscType'
 import type { QPType } from '@/types/qualification-pack/qpType'
 import { removeDuplicates } from '@/utils/removeDuplicates'
-import { PCType } from '@/types/pc/pcType'
-import { NOSType } from '@/types/nos/nosType'
+import type { PCType } from '@/types/pc/pcType'
+import type { NOSType } from '@/types/nos/nosType'
 import { MenuProps } from '@/configs/customDataConfig';
 
 type AddQPDialogData = InferInput<typeof schema>
@@ -283,6 +283,7 @@ const AddEditVivaQuestionsDialog = ({ open, questionId, handleClose, updateQuest
         type: 'custom',
         message: `Total marks of selected PCs is ${totalPCMarks}. Please update the marks accordingly.`
       })
+
       return;
     }
 

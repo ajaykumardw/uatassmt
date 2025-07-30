@@ -71,6 +71,27 @@ export async function GET(req: Request) {
           last_name: true
         }
       },
+      theory_exam_set: {
+        select: {
+          id: true,
+          set_name: true,
+          set_type: true,
+        }
+      },
+      practical_exam_set: {
+        select: {
+          id: true,
+          set_name: true,
+          set_type: true,
+        }
+      },
+      viva_exam_set: {
+        select: {
+          id: true,
+          set_name: true,
+          set_type: true,
+        }
+      },
       scheme: {
         select: {
           id: true,
@@ -101,7 +122,7 @@ export async function POST(req: Request) {
 
   const data = await req.json();
 
-  const {qpId, examSetId, batchName, batchSize, scheme, subScheme, trainingPartner, trainingCenter, assessmentStartDate, assessmentEndDate, loginRestrictCount, modeOfAssessment, captureImage, captureImageInSeconds} = data;
+  const {qpId, theoryExamSetId, practicalExamSetId, vivaExamSetId, batchName, batchSize, scheme, subScheme, trainingPartner, trainingCenter, assessmentStartDate, assessmentEndDate, loginRestrictCount, modeOfAssessment, captureImage, captureImageInSeconds} = data;
 
   const session = await getServerSession(authOptions);
   const createdBy = Number(session?.user.id);
@@ -111,7 +132,9 @@ export async function POST(req: Request) {
     data: {
       batch_name: batchName,
       qp_id: Number(qpId),
-      exam_set_id: examSetId ? Number(examSetId) : null,
+      theory_exam_set_id: theoryExamSetId ? Number(theoryExamSetId) : null,
+      practical_exam_set_id: practicalExamSetId ? Number(practicalExamSetId) : null,
+      viva_exam_set_id: vivaExamSetId ? Number(vivaExamSetId) : null,
       scheme_id: Number(scheme),
       sub_scheme_id: Number(subScheme),
       batch_size: batchSize,

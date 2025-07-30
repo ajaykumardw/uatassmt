@@ -12,7 +12,7 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import MenuItem from '@mui/material/MenuItem'
 
-import { Checkbox, CircularProgress, FormControl, FormControlLabel, FormHelperText, Typography } from '@mui/material'
+import { CircularProgress, Typography } from '@mui/material'
 
 // Component Imports
 import { toast } from 'react-toastify'
@@ -23,7 +23,7 @@ import type { SubmitHandler } from 'react-hook-form'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, string, trim, minLength, optional, check, pipe, boolean } from "valibot"
+import { object, string, trim, minLength, check, pipe } from "valibot"
 
 import type { InferInput } from 'valibot'
 
@@ -44,6 +44,7 @@ import { ExamDurations } from '@/configs/customDataConfig'
 
 type AddQPDialogData = InferInput<typeof schema> & {
   selectedQuestions?: number[]
+  set_type?: 'T' | 'P' | 'V'
 }
 
 type AddQPDialogProps = {
@@ -62,11 +63,6 @@ const initialData: AddQPDialogData = {
   totalQuestions: '',
   status: '',
   examDuration: '',
-  easy: '0',
-  medium: '0',
-  hard: '0',
-  questionRandom: false,
-  optionRandom: false,
 }
 
 
@@ -79,17 +75,12 @@ const schema = object(
     totalQuestions: pipe(string(), trim(), minLength(1, 'This field is required.'), check((value) => !value || /^(?:[1-9]|[1-4]\d|50)$/.test(value), 'Total Questions must be between 1 and 50 and must be a number.') ),
     status: pipe(string(), trim(), minLength(1, 'This field is required.')),
     examDuration: pipe(string(), trim(), minLength(1, 'This field is required.')),
-    easy: pipe(string(), trim(), minLength(1, 'This field is required.'), check((value) => !value || /^(?:0|[1-9]|[1-4]\d|50)(\.\d+)?$/.test(value), 'Easy must be between 0 and 50 and must be a number.') ),
-    medium: pipe(string(), trim(), minLength(1, 'This field is required.'), check((value) => !value || /^(?:0|[1-9]|[1-4]\d|50)(\.\d+)?$/.test(value), 'Medium must be between 0 and 50 and must be a number.') ),
-    hard: pipe(string(), trim(), minLength(1, 'This field is required.'), check((value) => !value || /^(?:0|[1-9]|[1-4]\d|50)(\.\d+)?$/.test(value), 'Hard must be between 0 and 50 and must be a number.') ),
-    questionRandom: optional(boolean()),
-    optionRandom: optional(boolean()),
   }
 );
 
 
 
-const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsList }: AddQPDialogProps) => {
+const AddEditPracticalExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsList }: AddQPDialogProps) => {
 
   // States
   const [examSetData, setExamSetData] = useState<AddQPDialogProps['data']>(initialData)
@@ -98,16 +89,10 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
   const [qpData, setQPData] = useState<QPType[]>([]);
   const [changedMode, setMode] = useState<string>('');
   const [theoryQuestions, setTheoryQuestions] = useState<questions[]>([]);
-  const [easyQuestions, setEasyQuestions] = useState<questions[]>([]);
-  const [mediumQuestions, setMediumQuestions] = useState<questions[]>([]);
-  const [hardQuestions, setHardQuestions] = useState<questions[]>([]);
   const [selectedQuestions, setSelectedQuestions] = useState([]);
   const [selectedQuestion, setSelectedQuestion] = useState<{ [key: string]: boolean }>({});
 
-  const [easyCount, setEasyCount] = useState('');
-  const [mediumCount, setMediumCount] = useState('');
-  const [hardCount, setHardCount] = useState('');
-  const [totalTheoryMarks, setTotalTheoryMarks] = useState(0);
+  const [totalPracticalMarks, setTotalPracticalMarks] = useState(0);
   const [sumOfSelectedQuestionsMarks, setSumOfSelectedQuestionsMarks] = useState(0);
 
   const getSSCData = async () => {
@@ -145,17 +130,8 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
         totalQuestions: examSet.total_questions,
         status: examSet.status,
         examDuration: examSet.exam_duration,
-        easy: examSet.question_levels && examSet.question_levels.E ? examSet.question_levels.E.toString() : '0',
-        medium: examSet.question_levels && examSet.question_levels.M ? examSet.question_levels.M.toString() : '1',
-        hard: examSet.question_levels && examSet.question_levels.H ? examSet.question_levels.H.toString() : '0',
-        questionRandom: examSet.question_random === 1,
-        optionRandom: examSet.option_random === 1,
       })
       setMode(examSet.mode);
-
-      setEasyCount(examSet.question_levels && examSet.question_levels.E ? examSet.question_levels.E.toString() : 0)
-      setMediumCount(examSet.question_levels && examSet.question_levels.M ? examSet.question_levels.M.toString() : 0)
-      setHardCount(examSet.question_levels && examSet.question_levels.H ? examSet.question_levels.H.toString() : 0)
 
       if (examSet.exam_sets_questions.length > 0) {
 
@@ -185,11 +161,11 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
 
 
       if (selectedQP) {
-        console.log('selectedQP?.total_theory_marks: ', selectedQP?.total_theory_marks);
+        console.log('selectedQP?.total_practical_marks: ', selectedQP?.total_practical_marks);
 
-        setTotalTheoryMarks(selectedQP.total_theory_marks);
+        setTotalPracticalMarks(selectedQP.total_practical_marks);
 
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions?qpId=${qpId}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions?qpId=${qpId}&qType=practical`);
 
         if(!res.ok){
           throw new Error('Failed to fetch Theory question data')
@@ -197,23 +173,24 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
 
         const theory:questions[] = await res.json();
 
-        const easyQuestions = theory.filter(q => q.question_level === 'E');
-        const mediumQuestions = theory.filter(q => q.question_level === 'M');
-        const hardQuestions = theory.filter(q => q.question_level === 'H');
+        // const easyQuestions = theory.filter(q => q.question_level === 'E');
+        // const mediumQuestions = theory.filter(q => q.question_level === 'M');
+        // const hardQuestions = theory.filter(q => q.question_level === 'H');
 
-        setEasyQuestions(easyQuestions);
-        setMediumQuestions(mediumQuestions);
-        setHardQuestions(hardQuestions);
+        // setEasyQuestions(easyQuestions);
+        // setMediumQuestions(mediumQuestions);
+        // setHardQuestions(hardQuestions);
 
         setTheoryQuestions(theory);
 
       } else {
 
-        setTotalTheoryMarks(0);
+        setTotalPracticalMarks(0);
 
-        setEasyQuestions([]);
-        setMediumQuestions([]);
-        setHardQuestions([]);
+        // setEasyQuestions([]);
+        // setMediumQuestions([]);
+        // setHardQuestions([]);
+
         setTheoryQuestions([]);
       }
     } else {
@@ -265,15 +242,15 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
     // const selectedSSC = sscData.find(ssc => ssc.id === Number(getValues("sscId")));
     const selectedQP = qpData.find(qp => qp.id === qpId);
 
-    console.log('total marks: ', selectedQP?.total_theory_marks);
+    console.log('total marks: ', selectedQP?.total_practical_marks);
 
     if(selectedQP){
-      setTotalTheoryMarks(selectedQP.total_theory_marks);
+      setTotalPracticalMarks(selectedQP.total_practical_marks);
     }else {
-      setTotalTheoryMarks(0);
+      setTotalPracticalMarks(0);
     }
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions?qpId=${qpId}`);
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions?qpId=${qpId}&qType=practical`);
 
     if(!res.ok){
       throw new Error('Failed to fetch Theory question data')
@@ -281,13 +258,13 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
 
     const theory: questions[] = await res.json();
 
-    const easyQuestions = theory.filter(q => q.question_level === 'E');
-    const mediumQuestions = theory.filter(q => q.question_level === 'M');
-    const hardQuestions = theory.filter(q => q.question_level === 'H');
+    // const easyQuestions = theory.filter(q => q.question_level === 'E');
+    // const mediumQuestions = theory.filter(q => q.question_level === 'M');
+    // const hardQuestions = theory.filter(q => q.question_level === 'H');
 
-    setEasyQuestions(easyQuestions);
-    setMediumQuestions(mediumQuestions);
-    setHardQuestions(hardQuestions);
+    // setEasyQuestions(easyQuestions);
+    // setMediumQuestions(mediumQuestions);
+    // setHardQuestions(hardQuestions);
 
     setTheoryQuestions(theory);
 
@@ -298,7 +275,6 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
     control,
     reset,
     handleSubmit,
-    setValue,
     setError,
     clearErrors,
     getValues,
@@ -314,46 +290,42 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
       totalQuestions: examSetData?.totalQuestions.toString() || '',
       status: examSetData?.status.toString() || '',
       examDuration: examSetData?.examDuration || '',
-      easy: examSetData?.easy || '0',
-      medium: examSetData?.medium || '0',
-      hard: examSetData?.hard || '0',
-      questionRandom: examSetData?.questionRandom,
-      optionRandom: examSetData?.optionRandom,
     }
   })
 
+  // useEffect(() => {
+
+  //   if(changedMode === 'Auto'){
+
+  //     // const totalCounts = Number(easyCount || 0) + Number(mediumCount || 0) + Number(hardCount || 0);
+  //     // const totalQuestions = Number(getValues("totalQuestions")) || 0;
+
+  //     // const isEqual = totalCounts === totalQuestions;
+
+  //     // isEqual ? clearErrors(['easy', 'medium', 'hard']) : (setError('easy', {type: 'custom', message: 'The sum of Easy, Medium, and Hard questions must equal Total Questions.'}), setValue('easy', ''), setValue('medium', ''), setValue('hard', ''), setError('medium', {type: 'custom', message: 'The sum of Easy, Medium, and Hard questions must equal Total Questions.'}), setError('hard', {type: 'custom', message: 'The sum of Easy, Medium, and Hard questions must equal Total Questions.'}))
+
+  //   }else{
+  //     clearErrors(['easy', 'medium', 'hard']);
+  //     setValue('easy', '0');
+  //     setValue('medium', '0');
+  //     setValue('hard', '0');
+  //   }
+
+  // }, [changedMode, easyCount, mediumCount, hardCount, getValues]);
+
   useEffect(() => {
+    if(totalPracticalMarks && sumOfSelectedQuestionsMarks){
 
-    if(changedMode === 'Auto'){
-
-      const totalCounts = Number(easyCount || 0) + Number(mediumCount || 0) + Number(hardCount || 0);
-      const totalQuestions = Number(getValues("totalQuestions")) || 0;
-
-      const isEqual = totalCounts === totalQuestions;
-
-      isEqual ? clearErrors(['easy', 'medium', 'hard']) : (setError('easy', {type: 'custom', message: 'The sum of Easy, Medium, and Hard questions must equal Total Questions.'}), setValue('easy', ''), setValue('medium', ''), setValue('hard', ''), setError('medium', {type: 'custom', message: 'The sum of Easy, Medium, and Hard questions must equal Total Questions.'}), setError('hard', {type: 'custom', message: 'The sum of Easy, Medium, and Hard questions must equal Total Questions.'}))
-    }else{
-      clearErrors(['easy', 'medium', 'hard']);
-      setValue('easy', '0');
-      setValue('medium', '0');
-      setValue('hard', '0');
-    }
-
-  }, [changedMode, easyCount, mediumCount, hardCount, getValues]);
-
-  useEffect(() => {
-    if(totalTheoryMarks && sumOfSelectedQuestionsMarks){
-
-      const isEqual = totalTheoryMarks === sumOfSelectedQuestionsMarks;
+      const isEqual = totalPracticalMarks === sumOfSelectedQuestionsMarks;
 
       if(isEqual){
         clearErrors(['totalQuestions']);
       } else {
-        setError('totalQuestions', {type: 'custom', message: 'The sum of selected questions marks must equal to Total Theory Marks.'});
+        setError('totalQuestions', {type: 'custom', message: `The sum of selected questions marks must equal to Total Practical Marks. ${totalPracticalMarks}`});
       }
 
     }
-  }, [totalTheoryMarks, sumOfSelectedQuestionsMarks])
+  }, [totalPracticalMarks, sumOfSelectedQuestionsMarks])
 
   const onSubmit: SubmitHandler<AddQPDialogData> = async (data: AddQPDialogData) => {
     // e.preventDefault();
@@ -361,6 +333,7 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
     setLoading(true)
 
     data.selectedQuestions = selectedQuestions;
+    data.set_type = 'P'
 
     if (examSetId) {
 
@@ -461,7 +434,7 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
         <i className='tabler-x' />
       </DialogCloseButton>
       <DialogTitle variant='h4' className='flex gap-2 flex-col text-center sm:pbs-16 sm:pbe-6 sm:pli-16'>
-        {examSetId ? 'Edit Exam Set' : 'Add Exam Set'}
+        {examSetId ? 'Edit Practical Exam Set' : 'Add Practical Exam Set'}
       </DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent className='overflow-visible pbs-0 sm:pli-16'>
@@ -576,7 +549,6 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
                       onChange={(e) => { field.onChange(e); setMode(e.target.value)}}
                       {...(errors.mode && { error: true, helperText: errors.mode.message })}
                     >
-                      <MenuItem value='Auto'>Auto</MenuItem>
                       <MenuItem value='Manual'>Manual</MenuItem>
                     </CustomTextField>
                   )}
@@ -630,93 +602,6 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
                 )}
               />
             </Grid>
-            {changedMode === 'Auto'  &&
-              <>
-                <Grid item xs={12} sm={4}>
-                  <Controller
-                    control={control}
-                    name='easy'
-                    rules={{ required: true }}
-                    render={({ field }) => (
-                      <CustomTextField
-                        multiline
-                        fullWidth
-                        required={true}
-                        {...field}
-                        onChange={e => { field.onChange(e); Number(e.target.value) > easyQuestions.length ? (setValue('easy', '0'), setEasyCount('0')) : setEasyCount(e.target.value) }}
-                        {...(errors.easy && { error: true, helperText: errors.easy.message })}
-                        label={`Easy (Available ${easyQuestions.length})`}
-                        placeholder='0'
-                      />
-                    )}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Controller
-                    control={control}
-                    name='medium'
-                    rules={{ required: true }}
-                    render={({ field }) => (
-                      <CustomTextField
-                        multiline
-                        fullWidth
-                        required={true}
-                        {...field}
-                        onChange={e => { field.onChange(e); Number(e.target.value) > mediumQuestions.length ? (setValue('medium', '0'), setMediumCount('0')) : setMediumCount(e.target.value) }}
-                        {...(errors.medium && { error: true, helperText: errors.medium.message })}
-                        label={`Medium (Available ${mediumQuestions.length})`}
-                        placeholder='0'
-                      />
-                    )}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Controller
-                    control={control}
-                    name='hard'
-                    rules={{ required: true }}
-                    render={({ field }) => (
-                      <CustomTextField
-                        multiline
-                        fullWidth
-                        required={true}
-                        {...field}
-                        onChange={e => { field.onChange(e); Number(e.target.value) > hardQuestions.length ? (setValue('hard', '0'), setHardCount('0')) : setHardCount(e.target.value)}}
-                        {...(errors.hard && { error: true, helperText: errors.hard.message })}
-                        label={`Hard (Available ${hardQuestions.length})`}
-                        placeholder='0'
-                      />
-                    )}
-                  />
-                </Grid>
-              </>
-            }
-            <Grid item xs={12}>
-              <div className="flex flex-wrap">
-                <FormControl error={Boolean(errors.questionRandom)}>
-                  <Controller
-                    name='questionRandom'
-                    control={control}
-                    rules={{ required: true }}
-                    render={({ field }) => (
-                      <FormControlLabel control={<Checkbox {...field} checked={field.value} />} label='Questions Random' />
-                    )}
-                  />
-                  {errors.questionRandom && <FormHelperText error>This field is required.</FormHelperText>}
-                </FormControl>
-                <FormControl error={Boolean(errors.optionRandom)}>
-                  <Controller
-                    name='optionRandom'
-                    control={control}
-                    rules={{ required: true }}
-                    render={({ field }) => (
-                      <FormControlLabel control={<Checkbox {...field} checked={field.value} />} label='Option Random' />
-                    )}
-                  />
-                  {errors.optionRandom && <FormHelperText error>This field is required.</FormHelperText>}
-                </FormControl>
-              </div>
-            </Grid>
             {getValues('qpId') !== '' && <>
               <Grid item xs={12}>
                 <Typography color={theoryQuestions.length > 0 ? "primary" : "error"}>
@@ -724,8 +609,8 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
                 </Typography>
               </Grid>
               <Grid item xs={12}>
-                <Typography color={totalTheoryMarks > 0 ? "primary" : "error"}>
-                  Total Theory Marks {totalTheoryMarks}
+                <Typography color={totalPracticalMarks > 0 ? "primary" : "error"}>
+                  Total Practical Marks {totalPracticalMarks}
                 </Typography>
               </Grid>
               </>
@@ -751,4 +636,4 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
   )
 }
 
-export default AddEditExamSetsDialog
+export default AddEditPracticalExamSetsDialog

@@ -37,7 +37,8 @@ export async function GET() {
           exam_sets: {
             select: {
               id: true,
-              set_name: true
+              set_name: true,
+              set_type: true,
             }
           }
         }

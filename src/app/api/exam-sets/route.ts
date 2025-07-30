@@ -8,15 +8,21 @@ import { authOptions } from '@/libs/auth';
 
 import prisma from '@/libs/prisma';
 
-export async function GET() {
+export async function GET(req: Request) {
 
   const session = await getServerSession(authOptions);
   const agency_id = Number(session?.user?.agency_id)
 
+  const url = new URL(await req.url);
+  const setType = url.searchParams.get('setType');
+
+  const whereCondition = {
+    agency_id: agency_id,
+    set_type: (setType ? setType : 'T') as 'T' | 'P' | 'V',
+  };
+
   const examSets = await prisma.exam_sets.findMany({
-    where:{
-      agency_id: agency_id
-    },
+    where: whereCondition,
     include: {
       exam_sets_questions: {
         include: {
@@ -47,7 +53,8 @@ export async function POST(req: Request) {
     hard,
     questionRandom,
     optionRandom,
-    selectedQuestions
+    selectedQuestions,
+    set_type
   } = await req.json();
 
   const session = await getServerSession(authOptions);
@@ -83,6 +90,7 @@ export async function POST(req: Request) {
         ssc_id: Number(sscId),
         qp_id: Number(qpId),
         set_name: setName,
+        set_type: set_type,
         mode: mode,
         total_questions: Number(totalQuestions),
         status: Number(status),
