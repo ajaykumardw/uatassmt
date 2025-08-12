@@ -14,8 +14,11 @@ export async function GET(
   context: { params: { id: string } }
 ) {
   const url = new URL(await req.url);
-  const sscId = url.searchParams.get('sscId');
-  const qpId = url.searchParams.get('qpId');
+
+  // const sscId = url.searchParams.get('sscId');
+  // const qpId = url.searchParams.get('qpId');
+
+  const nosId = url.searchParams.get('nosId');
   const unique = url.searchParams.get('unique');
   const id = decodeURIComponent(context.params.id.toString());
 
@@ -46,15 +49,24 @@ export async function GET(
     where: {
       pc_id: id,
       nos: {
-        ssc_id: Number(sscId),
-        qualification_packs: {
-          some: {
-            id: Number(qpId),
-          },
-        }
+        nos_id: nosId ? nosId : undefined
       }
     }
   })
+  
+  // const pc = await prisma.pc.findFirst({
+  //   where: {
+  //     pc_id: id,
+  //     nos: {
+  //       ssc_id: Number(sscId),
+  //       qualification_packs: {
+  //         some: {
+  //           id: Number(qpId),
+  //         },
+  //       }
+  //     }
+  //   }
+  // })
 
   return NextResponse.json(pc);
 }

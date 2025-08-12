@@ -216,11 +216,51 @@ const PCWiseReportTable = () => {
     }
   };
 
+  function transformTheoryExamSet(theory_exam_set: exam_sets & { exam_sets_questions: { questions: { pc: { nos_id: number; nos: { nos_id: string, nos_name: string } }[] } }[] }) {
+  // Use a map to group pcs by nos_id
+  const nosMap = new Map();
+
+  theory_exam_set.exam_sets_questions.forEach((item) => {
+    const pcs = item.questions.pc;
+
+    pcs.forEach((pcItem) => {
+      const nosId = pcItem.nos.nos_id;
+
+      if (!nosMap.has(nosId)) {
+        nosMap.set(nosId, {
+          nos_id: nosId,
+          nos_name: pcItem.nos.nos_name,
+          pc: [],
+        });
+      }
+
+      nosMap.get(nosId).pc.push(pcItem);
+    });
+  });
+
+  // Convert map values to array
+  const nosArray = Array.from(nosMap.values());
+
+  // Return the new structured object
+  return {
+    ...theory_exam_set,
+    nos: nosArray,
+  };
+}
+
+
   const getBatchReport = async () => {
 
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches/${selectedBatch}`).then(function (response) { return response.json() })
 
     console.log("data:", res);
+
+
+    // Example usage
+    const newTheoryExamSet = transformTheoryExamSet(res.theory_exam_set);
+
+    console.log("newTheoryExamSet:",newTheoryExamSet);
+
 
     if (res) {
       setBatchReportData(res);

@@ -50,6 +50,7 @@ export const ExpectedTheoryQuestionExcelHeaders = [
   'Question_Level(E/M/H)',
   'Question_Explanation',
   'Marks',
+  'NOS_ID',
   'PC_ID',
 ];
 
