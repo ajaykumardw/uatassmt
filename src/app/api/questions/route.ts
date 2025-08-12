@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   const qpId = url.searchParams.get('qpId');
   const qType = url.searchParams.get('qType');
 
-  console.log('qType', qType);
+  // console.log('qType', qType);
 
   if(qpId){
     const questions = await prisma.questions.findMany({
