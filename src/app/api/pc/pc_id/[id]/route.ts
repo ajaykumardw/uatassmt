@@ -23,10 +23,13 @@ export async function GET(
   const id = decodeURIComponent(context.params.id.toString());
 
 
-  if(unique){
+  if(unique && nosId){
     const pc = await prisma.pc.findFirst({
       where: {
-        pc_id: id
+        pc_id: id,
+        nos: {
+          nos_id: nosId
+        }
       }
     })
 
@@ -53,7 +56,7 @@ export async function GET(
       }
     }
   })
-  
+
   // const pc = await prisma.pc.findFirst({
   //   where: {
   //     pc_id: id,

@@ -111,7 +111,7 @@ const initialData: AddQPDialogData = {
 const schema = object(
   {
     pcId: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'PC Id must be at least 3 characters long') , maxLength(100, 'The maximum length for PC Id is 100 characters.')),
-    pcName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'PC name must be at least 3 characters long') , maxLength(255, 'The maximum length for a PC name is 255 characters.')),
+    pcName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'PC name must be at least 3 characters long') , maxLength(500, 'The maximum length for a PC name is 500 characters.')),
     theoryMarks: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Theory_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Theory_Marks must be a valid number.'),),
     practicalMarks: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Practical_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Practical_Marks must be a valid number.'),),
     vivaMarks: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Viva_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Viva_Marks must be a valid number.'),),

@@ -203,7 +203,7 @@ model pc {
   nos        nos       @relation(fields: [nos_id], references: [id])
   nos_id     Int
   pc_id      String    @db.VarChar(100)
-  pc_name    String    @db.VarChar(255)
+  pc_name    String    @db.VarChar(500)
   theory_marks    Decimal @db.Decimal(10, 2)
   practical_marks Decimal @db.Decimal(10, 2)
   viva_marks      Decimal @db.Decimal(10, 2)
