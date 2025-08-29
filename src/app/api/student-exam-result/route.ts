@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
   const formattedTime = minutesToTimeFormat(examDurations);
 
-  console.log("data:", data);
+  // console.log("data:", data);
 
   const studentExamResult = await prisma.student_exam_set_results.findFirst({
     where: {

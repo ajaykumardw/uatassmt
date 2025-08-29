@@ -1,5 +1,7 @@
 'use client'
 
+import React from 'react';
+
 // React Imports
 import { useEffect, useState,
 
@@ -14,7 +16,7 @@ import Button from '@mui/material/Button';
 
 // import Typography from '@mui/material/Typography';
 
-import Chip from '@mui/material/Chip';
+// import Chip from '@mui/material/Chip';
 
 // import IconButton from '@mui/material/IconButton';
 // import TablePagination from '@mui/material/TablePagination';
@@ -43,7 +45,7 @@ import Chip from '@mui/material/Chip';
 
 // import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
-import type { batches, exam_sets, schemes, students } from '@prisma/client';
+import type { batches, exam_sets, nos, pc, schemes, students } from '@prisma/client';
 
 // Type Imports
 // import type { ThemeColor } from '@core/types'
@@ -166,6 +168,150 @@ import type { QPType } from '@/types/qualification-pack/qpType';
 // Column Definitions
 // const columnHelper = createColumnHelper<ExamSetsTypeWithAction>()
 
+type nosWithPcs = nos & {
+  pcs: pc[];
+};
+
+// sdfsd
+// type PC = {
+//   pc_id: string;
+// };
+
+type Question = {
+  question_type: string;
+  marks: number;
+  pc: pc[];
+};
+
+type ExamSetResult = {
+  student_answer: number;
+  correct_answer: number;
+  question: Question;
+};
+
+type Student = {
+  candidate_id: string;
+  exam_set_results?: ExamSetResult[];
+};
+
+// type TheoryMarksResult = Record<string, Record<string, number>>;
+
+// const getTheoryMarksPerStudent = (students: Student[]): TheoryMarksResult => {
+//   const result: TheoryMarksResult = {};
+
+//   students.forEach((student) => {
+//     const name = student.candidate_id;
+//     const pcMarks: Record<string, number> = {};
+
+//     student.exam_set_results?.forEach((res) => {
+//       const isCorrect = res.student_answer === res.correct_answer;
+//       // const isCorrect = true;
+//       const question = res.question;
+
+//       if (question.question_type === "theory") {
+//         question.pc.forEach((pc) => {
+//           const pcId = pc.pc_id;
+//           const theoryMark = parseFloat(pc.theory_marks.toString());
+
+//           console.log("asfdafsa marks: ", pcId, theoryMark, pc);
+
+//           if (!isNaN(theoryMark)) {
+//             pcMarks[pcId] = (pcMarks[pcId] || 0) + (isCorrect ? theoryMark : 0);
+//           }
+//         });
+//       }
+//     });
+
+//     result[name] = pcMarks;
+//   });
+
+//   return result;
+// };
+
+
+interface TheoryMarksResult {
+  [candidateId: string]: Record<string, number>; // pc_id to marks
+}
+
+interface FinalResult {
+  theoryMarks: TheoryMarksResult;
+  totalTheoryMarks: Record<string, number>;
+  absentStudents: string[];
+  passedStudents: string[];
+  failedStudents: string[];
+  grossTotal: Record<string, number>;
+  percentage: Record<string, number>;
+}
+
+const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): FinalResult => {
+  const theoryMarks: TheoryMarksResult = {};
+  const totalTheoryMarks: Record<string, number> = {};
+  const absentStudents: string[] = [];
+  const passedStudents: string[] = [];
+  const failedStudents: string[] = [];
+  const grossTotal: Record<string, number> = {};
+  const percentage: Record<string, number> = {};
+
+  students.forEach((student) => {
+    const studentId = student.candidate_id;
+
+    if (!student.exam_set_results || student.exam_set_results.length === 0) {
+      absentStudents.push(studentId);
+
+      return;
+    }
+
+    const pcMarks: Record<string, number> = {};
+    const grossMax = qp?.total_marks ?? 0;
+    const overAllCutOff = qp?.overall_cutoff_marks ?? 0;
+
+    student.exam_set_results.forEach((res) => {
+      const isCorrect = res.student_answer === res.correct_answer;
+      const question = res.question;
+
+      if (question.question_type === "theory") {
+        question.pc.forEach((pc) => {
+          const pcId = pc.pc_id;
+          const theoryMark = parseFloat(pc.theory_marks.toString());
+
+          if (!isNaN(theoryMark)) {
+            pcMarks[pcId] = (pcMarks[pcId] || 0) + (isCorrect ? theoryMark : 0);
+          }
+        });
+      }
+    });
+
+    const theoryTotal = Object.values(pcMarks).reduce((sum, m) => sum + m, 0);
+
+    const practicalTotal = 0;
+    const vivaTotal = 0;
+
+    const gross = theoryTotal + practicalTotal + vivaTotal;
+    const percent = grossMax > 0 ? (gross / grossMax) * 100 : 0;
+
+    if (percent >= overAllCutOff) {
+      passedStudents.push(studentId);
+    } else {
+      failedStudents.push(studentId);
+    }
+
+    theoryMarks[studentId] = pcMarks;
+    totalTheoryMarks[studentId] = theoryTotal;
+    grossTotal[studentId] = gross;
+    percentage[studentId] = parseFloat(percent.toFixed(2));
+  });
+
+  return {
+    theoryMarks,
+    totalTheoryMarks,
+    grossTotal,
+    passedStudents,
+    failedStudents,
+    absentStudents,
+    percentage
+  };
+};
+
 const PCWiseReportTable = () => {
 
   // States
@@ -177,7 +323,7 @@ const PCWiseReportTable = () => {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [data, setData] = useState<exam_sets[]>([]);
-  const [batchReportData, setBatchReportData] = useState<batches & {qualification_pack: QPType, scheme: schemes, sub_scheme: schemes, students: students[]} | null>(null);
+  const [batchReportData, setBatchReportData] = useState<batches & {qualification_pack: QPType, scheme: schemes, sub_scheme: schemes, students: students[], nos: nosWithPcs[]} | null>(null);
 
   // const [globalFilter, setGlobalFilter] = useState('');
   // const [examSetId, setExamSetId] = useState(0);
@@ -216,50 +362,50 @@ const PCWiseReportTable = () => {
     }
   };
 
-  function transformTheoryExamSet(theory_exam_set: exam_sets & { exam_sets_questions: { questions: { pc: { nos_id: number; nos: { nos_id: string, nos_name: string } }[] } }[] }) {
-  // Use a map to group pcs by nos_id
-  const nosMap = new Map();
+  // function transformTheoryExamSet(theory_exam_set: exam_sets & { exam_sets_questions: { questions: { pc: { nos_id: number; nos: { nos_id: string, nos_name: string } }[] } }[] }) {
+  //   // Use a map to group pcs by nos_id
+  //   const nosMap = new Map();
 
-  theory_exam_set.exam_sets_questions.forEach((item) => {
-    const pcs = item.questions.pc;
+  //   theory_exam_set.exam_sets_questions.forEach((item) => {
+  //     const pcs = item.questions.pc;
 
-    pcs.forEach((pcItem) => {
-      const nosId = pcItem.nos.nos_id;
+  //     pcs.forEach((pcItem) => {
+  //       const nosId = pcItem.nos.nos_id;
 
-      if (!nosMap.has(nosId)) {
-        nosMap.set(nosId, {
-          nos_id: nosId,
-          nos_name: pcItem.nos.nos_name,
-          pc: [],
-        });
-      }
+  //       if (!nosMap.has(nosId)) {
+  //         nosMap.set(nosId, {
+  //           nos_id: nosId,
+  //           nos_name: pcItem.nos.nos_name,
+  //           pc: [],
+  //         });
+  //       }
 
-      nosMap.get(nosId).pc.push(pcItem);
-    });
-  });
+  //       nosMap.get(nosId).pc.push(pcItem);
+  //     });
+  //   });
 
-  // Convert map values to array
-  const nosArray = Array.from(nosMap.values());
+  //   // Convert map values to array
+  //   const nosArray = Array.from(nosMap.values());
 
-  // Return the new structured object
-  return {
-    ...theory_exam_set,
-    nos: nosArray,
-  };
-}
+  //   // Return the new structured object
+  //   return {
+  //     ...theory_exam_set,
+  //     nos: nosArray,
+  //   };
+  // }
 
 
   const getBatchReport = async () => {
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches/${selectedBatch}`).then(function (response) { return response.json() })
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches/${selectedBatch}/report`).then(function (response) { return response.json() })
 
-    console.log("data:", res);
+    // console.log("data:", res);
 
 
     // Example usage
-    const newTheoryExamSet = transformTheoryExamSet(res.theory_exam_set);
+    // const newTheoryExamSet = transformTheoryExamSet(res.theory_exam_set);
 
-    console.log("newTheoryExamSet:",newTheoryExamSet);
+    // console.log("newTheoryExamSet:",newTheoryExamSet);
 
 
     if (res) {
@@ -465,6 +611,59 @@ const PCWiseReportTable = () => {
   //   getFacetedMinMaxValues: getFacetedMinMaxValues()
   // })
 
+  // const getTheoryMarksPerStudent = (students:any) => {
+  //   const result = {};
+
+  //   students.forEach((student: any) => {
+  //     const name = student.candidate_id; // You can also use `student.id` or `candidate_name`
+  //     const pcMarks = {};
+
+  //     student.exam_set_results?.forEach((result:any) => {
+  //       const isCorrect = result.student_answer === result.correct_answer;
+  //       const question = result.question;
+
+  //       if (question.question_type === "theory") {
+  //         const marks = isCorrect ? question.marks : 0;
+
+  //         question.pc.forEach((pc:any) => {
+  //           const pcId = pc.pc_id;
+  //           if (!pcMarks[pcId]) pcMarks[pcId] = 0;
+  //           pcMarks[pcId] += marks;
+  //         });
+  //       }
+  //     });
+
+  //     result[name] = pcMarks;
+  //   });
+
+  //   return result;
+  // };
+
+  // const studentPcTheoryMarks = getTheoryMarksPerStudent(batchReportData?.students || []);
+  const { theoryMarks, totalTheoryMarks, grossTotal, absentStudents, passedStudents, failedStudents } = getTheoryMarksPerStudent(batchReportData?.students || [], batchReportData?.qualification_pack || null);
+
+  const activeExamCount =
+  (batchReportData?.theory_exam_set_id ? 1 : 0) +
+  (batchReportData?.practical_exam_set_id ? 1 : 0) +
+  (batchReportData?.viva_exam_set_id ? 1 : 0);
+
+  const dynamicNOSColumns = batchReportData?.nos?.reduce((acc, nos) => {
+    return acc + ((nos?.pcs?.length || 0) * activeExamCount);
+  }, 0) ?? 0;
+
+  const fixedColumnsBeforeNOS = 3;
+
+  const fixedColumnsAfterNOS =
+    (batchReportData?.theory_exam_set_id ? 1 : 0) +
+    (batchReportData?.practical_exam_set_id ? 1 : 0) +
+    (batchReportData?.viva_exam_set_id ? 1 : 0) +
+    1 + // Gross Total
+    2;
+
+  const totalColumns = fixedColumnsBeforeNOS + dynamicNOSColumns + fixedColumnsAfterNOS;
+
+
+
   return (
     <>
       <Card>
@@ -524,122 +723,150 @@ const PCWiseReportTable = () => {
           <table className={`${tableStyles.table} text-center report-table`}>
             <thead>
               <tr>
-                <th colSpan={19} className='text-center light-gray'>Result Sheet</th>
+                <th colSpan={totalColumns - 3} className='text-center light-gray'>Result Sheet</th>
                 <th colSpan={3} className='text-center gold'>Summary</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td rowSpan={3} colSpan={3} className='aliceblue'>Name of Assessing Body :</td>
-                <td rowSpan={3} colSpan={4}>Dream Weavers</td>
+                <td rowSpan={3} colSpan={Math.floor((totalColumns - 3 - 4 - 3) / 2)}>Dream Weavers</td>
                 <td rowSpan={3} colSpan={4} className='aliceblue'>Name of Training Provider :</td>
-                <td rowSpan={3} colSpan={8}>0</td>
+                <td rowSpan={3} colSpan={Math.round((totalColumns - 3 - 4 - 3) / 2)}>0</td>
                 <td className='green'>Result</td>
                 <td className='green'>Count</td>
                 <td className='green'>%</td>
               </tr>
               <tr>
                 <td className='green'>Pass</td>
-                <td className='green'>30</td>
-                <td className='green'>100</td>
+                <td className='green'>{passedStudents.length ?? 0}</td>
+                <td className='green'>{((passedStudents.length ?? 0) / (batchReportData?.students?.length ?? 0) * 100).toFixed(2) }</td>
               </tr>
               <tr>
                 <td className='green'>Fail</td>
-                <td className='green'>0</td>
-                <td className='green'>0</td>
+                <td className='green'>{failedStudents.length ?? 0}</td>
+                <td className='green'>{((failedStudents.length ?? 0) / (batchReportData?.students?.length ?? 0) * 100).toFixed(2) }</td>
               </tr>
               <tr>
                 <td colSpan={3} className='aliceblue'>Scheme Name :</td>
-                <td colSpan={4}>{batchReportData?.scheme ? batchReportData.scheme.scheme_name : '0'}</td>
+                <td colSpan={Math.floor((totalColumns - 3 - 4 - 3) / 2)}>{batchReportData?.scheme ? batchReportData.scheme.scheme_name : '0'}</td>
                 <td colSpan={4} className='aliceblue'>Batch Name :</td>
-                <td colSpan={8}>{batchReportData ? batchReportData.batch_name : '0'}</td>
+                <td colSpan={Math.round((totalColumns - 3 - 4 - 3) / 2)}>{batchReportData ? batchReportData.batch_name : '0'}</td>
                 <td className='green'>Absent</td>
-                <td className='green'>0</td>
-                <td className='green'>0</td>
+                <td className='green'>{absentStudents.length ?? 0}</td>
+                <td className='green'>{((absentStudents.length ?? 0) / (batchReportData?.students?.length ?? 0) * 100).toFixed(2) }</td>
               </tr>
               <tr>
                 <td colSpan={3} className='aliceblue'>Sub Scheme :</td>
-                <td colSpan={4}>{batchReportData?.sub_scheme ? batchReportData.sub_scheme.scheme_name : '0'}</td>
+                <td colSpan={Math.floor((totalColumns - 3 - 4 - 3) / 2)}>{batchReportData?.sub_scheme ? batchReportData.sub_scheme.scheme_name : '0'}</td>
                 <td colSpan={4} className='aliceblue'>Assessment Date :</td>
-                <td colSpan={8}>{batchReportData?.assessment_start_datetime ? format(batchReportData.assessment_start_datetime, 'd-MMM-y') : '0'}</td>
+                <td colSpan={Math.round((totalColumns - 3 - 4 - 3) / 2)}>{batchReportData?.assessment_start_datetime ? format(batchReportData.assessment_start_datetime, 'd-MMM-y') : '0'}</td>
                 <td className='green'>Drop out</td>
                 <td className='green'>0</td>
                 <td className='green'>0</td>
               </tr>
               <tr>
                 <td colSpan={3} className='aliceblue'>No. of Candidates present :</td>
-                <td colSpan={4}>{batchReportData?.students.length ?? 0}</td>
+                <td colSpan={Math.floor((totalColumns - 3 - 4 - 3) / 2)}>{batchReportData?.students?.length ?? 0}</td>
                 <td colSpan={4} className='aliceblue'>Job role, Level, Version :</td>
-                <td colSpan={8}>{batchReportData && batchReportData.qualification_pack ? batchReportData.qualification_pack.qualification_pack_name + ', ' + batchReportData.qualification_pack.nsqf_level + ', ' + batchReportData.qualification_pack.version.version_number : '0'}</td>
-                <td colSpan={3} className='text-center gold'>30</td>
+                <td colSpan={Math.round((totalColumns - 3 - 4 - 3) / 2)}>{batchReportData && batchReportData.qualification_pack ? batchReportData.qualification_pack.qualification_pack_name + ', ' + batchReportData.qualification_pack.nsqf_level + ', ' + batchReportData.qualification_pack.version.version_number : '0'}</td>
+                <td colSpan={3} className='text-center gold'>{batchReportData?.students?.length ?? 0}</td>
               </tr>
               <tr className='light-gray'>
-                <td rowSpan={3}>S No.</td>
-                <td rowSpan={3}>Student Unique Id</td>
-                <td className='text-wrap' rowSpan={3}>Name of the Candidate (fullName)</td>
-                <td className='text-wrap' colSpan={2}>
-                  MES/N1801 <br /> Identify Hair & make up Requirements
-                </td>
-                <td className='text-wrap' colSpan={2}>
-                  MES/N1801 <br /> Identify Hair & make up Requirements
-                </td>
-                <td className='text-wrap' colSpan={2}>
-                  MES/N1801 <br /> Identify Hair & make up Requirements
-                </td>
-                <td className='text-wrap' colSpan={2}>
-                  MES/N1801 <br /> Identify Hair & make up Requirements
-                </td>
-                <td className='text-wrap' colSpan={2}>
-                  MES/N1801 <br /> Identify Hair & make up Requirements
-                </td>
-                <td className='text-wrap' colSpan={2}>
-                  MES/N1801 <br /> Identify Hair & make up Requirements
-                </td>
-                <td className='text-wrap' colSpan={2}>
-                  DGT/VSQ/N0102 <br /> Employability Skills
-                </td>
-                <td rowSpan={2}>Total Theory</td>
-                <td rowSpan={2}>Total Practical</td>
-                <td rowSpan={2}>Gross <br/> Total</td>
-                <td colSpan={2}>Result</td>
+                <td rowSpan={4}>S No.</td>
+                <td rowSpan={4}>Student Unique Id</td>
+                <td className='text-wrap' rowSpan={4}>Name of the Candidate (Full Name)</td>
+                {batchReportData?.nos && batchReportData?.nos?.length > 0 ?
+                  batchReportData?.nos?.map((n, index) => (
+                  <td key={index} className='text-wrap' colSpan={n?.pcs?.length * ((batchReportData?.theory_exam_set_id != null ? 1 : 0) + (batchReportData?.practical_exam_set_id != null ? 1 : 0) + (batchReportData?.viva_exam_set_id != null ? 1 : 0) )}>
+                    {n?.nos_id}
+                  </td>
+                  ))
+                 : null}
+                {batchReportData?.theory_exam_set_id &&
+                  <td rowSpan={3}>Total Theory</td>
+                }
+                {batchReportData?.practical_exam_set_id &&
+                  <td rowSpan={3}>Total Practical</td>
+                }
+                {batchReportData?.viva_exam_set_id &&
+                  <td rowSpan={3}>Total Viva</td>
+                }
+                <td rowSpan={3}>Gross <br/> Total</td>
+                <td rowSpan={2} colSpan={2}>Result</td>
               </tr>
               <tr className='light-gray'>
-                <td>Theory</td>
+                {batchReportData?.nos && batchReportData.nos.length > 0 ? (
+                  batchReportData.nos.map((n, index) =>
+                    n?.pcs && n.pcs.length > 0 ? (
+                      n.pcs.map((p, idx) => (
+                        <td key={`${index}-${idx}`} colSpan={((batchReportData?.theory_exam_set_id != null ? 1 : 0) + (batchReportData?.practical_exam_set_id != null ? 1 : 0) + (batchReportData?.viva_exam_set_id != null ? 1 : 0) )}>{p?.pc_id}</td>
+                      ))
+                    ) : null
+                  )
+                ) : null}
+                {/* <td>Theory</td>
                 <td>Practical</td>
                 <td>Theory</td>
                 <td>Practical</td>
                 <td>Theory</td>
-                <td>Practical</td>
-                <td>Theory</td>
-                <td>Practical</td>
-                <td>Theory</td>
-                <td>Practical</td>
-                <td>Theory</td>
-                <td>Practical</td>
-                <td>Theory</td>
-                <td>Practical</td>
+                <td>Practical</td> */}
+              </tr>
+              <tr className='light-gray'>
+                {batchReportData?.nos && batchReportData?.nos?.length > 0 ?
+                  batchReportData?.nos?.map((n) => (
+                    n?.pcs && n.pcs.length > 0 ? (
+                      n.pcs.map((p, idx) => (
+                        <React.Fragment key={idx}>
+                          {batchReportData?.theory_exam_set_id &&
+                            <td>Theory</td>
+                          }
+                          {batchReportData?.practical_exam_set_id &&
+                            <td>Practical</td>
+                          }
+                          {batchReportData?.viva_exam_set_id &&
+                            <td>Viva</td>
+                          }
+                        </React.Fragment>
+                      ))
+                    ) : null
+                  ))
+                 : null}
+
                 <td>%</td>
                 <td>Final</td>
               </tr>
               <tr className='light-gray'>
-                <td>40</td>
-                <td>60</td>
-                <td>40</td>
-                <td>60</td>
-                <td>40</td>
-                <td>60</td>
-                <td>40</td>
-                <td>60</td>
-                <td>40</td>
-                <td>60</td>
-                <td>50</td>
-                <td>50</td>
-                <td>20</td>
-                <td>30</td>
-                <td>270</td>
-                <td>380</td>
-                <td>650</td>
-                <td>650</td>
+                {batchReportData?.nos && batchReportData?.nos?.length > 0 ?
+                  batchReportData?.nos?.map((n, index) => (
+                    n?.pcs && n.pcs.length > 0 ? (
+                      n.pcs.map((p, idx) => (
+                        <React.Fragment key={`${index} - ${idx}`}>
+                          {batchReportData?.theory_exam_set_id &&
+                            <td>{p.theory_marks.toString()}</td>
+                          }
+                          {batchReportData?.practical_exam_set_id &&
+                            <td>{p.practical_marks.toString()}</td>
+                          }
+                          {batchReportData?.viva_exam_set_id &&
+                            <td>{p.viva_marks.toString()}</td>
+                          }
+                        </React.Fragment>
+                      ))
+                    ) : null
+                  ))
+                 : null}
+                {batchReportData?.theory_exam_set_id &&
+                  <td>{batchReportData?.qualification_pack?.total_theory_marks}</td>
+                }
+                {batchReportData?.practical_exam_set_id &&
+                  <td>{batchReportData?.qualification_pack?.total_practical_marks}</td>
+                }
+                {batchReportData?.viva_exam_set_id &&
+                  <td>{batchReportData?.qualification_pack?.total_viva_marks}</td>
+                }
+                <td>{batchReportData?.qualification_pack?.total_marks}</td>
+                <td>{batchReportData?.qualification_pack?.total_marks}</td>
                 <td></td>
               </tr>
               { batchReportData && batchReportData.students && batchReportData.students.length > 0 ? batchReportData.students.map((student, index) => {
@@ -648,7 +875,23 @@ const PCWiseReportTable = () => {
                     <td>{index + 1}</td>
                     <td>{student.candidate_id}</td>
                     <td>{student.candidate_name}</td>
-                    <td>28</td>
+                    {batchReportData.nos.map((nos) =>
+                      nos.pcs.map((pc) => (
+                        <React.Fragment key={`${student.candidate_id}-${pc.pc_id}`}>
+                          {batchReportData.theory_exam_set_id && (
+                            <td>{theoryMarks[student.candidate_id]?.[pc.pc_id] ?? 0}</td>
+                          )}
+                          {batchReportData.practical_exam_set_id && (
+                            <td>--</td> // Replace with practical logic if needed
+                          )}
+                          {batchReportData.viva_exam_set_id && (
+                            <td>--</td> // Replace with viva logic if needed
+                          )}
+                        </React.Fragment>
+                      ))
+                    )}
+
+                    {/* <td>28</td>
                     <td>49</td>
                     <td>32</td>
                     <td>45</td>
@@ -661,12 +904,56 @@ const PCWiseReportTable = () => {
                     <td>36</td>
                     <td>41</td>
                     <td>17</td>
-                    <td>23</td>
-                    <td>204</td>
-                    <td>298</td>
-                    <td>502</td>
-                    <td>77.23</td>
-                    <td><Chip color='success' variant='tonal' label="Pass" /></td>
+                    <td>23</td> */}
+                    {/* <td>204</td> */}
+                    <td className='light-gray'>{totalTheoryMarks[student.candidate_id] ?? 0}</td>
+                    <td className='light-gray'>0</td>
+                    <td className='light-gray'>0</td>
+                    <td className='light-gray'>{grossTotal[student.candidate_id] ?? 0}</td>
+                    <td>
+                      {
+                        batchReportData?.qualification_pack?.total_marks
+                          ? (
+                              ((grossTotal[student.candidate_id] ?? 0) / batchReportData.qualification_pack.total_marks) * 100
+                            ).toFixed(2)
+                          : "0.00"
+                      }
+                    </td>
+                    {/* <td><Chip color='success' variant='tonal' label="Pass" /></td> */}
+                    {/* <td>
+                      <Chip
+                        color={
+                          absentStudents.includes(student.candidate_id)
+                            ? 'warning'             // or 'warning' if you want it highlighted
+                            : ( ( (grossTotal[student.candidate_id] ?? 0) / batchReportData.qualification_pack.total_marks ) * 100 ) >= (batchReportData?.qualification_pack?.overall_cutoff_marks ?? 0)
+                              ? 'success'
+                              : 'error'
+                        }
+                        label={
+                          absentStudents.includes(student.candidate_id)
+                            ? 'Absent'
+                            : ( ( (grossTotal[student.candidate_id] ?? 0) / batchReportData.qualification_pack.total_marks ) * 100 ) >= (batchReportData?.qualification_pack?.overall_cutoff_marks ?? 0)
+                              ? 'Pass'
+                              : 'Fail'
+                        }
+                        variant='tonal'
+                      />
+                    </td> */}
+                    <td className={
+                      absentStudents.includes(student.candidate_id)
+                            ? 'absent'             // or 'warning' if you want it highlighted
+                            : ( ( (grossTotal[student.candidate_id] ?? 0) / batchReportData.qualification_pack.total_marks ) * 100 ) >= (batchReportData?.qualification_pack?.overall_cutoff_marks ?? 0)
+                              ? 'pass'
+                              : 'fail'
+                    }>
+                      {
+                        absentStudents.includes(student.candidate_id)
+                          ? 'Absent'
+                          : ( ( (grossTotal[student.candidate_id] ?? 0) / batchReportData.qualification_pack.total_marks ) * 100 ) >= (batchReportData?.qualification_pack?.overall_cutoff_marks ?? 0)
+                            ? 'Pass'
+                            : 'Fail'
+                      }
+                    </td>
                   </tr>
                 )
               }) : (

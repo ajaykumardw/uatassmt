@@ -86,7 +86,12 @@ export async function GET(
           },
         }
       },
-      students: true,
+      students: {
+        include: {
+          batch: true,
+          student_exam_set_results: true
+        }
+      },
       scheme: {
         select: {
           id: true,

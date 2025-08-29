@@ -144,7 +144,7 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
         mode: examSet.mode,
         totalQuestions: examSet.total_questions,
         status: examSet.status,
-        examDuration: examSet.exam_duration,
+        examDuration: examSet.exam_duration.toString(),
         easy: examSet.question_levels && examSet.question_levels.E ? examSet.question_levels.E.toString() : '0',
         medium: examSet.question_levels && examSet.question_levels.M ? examSet.question_levels.M.toString() : '1',
         hard: examSet.question_levels && examSet.question_levels.H ? examSet.question_levels.H.toString() : '0',
@@ -446,7 +446,7 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
   }
 
   const totQuestions = useWatch({control, name: 'totalQuestions'});
-  const isDisabled = changedMode === 'Manual' && selectedQuestions.length !== Number(totQuestions);
+  const isDisabled = changedMode === 'Manual' && selectedQuestions.length !== Number(totQuestions) || totalTheoryMarks !== sumOfSelectedQuestionsMarks;
 
   return (
     <Dialog
@@ -723,9 +723,14 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
                   Available Questions {theoryQuestions.length}
                 </Typography>
               </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <Typography color={totalTheoryMarks > 0 ? "primary" : "error"}>
                   Total Theory Marks {totalTheoryMarks}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography color={sumOfSelectedQuestionsMarks > 0 ? "primary" : "error"}>
+                  Total Selected Questions Marks {sumOfSelectedQuestionsMarks}
                 </Typography>
               </Grid>
               </>

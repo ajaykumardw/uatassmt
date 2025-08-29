@@ -120,7 +120,7 @@ const AgencyEditForm = ({ currentAgency, stateData, citiesData }: { stateData?: 
 
   const onSubmit: SubmitHandler<FormData> = async (data: FormData) => {
 
-    console.log(data);
+    // console.log(data);
 
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/agency/${currentAgency?.id}`, {
 

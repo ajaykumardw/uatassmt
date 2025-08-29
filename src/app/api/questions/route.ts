@@ -57,6 +57,9 @@ export async function GET(req: Request) {
                   practical_marks: true,
                   viva_marks: true,
                   questions: {
+                    where: {
+                      question_type: 'theory'
+                    },
                     include: {
                       pc: {
                         select: {
