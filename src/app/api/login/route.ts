@@ -119,13 +119,13 @@ export async function POST(req: Request) {
         const accessToken = jwt.sign(
           { ...filteredUserData, agency_id },
           process.env.NEXTAUTH_SECRET as string,
-          { expiresIn: process.env.ACCESS_TOKEN_EXPIRATION as jwt.SignOptions['expiresIn'] }
+          { expiresIn: process.env.ACCESS_TOKEN_EXPIRATION as jwt.SignOptions['expiresIn'] || '1h' }
         );
 
         const refreshToken = jwt.sign(
           { userId: 1 },
           process.env.NEXTAUTH_SECRET as string,
-          { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION as jwt.SignOptions['expiresIn'] }
+          { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION as jwt.SignOptions['expiresIn'] || '14d' }
         );
 
         response = {
