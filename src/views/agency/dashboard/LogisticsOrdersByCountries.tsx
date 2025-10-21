@@ -246,6 +246,7 @@ const LogisticsOrdersByCountries = () => {
   const getBatches = async () => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches`)
+
       if (!res.ok) {
         setBatches([]);
         console.error('Failed to fetch batches data');
@@ -296,6 +297,7 @@ const LogisticsOrdersByCountries = () => {
         } else if (isBefore(endDate, today)) {
           targetCategory = "completed";
         }
+
         if (targetCategory) {
           result[targetCategory].push({
             batch_name: batch.batch_name ? batch.batch_name : '',
@@ -306,6 +308,7 @@ const LogisticsOrdersByCountries = () => {
       });
 
       setResultData(result);
+
       // return result;
     }
   }, [batches])
