@@ -62,7 +62,8 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
     if (selectedSSC) {
       setQPData(selectedSSC.qualification_packs || []);
 
-      console.log("qp data:", selectedSSC.qualification_packs);
+      // console.log("qp data:", selectedSSC.qualification_packs);
+
     } else {
       setQPData([]);
     }
@@ -99,7 +100,8 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
     const batch_id = Number(batch);
 
     setBatchId(batch_id);
-    console.log("batch:", batch);
+    
+    // console.log("batch:", batch);
 
   }
 

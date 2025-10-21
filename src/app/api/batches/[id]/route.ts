@@ -27,10 +27,71 @@ export async function GET(
     include: {
       qualification_pack: {
         include: {
-          version: true
+          version: true,
+          nos: {
+            include: {
+              pc: true
+            }
+          }
         }
       },
-      students: true,
+      theory_exam_set: {
+        include: {
+          exam_sets_questions: {
+            select: {
+              questions: {
+                select: {
+                  pc: {
+                    include: {
+                      nos: true
+                    }
+                  }
+                }
+              }
+            }
+          },
+        }
+      },
+      practical_exam_set: {
+        include: {
+          exam_sets_questions: {
+            select: {
+              questions: {
+                select: {
+                  pc: {
+                    include: {
+                      nos: true
+                    }
+                  }
+                }
+              }
+            }
+          },
+        }
+      },
+      viva_exam_set: {
+        include: {
+          exam_sets_questions: {
+            select: {
+              questions: {
+                select: {
+                  pc: {
+                    include: {
+                      nos: true
+                    }
+                  }
+                }
+              }
+            }
+          },
+        }
+      },
+      students: {
+        include: {
+          batch: true,
+          student_exam_set_results: true
+        }
+      },
       scheme: {
         select: {
           id: true,

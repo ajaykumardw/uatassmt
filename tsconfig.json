@@ -63,7 +63,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts"
-, "src/app/[lang]/(student-examination)/examination/page.jsx"  ],
+, "src/app/[lang]/(student-examination)/examination/page.jsx", "src/app/api/batches/[id]/report/route.ts"  ],
   "exclude": [
     "node_modules"
   ]

@@ -21,6 +21,9 @@ export async function POST(req: Request) {
 
     const pcs = await prisma.pc.findMany({
       where: {
+        nos: {
+          nos_id: item.NOS_ID
+        },
         pc_id: {
           in: pcIds.map((pcId: string) => pcId.toString()), // Convert to numbers if needed
         },

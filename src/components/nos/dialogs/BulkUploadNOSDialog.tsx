@@ -29,7 +29,7 @@ import { toast } from 'react-toastify'
 
 
 
-import { string, trim, minLength, optional, check, pipe, pipeAsync, checkAsync, objectAsync, safeParseAsync, maxLength, optionalAsync, number, union } from "valibot"
+import { string, trim, minLength, optional, check, pipe, pipeAsync, objectAsync, safeParseAsync, maxLength, optionalAsync, number, union } from "valibot"
 
 import type { InferInput } from 'valibot'
 
@@ -186,14 +186,30 @@ type BulkUploadNOSDialogProps = {
 //   }
 // ];
 
-const checkExistPCId = async (input: any) => {
+// const checkExistPCId = async (input: any, nos_id: any) => {
 
 
-  const pc = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pc/pc_id/${encodeURIComponent(input)}?unique=true`).then(function (response) { return response.json() });
+//   const pc = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pc/pc_id/${encodeURIComponent(input)}?unique=true`).then(function (response) { return response.json() });
 
-  return pc ? false : true;
+//   return pc ? false : true;
 
-}
+// }
+
+const checkExistPCId = async (pcId: string, nosId: string): Promise<boolean> => {
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/pc/pc_id/${encodeURIComponent(pcId)}?nosId=${encodeURIComponent(nosId)}&unique=true`;
+
+  try {
+    const response = await fetch(url);
+    const result = await response.json();
+
+    // Your API should return something like { exists: true } or false
+    return result ? false : true; // true means available, false means taken
+  } catch (error) {
+    console.error('Error checking PC ID:', error);
+
+    return true; // Fail open — don't block upload if check fails
+  }
+};
 
 // const checkExistQPId = async (input: any) => {
 
@@ -212,8 +228,8 @@ const schema = objectAsync(
     // questionType: pipe(string(), trim() , minLength(1, 'This field is required')),
     // Question_Level: pipe(string('This field is required'), trim(), minLength(1, 'This field is required')),
     NOS_Name: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), minLength(3, 'NOS name must be at least 3 characters long'), maxLength(255, 'The max length for this field is 255.')),
-    PC_ID: optionalAsync(pipeAsync(string('This field should be string'), trim(), checkAsync(checkExistPCId, "PC ID already exist."), check(value => !value || !/\s/.test(value.toString()), 'PC ID should not contain any spaces.'))),
-    PC_Name: optional(pipe(string('This field should be string'), trim(), maxLength(255, 'The max length for this field is 255.'))),
+    PC_ID: optionalAsync(pipeAsync(string('This field should be string'), trim(), check(value => !value || !/\s/.test(value.toString()), 'PC ID should not contain any spaces.'))),
+    PC_Name: optional(pipe(string('This field should be string'), trim(), maxLength(500, 'The max length for this field is 500.'))),
     Theory_Marks: union([
       number('This field is required'),
       pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Theory_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Theory_Marks must be a valid number.')),
@@ -255,15 +271,26 @@ const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   return itemRank.passed
 }
 
+// const mapKeys = (data: any[]) => data.map((item: any) => ({
+//   QP_ID: item['QP_ID'],
+//   NOS_ID: item['NOS_ID'],
+//   NOS_Name: item['NOS_Name'],
+//   PC_ID: item['PC_ID'],
+//   PC_Name: item['PC_Name'],
+//   Theory_Marks: item['Theory_Marks'],
+//   Practical_Marks: item['Practical_Marks'],
+//   Viva_Marks: item['Viva_Marks']
+// }));
+
 const mapKeys = (data: any[]) => data.map((item: any) => ({
-  QP_ID: item['QP_ID'],
-  NOS_ID: item['NOS_ID'],
-  NOS_Name: item['NOS_Name'],
-  PC_ID: item['PC_ID'],
-  PC_Name: item['PC_Name'],
-  Theory_Marks: item['Theory_Marks'],
-  Practical_Marks: item['Practical_Marks'],
-  Viva_Marks: item['Viva_Marks']
+  QP_ID: item['QP Code'],
+  NOS_ID: item['NOS Code'],
+  NOS_Name: item['NOS Name'],
+  PC_ID: item['Elements and Performance Criteria'],
+  PC_Name: item['Assessment Criteria for Outcomes'],
+  Theory_Marks: item['Theory Marks'],
+  Practical_Marks: item['Practical Marks'],
+  Viva_Marks: item['Viva Marks']
 }));
 
 const columnHelper = createColumnHelper<NOSTypeWithError>()
@@ -377,160 +404,226 @@ const BulkUploadNOSDialog = ({ open, sscID, handleClose, updateNOSList }: BulkUp
             // console.log("duplicate pc:", duplicatePCIds, duplicatesPC);
 
             // Process questions
-            const validatedData = [];
 
-            for (const [index, item] of mappedData.entries()) {
+            /**
+             * For making api call one by one
+             */
+            // const validatedData = [];
 
-              console.log("index", index);
+            // for (const [index, item] of mappedData.entries()) {
 
-              // const pcIds = item.PC_ID.toString().split(',').map((id: string) => id.trim());
-              // const duplicatePCIds = pcIds.filter((id: any, index: number) => pcIds.indexOf(id) !== index && pcIds.lastIndexOf(id) === index);
+            //   console.log("index", index);
 
-              // const options = [item.Option1, item.Option2, item.Option3, item.Option4, item.Option5];
+            //   // const pcIds = item.PC_ID.toString().split(',').map((id: string) => id.trim());
+            //   // const duplicatePCIds = pcIds.filter((id: any, index: number) => pcIds.indexOf(id) !== index && pcIds.lastIndexOf(id) === index);
 
-              // const correctAnswer = (item?.Correct_Answer) - 1;
+            //   // const options = [item.Option1, item.Option2, item.Option3, item.Option4, item.Option5];
 
-
-              // const answerErr = options[correctAnswer] === undefined;
-
-              // const answerError = answerErr ? {
-              //   path: [{ key: 'Correct_Answer' }],
-              //   message: `Provided Answer not exist.`
-              // } : null;
-
-              // const nullOrUndefinedIndices = [];
-
-              // for (let i = 0; i <= correctAnswer; i++) {
-              //   if (options[i] == null) { // checks for both null and undefined
-              //     nullOrUndefinedIndices.push(i);
-              //   }
-              // }
-
-              // const Option1Error = nullOrUndefinedIndices.length != 0 && nullOrUndefinedIndices.find(value => value+1 === 1) ? {
-              //   path: [{ key: `Option1` }],
-              //   message: 'This field is required.'
-              // } : null;
-              // const Option2Error = nullOrUndefinedIndices.length != 0 && nullOrUndefinedIndices.find(value => value+1 === 2) ? {
-              //   path: [{ key: `Option2` }],
-              //   message: 'This field is required.'
-              // } : null;
-              // const Option3Error = nullOrUndefinedIndices.length != 0 && nullOrUndefinedIndices.find(value => value+1 === 3) ? {
-              //   path: [{ key: `Option3` }],
-              //   message: 'This field is required.'
-              // } : null;
-              // const Option4Error = nullOrUndefinedIndices.length != 0 && nullOrUndefinedIndices.find(value => value+1 === 4) ? {
-              //   path: [{ key: `Option4` }],
-              //   message: 'This field is required.'
-              // } : null;
-              // const Option5Error = nullOrUndefinedIndices.length != 0 && nullOrUndefinedIndices.find(value => value+1 === 5) ? {
-              //   path: [{ key: `Option5` }],
-              //   message: 'This field is required.'
-              // } : null;
-
-              // const nonExistingPcIds = await Promise.all(
-              //   pcIds.map(async (pcId: string) => {
-              //     // Fetch batch details from the database
-              const qp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/qualification-packs/qp_id/${encodeURIComponent(item.QP_ID)}?sscId=${sscID}`)
-                .then(response => response.json());
-
-              const qpIDError = !qp ? {
-                path: [{ key: 'QP_ID' }],
-                message: `QP ID doesn't exist in our records.`
-              } : null;
-
-              const pcIdProvided = item.PC_ID && item.PC_ID.length > 0;
-              const pcNameProvided = item.PC_Name && item.PC_Name.length > 0;
-
-              const pcIdAndPCNameProvidedORNot = (pcIdProvided && pcNameProvided) || (!pcIdProvided && !pcNameProvided)
-
-              console.log("pcIdAndPCNameProvidedORNot", pcIdAndPCNameProvidedORNot)
-
-              const pcIdPCNameError = !pcIdAndPCNameProvidedORNot ? {
-                path: [{ key: 'PC_ID' }, { key: 'PC_Name' }],
-                message: 'Both PC ID and PC Name must be provided together or not at all.'
-              } : null;
-
-              // Check for duplicate Candidate IDs
-              // const pcIdError = duplicatesPC.has(item.PC_ID) ? {
-              //   path: [{ key: 'PC_ID' }],
-              //   message: `PC ID "${item.PC_ID}" is duplicated.`
-              // } : null;
-
-              const combinedKey = `${item.NOS_ID}_${item.PC_ID}`;
-
-              // Check for duplicate Candidate IDs
-              const pcIdError = duplicateNosPC.has(combinedKey) ? {
-                path: [{ key: 'PC_ID' }],
-                message: `PC ID "${item.PC_ID}" is duplicated with same NOS ID.`
-              } : null;
-
-              const totalMarksError = (item.Theory_Marks + item.Practical_Marks + item.Viva_Marks ) == 0 ? {
-                path: [{ key: 'Theory_Marks' }, { key: 'Practical_Marks' }, { key: 'Viva_Marks' }],
-                message: 'Sum of the Theory_Marks, Practical_Marks and Viva_Marks must be greater then 0.'
-              } : null;
-
-              const nos = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/nos/nos_id/${encodeURIComponent(item.NOS_ID)}`)
-                .then(response => response.json());
+            //   // const correctAnswer = (item?.Correct_Answer) - 1;
 
 
-              const nosIDExist = nos ? true : false;
+            //   // const answerErr = options[correctAnswer] === undefined;
+
+            //   // const answerError = answerErr ? {
+            //   //   path: [{ key: 'Correct_Answer' }],
+            //   //   message: `Provided Answer not exist.`
+            //   // } : null;
+
+            //   // const nullOrUndefinedIndices = [];
+
+            //   // for (let i = 0; i <= correctAnswer; i++) {
+            //   //   if (options[i] == null) { // checks for both null and undefined
+            //   //     nullOrUndefinedIndices.push(i);
+            //   //   }
+            //   // }
+
+            //   // const Option1Error = nullOrUndefinedIndices.length != 0 && nullOrUndefinedIndices.find(value => value+1 === 1) ? {
+            //   //   path: [{ key: `Option1` }],
+            //   //   message: 'This field is required.'
+            //   // } : null;
+            //   // const Option2Error = nullOrUndefinedIndices.length != 0 && nullOrUndefinedIndices.find(value => value+1 === 2) ? {
+            //   //   path: [{ key: `Option2` }],
+            //   //   message: 'This field is required.'
+            //   // } : null;
+            //   // const Option3Error = nullOrUndefinedIndices.length != 0 && nullOrUndefinedIndices.find(value => value+1 === 3) ? {
+            //   //   path: [{ key: `Option3` }],
+            //   //   message: 'This field is required.'
+            //   // } : null;
+            //   // const Option4Error = nullOrUndefinedIndices.length != 0 && nullOrUndefinedIndices.find(value => value+1 === 4) ? {
+            //   //   path: [{ key: `Option4` }],
+            //   //   message: 'This field is required.'
+            //   // } : null;
+            //   // const Option5Error = nullOrUndefinedIndices.length != 0 && nullOrUndefinedIndices.find(value => value+1 === 5) ? {
+            //   //   path: [{ key: `Option5` }],
+            //   //   message: 'This field is required.'
+            //   // } : null;
+
+            //   // const nonExistingPcIds = await Promise.all(
+            //   //   pcIds.map(async (pcId: string) => {
+            //   //     // Fetch batch details from the database
+            //   const qp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/qualification-packs/qp_id/${encodeURIComponent(item.QP_ID)}?sscId=${sscID}`)
+            //     .then(response => response.json());
+
+            //   const qpIDError = !qp ? {
+            //     path: [{ key: 'QP_ID' }],
+            //     message: `QP ID doesn't exist in our records.`
+            //   } : null;
+
+            //   const pcIdProvided = item.PC_ID && item.PC_ID.length > 0;
+            //   const pcNameProvided = item.PC_Name && item.PC_Name.length > 0;
+
+            //   const pcIdAndPCNameProvidedORNot = (pcIdProvided && pcNameProvided) || (!pcIdProvided && !pcNameProvided)
+
+            //   console.log("pcIdAndPCNameProvidedORNot", pcIdAndPCNameProvidedORNot)
+
+            //   const pcIdPCNameError = !pcIdAndPCNameProvidedORNot ? {
+            //     path: [{ key: 'PC_ID' }, { key: 'PC_Name' }],
+            //     message: 'Both PC ID and PC Name must be provided together or not at all.'
+            //   } : null;
+
+            //   // Check for duplicate Candidate IDs
+            //   // const pcIdError = duplicatesPC.has(item.PC_ID) ? {
+            //   //   path: [{ key: 'PC_ID' }],
+            //   //   message: `PC ID "${item.PC_ID}" is duplicated.`
+            //   // } : null;
+
+            //   const combinedKey = `${item.NOS_ID}_${item.PC_ID}`;
+
+            //   // Check for duplicate Candidate IDs
+            //   const pcIdError = duplicateNosPC.has(combinedKey) ? {
+            //     path: [{ key: 'PC_ID' }],
+            //     message: `PC ID "${item.PC_ID}" is duplicated with same NOS ID.`
+            //   } : null;
+
+            //   // Check if PC ID exists for this NOS ID
+            //   const pcIDExistsForNOS = item.PC_ID && item.NOS_ID
+            //     ? !(await checkExistPCId(item.PC_ID, item.NOS_ID))
+            //     : false;
+
+            //   const pcIdExistError = pcIDExistsForNOS ? {
+            //     path: [{ key: 'PC_ID' }],
+            //     message: `PC ID "${item.PC_ID}" already exists for NOS ID "${item.NOS_ID}".`
+            //   } : null;
+
+            //   const totalMarksError = (item.Theory_Marks + item.Practical_Marks + item.Viva_Marks ) == 0 ? {
+            //     path: [{ key: 'Theory_Marks' }, { key: 'Practical_Marks' }, { key: 'Viva_Marks' }],
+            //     message: 'Sum of the Theory_Marks, Practical_Marks and Viva_Marks must be greater then 0.'
+            //   } : null;
+
+            //   const nos = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/nos/nos_id/${encodeURIComponent(item.NOS_ID)}`)
+            //     .then(response => response.json());
 
 
-              //     // Check if the PC ID exists
-              //     if (!pc) {
-              //       return pcId; // Return the non-existing PC ID
-              //     }
-              //     return null; // Return null if it exists
-              //   })
-              // );
+            //   const nosIDExist = nos ? true : false;
 
-              // // Filter out the null values to get the array of non-existing PC IDs
-              // const pcResult = nonExistingPcIds.filter(pcId => pcId !== null);
 
-              // const pcIdsError = pcResult.length !== 0 ? {
-              //   path: [{ key: 'PC_ID' }],
-              //   message: `PC ID "${pcResult.join(", ")}" does not exist.`
-              // } : null;
+            //   //     // Check if the PC ID exists
+            //   //     if (!pc) {
+            //   //       return pcId; // Return the non-existing PC ID
+            //   //     }
+            //   //     return null; // Return null if it exists
+            //   //   })
+            //   // );
 
-              // const duplicatePCError = duplicatePCIds.length !== 0 ? {
-              //   path: [{ key: 'PC_ID' }],
-              //   message: `Duplicate PC ID "${duplicatePCIds.join(", ")}".`
-              // } : null;
+            //   // // Filter out the null values to get the array of non-existing PC IDs
+            //   // const pcResult = nonExistingPcIds.filter(pcId => pcId !== null);
 
-              // Validate student data using your existing schema
-              const result = await safeParseAsync(schema, item);
+            //   // const pcIdsError = pcResult.length !== 0 ? {
+            //   //   path: [{ key: 'PC_ID' }],
+            //   //   message: `PC ID "${pcResult.join(", ")}" does not exist.`
+            //   // } : null;
 
-              // Augment issues with any new validation errors
-              const augmentedIssues = [
-                ...(result.issues || []),
-                qpIDError,
-                pcIdPCNameError,
-                pcIdError,
-                totalMarksError
+            //   // const duplicatePCError = duplicatePCIds.length !== 0 ? {
+            //   //   path: [{ key: 'PC_ID' }],
+            //   //   message: `Duplicate PC ID "${duplicatePCIds.join(", ")}".`
+            //   // } : null;
 
-                // nosIDError
-                // pcIdsError,
-                // duplicatePCError,
-                // Option1Error,
-                // Option2Error,
-                // Option3Error,
-                // Option4Error,
-                // Option5Error,
-                // answerError,
-                // candidateIdError,
-                // batchSizeError
-              ].filter(Boolean); // Remove null values
+            //   // Validate student data using your existing schema
+            //   const result = await safeParseAsync(schema, item);
 
-              validatedData.push({
-                // batchId: batchId,
-                ...item,
-                nosIDExist,
-                result: {
-                  ...result,
-                  issues: augmentedIssues.length === 0 ? undefined : augmentedIssues
-                }
-              });
-            }
+            //   // Augment issues with any new validation errors
+            //   const augmentedIssues = [
+            //     ...(result.issues || []),
+            //     qpIDError,
+            //     pcIdPCNameError,
+            //     pcIdError,
+            //     pcIdExistError,
+            //     totalMarksError
+
+            //     // nosIDError
+            //     // pcIdsError,
+            //     // duplicatePCError,
+            //     // Option1Error,
+            //     // Option2Error,
+            //     // Option3Error,
+            //     // Option4Error,
+            //     // Option5Error,
+            //     // answerError,
+            //     // candidateIdError,
+            //     // batchSizeError
+            //   ].filter(Boolean); // Remove null values
+
+            //   validatedData.push({
+            //     // batchId: batchId,
+            //     ...item,
+            //     nosIDExist,
+            //     result: {
+            //       ...result,
+            //       issues: augmentedIssues.length === 0 ? undefined : augmentedIssues
+            //     }
+            //   });
+            // }
+
+            /**
+             * For making api calls parallel
+             */
+            const validatedData = await Promise.all(mappedData.map(async (item) => {
+              try {
+                // Fetch required data (QP and NOS)
+                const [qp, nos] = await Promise.all([
+                  fetch(`${process.env.NEXT_PUBLIC_API_URL}/qualification-packs/qp_id/${encodeURIComponent(item.QP_ID)}?sscId=${sscID}`).then(response => response.json()),
+                  fetch(`${process.env.NEXT_PUBLIC_API_URL}/nos/nos_id/${encodeURIComponent(item.NOS_ID)}`).then(response => response.json())
+                ]);
+
+                // Perform validation checks
+                const qpIDError = !qp ? { path: [{ key: 'QP_ID' }], message: `QP ID doesn't exist in our records.` } : null;
+                const pcIdProvided = item.PC_ID && item.PC_ID.length > 0;
+                const pcNameProvided = item.PC_Name && item.PC_Name.length > 0;
+                const pcIdAndPCNameProvidedORNot = (pcIdProvided && pcNameProvided) || (!pcIdProvided && !pcNameProvided);
+                const pcIdPCNameError = !pcIdAndPCNameProvidedORNot ? { path: [{ key: 'PC_ID' }, { key: 'PC_Name' }], message: 'Both PC ID and PC Name must be provided together or not at all.' } : null;
+
+                const combinedKey = `${item.NOS_ID}_${item.PC_ID}`;
+                const pcIdError = duplicateNosPC.has(combinedKey) ? { path: [{ key: 'PC_ID' }], message: `PC ID "${item.PC_ID}" is duplicated with same NOS ID.` } : null;
+
+                const pcIDExistsForNOS = item.PC_ID && item.NOS_ID ? !(await checkExistPCId(item.PC_ID, item.NOS_ID)) : false;
+                const pcIdExistError = pcIDExistsForNOS ? { path: [{ key: 'PC_ID' }], message: `PC ID "${item.PC_ID}" already exists for NOS ID "${item.NOS_ID}".` } : null;
+
+                const totalMarksError = (item.Theory_Marks + item.Practical_Marks + item.Viva_Marks) === 0 ? { path: [{ key: 'Theory_Marks' }, { key: 'Practical_Marks' }, { key: 'Viva_Marks' }], message: 'Sum of the Theory_Marks, Practical_Marks and Viva_Marks must be greater than 0.' } : null;
+
+                const nosIDExist = nos ? true : false;
+
+                const result = await safeParseAsync(schema, item);
+
+                const augmentedIssues = [
+                  ...(result.issues || []),
+                  qpIDError,
+                  pcIdPCNameError,
+                  pcIdError,
+                  pcIdExistError,
+                  totalMarksError
+                ].filter(Boolean);
+
+                return {
+                  ...item,
+                  nosIDExist,
+                  result: { ...result, issues: augmentedIssues.length === 0 ? undefined : augmentedIssues }
+                };
+              } catch (error) {
+                console.error('Error processing row:', error);
+
+                return { ...item, result: { issues: [{ path: [{ key: 'General' }], message: 'Error processing row.' }] } };
+              }
+            }));
 
             console.log("validatedData", validatedData);
 

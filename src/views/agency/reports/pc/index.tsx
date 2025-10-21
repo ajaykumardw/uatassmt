@@ -4,7 +4,6 @@ import Grid from '@mui/material/Grid'
 // Type Imports
 
 // Component Imports
-import type { exam_sets } from '@prisma/client'
 
 import PCWiseReportTable from './PCWiseReportTable'
 
@@ -12,9 +11,7 @@ import PCWiseReportTable from './PCWiseReportTable'
 
 // import UserListCards from './UserListCards'
 
-const PCReportList = ({ questionsData }: { questionsData?: exam_sets[], }) => {
-
-  console.log(questionsData);
+const PCReportList = () => {
 
   return (
     <Grid container spacing={6}>

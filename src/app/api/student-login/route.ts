@@ -3,12 +3,14 @@ import { NextResponse } from 'next/server'
 
 import {compare} from 'bcrypt'
 
+import jwt from 'jsonwebtoken';
+
 import prisma from '@/libs/prisma';
 
 import type { StudentTable } from './student';
 
 
-type ResponseUser = Omit<StudentTable, 'password'>
+type ResponseUser = Omit<StudentTable & { accessToken: string; refreshToken: string }, 'password'>
 
 export async function POST(req: Request) {
 
@@ -18,7 +20,7 @@ export async function POST(req: Request) {
   const rows = await prisma.students.findUnique({
     where: {
       candidate_id : email
-      
+
     }
   })
 
@@ -34,8 +36,22 @@ export async function POST(req: Request) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password: _, ...filteredUserData } = rows
 
+      const accessToken = jwt.sign(
+        { userId: 1, email },
+        process.env.NEXTAUTH_SECRET as string,
+        { expiresIn: process.env.ACCESS_TOKEN_EXPIRATION as jwt.SignOptions['expiresIn'] || '1h' }
+      );
+
+      const refreshToken = jwt.sign(
+        { userId: 1 },
+        process.env.NEXTAUTH_SECRET as string,
+        { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION as jwt.SignOptions['expiresIn'] || '14d' }
+      );
+
       response = {
-        ...filteredUserData
+        ...filteredUserData,
+        accessToken,
+        refreshToken
       }
 
       return NextResponse.json(response)

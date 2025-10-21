@@ -177,7 +177,7 @@ const TheoryQuestionListTable = ({ tableData, selectedQuestion, setSelectedQuest
 
       if(data){
 
-        console.log(data);
+        // console.log(data);
 
         const totalMarks = filteredSelection.reduce((sum, id) => {
           const question = data.find(q => q.id === id); // questions is an object: { [id]: { id, mark } }

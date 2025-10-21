@@ -253,7 +253,7 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
 
   const handleOnAddPCClick = async (nos_id: number, nos_unique_id?: string, pc?: PCType[]) => {
 
-    const pc_id = (nos_unique_id + '_PC' + ((pc?.length ?? 0) + 1));
+    const pc_id = ('PC' + ((pc?.length ?? 0) + 1)); // changed pc_id (nos_unique_id + '_PC' + pc?.length + 1) to ('PC' + pc?.length + 1) date: 12-08-2025
 
     setPCAddData({
       pcId: pc_id,

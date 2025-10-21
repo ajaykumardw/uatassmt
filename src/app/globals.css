@@ -224,4 +224,15 @@ table tbody tr:hover {
 
 .report-table .pass {
   background: var(--mui-palette-success-lightOpacity);
+  color: var(--mui-palette-success-main);
+}
+
+.report-table .fail {
+  background: var(--mui-palette-error-lightOpacity);
+  color: var(--mui-palette-error-main);
+}
+
+.report-table .absent {
+  background: var(--mui-palette-warning-lightOpacity);
+  color: var(--mui-palette-warning-main);
 }

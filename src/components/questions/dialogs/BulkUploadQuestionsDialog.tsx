@@ -95,6 +95,7 @@ type QuestionsTypeWithError = {
   Question_Level: { value: string, error: string }
   Question_Explanation: { value: string, error: string }
   Marks: { value: string, error: string }
+  NOS_ID: { value: string, error: string }
   PC_ID: { value: string, error: string }
 }
 
@@ -194,6 +195,7 @@ type BulkUploadQuestionDialogProps = {
 const schema = object(
   {
     // selectPC: array(string(), 'This field is required'),
+    NOS_ID: pipe(string('This field is required'), trim(), minLength(1, 'This field is required')),
     PC_ID: pipe(string('This field is required'), trim(), minLength(1, 'This field is required')),
 
     // questionType: pipe(string(), trim() , minLength(1, 'This field is required')),
@@ -228,6 +230,7 @@ const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
 }
 
 const mapKeys = (data: any[]) => data.map((item: any) => ({
+  NOS_ID: item['NOS_ID'],
   PC_ID: item['PC_ID'],
   Question_Level: item['Question_Level(E/M/H)'],
   Question: item['Question'],
@@ -323,8 +326,8 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
 
               console.log("index", index);
 
-              const pcIds = item.PC_ID.toString().split(',').map((id: string) => id.trim());
-              const duplicatePCIds = pcIds.filter((id: any, index: number) => pcIds.indexOf(id) !== index && pcIds.lastIndexOf(id) === index);
+              const pcIds = item?.PC_ID?.toString().split(',').map((id: string) => id.trim());
+              const duplicatePCIds = pcIds?.filter((id: any, index: number) => pcIds?.indexOf(id) !== index && pcIds?.lastIndexOf(id) === index);
 
               const options = [item.Option1, item.Option2, item.Option3, item.Option4, item.Option5];
 
@@ -371,31 +374,46 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
                 message: 'This field is required.'
               } : null;
 
-              const nonExistingPcIds = await Promise.all(
-                pcIds.map(async (pcId: string) => {
-                  // Fetch batch details from the database
-                  const pc = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pc/pc_id/${encodeURIComponent(pcId)}?sscId=${sscID}&qpId=${qpID}`)
-                    .then(response => response.json());
+              // const nonExistingPcIds = pcIds?.length > 0 ? await Promise.all(
+              //   pcIds?.map(async (pcId: string) => {
+              //     // Fetch batch details from the database
+              //     const pc = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pc/pc_id/${encodeURIComponent(pcId)}?sscId=${sscID}&qpId=${qpID}&nosId=${item.NOS_ID}`)
+              //       .then(response => response.json());
 
 
-                  // Check if the PC ID exists
-                  if (!pc) {
-                    return pcId; // Return the non-existing PC ID
-                  }
+              //     // Check if the PC ID exists
+              //     if (!pc) {
+              //       return pcId; // Return the non-existing PC ID
+              //     }
 
-                  return null; // Return null if it exists
-                })
-              );
+              //     return null; // Return null if it exists
+              //   })
+              // ) : [];
 
-              // Filter out the null values to get the array of non-existing PC IDs
-              const pcResult = nonExistingPcIds.filter(pcId => pcId !== null);
+              // // Filter out the null values to get the array of non-existing PC IDs
+              // const pcResult = nonExistingPcIds.filter(pcId => pcId !== null);
+
+              // Fetch all at once via new API
+              const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pc/bulk-check`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  pcIds,
+                  nosId: item.NOS_ID,
+                }),
+              });
+
+              const data = await response.json();
+              const pcResult = data.nonExistingPcIds || [];
 
               const pcIdsError = pcResult.length !== 0 ? {
                 path: [{ key: 'PC_ID' }],
                 message: `PC ID "${pcResult.join(", ")}" does not exist.`
               } : null;
 
-              const duplicatePCError = duplicatePCIds.length !== 0 ? {
+              const duplicatePCError = duplicatePCIds && duplicatePCIds.length !== 0 ? {
                 path: [{ key: 'PC_ID' }],
                 message: `Duplicate PC ID "${duplicatePCIds.join(", ")}".`
               } : null;
@@ -661,6 +679,17 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
               {row.original.Marks?.value}
             </Typography>
             <Typography variant='body2' color="error">{row.original.Marks.error}</Typography>
+          </div>
+        )
+      }),
+      columnHelper.accessor('NOS_ID.value', {
+        header: 'NOS_ID',
+        cell: ({ row }) => (
+          <div className="flex flex-col">
+            <Typography color='text.primary' >
+              {row.original.NOS_ID?.value}
+            </Typography>
+            <Typography variant='body2' color="error">{row.original.NOS_ID.error}</Typography>
           </div>
         )
       }),
