@@ -65,13 +65,15 @@ export const authOptions: NextAuthOptions = {
             }
 
             if (res.status === 200) {
+
+              const studentData = data.data;
               /*
                * Please unset all the sensitive information of the user either from API response or before returning
                * user data below. Below return statement will set the user object in the token and the same is set in
                * the session which will be accessible all over the app.
                */
               return {
-                ...data,
+                ...studentData,
                 is_student: isStudent,
                 sessionId: sessionId
               }
@@ -96,14 +98,16 @@ export const authOptions: NextAuthOptions = {
             }
 
             if (res.status === 200) {
+
+              const userData = data.data;
               /*
               * Please unset all the sensitive information of the user either from API response or before returning
               * user data below. Below return statement will set the user object in the token and the same is set in
               * the session which will be accessible all over the app.
               */
               return {
-                ...data,
-                is_ssc: !!data.ssc_username,
+                ...userData,
+                is_ssc: !!userData.ssc_username,
                 sessionId: sessionId
               }
             }

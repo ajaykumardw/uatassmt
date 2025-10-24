@@ -72,7 +72,7 @@ const MaskImg = styled('img')({
 })
 
 type ErrorType = {
-  message: string[]
+  message: string
 }
 
 type FormData = InferInput<typeof schema>
@@ -137,7 +137,7 @@ const Login = ({ mode }: { mode: SystemMode }) => {
 
       // Vars
       router.refresh() // Reload the page
-      
+
       const redirectURL = searchParams.get('redirectTo') ?? '/'
 
       router.push(getLocalizedUrl(redirectURL, locale as Locale))
@@ -213,7 +213,7 @@ const Login = ({ mode }: { mode: SystemMode }) => {
                   }}
                   {...((errors.email || errorState !== null) && {
                     error: true,
-                    helperText: errors?.email?.message || errorState?.message[0]
+                    helperText: errors?.email?.message || errorState?.message
                   })}
                 />
               )}

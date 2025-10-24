@@ -16,8 +16,54 @@ export async function POST(req: Request) {
 
   try {
 
+    let body;
+
+    try {
+
+      body = await req.json();
+
+    } catch {
+
+      return NextResponse.json(
+        {
+          status: 'Error',
+          statusCode: 400,
+          message: 'Invalid JSON'
+        },
+        { status: 400, statusText: 'Bad Request' }
+      );
+    }
+
     // Vars
-    const { email, password } = await req.json()
+    const { email, password } = body;
+
+    // Simple checks
+    if (!email && !password) {
+
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 400,
+        message: 'Email and Password are required'
+      }, { status: 400 });
+    }
+
+    if (!email) {
+
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 400,
+        message: 'Email is required'
+      }, { status: 400 });
+    }
+
+    if (!password) {
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 400,
+        message: 'Password is required'
+      }, { status: 400 });
+    }
+
 
     const rows = await prisma.users.findFirst({
       where: {
@@ -69,7 +115,12 @@ export async function POST(req: Request) {
             refreshToken
           }
 
-          return NextResponse.json(response)
+          return NextResponse.json({
+            status: 'Success',
+            statusCode: 200,
+            message: 'Login successful',
+            data: response
+          })
 
         } else {
 
@@ -77,7 +128,7 @@ export async function POST(req: Request) {
           return NextResponse.json(
             {
               // We create object here to separate each error message for each field in case of multiple errors
-              message: ['Email or Password is invalid']
+              message: 'Email or Password is invalid'
             },
             {
               status: 401,
@@ -92,7 +143,7 @@ export async function POST(req: Request) {
           {
 
             // We create object here to separate each error message for each field in case of multiple errors
-            message: ['Email or Password is invalid']
+            message: 'Email or Password is invalid'
           },
           {
             status: 401,
@@ -135,7 +186,12 @@ export async function POST(req: Request) {
           refreshToken
         }
 
-        return NextResponse.json(response)
+        return NextResponse.json({
+          status: 'Success',
+          statusCode: 200,
+          message: 'Login successful',
+          data: response
+        })
 
       } else {
 
@@ -143,7 +199,9 @@ export async function POST(req: Request) {
         return NextResponse.json(
           {
             // We create object here to separate each error message for each field in case of multiple errors
-            message: ['Email or Password is invalid']
+            status: 'Error',
+            statusCode: 401,
+            message: 'Email or Password is invalid'
           },
           {
             status: 401,
@@ -158,7 +216,9 @@ export async function POST(req: Request) {
         {
 
           // We create object here to separate each error message for each field in case of multiple errors
-          message: ['Email or Password is invalid']
+          status: 'Error',
+          statusCode: 401,
+          message: 'Email or Password is invalid'
         },
         {
           status: 401,
@@ -170,7 +230,9 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         // We create object here to separate each error message for each field in case of multiple errors
-        message: [e.message || 'Something went wrong while logging in'],
+        status: 'Error',
+        statusCode: 500,
+        message: e.message || 'Something went wrong while logging in',
 
       },
       {
