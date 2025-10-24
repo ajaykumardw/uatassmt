@@ -110,6 +110,7 @@
     "pending": "Pending",
     "completed": "Completed",
     "reports": "Reports",
+    "nosWise": "NOS Wise",
     "pcWise": "PC Wise"
   }
 }

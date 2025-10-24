@@ -7,9 +7,9 @@
 // import NOSList from "@/views/agency/nos/list"
 // import SkeletonTable from '@/components/skeleton/SkeletonTable'
 
-import PCReportList from "@/views/agency/reports/pc"
+import NOSReportList from "@/views/agency/reports/nos"
 
-const PCReport = () => {
+const NOSReport = () => {
 
   // Vars
   // const [data, setNOS] = useState([])
@@ -41,7 +41,7 @@ const PCReport = () => {
 
   // if(!loading){
 
-    return <PCReportList />
+    return <NOSReportList />
 
   // }else{
   //   return <SkeletonTable />
@@ -49,4 +49,4 @@ const PCReport = () => {
 
 }
 
-export default PCReport
+export default NOSReport

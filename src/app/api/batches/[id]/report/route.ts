@@ -42,6 +42,7 @@ export async function GET(
 
                   pc: {
                     select: {
+                      id: true,
                       pc_id: true,
                       pc_name: true,
                       theory_marks: true,
@@ -204,6 +205,7 @@ function groupAllExamSetPCsToNOS(...examSets: any[]) {
 
         if (!exists) {
           nosEntry.pcs.push({
+            id: pc.id,
             pc_id: pc.pc_id,
             pc_name: pc.pc_name,
             theory_marks: pc.theory_marks,
