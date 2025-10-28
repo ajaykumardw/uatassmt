@@ -312,7 +312,7 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): Final
   };
 };
 
-const NOSWiseReportTable = () => {
+const PCWiseReportTable = () => {
 
   // States
 
@@ -647,10 +647,9 @@ const NOSWiseReportTable = () => {
   (batchReportData?.practical_exam_set_id ? 1 : 0) +
   (batchReportData?.viva_exam_set_id ? 1 : 0);
 
-  // const dynamicNOSColumns = batchReportData?.nos?.reduce((acc, nos) => {
-  //   return acc + ((nos?.pcs?.length || 0) * activeExamCount);
-  // }, 0) ?? 0;
-  const dynamicNOSColumns = (batchReportData?.nos?.length || 0) * activeExamCount;
+  const dynamicNOSColumns = batchReportData?.nos?.reduce((acc, nos) => {
+    return acc + ((nos?.pcs?.length || 0) * activeExamCount);
+  }, 0) ?? 0;
 
   const fixedColumnsBeforeNOS = 3;
 
@@ -774,29 +773,29 @@ const NOSWiseReportTable = () => {
                 <td colSpan={3} className='text-center gold'>{batchReportData?.students?.length ?? 0}</td>
               </tr>
               <tr className='light-gray'>
-                <td rowSpan={3}>S No.</td>
-                <td rowSpan={3}>Student Unique Id</td>
-                <td className='text-wrap' rowSpan={3}>Name of the Candidate (Full Name)</td>
+                <td rowSpan={4}>S No.</td>
+                <td rowSpan={4}>Student Unique Id</td>
+                <td className='text-wrap' rowSpan={4}>Name of the Candidate (Full Name)</td>
                 {batchReportData?.nos && batchReportData?.nos?.length > 0 ?
                   batchReportData?.nos?.map((n, index) => (
-                  <td key={index} className='text-wrap' colSpan={ ((batchReportData?.theory_exam_set_id != null ? 1 : 0) + (batchReportData?.practical_exam_set_id != null ? 1 : 0) + (batchReportData?.viva_exam_set_id != null ? 1 : 0) )}>
+                  <td key={index} className='text-wrap' colSpan={n?.pcs?.length * ((batchReportData?.theory_exam_set_id != null ? 1 : 0) + (batchReportData?.practical_exam_set_id != null ? 1 : 0) + (batchReportData?.viva_exam_set_id != null ? 1 : 0) )}>
                     {n?.nos_id}
                   </td>
                   ))
                  : null}
                 {batchReportData?.theory_exam_set_id &&
-                  <td rowSpan={2}>Total Theory</td>
+                  <td rowSpan={3}>Total Theory</td>
                 }
                 {batchReportData?.practical_exam_set_id &&
-                  <td rowSpan={2}>Total Practical</td>
+                  <td rowSpan={3}>Total Practical</td>
                 }
                 {batchReportData?.viva_exam_set_id &&
-                  <td rowSpan={2}>Total Viva</td>
+                  <td rowSpan={3}>Total Viva</td>
                 }
-                <td rowSpan={2}>Gross <br/> Total</td>
-                <td colSpan={2}>Result</td>
+                <td rowSpan={3}>Gross <br/> Total</td>
+                <td rowSpan={2} colSpan={2}>Result</td>
               </tr>
-              {/* <tr className='light-gray'>
+              <tr className='light-gray'>
                 {batchReportData?.nos && batchReportData.nos.length > 0 ? (
                   batchReportData.nos.map((n, index) =>
                     n?.pcs && n.pcs.length > 0 ? (
@@ -805,13 +804,19 @@ const NOSWiseReportTable = () => {
                       ))
                     ) : null
                   )
-                ) : null} */}
-              {/* </tr> */}
+                ) : null}
+                {/* <td>Theory</td>
+                <td>Practical</td>
+                <td>Theory</td>
+                <td>Practical</td>
+                <td>Theory</td>
+                <td>Practical</td> */}
+              </tr>
               <tr className='light-gray'>
                 {batchReportData?.nos && batchReportData?.nos?.length > 0 ?
-                  batchReportData?.nos?.map((n, idx) => (
-                    // n?.pcs && n.pcs.length > 0 ? (
-                    //   n.pcs.map((p, idx) => (
+                  batchReportData?.nos?.map((n) => (
+                    n?.pcs && n.pcs.length > 0 ? (
+                      n.pcs.map((p, idx) => (
                         <React.Fragment key={idx}>
                           {batchReportData?.theory_exam_set_id &&
                             <td>Theory</td>
@@ -823,8 +828,8 @@ const NOSWiseReportTable = () => {
                             <td>Viva</td>
                           }
                         </React.Fragment>
-                    //   ))
-                    // ) : null
+                      ))
+                    ) : null
                   ))
                  : null}
 
@@ -832,7 +837,7 @@ const NOSWiseReportTable = () => {
                 <td>Final</td>
               </tr>
               <tr className='light-gray'>
-                {/* {batchReportData?.nos && batchReportData?.nos?.length > 0 ?
+                {batchReportData?.nos && batchReportData?.nos?.length > 0 ?
                   batchReportData?.nos?.map((n, index) => (
                     n?.pcs && n.pcs.length > 0 ? (
                       n.pcs.map((p, idx) => (
@@ -850,38 +855,7 @@ const NOSWiseReportTable = () => {
                       ))
                     ) : null
                   ))
-                 : null} */}
-                {batchReportData?.nos && batchReportData?.nos?.length > 0
-                ? batchReportData?.nos?.map((n, index) => {
-                    const totalTheory = n?.pcs?.reduce(
-                      (sum, p) => sum + (parseFloat(p.theory_marks.toString()) || 0),
-                      0
-                    );
-                    const totalPractical = n?.pcs?.reduce(
-                      (sum, p) => sum + (parseFloat(p.practical_marks.toString()) || 0),
-                      0
-                    );
-                    const totalViva = n?.pcs?.reduce(
-                      (sum, p) => sum + (parseFloat(p.viva_marks.toString()) || 0),
-                      0
-                    );
-
-                    return (
-                      <React.Fragment key={index}>
-                        {batchReportData?.theory_exam_set_id && (
-                          <td>{totalTheory}</td>
-                        )}
-                        {batchReportData?.practical_exam_set_id && (
-                          <td>{totalPractical}</td>
-                        )}
-                        {batchReportData?.viva_exam_set_id && (
-                          <td>{totalViva}</td>
-                        )}
-                      </React.Fragment>
-                    );
-                  })
-                : null}
-
+                 : null}
                 {batchReportData?.theory_exam_set_id &&
                   <td>{batchReportData?.qualification_pack?.total_theory_marks}</td>
                 }
@@ -916,9 +890,25 @@ const NOSWiseReportTable = () => {
                         </React.Fragment>
                       ))
                     )}
+
+                    {/* <td>28</td>
+                    <td>49</td>
+                    <td>32</td>
+                    <td>45</td>
+                    <td>28</td>
+                    <td>47</td>
+                    <td>32</td>
+                    <td>46</td>
+                    <td>31</td>
+                    <td>47</td>
+                    <td>36</td>
+                    <td>41</td>
+                    <td>17</td>
+                    <td>23</td> */}
+                    {/* <td>204</td> */}
                     <td className='light-gray'>{totalTheoryMarks[student.candidate_id] ?? 0}</td>
-                    {batchReportData?.practical_exam_set_id && <td className='light-gray'>0</td>}
-                    {batchReportData?.viva_exam_set_id && <td className='light-gray'>0</td>}
+                    <td className='light-gray'>0</td>
+                    <td className='light-gray'>0</td>
                     <td className='light-gray'>{grossTotal[student.candidate_id] ?? 0}</td>
                     <td>
                       {
@@ -929,6 +919,26 @@ const NOSWiseReportTable = () => {
                           : "0.00"
                       }
                     </td>
+                    {/* <td><Chip color='success' variant='tonal' label="Pass" /></td> */}
+                    {/* <td>
+                      <Chip
+                        color={
+                          absentStudents.includes(student.candidate_id)
+                            ? 'warning'             // or 'warning' if you want it highlighted
+                            : ( ( (grossTotal[student.candidate_id] ?? 0) / batchReportData.qualification_pack.total_marks ) * 100 ) >= (batchReportData?.qualification_pack?.overall_cutoff_marks ?? 0)
+                              ? 'success'
+                              : 'error'
+                        }
+                        label={
+                          absentStudents.includes(student.candidate_id)
+                            ? 'Absent'
+                            : ( ( (grossTotal[student.candidate_id] ?? 0) / batchReportData.qualification_pack.total_marks ) * 100 ) >= (batchReportData?.qualification_pack?.overall_cutoff_marks ?? 0)
+                              ? 'Pass'
+                              : 'Fail'
+                        }
+                        variant='tonal'
+                      />
+                    </td> */}
                     <td className={
                       absentStudents.includes(student.candidate_id)
                             ? 'absent'             // or 'warning' if you want it highlighted
@@ -951,8 +961,85 @@ const NOSWiseReportTable = () => {
                   <td colSpan={100}>No Records Found!</td>
                 </tr>
               )}
+              {/* <tr>
+                <td>1</td>
+                <td>0</td>
+                <td>0</td>
+                <td>28</td>
+                <td>49</td>
+                <td>32</td>
+                <td>45</td>
+                <td>28</td>
+                <td>47</td>
+                <td>32</td>
+                <td>46</td>
+                <td>31</td>
+                <td>47</td>
+                <td>36</td>
+                <td>41</td>
+                <td>17</td>
+                <td>23</td>
+                <td>204</td>
+                <td>298</td>
+                <td>502</td>
+                <td>77.23</td>
+                <td><Chip color='success' variant='tonal' label="Pass" /></td>
+              </tr> */}
             </tbody>
           </table>
+          {/* <table className={tableStyles.table}>
+            <thead>
+              {table.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map(header => (
+                    <th key={header.id}>
+                      {header.isPlaceholder ? null : (
+                        <>
+                          <div
+                            className={classnames({
+                              'flex items-center': header.column.getIsSorted(),
+                              'cursor-pointer select-none': header.column.getCanSort()
+                            })}
+                            onClick={header.column.getToggleSortingHandler()}
+                          >
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                            {{
+                              asc: <i className='tabler-chevron-up text-xl' />,
+                              desc: <i className='tabler-chevron-down text-xl' />
+                            }[header.column.getIsSorted() as 'asc' | 'desc'] ?? null}
+                          </div>
+                        </>
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            {table.getFilteredRowModel().rows.length === 0 ? (
+              <tbody>
+                <tr>
+                  <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                    No data available
+                  </td>
+                </tr>
+              </tbody>
+            ) : (
+              <tbody>
+                {table
+                  .getRowModel()
+                  .rows.slice(0, table.getState().pagination.pageSize)
+                  .map(row => {
+                    return (
+                      <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
+                        {row.getVisibleCells().map(cell => (
+                          <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                        ))}
+                      </tr>
+                    )
+                  })}
+              </tbody>
+            )}
+          </table> */}
         </div>
         {/* <TablePagination
           component={() => <TablePaginationComponent table={table} />}
@@ -970,4 +1057,4 @@ const NOSWiseReportTable = () => {
   )
 }
 
-export default NOSWiseReportTable
+export default PCWiseReportTable

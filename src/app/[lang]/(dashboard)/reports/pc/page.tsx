@@ -7,7 +7,7 @@
 // import NOSList from "@/views/agency/nos/list"
 // import SkeletonTable from '@/components/skeleton/SkeletonTable'
 
-import PCReportList from "@/views/agency/reports/pc"
+import PCReportList from "@/views/agency/reports/pc-wise"
 
 const PCReport = () => {
 
