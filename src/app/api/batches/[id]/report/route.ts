@@ -29,6 +29,19 @@ export async function GET(
       qualification_pack: {
         include: {
           version: true,
+          ssc: {
+            select: {
+              id: true,
+              ssc_name: true,
+              ssc_code: true,
+              agency: {
+                select: {
+                  id: true,
+                  company_name: true
+                }
+              }
+            }
+          }
         }
       },
       theory_exam_set: {
@@ -126,6 +139,12 @@ export async function GET(
                       pc_id: true,
                       pc_name: true,
                       theory_marks: true,
+                      nos: {
+                        select: {
+                          nos_id: true,
+                          nos_name: true
+                        }
+                      }
                     }
                   }
                 }

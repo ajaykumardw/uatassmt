@@ -2,6 +2,7 @@
 import type { ThemeColor } from '@core/types'
 import type { QPType } from '../qualification-pack/qpType'
 import type { NOSType } from '../nos/nosType'
+import type { UsersType } from '../users/usersType'
 
 export type SSCType = {
   id: number
@@ -20,4 +21,5 @@ export type SSCType = {
   updated_at: string,
   qualification_packs: QPType[]
   nos: NOSType[]
+  agency: UsersType
 }
