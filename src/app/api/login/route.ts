@@ -98,13 +98,13 @@ export async function POST(req: Request) {
           const { ssc_pwd: _, ...filteredUserData } = sscRow
 
           const accessToken = jwt.sign(
-            { userId: 1, email },
+            { ...filteredUserData },
             process.env.NEXTAUTH_SECRET as string,
             { expiresIn: process.env.ACCESS_TOKEN_EXPIRATION as jwt.SignOptions['expiresIn'] }
           );
 
           const refreshToken = jwt.sign(
-            { userId: 1 },
+            { ...filteredUserData },
             process.env.NEXTAUTH_SECRET as string,
             { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION as jwt.SignOptions['expiresIn'] }
           );
@@ -174,7 +174,7 @@ export async function POST(req: Request) {
         );
 
         const refreshToken = jwt.sign(
-          { userId: 1 },
+          { ...filteredUserData, agency_id },
           process.env.NEXTAUTH_SECRET as string,
           { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION as jwt.SignOptions['expiresIn'] || '14d' }
         );

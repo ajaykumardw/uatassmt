@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-
 import { Button, Dialog, DialogContent, DialogTitle } from "@mui/material";
 
 import XLSX from 'xlsx';
@@ -27,14 +25,6 @@ type PCReportDialogProps = {
 }
 
 const PCReportDialog = ({ open, handleClose, theoryMarks, batchReportData, selectedCandidate } : PCReportDialogProps) => {
-
-
-  useEffect(() => {
-
-    if (theoryMarks && open) {
-      console.log('theoryMarks in dialog:', theoryMarks);
-    }
-  }, [theoryMarks, open]);
 
   const handleGenerateReport = () => {
     // Get the table element
@@ -89,44 +79,44 @@ const PCReportDialog = ({ open, handleClose, theoryMarks, batchReportData, selec
             <table className={`${tableStyles.table} text-center report-table text-xs m-0 table-pc-wise`}>
               <thead>
                 <tr>
-                  <th colSpan={11} className="text-center">{batchReportData?.qualification_pack?.ssc?.agency?.company_name}</th>
+                  <th colSpan={11} className="text-center bs-[30px] p-1.5 text-[13px]">{batchReportData?.qualification_pack?.ssc?.agency?.company_name}</th>
                 </tr>
                 <tr>
-                  <th colSpan={2}>Batch ID</th>
-                  <th colSpan={3}>{batchReportData?.batch_name || ''}</th>
-                  <th colSpan={3}>Assessment Date</th>
-                  <th colSpan={3}>{batchReportData?.assessment_start_datetime ? format(batchReportData.assessment_start_datetime, 'd-MMM-y') : '0'}</th>
+                  <th colSpan={2} className="bs-[30px] p-1.5 text-[13px]">Batch ID</th>
+                  <th colSpan={3} className="bs-[30px] p-1.5 text-[13px]">{batchReportData?.batch_name || ''}</th>
+                  <th colSpan={3} className="bs-[30px] p-1.5 text-[13px]">Assessment Date</th>
+                  <th colSpan={3} className="bs-[30px] p-1.5 text-[13px]">{batchReportData?.assessment_start_datetime ? format(batchReportData.assessment_start_datetime, 'd-MMM-y') : '0'}</th>
                 </tr>
                 <tr>
-                  <th colSpan={2}>Sector</th>
-                  <th colSpan={3}>{batchReportData?.qualification_pack?.ssc?.ssc_name}</th>
-                  <th colSpan={3}>Candidate ID</th>
-                  <th colSpan={3}>{selectedCandidate}</th>
+                  <th colSpan={2} className="bs-[30px] p-1.5 text-[13px]">Sector</th>
+                  <th colSpan={3} className="bs-[30px] p-1.5 text-[13px]">{batchReportData?.qualification_pack?.ssc?.ssc_name}</th>
+                  <th colSpan={3} className="bs-[30px] p-1.5 text-[13px]">Candidate ID</th>
+                  <th colSpan={3} className="bs-[30px] p-1.5 text-[13px]">{selectedCandidate}</th>
                 </tr>
                 <tr>
-                  <th colSpan={2}>Job Role</th>
-                  <th colSpan={3}>{batchReportData?.qualification_pack ? batchReportData?.qualification_pack?.qualification_pack_name : ''}</th>
-                  <th colSpan={3}>Candidate Name</th>
-                  <th colSpan={3}>{batchReportData?.students?.find(student => student.candidate_id === selectedCandidate)?.candidate_name || ''}</th>
+                  <th colSpan={2} className="bs-[30px] p-1.5 text-[13px]">Job Role</th>
+                  <th colSpan={3} className="bs-[30px] p-1.5 text-[13px]">{batchReportData?.qualification_pack ? batchReportData?.qualification_pack?.qualification_pack_name : ''}</th>
+                  <th colSpan={3} className="bs-[30px] p-1.5 text-[13px]">Candidate Name</th>
+                  <th colSpan={3} className="bs-[30px] p-1.5 text-[13px]">{batchReportData?.students?.find(student => student.candidate_id === selectedCandidate)?.candidate_name || ''}</th>
                 </tr>
                 <tr>
-                  <th rowSpan={2} className="text-center">Sr. No</th>
-                  <th rowSpan={2} className="text-center">NOS ID</th>
-                  <th rowSpan={2} className="text-center">PC ID</th>
-                  <th colSpan={2} className="text-center">Theory Marks</th>
-                  <th colSpan={2} className="text-center">Practical Marks</th>
-                  <th colSpan={2} className="text-center">Viva Marks</th>
-                  <th colSpan={2} className="text-center">Total Marks</th>
+                  <th rowSpan={2} className="text-center bs-[30px] p-1.5 text-[13px]">Sr. No</th>
+                  <th rowSpan={2} className="text-center bs-[30px] p-1.5 text-[13px]">NOS ID</th>
+                  <th rowSpan={2} className="text-center bs-[30px] p-1.5 text-[13px]">PC ID</th>
+                  <th colSpan={2} className="text-center bs-[30px] p-1.5 text-[13px]">Theory Marks</th>
+                  <th colSpan={2} className="text-center bs-[30px] p-1.5 text-[13px]">Practical Marks</th>
+                  <th colSpan={2} className="text-center bs-[30px] p-1.5 text-[13px]">Viva Marks</th>
+                  <th colSpan={2} className="text-center bs-[30px] p-1.5 text-[13px]">Total Marks</th>
                 </tr>
                 <tr>
-                  <th className="text-center">Out Of</th>
-                  <th className="text-center">Obtained</th>
-                  <th className="text-center">Out Of</th>
-                  <th className="text-center">Obtained</th>
-                  <th className="text-center">Out Of</th>
-                  <th className="text-center">Obtained</th>
-                  <th className="text-center">Out Of</th>
-                  <th className="text-center">Obtained</th>
+                  <th className="text-center bs-[30px] p-1.5 text-[13px]">Out Of</th>
+                  <th className="text-center bs-[30px] p-1.5 text-[13px]">Obtained</th>
+                  <th className="text-center bs-[30px] p-1.5 text-[13px]">Out Of</th>
+                  <th className="text-center bs-[30px] p-1.5 text-[13px]">Obtained</th>
+                  <th className="text-center bs-[30px] p-1.5 text-[13px]">Out Of</th>
+                  <th className="text-center bs-[30px] p-1.5 text-[13px]">Obtained</th>
+                  <th className="text-center bs-[30px] p-1.5 text-[13px]">Out Of</th>
+                  <th className="text-center bs-[30px] p-1.5 text-[13px]">Obtained</th>
                 </tr>
               </thead>
               <tbody>
@@ -185,38 +175,38 @@ const PCReportDialog = ({ open, handleClose, theoryMarks, batchReportData, selec
 
                       return (
                         <tr key={`${nosItem.nos_id}-${pcItem.pc_id}`}>
-                          <td>{srNo++}</td> {/* ✅ continuous serial number */}
-                          <td>{nosItem.nos_id}</td>
-                          <td>{pcItem.pc_id}</td>
-                          <td>{theoryOutOf}</td>
-                          <td>{obtainedTheoryMarks}</td>
-                          <td>{practicalOutOf}</td>
-                          <td>{obtainedPracticalMarks}</td>
-                          <td>{vivaOutOf}</td>
-                          <td>{obtainedVivaMarks}</td>
-                          <td>{totalOutOf}</td>
-                          <td>{totalObtained}</td>
+                          <td className="bs-[30px] p-1.5 text-[13px]">{srNo++}</td> {/* ✅ continuous serial number */}
+                          <td className="bs-[30px] p-1.5 text-[13px]">{nosItem.nos_id}</td>
+                          <td className="bs-[30px] p-1.5 text-[13px]">{pcItem.pc_id}</td>
+                          <td className="bs-[30px] p-1.5 text-[13px]">{theoryOutOf}</td>
+                          <td className="bs-[30px] p-1.5 text-[13px]">{obtainedTheoryMarks}</td>
+                          <td className="bs-[30px] p-1.5 text-[13px]">{practicalOutOf}</td>
+                          <td className="bs-[30px] p-1.5 text-[13px]">{obtainedPracticalMarks}</td>
+                          <td className="bs-[30px] p-1.5 text-[13px]">{vivaOutOf}</td>
+                          <td className="bs-[30px] p-1.5 text-[13px]">{obtainedVivaMarks}</td>
+                          <td className="bs-[30px] p-1.5 text-[13px]">{totalOutOf}</td>
+                          <td className="bs-[30px] p-1.5 text-[13px]">{totalObtained}</td>
                         </tr>
                       );
                     })
                   );
                 })()}
                 <tr className="border-0">
-                  <td colSpan={11} className="border-0"></td>
+                  <td colSpan={11} className="border-0 bs-[30px] p-1.5 text-[13px]"></td>
                 </tr>
                 <tr className="border-0">
-                  <td colSpan={3} className="border-0"></td>
-                  <td colSpan={5}>Summary</td>
-                  <td colSpan={3} className="border-0"></td>
+                  <td colSpan={3} className="border-0 bs-[30px] p-1.5 text-[13px]"></td>
+                  <td colSpan={5} className="bs-[30px] p-1.5 text-[13px]">Summary</td>
+                  <td colSpan={3} className="border-0 bs-[30px] p-1.5 text-[13px]"></td>
                 </tr>
                 <tr className="border-0">
-                  <td colSpan={3} className="border-0"></td>
-                  <td>NOS ID</td>
-                  <td>Total Marks</td>
-                  <td>Obtained</td>
-                  <td>Percentage (%)</td>
-                  <td>Status</td>
-                  <td colSpan={3} className="border-0"></td>
+                  <td colSpan={3} className="border-0 bs-[30px] p-1.5 text-[13px]"></td>
+                  <td className="bs-[30px] p-1.5 text-[13px]">NOS ID</td>
+                  <td className="bs-[30px] p-1.5 text-[13px]">Total Marks</td>
+                  <td className="bs-[30px] p-1.5 text-[13px]">Obtained</td>
+                  <td className="bs-[30px] p-1.5 text-[13px]">Percentage (%)</td>
+                  <td className="bs-[30px] p-1.5 text-[13px]">Status</td>
+                  <td colSpan={3} className="border-0 bs-[30px] p-1.5 text-[13px]"></td>
                 </tr>
                 {batchReportData?.nos.map((nosItem) => {
                   const totalMarks = nosItem.pcs.reduce((sum, pcItem) => {
@@ -238,27 +228,27 @@ const PCReportDialog = ({ open, handleClose, theoryMarks, batchReportData, selec
 
                   return (
                     <tr key={`summary-${nosItem.nos_id}`} className="border-0">
-                      <td colSpan={3} className="border-0"></td>
-                      <td>{nosItem.nos_id}</td>
-                      <td>{totalMarks.toFixed(2)}</td>
-                      <td>{obtainedMarks.toFixed(2)}</td>
-                      <td>{(percentage % 1 ? percentage.toFixed(2) : percentage)}</td>
-                      <td>{status}</td>
-                      <td colSpan={3} className="border-0"></td>
+                      <td colSpan={3} className="border-0 bs-[30px] p-1.5 text-[13px]"></td>
+                      <td className="bs-[30px] p-1.5 text-[13px]">{nosItem.nos_id}</td>
+                      <td className="bs-[30px] p-1.5 text-[13px]">{totalMarks.toFixed(2)}</td>
+                      <td className="bs-[30px] p-1.5 text-[13px]">{obtainedMarks.toFixed(2)}</td>
+                      <td className="bs-[30px] p-1.5 text-[13px]">{(percentage % 1 ? percentage.toFixed(2) : percentage)}</td>
+                      <td className={`bs-[30px] p-1.5 text-[13px] ${status.toLowerCase()}`}>{status}</td>
+                      <td colSpan={3} className="border-0 bs-[30px] p-1.5 text-[13px]"></td>
                     </tr>
                   );
                 })}
                 <tr className="border-0">
-                  <td colSpan={3} className="border-0"></td>
-                  <td>Total</td>
-                  <td>{batchReportData?.nos.reduce((sum, nosItem) => {
+                  <td colSpan={3} className="border-0 bs-[30px] p-1.5 text-[13px]"></td>
+                  <td className="bs-[30px] p-1.5 text-[13px]">Total</td>
+                  <td className="bs-[30px] p-1.5 text-[13px]">{batchReportData?.nos.reduce((sum, nosItem) => {
                     return sum + nosItem.pcs.reduce((pcSum, pcItem) => {
                       return pcSum + parseFloat(pcItem.theory_marks?.toString() || '0') +
                         parseFloat(pcItem.practical_marks?.toString() || '0') +
                         parseFloat(pcItem.viva_marks?.toString() || '0');
                     }, 0);
                   }, 0).toFixed(2)}</td>
-                  <td>{batchReportData?.nos.reduce((sum, nosItem) => {
+                  <td className="bs-[30px] p-1.5 text-[13px]">{batchReportData?.nos.reduce((sum, nosItem) => {
                     return sum + nosItem.pcs.reduce((pcSum, pcItem) => {
                       const obtainedTheoryMarks = theoryMarks?.pcs?.[pcItem.id] || 0;
                       const obtainedPracticalMarks = 0;
@@ -267,7 +257,7 @@ const PCReportDialog = ({ open, handleClose, theoryMarks, batchReportData, selec
                       return pcSum + obtainedTheoryMarks + obtainedPracticalMarks + obtainedVivaMarks;
                     }, 0);
                   }, 0).toFixed(2)}</td>
-                  <td>
+                  <td className="bs-[30px] p-1.5 text-[13px]">
                     {(() => {
                       const totalMarks = batchReportData?.nos.reduce((sum, nosItem) => {
                         return sum + nosItem.pcs.reduce((pcSum, pcItem) => {
@@ -292,7 +282,7 @@ const PCReportDialog = ({ open, handleClose, theoryMarks, batchReportData, selec
                       return percentage % 1 ? percentage.toFixed(2) : percentage;
                     })()}
                   </td>
-                  <td>
+                  {/* <td className="bs-[30px] p-1.5 text-[13px]"> */}
                     {(() => {
                       const totalMarks = batchReportData?.nos.reduce((sum, nosItem) => {
                         return sum + nosItem.pcs.reduce((pcSum, pcItem) => {
@@ -314,10 +304,10 @@ const PCReportDialog = ({ open, handleClose, theoryMarks, batchReportData, selec
 
                       const percentage = totalMarks > 0 ? (obtainedMarks / totalMarks) * 100 : 0;
 
-                      return percentage >= (batchReportData?.qualification_pack?.overall_cutoff_marks || 0) ? 'Pass' : 'Fail';
+                      return percentage >= (batchReportData?.qualification_pack?.overall_cutoff_marks || 0) ? <td className="bs-[30px] p-1.5 text-[13px] pass">Pass</td> : <td className="bs-[30px] p-1.5 text-[13px] fail">Fail</td>;
                     })()}
-                  </td>
-                  <td colSpan={3} className="border-0"></td>
+                  {/* </td> */}
+                  <td colSpan={3} className="border-0 bs-[30px] p-1.5 text-[13px]"></td>
                 </tr>
               </tbody>
             </table>

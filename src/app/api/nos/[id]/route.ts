@@ -27,15 +27,34 @@ export async function POST(
   context: { params: { id: number } }
 ) {
   const id = Number(context.params.id);
-  const {sscId, nosName} = await req.json();
+  const {sscId, nosId, nosName} = await req.json();
 
-  const qualificationPackExist = await prisma.nos.findUnique({
+  const nosExist = await prisma.nos.findUnique({
     where: {
       id: id
     }
   })
 
-  if (qualificationPackExist) {
+  if (nosExist) {
+
+    const duplicate = await prisma.nos.findFirst({
+      where: {
+        nos_id: nosId,
+        agency_id: nosExist.agency_id,
+        NOT: { id },
+      },
+    })
+
+    if (duplicate) {
+      return NextResponse.json(
+        {
+          status: 'Error',
+          message: 'NOS ID must be unique',
+          errors: { nosId: ['This NOS ID is already exists'] },
+        },
+        { status: 422 }
+      )
+    }
 
     const result = await prisma.nos.update({
       where:{
@@ -43,19 +62,20 @@ export async function POST(
       },
       data: {
         ssc_id: Number(sscId),
+        nos_id: nosId,
         nos_name: nosName
       }
     });
 
     if(result){
 
-      return NextResponse.json({ message: 'Qualification pack updated successfully!' });
+      return NextResponse.json({ message: 'NOS updated successfully!' });
     }else{
 
-      return NextResponse.json({ message: 'Qualification pack not updated!' }, { status: 500 });
+      return NextResponse.json({ message: 'NOS not updated!' }, { status: 500 });
     }
   } else {
 
-    return NextResponse.json({ message: 'Qualification pack not found' }, { status: 404 });
+    return NextResponse.json({ message: 'NOS not found' }, { status: 404 });
   }
 }

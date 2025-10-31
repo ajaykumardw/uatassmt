@@ -14,7 +14,7 @@ import Divider from '@mui/material/Divider'
 // Component Imports
 import { toast } from 'react-toastify'
 
-import { Avatar, InputAdornment } from '@mui/material'
+import { Avatar, CircularProgress, InputAdornment } from '@mui/material'
 
 import { Controller,  useForm } from 'react-hook-form'
 
@@ -80,6 +80,7 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
   // States
   // const [formData, setFormData] = useState<FormDataType>(initialData)
 
+  const [loading, setLoading] = useState(false);
   const [isPasswordShown, setIsPasswordShown] = useState(false)
   const [isConfirmPasswordShown, setIsConfirmPasswordShown] = useState(false)
   const [imgSrc, setImgSrc] = useState<string | null>(null);
@@ -90,6 +91,7 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
     control,
     reset,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<FormDataType>({
     resolver: valibotResolver(schema),
@@ -109,6 +111,8 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
 
   const onSubmit: SubmitHandler<FormDataType> = async (data: FormDataType) => {
     // e.preventDefault()
+
+    setLoading(true);
 
     data.profileImage = fileInput as File;
 
@@ -141,11 +145,26 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
 
       reset();
 
+      setLoading(false);
+
       toast.success('New SSC has been created successfully!',{
         hideProgressBar: false
       });
       updateSSCList();
 
+    } else if (res.status === 422) {
+      const result = await res.json();
+      
+      Object.entries(result.errors).forEach(([field, messages]) => {
+        setError(field as keyof FormDataType, {
+          type: 'server',
+          message: (messages as string[])[0],
+        });
+      });
+
+      setLoading(false)
+
+      return
     } else {
 
       toast.error('Something went wrong!',{
@@ -157,6 +176,7 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
     handleClose()
     reset()
     handleReset();
+    setLoading(false);
 
     // setFormData(initialData)
   }
@@ -165,7 +185,7 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
     handleClose()
     reset()
     handleFileInputReset()
-    
+
     // setFormData({
     //   sscName: '',
     //   sscCode: '',
@@ -353,7 +373,8 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
             )}
           />
           <div className='flex items-center gap-4'>
-            <Button variant='contained' type='submit'>
+            <Button variant='contained' type='submit' disabled={loading}>
+              {loading && <CircularProgress size={20} color='inherit' />}
               Submit
             </Button>
             <Button variant='tonal' color='error' type='reset' onClick={() => handleReset()}>

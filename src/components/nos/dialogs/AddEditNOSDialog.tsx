@@ -94,6 +94,7 @@ const AddEditNOSDialog = ({ open, nosId, handleClose, updateNOSList, data }: Add
     control,
     reset,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<AddQPDialogData>({
     resolver: valibotResolver(schema),
@@ -128,6 +129,20 @@ const AddEditNOSDialog = ({ open, nosId, handleClose, updateNOSList, data }: Add
           hideProgressBar: false
         });
         updateNOSList();
+
+      } else if (res.status === 422) {
+        const result = await res.json();
+        
+        Object.entries(result.errors).forEach(([field, messages]) => {
+          setError(field as keyof AddQPDialogData, {
+            type: 'server',
+            message: (messages as string[])[0],
+          });
+        });
+
+        setLoading(false)
+        
+        return
       } else {
         setLoading(false);
         toast.error('NOS not updated. Something went wrong here!', {
@@ -162,6 +177,19 @@ const AddEditNOSDialog = ({ open, nosId, handleClose, updateNOSList, data }: Add
         });
         updateNOSList();
 
+      } else if (res.status === 422) {
+        const result = await res.json();
+        
+        Object.entries(result.errors).forEach(([field, messages]) => {
+          setError(field as keyof AddQPDialogData, {
+            type: 'server',
+            message: (messages as string[])[0],
+          });
+        });
+
+        setLoading(false)
+        
+        return
       } else {
         setLoading(false)
         toast.error('Something went wrong!', {
@@ -235,7 +263,6 @@ const AddEditNOSDialog = ({ open, nosId, handleClose, updateNOSList, data }: Add
                 render={({ field }) => (
                   <CustomTextField
                     fullWidth
-                    disabled={nosId ? true : false}
                     {...field}
                     {...(errors.nosId && { error: true, helperText: errors.nosId.message })}
                     label='NOS ID'

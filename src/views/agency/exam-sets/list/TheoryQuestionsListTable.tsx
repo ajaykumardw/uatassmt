@@ -219,6 +219,11 @@ const TheoryQuestionListTable = ({ tableData, selectedQuestion, setSelectedQuest
           />
         )
       },
+      {
+        id: 'serialNumber', // Serial number column
+        header: 'S. No.',
+        cell: ({ row }) => <Typography color='text.primary'>{row.index + 1}</Typography>
+      },
       columnHelper.accessor('id', {
         header: 'ID',
         cell: ({ row }) => (

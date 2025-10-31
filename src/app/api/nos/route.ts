@@ -39,20 +39,41 @@ export async function POST(req: Request) {
   const createdBy = Number(session?.user.id);
   const agency_id = Number(session?.user?.agency_id);
 
-  const result = await prisma.nos.create({
-    data: {
-      agency_id: agency_id,
-      ssc_id: Number(sscId),
-      nos_id: nosId,
-      nos_name: nosName,
-      created_by: createdBy
-    }
-  });
+  try {
 
-  if(result){
-    return NextResponse.json({message: 'NOS created successfully!'})
-  }else{
-    return NextResponse.json({message: 'Not created NOS!'})
+    const existingNos = await prisma.nos.findFirst({
+      where: { nos_id: nosId, agency_id },
+    });
+
+    if (existingNos) {
+      return NextResponse.json(
+        {
+          status: 'Error',
+          message: 'NOS with this ID already exists',
+          errors: { nosId: ['NOS ID already exists'] }
+        },
+        { status: 422 }
+      );
+    }
+
+    const result = await prisma.nos.create({
+      data: {
+        agency_id: agency_id,
+        ssc_id: Number(sscId),
+        nos_id: nosId,
+        nos_name: nosName,
+        created_by: createdBy
+      }
+    });
+
+    if(result){
+      return NextResponse.json({message: 'NOS created successfully!'})
+    }else{
+      return NextResponse.json({message: 'Not created NOS!'})
+    }
+
+  } catch (error) {
+    return NextResponse.json({message: 'Error creating NOS!', error: error}, {status: 500});
   }
 
 }

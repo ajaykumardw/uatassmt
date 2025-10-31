@@ -59,6 +59,34 @@ export async function POST(req: NextRequest) {
 
   const body = Object.fromEntries(formData);
   const { sscName, sscCode, username, password, status, profileImage } = body;
+
+  const duplicates = await prisma.sector_skill_councils.findMany({
+    where: {
+      OR: [
+        { ssc_code: sscCode.toString() },
+        { ssc_username: username.toString() }
+      ]
+    }
+  })
+
+  const errors: Record<string, string[]> = {}
+
+  duplicates.forEach((d) => {
+    if (d.ssc_code === sscCode) errors.sscCode = ['This SSC Code already exists']
+    if (d.ssc_username === username) errors.username = ['This SSC Username already exists']
+  })
+
+  if (Object.keys(errors).length > 0) {
+    return NextResponse.json(
+      {
+        status: 'Error',
+        message: 'Validation failed',
+        errors,
+      },
+      { status: 422 }
+    )
+  }
+
   const hashPassword = await hash(password as string, 10);
 
   const session = await getServerSession(authOptions);

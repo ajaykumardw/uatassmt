@@ -149,7 +149,7 @@ model qualification_packs {
   qualification_pack_id    String                   @unique @db.VarChar(100)
   qualification_pack_name  String                   @db.VarChar(100)
   nqr_code                 String?                  @db.VarChar(100)
-  nsqf_level               Int                      @db.TinyInt @default(1)
+  nsqf_level               String                   @db.VarChar(6)
   version                  version                  @relation(fields: [version_id], references: [id])
   version_id               Int
   total_marks              Decimal                  @db.Decimal(10, 2)
@@ -177,7 +177,7 @@ model qualification_packs {
 model version {
   id                 Int                   @id @default(autoincrement())
   version_number     String                @db.VarChar(20)
-  version_name       String                @db.VarChar(50)
+  version_name       String?                @db.VarChar(50)
   qualificatin_packs qualification_packs[]
 }
 

@@ -1207,7 +1207,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                 <Grid item xs={12} sm={6} md={3}>
                   <CustomTextField
                     fullWidth
-                    required={data?.user_additional_data && data?.user_additional_data.certificate_8th ? false : true}
+                    required={false}
                     type='file'
                     label='8th Certificate'
                     inputProps={{ accept: 'image/png, image/jpeg, application/pdf' }}

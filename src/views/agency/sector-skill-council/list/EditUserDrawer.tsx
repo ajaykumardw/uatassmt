@@ -77,6 +77,7 @@ const EditUserDrawer = ({ open, handleClose, sscId, sscName, sscCode, username, 
     control,
     reset,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<FormDataType>({
     resolver: valibotResolver(schema),
@@ -124,6 +125,19 @@ const EditUserDrawer = ({ open, handleClose, sscId, sscName, sscCode, username, 
         hideProgressBar: false
       });
       updateSSCList();
+    } else if (res.status === 422) {
+      const result = await res.json();
+      
+      Object.entries(result.errors).forEach(([field, messages]) => {
+        setError(field as keyof FormDataType, {
+          type: 'server',
+          message: (messages as string[])[0],
+        });
+      });
+
+      setLoading(false)
+
+      return
     } else {
       setLoading(false)
       toast.error('Something wrong',{

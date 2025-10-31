@@ -53,7 +53,7 @@ export async function POST(req: Request) {
       qualification_pack_id: qualificationPackId,
       qualification_pack_name: qualificationPackName,
       nqr_code: nQRCode,
-      nsqf_level: Number(nSQFLevel),
+      nsqf_level: nSQFLevel,
       version_id: Number(version),
       total_marks: Number(totalMarks),
       total_theory_marks: Number(totalTheoryMarks),

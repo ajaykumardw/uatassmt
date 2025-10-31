@@ -37,7 +37,7 @@ import type { SSCType } from '@/types/sectorskills/sscType'
 import DialogCloseButton from '@components/dialogs/DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
 
-import { NSQFLevelLength } from '@/configs/customDataConfig';
+// import { NSQFLevelLength } from '@/configs/customDataConfig';
 
 type AddQPDialogData = InferInput<typeof schema>
 
@@ -80,7 +80,7 @@ const schema = object(
     sscId: pipe(string(), trim() , minLength(1, 'This field is required')),
     qualificationPackId: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Qualification pack Id must be at least 3 characters long')),
     qualificationPackName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Qualification pack name must be at least 3 characters long')),
-    nSQFLevel: pipe(string(), trim() , minLength(1, 'This field is required')),
+    nSQFLevel: pipe(string(), trim() , minLength(1, 'This field is required'), maxLength(6, 'Max length is 6 characters')),
     nQRCode: optional(pipe(string(), trim() ,)),
     version: pipe(string(), trim() , minLength(1, 'This field is required')),
     totalTheoryMarks: pipe(string(), trim() , minLength(1, 'Total theory marks is required') , regex(/^[0-9]+(?:\.[0-9]+)?$/, 'Total theory marks must contain only numbers') , maxLength(10, 'Max length is 10 digits')),
@@ -398,19 +398,27 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
                 rules={{ required: true }}
                 render={({ field }) => (
                   <CustomTextField
-                    select
                     fullWidth
-                    label='NSQF Level'
-                    required={true}
                     {...field}
                     {...(errors.nSQFLevel && { error: true, helperText: errors.nSQFLevel.message })}
-                  >
-                    {NSQFLevelLength.map((level) => (
-                      <MenuItem key={level} value={level.toString()}>
-                      {level}
-                    </MenuItem>
-                    ))}
-                  </CustomTextField>
+                    label='NQR Level'
+                  />
+                  
+                  // <CustomTextField
+                  //   select
+                  //   fullWidth
+                  //   label='NSQF Level'
+                  //   required={true}
+                  //   {...field}
+                  //   {...(errors.nSQFLevel && { error: true, helperText: errors.nSQFLevel.message })}
+                  // >
+                  //   {NSQFLevelLength.map((level) => (
+                  //     <MenuItem key={level} value={level.toString()}>
+                  //     {level}
+                  //   </MenuItem>
+                  //   ))}
+                  // </CustomTextField>
+
                 )}
               />
             </Grid>
