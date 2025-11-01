@@ -163,7 +163,7 @@ const AddEditVivaExamSetsDialog = ({ open, examSetId, handleClose, updateExamSet
       if (selectedQP) {
         console.log('selectedQP?.total_theory_marks: ', selectedQP?.total_viva_marks);
 
-        setTotalVivaMarks(selectedQP.total_viva_marks);
+        setTotalVivaMarks(Number(selectedQP.total_viva_marks));
 
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions?qpId=${qpId}&qType=viva`);
 
@@ -245,7 +245,7 @@ const AddEditVivaExamSetsDialog = ({ open, examSetId, handleClose, updateExamSet
     console.log('total marks: ', selectedQP?.total_viva_marks);
 
     if(selectedQP){
-      setTotalVivaMarks(selectedQP.total_viva_marks);
+      setTotalVivaMarks(Number(selectedQP.total_viva_marks));
     }else {
       setTotalVivaMarks(0);
     }
@@ -607,11 +607,18 @@ const AddEditVivaExamSetsDialog = ({ open, examSetId, handleClose, updateExamSet
                   Available Questions {theoryQuestions.length}
                 </Typography>
               </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <Typography color={totalVivaMarks > 0 ? "primary" : "error"}>
                   Total Viva Marks {totalVivaMarks}
                 </Typography>
               </Grid>
+              {changedMode === 'Manual' &&
+                <Grid item xs={12} sm={6}>
+                  <Typography color={sumOfSelectedQuestionsMarks > 0 ? "primary" : "error"}>
+                    Total Selected Questions Marks {sumOfSelectedQuestionsMarks}
+                  </Typography>
+                </Grid>
+              }
               </>
             }
             {changedMode === 'Manual' &&

@@ -189,7 +189,7 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
       if (selectedQP) {
         console.log('selectedQP?.total_theory_marks: ', selectedQP?.total_theory_marks);
 
-        setTotalTheoryMarks(selectedQP.total_theory_marks);
+        setTotalTheoryMarks(Number(selectedQP.total_theory_marks));
 
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions?qpId=${qpId}`);
 
@@ -270,7 +270,7 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
     console.log('total marks: ', selectedQP?.total_theory_marks);
 
     if(selectedQP){
-      setTotalTheoryMarks(selectedQP.total_theory_marks);
+      setTotalTheoryMarks(Number(selectedQP.total_theory_marks));
     }else {
       setTotalTheoryMarks(0);
     }
@@ -344,45 +344,149 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
 
   // }, [changedMode, easyCount, mediumCount, hardCount, getValues]);
 
+  // const easy = watch('easy');
+  // const medium = watch('medium');
+  // const hard = watch('hard');
+  // const totalQuestions = watch('totalQuestions');
+
+  // useEffect(() => {
+  //   if (changedMode === 'Auto') {
+  //     clearErrors(['totalQuestions']);
+  //     const totalEasy = Number(easy || 0);
+  //     const totalMedium = Number(medium || 0);
+  //     const totalHard = Number(hard || 0);
+  //     const total = Number(totalQuestions || 0);
+
+  //     if (total === 0) {
+  //       clearErrors(['easy', 'medium', 'hard']);
+        
+  //       return;
+  //     }
+
+  //     const sum = totalEasy + totalMedium + totalHard;
+
+  //     if (sum === total) {
+  //       clearErrors(['easy', 'medium', 'hard']);
+  //       setIsAutoDisabled(false);
+  //     } else {
+  //       const message = 'The sum of Easy, Medium, and Hard must equal Total Questions.';
+        
+  //       setError('easy', { type: 'manual', message });
+  //       setError('medium', { type: 'manual', message });
+  //       setError('hard', { type: 'manual', message });
+  //       setIsAutoDisabled(true);
+  //     }
+  //   } else {
+  //     clearErrors(['easy', 'medium', 'hard']);
+  //     setValue('easy', '0');
+  //     setValue('medium', '0');
+  //     setValue('hard', '0');
+  //     setIsAutoDisabled(false);
+  //   }
+  // }, [changedMode, easy, medium, hard, totalQuestions]);
+
+  // useEffect(() => {
+
+  //   if(easy && easyQuestions && Number(easy) > easyQuestions.length){
+  //     setError('easy', { type: 'manual', message: 'Available question are ' + easyQuestions.length})
+  //   }
+
+  // }, [easyQuestions, easy])
+  
+  // useEffect(() => {
+
+  //   if(medium && mediumQuestions && Number(medium) > mediumQuestions.length){
+  //     setError('medium', { type: 'manual', message: 'Available question are ' + mediumQuestions.length})
+  //   }
+
+  // }, [mediumQuestions, medium])
+  
+  // useEffect(() => {
+
+  //   if(hard && hardQuestions && Number(hard) > hardQuestions.length){
+  //     setError('hard', { type: 'manual', message: 'Available question are ' + hardQuestions.length})
+  //   }
+
+  // }, [hardQuestions, hard])
+
   const easy = watch('easy');
   const medium = watch('medium');
   const hard = watch('hard');
   const totalQuestions = watch('totalQuestions');
 
   useEffect(() => {
-    if (changedMode === 'Auto') {
-      const totalEasy = Number(easy || 0);
-      const totalMedium = Number(medium || 0);
-      const totalHard = Number(hard || 0);
-      const total = Number(totalQuestions || 0);
+    const totalEasy = Number(easy || 0);
+    const totalMedium = Number(medium || 0);
+    const totalHard = Number(hard || 0);
+    const total = Number(totalQuestions || 0);
 
+    // Clear all previous errors first
+    clearErrors(['easy', 'medium', 'hard', 'totalQuestions']);
+
+    if (changedMode === 'Auto') {
       if (total === 0) {
-        clearErrors(['easy', 'medium', 'hard']);
-        
+        setIsAutoDisabled(false);
+
         return;
       }
 
-      const sum = totalEasy + totalMedium + totalHard;
+      let hasError = false;
 
-      if (sum === total) {
-        clearErrors(['easy', 'medium', 'hard']);
-        setIsAutoDisabled(false);
-      } else {
+      // Check category limits
+      if (easyQuestions && totalEasy > easyQuestions.length) {
+        setError('easy', {
+          type: 'manual',
+          message: `Available questions are ${easyQuestions.length}`,
+        });
+        hasError = true;
+      }
+
+      if (mediumQuestions && totalMedium > mediumQuestions.length) {
+        setError('medium', {
+          type: 'manual',
+          message: `Available questions are ${mediumQuestions.length}`,
+        });
+        hasError = true;
+      }
+
+      if (hardQuestions && totalHard > hardQuestions.length) {
+        setError('hard', {
+          type: 'manual',
+          message: `Available questions are ${hardQuestions.length}`,
+        });
+        hasError = true;
+      }
+
+      // Check sum of questions
+      const sum = totalEasy + totalMedium + totalHard;
+      
+      if (sum !== total) {
         const message = 'The sum of Easy, Medium, and Hard must equal Total Questions.';
-        
+
         setError('easy', { type: 'manual', message });
         setError('medium', { type: 'manual', message });
         setError('hard', { type: 'manual', message });
-        setIsAutoDisabled(true);
+        hasError = true;
       }
+
+      setIsAutoDisabled(hasError);
     } else {
-      clearErrors(['easy', 'medium', 'hard']);
+      // Manual mode: reset values
       setValue('easy', '0');
       setValue('medium', '0');
       setValue('hard', '0');
       setIsAutoDisabled(false);
     }
-  }, [changedMode, easy, medium, hard, totalQuestions]);
+  }, [
+    changedMode,
+    easy,
+    medium,
+    hard,
+    totalQuestions,
+    easyQuestions,
+    mediumQuestions,
+    hardQuestions,
+  ]);
 
 
   useEffect(() => {
@@ -390,9 +494,12 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
 
       const isEqual = totalTheoryMarks === sumOfSelectedQuestionsMarks;
 
+      console.log("sum of marks: ", isEqual, totalTheoryMarks, sumOfSelectedQuestionsMarks, typeof totalTheoryMarks, typeof sumOfSelectedQuestionsMarks);
+      
       if(isEqual){
         clearErrors(['totalQuestions']);
       } else {
+        console.log("sum of marks in else: ", isEqual, totalTheoryMarks, sumOfSelectedQuestionsMarks);
         setError('totalQuestions', {type: 'custom', message: 'The sum of selected questions marks must equal to Total Theory Marks.'});
       }
 

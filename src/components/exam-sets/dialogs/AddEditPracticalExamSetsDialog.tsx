@@ -163,7 +163,7 @@ const AddEditPracticalExamSetsDialog = ({ open, examSetId, handleClose, updateEx
       if (selectedQP) {
         console.log('selectedQP?.total_practical_marks: ', selectedQP?.total_practical_marks);
 
-        setTotalPracticalMarks(selectedQP.total_practical_marks);
+        setTotalPracticalMarks(Number(selectedQP.total_practical_marks));
 
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions?qpId=${qpId}&qType=practical`);
 
@@ -245,7 +245,7 @@ const AddEditPracticalExamSetsDialog = ({ open, examSetId, handleClose, updateEx
     console.log('total marks: ', selectedQP?.total_practical_marks);
 
     if(selectedQP){
-      setTotalPracticalMarks(selectedQP.total_practical_marks);
+      setTotalPracticalMarks(Number(selectedQP.total_practical_marks));
     }else {
       setTotalPracticalMarks(0);
     }
@@ -608,11 +608,18 @@ const AddEditPracticalExamSetsDialog = ({ open, examSetId, handleClose, updateEx
                   Available Questions {theoryQuestions.length}
                 </Typography>
               </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <Typography color={totalPracticalMarks > 0 ? "primary" : "error"}>
                   Total Practical Marks {totalPracticalMarks}
                 </Typography>
               </Grid>
+              {changedMode === 'Manual' &&
+                <Grid item xs={12} sm={6}>
+                  <Typography color={sumOfSelectedQuestionsMarks > 0 ? "primary" : "error"}>
+                    Total Selected Questions Marks {sumOfSelectedQuestionsMarks}
+                  </Typography>
+                </Grid>
+              }
               </>
             }
             {changedMode === 'Manual' &&
