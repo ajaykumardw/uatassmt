@@ -346,11 +346,15 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
 
     if (selectedQP) {
 
-      setTheoryExamSetData(selectedQP.exam_sets || []);
+      setTheoryExamSetData((selectedQP.exam_sets || []).filter(set => set.set_type === 'T'));
+      setPracticalExamSetData((selectedQP.exam_sets || []).filter(set => set.set_type === 'P'));
+      setVivaExamSetData((selectedQP.exam_sets || []).filter(set => set.set_type === 'V'));
 
     } else {
 
       setTheoryExamSetData([]);
+      setPracticalExamSetData([]);
+      setVivaExamSetData([]);
 
     }
   }

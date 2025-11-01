@@ -172,7 +172,7 @@ const schema = object(
     questionLevel: pipe(string(), trim() , minLength(1, 'This field is required')),
     questionName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Question name must be at least 3 characters long')),
     questionExplanation: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Question name must be at least 3 characters long')),
-    questionMarks: pipe(string(), trim() , minLength(1, 'This field is required') , check((value) => !value || /^(?:[1-9]|1\d|2[0-5])(\.\d+)?$/.test(value), 'Marks must be between 1 and 25.') ,),
+    questionMarks: pipe(string(), trim() , minLength(1, 'This field is required') , check((value) => !value || /^[1-9]\d*(\.\d+)?$/.test(value), 'Marks must be greater then 0.') ,),
     option1: pipe(string(), trim() , minLength(1, 'This field is required')),
     option2: pipe(string(), trim() , minLength(1, 'This field is required')),
     option: optional(array(string(),'optional field')),
