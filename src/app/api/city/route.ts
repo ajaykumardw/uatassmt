@@ -40,13 +40,34 @@ export async function GET() {
   return NextResponse.json(data)
 }
 
-// export async function POST(req: Request) {
-//   const connection = await connect();
-//   // const {data: session} = useSession();
-//   // const createdBy = session?.user?.id
-//   const result = await connection.execute(`SELECT id, name FROM state`)
-//   if(result){
-//     return NextResponse.json(result)
-//   }
-//   return NextResponse.json({data: 'not found'})
-// }
+export async function POST(req: Request) {
+  const {stateId, cityName} = await req.json();
+
+  if(!stateId || !cityName) {
+    return NextResponse.json({
+      status: 'Error',
+      message: 'State ID and City Name are required'
+    })
+  }
+
+  const result = await prisma.city.create({
+    data: {
+      state_id: Number(stateId),
+      city_name: cityName,
+      is_active: true
+    }
+  })
+
+  if(result){
+    return NextResponse.json({
+      status: 'Success',
+      message: 'City created successfully',
+      data: result
+    })
+  }
+
+  return NextResponse.json({
+    status: 'Error',
+    message: 'City not created'
+  })
+}

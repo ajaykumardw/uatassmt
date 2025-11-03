@@ -31,9 +31,9 @@ import { Controller, useForm } from 'react-hook-form'
 
 import type { SubmitHandler } from 'react-hook-form'
 
-import type { city, state } from '@prisma/client'
+import type { state } from '@prisma/client'
 
-import { CircularProgress } from '@mui/material'
+import { Autocomplete, CircularProgress, createFilterOptions } from '@mui/material'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
@@ -147,7 +147,23 @@ const initialData = {
   cancelCheck: '',
 }
 
+const filter = createFilterOptions();
 
+async function createCity(name: string, state: string) {
+
+  console.log('Creating city:', name);
+
+  // Replace with your actual API call
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/city`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cityName: name, stateId: state }),
+  });
+
+  if (!res.ok) throw new Error('Failed to create city');
+
+  return res.json();
+}
 
 const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number}) => {
   // States
@@ -174,7 +190,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
   const [imgSrc, setImgSrc] = useState<string>('/images/avatars/1.png')
   const [sscData, setSSCData] = useState<SSCType[]>([])
   const [stateData, setStateData] = useState<state[]>([])
-  const [cityData, setCityData] = useState<city[]>([])
+  const [cityData, setCityData] = useState<any[]>([])
   const [qpData, setQPData] = useState<QPType[]>([])
   const [selectedQualification, setCountEducationCertificates] = useState('');
   const [jobValidUpto, setJobValidUpto] = useState<{ [key: number]: Date }>({});
@@ -324,6 +340,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
     handleSubmit,
 
     setValue,
+    watch,
 
     // setError,
     // clearErrors,
@@ -712,6 +729,8 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
     return filename.toLowerCase().endsWith('.pdf');
   }
 
+  const state = watch('state');
+
   return (
     <Card>
       <CardHeader title={`${assessorId ? 'Edit' : 'Add'} Assessor`} />
@@ -970,51 +989,101 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                   control={control}
                   name='state'
                   render={({ field }) => (
-                    <CustomTextField
-                      select
+                    <Autocomplete
                       fullWidth
-                      label='State'
-                      {...field}
-                      {...(errors.state && { error: true, helperText: errors.state.message })}
-                      onChange={e => {
-                        handleStateChange(e.target.value)
-                        field.onChange(e)
+                      options={stateData || []}
+                      value={
+                        stateData?.find((state) => state.state_id.toString() === field.value) || null
+                      }
+                      isOptionEqualToValue={(option, value) =>
+                        option.state_id.toString() === value.state_id.toString()
+                      }
+                      getOptionLabel={(option) => option.state_name || ''}
+                      getOptionKey={option => option.state_id}
+                      onChange={(event, value) => {
+                        handleStateChange(value?.state_id.toString() || '');
+                        field.onChange(value?.state_id.toString() || '');
                       }}
-                      SelectProps={{ MenuProps}}
-                    >
-                      <MenuItem value=''>Select State</MenuItem>
-                      {stateData?.map((state, index) => (
-                        <MenuItem key={index} value={state?.state_id?.toString()}>{state.state_name}</MenuItem>
-                      ))}
-                    </CustomTextField>
+                      renderInput={(params) => (
+                        <CustomTextField
+                          label='State'
+                          {...params}
+                          {...(errors.state && { error: true, helperText: errors.state.message })}
+                        />
+                      )}
+                    />
                   )}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <Controller
                   control={control}
-                  name='city'
+                  name="city"
                   render={({ field }) => (
-                    <CustomTextField
-                      select
+                    <Autocomplete
                       fullWidth
-                      label='City'
-                      {...field}
-                      {...(errors.city && { error: true, helperText: errors.city.message })}
-                      SelectProps={{ MenuProps}}
-                    >
-                      <MenuItem value=''>Select City</MenuItem>
-                      {cityData && cityData.length > 0 ? (
-                        cityData.map((city) => (
-                          <MenuItem key={city.city_id.toString()} value={city.city_id.toString()}>
-                            {city.city_name}
-                          </MenuItem>
-                        ))
-                      ) : (
-                        <MenuItem disabled>No cities found </MenuItem>
-                      )}
+                      options={cityData || []}
+                      value={
+                        cityData?.find((city) => city.city_id.toString() === field.value) || null
+                      }
+                      isOptionEqualToValue={(option, value) =>
+                        option?.city_id?.toString() === value?.city_id?.toString()
+                      }
+                      getOptionLabel={(option) => {
+                        if (typeof option === 'string') return option;
+                        if (option.inputValue) return `Click to Add "${option.inputValue}"`;
 
-                    </CustomTextField>
+                        return option.city_name || '';
+                      }}
+                      filterOptions={(options, params) => {
+                        const filtered = filter(options, params);
+                        const { inputValue } = params;
+
+                        const isExisting = options.some(
+                          (option) => inputValue === option.city_name
+                        );
+
+                        if (inputValue !== '' && !isExisting) {
+                          filtered.push({
+                            inputValue,
+                            city_name: inputValue,
+                          });
+                        }
+
+                        return filtered;
+                      }}
+                      onChange={async (event, newValue) => {
+                        if (typeof newValue === 'string' && state) {
+                          try {
+                            const created = await createCity(newValue, state);
+
+                            field.onChange(created.data.city_id.toString());
+                            setCityData((prev) => [...(prev || []), created.data]);
+                          } catch (err) {
+                            console.error('Create failed', err);
+                          }
+                        } else if (newValue?.inputValue && state) {
+                          try {
+                            const created = await createCity(newValue.inputValue, state);
+
+                            field.onChange(created.data.city_id.toString());
+                            setCityData((prev) => [...(prev || []), created.data]);
+                          } catch (err) {
+                            console.error('Create failed', err);
+                          }
+                        } else {
+                          field.onChange(newValue?.city_id?.toString() || '');
+                        }
+                      }}
+                      renderInput={(params) => (
+                        <CustomTextField
+                          {...params}
+                          label="City"
+                          error={!!errors.city}
+                          helperText={errors.city?.message}
+                        />
+                      )}
+                    />
                   )}
                 />
               </Grid>

@@ -33,7 +33,7 @@ export async function POST(req: Request) {
         message: 'Version created successfully',
         data: result
       },
-      { status: 201 }
+      { status: 200 }
     );
 
   } catch (error) {

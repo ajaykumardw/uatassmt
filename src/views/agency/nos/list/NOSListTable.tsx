@@ -285,6 +285,7 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
           theoryMarks: pcData.theory_marks.toString(),
           practicalMarks: pcData.practical_marks.toString(),
           vivaMarks: pcData.viva_marks.toString(),
+          projectMarks: pcData.project_marks ? pcData.project_marks.toString() : '',
         }
 
         setPCEditData(editData);
@@ -559,6 +560,9 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
                                           <div>Viva Marks</div>
                                         </th>
                                         <th>
+                                          <div>Project Marks</div>
+                                        </th>
+                                        <th>
                                           <div>Total Marks</div>
                                         </th>
                                         <th>
@@ -584,6 +588,7 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
                                             <td>{pc.theory_marks}</td>
                                             <td>{pc.practical_marks}</td>
                                             <td>{pc.viva_marks}</td>
+                                            <td>{pc.project_marks}</td>
                                             <td>{pc.total_marks}</td>
                                             <td>
                                               <div className='flex items-center'>

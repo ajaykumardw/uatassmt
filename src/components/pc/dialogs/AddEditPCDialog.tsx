@@ -23,7 +23,7 @@ import type { SubmitHandler } from 'react-hook-form'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, string, trim, minLength, maxLength, pipe, check } from "valibot"
+import { object, string, trim, minLength, maxLength, pipe, check, optional } from "valibot"
 
 import type { InferInput } from 'valibot'
 
@@ -105,7 +105,8 @@ const initialData: AddQPDialogData = {
   pcName: '',
   theoryMarks: "",
   practicalMarks: "",
-  vivaMarks: ""
+  vivaMarks: "",
+  projectMarks: ""
 }
 
 const schema = object(
@@ -115,6 +116,7 @@ const schema = object(
     theoryMarks: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Theory_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Theory_Marks must be a valid number.'),),
     practicalMarks: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Practical_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Practical_Marks must be a valid number.'),),
     vivaMarks: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Viva_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Viva_Marks must be a valid number.'),),
+    projectMarks: optional(pipe( string(), maxLength(10, 'Project Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Project Marks must be a valid number.'),)),
 
   }
 )
@@ -355,6 +357,21 @@ const AddEditPCDialog = ({ open, nosId, pcId, handleClose, updatePCList, data }:
                     placeholder='0'
                     {...(errors.vivaMarks && { error: true, helperText: errors.vivaMarks.message })}
                     label='Viva Marks'
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                control={control}
+                name='projectMarks'
+                render={({ field }) => (
+                  <CustomTextField
+                    fullWidth
+                    {...field}
+                    placeholder='0'
+                    {...(errors.projectMarks && { error: true, helperText: errors.projectMarks.message })}
+                    label='Project Marks'
                   />
                 )}
               />

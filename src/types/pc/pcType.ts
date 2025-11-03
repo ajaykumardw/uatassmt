@@ -11,6 +11,7 @@ export type PCType = {
   theory_marks: number
   practical_marks: number
   viva_marks: number
+  project_marks?: number
   total_marks: number
   status: number
   created_by: number

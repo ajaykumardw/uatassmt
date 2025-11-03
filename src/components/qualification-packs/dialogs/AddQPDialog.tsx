@@ -14,7 +14,7 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import MenuItem from '@mui/material/MenuItem'
 import Switch from '@mui/material/Switch'
-import { CircularProgress, FormControlLabel, Slide } from '@mui/material'
+import { Autocomplete, CircularProgress, createFilterOptions, FormControlLabel, Slide } from '@mui/material'
 
 import type { SlideProps } from '@mui/material'
 
@@ -108,6 +108,24 @@ const Transition = forwardRef(function Transition(
 ) {
   return <Slide direction='up' ref={ref} {...props} />
 })
+
+const filter = createFilterOptions()
+
+async function createVersion(name: string) {
+
+  console.log('Creating version:', name);
+
+  // Replace with your actual API call
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/versions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ versionNumber: name, versionName: name }),
+  });
+
+  if (!res.ok) throw new Error('Failed to create version');
+
+  return res.json();
+}
 
 const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialogProps) => {
 
@@ -357,20 +375,86 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
                 control={control}
                 name='version'
                 render={({ field }) => (
-                  <CustomTextField
-                    select
+                  <Autocomplete
                     fullWidth
-                    label='Version'
-                    required={true}
-                    {...field}
-                    {...(errors.version && { error: true, helperText: errors.version.message })}
-                  >
-                    {versionData.map((version) => (
-                      <MenuItem key={version.id} value={version.id.toString()}>
-                        {version.version_number}
-                      </MenuItem>
-                    ))}
-                  </CustomTextField>
+                    freeSolo
+                    value={
+                      versionData?.find(version => version.id === field.value) ||
+                      (typeof field.value === 'string' ? field.value : null)
+                    }
+                    options={versionData || []}
+                    getOptionKey={option => option.id}
+
+                    // getOptionLabel={(option) => option.version_number || ''}
+                    getOptionLabel={(option) => {
+                      if (typeof option === 'string') return option;
+                      if (option.inputValue) return `Click to Add "${option.inputValue}"`;
+
+                      return option.version_number || '';
+                    }}
+                    filterOptions={(options, params) => {
+                      const filtered = filter(options, params);
+
+                      const { inputValue } = params;
+
+                      // Suggest the creation of a new value
+                      const isExisting = options.some((option) => inputValue === option.version_number);
+
+                      if (inputValue !== '' && !isExisting) {
+                        filtered.push({
+                          inputValue,
+                          version_number: `Add "${inputValue}"`,
+                        });
+                      }
+
+                      return filtered;
+                    }}
+                    isOptionEqualToValue={(option, value) => {
+                      if (typeof value === 'string') return option.version_number === value;
+                      if (option.inputValue) return option.inputValue === value.inputValue;
+
+                      return option.id === value.id;
+                    }}
+
+                    // onChange={(event, newValue) => {
+                    //   field.onChange(newValue ? newValue.id : '');
+                    // }}
+
+                    onChange={async (event, newValue) => {
+                      if (typeof newValue === 'string') {
+                        // User typed and selected raw string
+                        try {
+                          const created = await createVersion(newValue);
+
+                          field.onChange(created.data.id);
+                          setVersion((prev) => [...(prev || []), created.data]);
+                        } catch (err) {
+                          console.error('Create failed', err);
+                        }
+                      } else if (newValue?.inputValue) {
+                        // User clicked on "Add 'XYZ'"
+                        try {
+                          const created = await createVersion(newValue.inputValue);
+
+                          field.onChange(created.data.id);
+                          setVersion((prev) => [...(prev || []), created.data]);
+                        } catch (err) {
+                          console.error('Create failed', err);
+                        }
+                      } else {
+                        // User selected existing department
+                        field.onChange(newValue?.id || '');
+                      }
+                    }}
+                    renderInput={(params) => (
+                      <CustomTextField
+                        label='Version'
+                        required={true}
+                        {...params}
+                        {...(errors.version && { error: true, helperText: errors.version.message })}
+                      />
+                    )}
+                  />
 
                 )}
               />
@@ -403,7 +487,7 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
                     {...(errors.nSQFLevel && { error: true, helperText: errors.nSQFLevel.message })}
                     label='NQR Level'
                   />
-                  
+
                   // <CustomTextField
                   //   select
                   //   fullWidth

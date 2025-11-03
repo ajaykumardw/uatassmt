@@ -242,6 +242,12 @@ const schema = objectAsync(
       number('This field is required'),
       pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), maxLength(10, 'Viva_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Viva_Marks must be a valid number.'),)
     ]),
+    Project_Marks: optional(
+      union([
+        number('This field must be a number'),
+        pipe( string(), trim(), maxLength(10, 'Project_Marks must not exceed 10 characters'), check((value) => !value || /^\d+(\.\d+)?$/.test(value), 'Project_Marks must be a valid number.' ))
+      ])
+    ),
 
     // Question_Explanation: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), minLength(3, 'Question name must be at least 3 characters long')),
     // Marks: pipe(string('This field is required'), trim(), minLength(1, 'This field is required'), check((value) => !value || /^(?:[1-9]|1\d|2[0-5])(\.\d+)?$/.test(value), 'Marks must be between 1 and 25.'),),
@@ -271,27 +277,29 @@ const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   return itemRank.passed
 }
 
-// const mapKeys = (data: any[]) => data.map((item: any) => ({
-//   QP_ID: item['QP_ID'],
-//   NOS_ID: item['NOS_ID'],
-//   NOS_Name: item['NOS_Name'],
-//   PC_ID: item['PC_ID'],
-//   PC_Name: item['PC_Name'],
-//   Theory_Marks: item['Theory_Marks'],
-//   Practical_Marks: item['Practical_Marks'],
-//   Viva_Marks: item['Viva_Marks']
-// }));
-
 const mapKeys = (data: any[]) => data.map((item: any) => ({
-  QP_ID: item['QP Code'],
-  NOS_ID: item['NOS Code'],
-  NOS_Name: item['NOS Name'],
-  PC_ID: item['Elements and Performance Criteria'],
-  PC_Name: item['Assessment Criteria for Outcomes'],
-  Theory_Marks: item['Theory Marks'],
-  Practical_Marks: item['Practical Marks'],
-  Viva_Marks: item['Viva Marks']
+  QP_ID: item['QP_ID'],
+  NOS_ID: item['NOS_ID'],
+  NOS_Name: item['NOS_Name'],
+  PC_ID: item['PC_ID'],
+  PC_Name: item['PC_Name'],
+  Theory_Marks: item['Theory_Marks'],
+  Practical_Marks: item['Practical_Marks'],
+  Viva_Marks: item['Viva_Marks'],
+  Project_Marks: item['Project_Marks']
 }));
+
+// const mapKeys = (data: any[]) => data.map((item: any) => ({
+//   QP_ID: item['QP Code'],
+//   NOS_ID: item['NOS Code'],
+//   NOS_Name: item['NOS Name'],
+//   PC_ID: item['Elements and Performance Criteria'],
+//   PC_Name: item['Assessment Criteria for Outcomes'],
+//   Theory_Marks: item['Theory Marks'],
+//   Practical_Marks: item['Practical Marks'],
+//   Viva_Marks: item['Viva Marks'],
+//   Project_Marks: item['Project Marks']
+// }));
 
 const columnHelper = createColumnHelper<NOSTypeWithError>()
 
@@ -841,6 +849,19 @@ const BulkUploadNOSDialog = ({ open, sscID, handleClose, updateNOSList }: BulkUp
                 {row.original.Viva_Marks.value}
               </Typography>
               <Typography variant='body2' color="error">{row.original.Viva_Marks.error}</Typography>
+            </div>
+          </div>
+        )
+      }),
+      columnHelper.accessor('Project_Marks.value', {
+        header: 'Project_Marks',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' >
+                {row.original.Project_Marks.value}
+              </Typography>
+              <Typography variant='body2' color="error">{row.original.Project_Marks.error}</Typography>
             </div>
           </div>
         )

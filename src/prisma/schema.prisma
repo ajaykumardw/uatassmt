@@ -207,6 +207,7 @@ model pc {
   theory_marks    Decimal @db.Decimal(10, 2)
   practical_marks Decimal @db.Decimal(10, 2)
   viva_marks      Decimal @db.Decimal(10, 2)
+  project_marks   Decimal? @db.Decimal(10, 2)
   total_marks     Decimal @db.Decimal(10, 2)
   created_by Int
   created_at DateTime? @default(now()) @db.DateTime(0)

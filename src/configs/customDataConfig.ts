@@ -54,27 +54,27 @@ export const ExpectedTheoryQuestionExcelHeaders = [
   'PC_ID',
 ];
 
-// export const ExpectedNOSExcelHeaders = [
-//   'QP_ID',
-//   'NOS_ID',
-//   'NOS_Name',
-//   'PC_ID',
-//   'PC_Name',
-//   'Theory_Marks',
-//   'Practical_Marks',
-//   'Viva_Marks',
-// ];
-
 export const ExpectedNOSExcelHeaders = [
-  'QP Code',
-  'NOS Code',
-  'NOS Name',
-  'Elements and Performance Criteria',
-  'Assessment Criteria for Outcomes',
-  'Theory Marks',
-  'Practical Marks',
-  'Viva Marks',
+  'QP_ID',
+  'NOS_ID',
+  'NOS_Name',
+  'PC_ID',
+  'PC_Name',
+  'Theory_Marks',
+  'Practical_Marks',
+  'Viva_Marks',
 ];
+
+// export const ExpectedNOSExcelHeaders = [
+//   'QP Code',
+//   'NOS Code',
+//   'NOS Name',
+//   'Elements and Performance Criteria',
+//   'Assessment Criteria for Outcomes',
+//   'Theory Marks',
+//   'Practical Marks',
+//   'Viva Marks',
+// ];
 
 export const GenderMap = {
   m: "Male",

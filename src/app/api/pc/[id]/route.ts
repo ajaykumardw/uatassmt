@@ -29,7 +29,7 @@ export async function POST(
   context: { params: { id: number } }
 ) {
   const id = Number(context.params.id);
-  const {nosId, pcId, pcName, theoryMarks, practicalMarks, vivaMarks} = await req.json();
+  const {nosId, pcId, pcName, theoryMarks, practicalMarks, vivaMarks, projectMarks} = await req.json();
   const session = await getServerSession(authOptions);
   const agency_id = Number(session?.user?.agency_id);
 
@@ -56,7 +56,8 @@ export async function POST(
         theory_marks: Number(theoryMarks),
         practical_marks: Number(practicalMarks),
         viva_marks: Number(vivaMarks),
-        total_marks: (Number(theoryMarks)+Number(practicalMarks)+Number(vivaMarks)),
+        project_marks: Number(projectMarks),
+        total_marks: (Number(theoryMarks)+Number(practicalMarks)+Number(vivaMarks)+Number(projectMarks)),
       }
     });
 
