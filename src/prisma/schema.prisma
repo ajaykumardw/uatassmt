@@ -387,6 +387,7 @@ model users {
   created_at    DateTime     @default(now()) @db.DateTime(0)
   updated_at    DateTime     @default(now()) @updatedAt @db.DateTime(0)
   role_id Int?
+  fcm_token     String?      @db.Text
   role role? @relation(fields: [role_id], references: [id])
 
   sector_skills sector_skill_councils[]
