@@ -310,6 +310,6 @@ export const config = {
      *    - next.svg (Next.js logo)
      *    - vercel.svg (Vercel logo)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|.+?/hook-examples|.+?/menu-examples|images|uploads|sample_students_excel_updated.xlsx|next.svg|vercel.svg).*)'
+    '/((?!api|_next/static|_next/image|favicon.ico|.+?/hook-examples|.+?/menu-examples|images|storage|uploads|sample_students_excel_updated.xlsx|next.svg|vercel.svg).*)'
   ]
 }

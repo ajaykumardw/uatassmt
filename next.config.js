@@ -12,6 +12,14 @@ const nextConfig = {
     ]
   },
   // output: 'export',
+  rewrites: async () => {
+    return [
+      {
+        source: '/storage/uploads/:path*',
+        destination: '/api/uploads/:path*'
+      }
+    ]
+  },
 
   // TODO: below line is added to resolve twice event dispatch in the calendar reducer
   reactStrictMode: false

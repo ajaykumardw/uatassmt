@@ -106,7 +106,14 @@ export async function GET(req: NextRequest) {
         },
         training_center: {
           select: {
-            user_name: true
+            id: true,
+            email: true,
+            company_name: true,
+            user_name: true,
+            user_type: true,
+            first_name: true,
+            last_name: true,
+            mobile_no: true,
           }
         },
         assessor: {
@@ -121,6 +128,15 @@ export async function GET(req: NextRequest) {
             id: true,
             set_name: true,
             set_type: true,
+            exam_sets_questions: {
+              select: {
+                id: true,
+                exam_set_id: true,
+                question_id: true,
+                marks: true,
+                questions: true,
+              }
+            },
           }
         },
         practical_exam_set: {
@@ -128,6 +144,15 @@ export async function GET(req: NextRequest) {
             id: true,
             set_name: true,
             set_type: true,
+            exam_sets_questions: {
+              select: {
+                id: true,
+                exam_set_id: true,
+                question_id: true,
+                marks: true,
+                questions: true,
+              }
+            },
           }
         },
         viva_exam_set: {
@@ -135,6 +160,7 @@ export async function GET(req: NextRequest) {
             id: true,
             set_name: true,
             set_type: true,
+            exam_sets_questions: true,
           }
         },
         scheme: {
@@ -151,7 +177,19 @@ export async function GET(req: NextRequest) {
             scheme_code: true
           }
         },
-        students: true
+        students: {
+          select: {
+            id: true,
+            batch_id: true,
+            candidate_id: true,
+            user_name: true,
+            candidate_name: true,
+            gender: true,
+            category: true,
+            date_of_birth: true,
+            mobile_no: true,
+          }
+        }
       },
       orderBy: {
         assessment_start_datetime: "desc"
