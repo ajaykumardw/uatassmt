@@ -298,7 +298,7 @@ export async function POST(req: NextRequest) {
     await prisma.users_additional_data.create({
       data: {
         user_id: result.id,
-        employee_id: Number(employeeId),
+        employee_id: employeeId ? employeeId.toString() : null,
         job_roles: jobRoles.toString(),
         job_valid_upto: jobValidUpto.toString(),
         toa_nomination: toa_nomination ? Number(toa_nomination) : null,
@@ -306,7 +306,7 @@ export async function POST(req: NextRequest) {
         aadhaar_no: aadhaarNumber.toString(),
         pan_card_no: panCardNumber.toString(),
         bank_name: bankName.toString(),
-        account_no: Number(accountNumber),
+        account_no: accountNumber ? Number(accountNumber) : null,
         ifsc_code: ifscCode.toString(),
         certificate_8th: certificate8thName || null,
         certificate_10th: certificate10thName || null,

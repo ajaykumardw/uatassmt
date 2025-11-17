@@ -405,7 +405,7 @@ model users_additional_data {
   id                        Int     @id @default(autoincrement())
   user                      users   @relation(fields: [user_id], references: [id])
   user_id                   Int     @unique
-  employee_id               Int?
+  employee_id               String?
   job_roles                 String? @db.Text
   job_valid_upto            String? @db.Text
   toa_nomination            Int?    @db.TinyInt

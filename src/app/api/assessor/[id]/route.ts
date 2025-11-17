@@ -288,7 +288,7 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
           user_id: result.id
         },
         data: {
-          employee_id: Number(employeeId),
+          employee_id: employeeId ? employeeId.toString() : null,
           job_roles: jobRoles.toString(),
           job_valid_upto: jobValidUpto.toString(),
           toa_nomination: toa_nomination ? Number(toa_nomination) : null,
@@ -296,7 +296,7 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
           aadhaar_no: aadhaarNumber.toString(),
           pan_card_no: panCardNumber.toString(),
           bank_name: bankName.toString(),
-          account_no: Number(accountNumber),
+          account_no: accountNumber ? Number(accountNumber) : null,
           ifsc_code: ifscCode.toString(),
           certificate_8th: certificate8thName || assessor?.user_additional_data?.certificate_8th || null,
           certificate_10th: certificate10thName || assessor?.user_additional_data?.certificate_10th || null,
