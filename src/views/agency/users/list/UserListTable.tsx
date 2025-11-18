@@ -66,6 +66,8 @@ import AddUsersDialog from '@/components/users/dialogs/AddUsersDialog'
 
 import { formatDate } from '@/utils/formateDate'
 import { MenuProps, TableRowLimit, userRoleObj } from '@/configs/customDataConfig'
+import ChangePasswordDialog from '@/components/ChangePasswordDialog'
+import OptionMenu from '@/@core/components/option-menu'
 
 // declare module '@tanstack/table-core' {
 //   interface FilterFns {
@@ -180,6 +182,8 @@ const UserListTable = ({ tableData }: { tableData?: users[]}) => {
   const [data, setData] = useState(...[tableData])
   const [globalFilter, setGlobalFilter] = useState('')
   const [roles, setRoles] = useState<role[]>([]);
+  const [openChangePassword, setOpenChangePassword] = useState<boolean>(false);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
   // Hooks
   const { lang: locale } = useParams()
@@ -295,6 +299,18 @@ const UserListTable = ({ tableData }: { tableData?: users[]}) => {
                 <i className='tabler-edit text-[22px] text-textSecondary' />
               </IconButton>
             </Link>
+            <OptionMenu
+              iconClassName='text-textSecondary'
+              options={[
+                {
+                  text: 'Change Password',
+                  icon: 'tabler-key',
+                  menuItemProps: {
+                    onClick: () => handleChangePassword(row.original.id)
+                  },
+                },
+              ]}
+            />
             {/* <IconButton>
               <Link href={getLocalizedUrl('apps/user/view', locale as Locale)} className='flex'>
                 <i className='tabler-eye text-[22px] text-textSecondary' />
@@ -361,6 +377,12 @@ const UserListTable = ({ tableData }: { tableData?: users[]}) => {
     } else {
       return <CustomAvatar size={34}>{getInitials(first_name as string)}</CustomAvatar>
     }
+  }
+
+  const handleChangePassword = (id: number) => {
+    setOpenChangePassword(true);
+    setSelectedUserId(id);
+    console.log("Change password for user ID:", id);
   }
 
   return (
@@ -472,6 +494,7 @@ const UserListTable = ({ tableData }: { tableData?: users[]}) => {
       </Card>
       {/* <AddUserDrawer open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} /> */}
       <AddUsersDialog rolesData={roles} open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} />
+      <ChangePasswordDialog open={openChangePassword} onClose={() => {setOpenChangePassword(false); setSelectedUserId(null); }} userId={selectedUserId} userType='user' />
     </>
   )
 }

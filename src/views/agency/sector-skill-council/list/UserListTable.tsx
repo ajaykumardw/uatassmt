@@ -53,6 +53,8 @@ import tableStyles from '@core/styles/table.module.css'
 import EditUserDrawer from './EditUserDrawer'
 import type { SSCType } from '@/types/sectorskills/sscType'
 import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
+import ChangePasswordDialog from '@/components/ChangePasswordDialog';
+import OptionMenu from '@/@core/components/option-menu';
 
 // declare module '@tanstack/table-core' {
 //   interface FilterFns {
@@ -165,6 +167,8 @@ const UserListTable = ({ tableData, updateSSCList }: { tableData?: SSCType[], up
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [data, setData] = useState(...[tableData]);
   const [globalFilter, setGlobalFilter] = useState('');
+  const [openChangePassword, setOpenChangePassword] = useState<boolean>(false);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
   // Hooks
   const columns = useMemo<ColumnDef<SSCTypeWithAction, any>[]>(
@@ -231,6 +235,18 @@ const UserListTable = ({ tableData, updateSSCList }: { tableData?: SSCType[], up
             <IconButton onClick={() => { setEditUserOpen(!editUserOpen); setSSCId(row.original.id); setSSCName(row.original.ssc_name); setSscCode(row.original.ssc_code); setUsername(row.original.ssc_username); setStatus(row.original.status.toString()); setSSCImage(row.original.ssc_image); }}>
               <i className='tabler-edit text-[22px] text-textSecondary' />
             </IconButton>
+            <OptionMenu
+              iconClassName='text-textSecondary'
+              options={[
+                {
+                  text: 'Change Password',
+                  icon: 'tabler-key',
+                  menuItemProps: {
+                    onClick: () => handleChangePassword(row.original.id)
+                  },
+                },
+              ]}
+            />
           </div>
         ),
         enableSorting: false
@@ -278,6 +294,12 @@ const UserListTable = ({ tableData, updateSSCList }: { tableData?: SSCType[], up
     } else {
       return <CustomAvatar size={34}>{getInitials(ssc_name as string)}</CustomAvatar>
     }
+  }
+
+  const handleChangePassword = (id: number) => {
+    setOpenChangePassword(true);
+    setSelectedUserId(id);
+    console.log("Change password for user ID:", id);
   }
 
   return (
@@ -393,6 +415,7 @@ const UserListTable = ({ tableData, updateSSCList }: { tableData?: SSCType[], up
       </Card>
       <AddUserDrawer open={addUserOpen} updateSSCList={updateSSCList} handleClose={() => setAddUserOpen(!addUserOpen)} />
       <EditUserDrawer sscId={sscId} open={editUserOpen} handleClose={() => setEditUserOpen(!editUserOpen)} updateSSCList={updateSSCList} sscName={sscName} sscCode={sscCode} username={username} sscStatus={sscStatus} sscImage={sscImage} />
+      <ChangePasswordDialog open={openChangePassword} onClose={() => {setOpenChangePassword(false); setSelectedUserId(null); }} userId={selectedUserId} userType='ssc' />
     </>
   )
 }

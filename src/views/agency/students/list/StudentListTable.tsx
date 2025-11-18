@@ -65,6 +65,8 @@ import AddUsersDialog from '@/components/users/dialogs/AddUsersDialog'
 import { GenderMap, MenuProps, TableRowLimit } from '@/configs/customDataConfig'
 
 import EditStudentDrawer from './EditStudentDrawer'
+import OptionMenu from '@/@core/components/option-menu'
+import ChangePasswordDialog from '@/components/ChangePasswordDialog'
 
 // declare module '@tanstack/table-core' {
 //   interface FilterFns {
@@ -163,6 +165,8 @@ const StudentListTable = () => {
   const [globalFilter, setGlobalFilter] = useState('')
 
   const [updateStudentList, setUpdateStudentList] = useState(false);
+  const [openChangePassword, setOpenChangePassword] = useState<boolean>(false);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
 
   // Hooks
@@ -347,6 +351,18 @@ const StudentListTable = () => {
                 }
               ]}
             /> */}
+            <OptionMenu
+              iconClassName='text-textSecondary'
+              options={[
+                {
+                  text: 'Change Password',
+                  icon: 'tabler-key',
+                  menuItemProps: {
+                    onClick: () => handleChangePassword(row.original.id)
+                  },
+                },
+              ]}
+            />
           </div>
         ),
         enableSorting: false
@@ -385,6 +401,11 @@ const StudentListTable = () => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
+  const handleChangePassword = (id: number) => {
+    setOpenChangePassword(true);
+    setSelectedUserId(id);
+    console.log("Change password for user ID:", id);
+  }
 
   return (
     <>
@@ -496,6 +517,7 @@ const StudentListTable = () => {
       {/* <AddUserDrawer open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} /> */}
       <EditStudentDrawer open={editStudentOpen} id={studentId} handleClose={() => setEditStudentOpen(!editStudentOpen)} updateStudentList={setUpdateStudentList} />
       <AddUsersDialog open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} />
+      <ChangePasswordDialog open={openChangePassword} onClose={() => {setOpenChangePassword(false); setSelectedUserId(null); }} userId={selectedUserId} userType='candidate' />
     </>
   )
 }
