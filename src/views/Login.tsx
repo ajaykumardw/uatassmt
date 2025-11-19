@@ -13,9 +13,12 @@ import { styled, useTheme } from '@mui/material/styles'
 import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
-import Checkbox from '@mui/material/Checkbox'
+
+// import Checkbox from '@mui/material/Checkbox'
+
 import Button from '@mui/material/Button'
-import FormControlLabel from '@mui/material/FormControlLabel'
+
+// import FormControlLabel from '@mui/material/FormControlLabel'
 
 // import Divider from '@mui/material/Divider'
 // import Alert from '@mui/material/Alert'
@@ -247,7 +250,7 @@ const Login = ({ mode }: { mode: SystemMode }) => {
                 />
               )}
             />
-            <div className='flex justify-between items-center gap-x-3 gap-y-1 flex-wrap'>
+            {/* <div className='flex justify-between items-center gap-x-3 gap-y-1 flex-wrap'>
               <FormControlLabel control={<Checkbox defaultChecked />} label='Remember me' />
               <Typography
                 className='text-end'
@@ -257,9 +260,12 @@ const Login = ({ mode }: { mode: SystemMode }) => {
               >
                 Forgot password?
               </Typography>
-            </div>
+            </div> */}
             <Button fullWidth variant='contained' type='submit'>
               Login
+            </Button>
+            <Button fullWidth variant='outlined' type='button' component={Link} href={getLocalizedUrl('/student-login', locale as Locale)}>
+              Candidate Login
             </Button>
             {/* <div className='flex justify-center items-center flex-wrap gap-2'>
               <Typography>New on our platform?</Typography>

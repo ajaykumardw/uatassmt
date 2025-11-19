@@ -4,7 +4,8 @@
 import { useState } from 'react'
 
 // Next Imports
-import Link from 'next/link'
+// import Link from 'next/link'
+
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 
 // MUI Imports
@@ -13,9 +14,12 @@ import { styled, useTheme } from '@mui/material/styles'
 import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
-import Checkbox from '@mui/material/Checkbox'
+
+// import Checkbox from '@mui/material/Checkbox'
+
 import Button from '@mui/material/Button'
-import FormControlLabel from '@mui/material/FormControlLabel'
+
+// import FormControlLabel from '@mui/material/FormControlLabel'
 
 // import Divider from '@mui/material/Divider'
 // import Alert from '@mui/material/Alert'
@@ -207,7 +211,7 @@ const StudentLogin = ({ mode }: { mode: SystemMode }) => {
                   }}
                   {...((errors.email || errorState !== null) && {
                     error: true,
-                    helperText: errors?.email?.message || errorState?.message[0]
+                    helperText: errors?.email?.message || errorState?.message
                   })}
                 />
               )}
@@ -241,7 +245,7 @@ const StudentLogin = ({ mode }: { mode: SystemMode }) => {
                 />
               )}
             />
-            <div className='flex justify-between items-center gap-x-3 gap-y-1 flex-wrap'>
+            {/* <div className='flex justify-between items-center gap-x-3 gap-y-1 flex-wrap'>
               <FormControlLabel control={<Checkbox defaultChecked />} label='Remember me' />
               <Typography
                 className='text-end'
@@ -251,7 +255,7 @@ const StudentLogin = ({ mode }: { mode: SystemMode }) => {
               >
                 Forgot password?
               </Typography>
-            </div>
+            </div> */}
             <Button fullWidth variant='contained' type='submit'>
               Login
             </Button>
