@@ -156,7 +156,7 @@ const Examination = () => {
   const getExamData = async () => {
     const data = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student-exam-set`).then(res => res.json());
 
-    setExamData(data.batch.exam_set);
+    setExamData(data.batch.theory_exam_set);
     setCaptureImageInSeconds(data.batch.capture_image_in_seconds);
   };
 
