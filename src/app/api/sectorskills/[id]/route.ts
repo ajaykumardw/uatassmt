@@ -30,6 +30,13 @@ export async function GET(
     include: {
       qualification_packs: {
         include: {
+          ssc: {
+            select: {
+              id: true,
+              ssc_code: true,
+              ssc_name: true,
+            }
+          },
           exam_sets: {
             select: {
               id: true,

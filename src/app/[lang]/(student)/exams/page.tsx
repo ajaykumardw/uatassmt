@@ -31,7 +31,7 @@ const ExamTest = () => {
     setBatchData(data.batch);
     setStudentExamResults(
       data.exam_set_results ?
-        data.exam_set_results.find((studentResult: student_exam_set_results) => studentResult.exam_set_id === data.batch.theory_exam_set.id)
+        data.exam_set_results.find((studentResult: student_exam_set_results) => studentResult.exam_set_id === data.batch.theory_exam_set_id)
         : null
     );
 
@@ -130,13 +130,13 @@ const ExamTest = () => {
                   <div className='flex'>
                     <i className='tabler-calendar-time text-xl text-textSecondary' />
                   </div>
-                  <Typography color='text.secondary'>Exam Start Date Time: {batchData?.assessment_start_datetime ? format(batchData.assessment_start_datetime, 'dd-LL-yyyy HH:mm:ss') : ""}</Typography>
+                  <Typography color='text.secondary'>Exam Start Date Time: {batchData?.assessment_start_datetime ? format(batchData.assessment_start_datetime, 'dd-LL-yyyy hh:mm:ss a') : ""}</Typography>
                 </div>
                 <div className='flex items-center gap-2.5'>
                   <div className='flex'>
                     <i className='tabler-calendar-time text-xl text-textSecondary' />
                   </div>
-                  <Typography color='text.secondary'>Current Date Time: {currentTime ? format(currentTime, 'dd-LL-yyyy HH:mm:ss') : ""}</Typography>
+                  <Typography color='text.secondary'>Current Date Time: {currentTime ? format(currentTime, 'dd-LL-yyyy hh:mm:ss a') : ""}</Typography>
                 </div>
               </Grid>
               <Grid item xs={12} sm={6} className='flex flex-col max-sm:mbs-[26px] sm:pis-5 sm:border-is gap-[26px]'>
@@ -150,7 +150,7 @@ const ExamTest = () => {
                   <div className='flex'>
                     <i className='tabler-calendar-time text-xl text-textSecondary' />
                   </div>
-                  <Typography color='text.secondary'>Exam End Date Time: {batchData?.assessment_end_datetime ? format(batchData.assessment_end_datetime, 'dd-LL-yyyy HH:mm:ss') : ""}</Typography>
+                  <Typography color='text.secondary'>Exam End Date Time: {batchData?.assessment_end_datetime ? format(batchData.assessment_end_datetime, 'dd-LL-yyyy hh:mm:ss a') : ""}</Typography>
                 </div>
                 <div className='flex items-center gap-2.5'>
                   <div className='flex'>

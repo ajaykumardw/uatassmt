@@ -406,7 +406,7 @@ model users_additional_data {
   user                      users   @relation(fields: [user_id], references: [id])
   user_id                   Int     @unique
   employee_id               String?
-  job_roles                 String? @db.Text
+  job_roles                 Json?
   job_valid_upto            String? @db.Text
   toa_nomination            Int?    @db.TinyInt
   last_qualification        String?

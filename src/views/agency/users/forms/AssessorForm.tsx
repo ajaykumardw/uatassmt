@@ -33,11 +33,11 @@ import type { SubmitHandler } from 'react-hook-form'
 
 import type { state } from '@prisma/client'
 
-import { Autocomplete, CircularProgress, createFilterOptions } from '@mui/material'
+import { Autocomplete, Chip, CircularProgress, createFilterOptions } from '@mui/material'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, string, trim, minLength, optional, regex, maxLength, check, array, date, pipe } from "valibot"
+import { object, string, trim, minLength, optional, regex, maxLength, check, array, date, pipe, number, minValue } from "valibot"
 
 import { toast } from 'react-toastify'
 
@@ -83,8 +83,8 @@ type FormDataType = InferInput<typeof schema> & {
 
 const schema = object(
   {
-    sscId: pipe(string(), trim() , minLength(1, 'This field is required')),
-    jobRoles: array( pipe(string(), trim() , minLength(1, 'This field is required'))),
+    sscId: array(pipe(string(), trim() , minLength(1, 'This field is required'))),
+    jobRoles: array( pipe(number('must be number'), minValue(1, 'This field is required'))),
     jobValidUpto: array(date()),
     username: pipe(string(), trim() , minLength(1, 'This field is required')),
     email: pipe(string(), trim() , minLength(1, 'This field is required')),
@@ -116,7 +116,7 @@ const initialData = {
   email: '',
   password: '',
   employeeId: '',
-  sscId: '',
+  sscId: [],
   jobRoles: [],
   jobValidUpto: [],
   firstName: '',
@@ -203,29 +203,51 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
 
       // console.log("user data:", data);
 
-      if(data.ssc_id){
-        handleSSCChange(data.ssc_id.toString())
+
+      const rawJobRoles = data.user_additional_data.job_roles;
+
+      const jobRoleIds: number[] = Array.isArray(rawJobRoles)
+        ? rawJobRoles
+            .filter((v): v is number => typeof v === 'number') // only keep numbers
+        : [];
+
+      const sscIds = sscData
+        .filter(ssc =>
+          ssc.qualification_packs?.some(qp => jobRoleIds.includes(qp.id))
+        )
+        .map(ssc => ssc.id.toString());
+
+        console.log("sscIds:", sscIds);
+
+      if(sscIds.length > 0){
+        handleSSCChange(sscIds);
       }
+
+      // if(data.ssc_id){
+      //   handleSSCChange([data.ssc_id.toString()])
+      // }
 
       if(data.state_id){
         handleStateChange(data.state_id.toString());
       }
 
       if(data.user_additional_data && data.user_additional_data.job_roles){
-        setJobRolesLength(JSON.parse(data.user_additional_data.job_roles));
+        setJobRolesLength(data.user_additional_data.job_roles as number[]);
 
-        const jobRolesOld = JSON.parse(data.user_additional_data.job_roles);
+        const jobRolesOld = data.user_additional_data.job_roles as number[];
         const jobValidUptoOld = data.user_additional_data.job_valid_upto ? JSON.parse(data.user_additional_data.job_valid_upto) : [];
         const result:{ [key: number]: Date } = {};
 
         if(jobRolesOld.length > 0 && jobValidUptoOld.length > 0){
-          jobRolesOld.forEach((job:string, index:number) => {
-            result[parseInt(job)] = new Date(jobValidUptoOld[index]);
+          jobRolesOld.forEach((job:number, index:number) => {
+            result[job] = new Date(jobValidUptoOld[index]);
           });
         }
 
         setJobValidUpto(result);
       }
+
+
 
       setFormData({
         profile: data.avatar || '',
@@ -233,8 +255,8 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
         email: data.email || '',
         password: 'null',
         employeeId: data.user_additional_data && data.user_additional_data.employee_id?.toString() || '',
-        sscId: sscData.length > 0 && data.ssc_id ? data.ssc_id?.toString() : '',
-        jobRoles: data.user_additional_data && data.user_additional_data.job_roles && data.user_additional_data.job_roles?.length > 0 ? JSON.parse(data.user_additional_data.job_roles) : [],
+        sscId: sscIds.length > 0 ? sscIds : [],
+        jobRoles: data.user_additional_data && data.user_additional_data.job_roles && (data.user_additional_data.job_roles as number[])?.length > 0 ? (data.user_additional_data.job_roles as number[]) : [],
         jobValidUpto: [],
         firstName: data.first_name || '',
         lastName: data.last_name || '',
@@ -305,29 +327,39 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
     getSSCData()
   }, []);
 
-  const handleSSCChange = async (ssc: string) => {
+  const handleSSCChange = async (sscIds: string[]) => {
 
+    if(sscIds.length === 0) {
     resetField("jobRoles")
     setJobValidUpto({});
     setJobRolesLength([]);
+    }
 
     // setFormData({ ...formData, sscId: ssc, jobRoles: [] as string[]  })
 
-    const sscId = Number(ssc);
+    const selectedSSCs = sscData.filter(ssc => sscIds.includes(ssc.id.toString()));
 
-    // setSSC(sscId);
+    const allQPs = selectedSSCs.flatMap(ssc => ssc.qualification_packs || []);
 
-    const selectedSSC = sscData.find(ssc => ssc.id === sscId);
+    setQPData(allQPs);
 
-    if (selectedSSC) {
+    console.log("selectedSSCs:", selectedSSCs);
 
-      setQPData(selectedSSC.qualification_packs || []);
+    // const sscId = Number(sscIds);
 
-    } else {
+    // // setSSC(sscId);
 
-      setQPData([]);
+    // const selectedSSC = sscData.find(ssc => ssc.id === sscId);
 
-    }
+    // if (selectedSSC) {
+
+    //   setQPData(selectedSSC.qualification_packs || []);
+
+    // } else {
+
+    //   setQPData([]);
+
+    // }
   }
 
   // const handleClickShowPassword = () => setFormData(show => ({ ...show, isPasswordShown: !show.isPasswordShown }))
@@ -389,7 +421,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
     formData.append("email", data?.email || reqData.email);
     formData.append("password", reqData.password);
     formData.append("employeeId", reqData.employeeId || "");
-    formData.append("sscId", data?.ssc_id?.toString() || reqData.sscId);
+    formData.append("sscId", JSON.stringify(data?.ssc_id ? [data.ssc_id.toString()] : reqData.sscId));
     formData.append("jobRoles", JSON.stringify(reqData.jobRoles));
     formData.append("firstName", reqData.firstName || "");
     formData.append("lastName", reqData.lastName || "");
@@ -862,16 +894,29 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                     <CustomTextField
                       select
                       required={true}
-                      disabled={data && data.ssc_id ? true : false}
+
+                      // disabled={data && data.ssc_id ? true : false}
+
                       fullWidth
                       label='Select SSC'
                       {...field}
                       {...(errors.sscId && { error: true, helperText: errors.sscId.message })}
+
+                      // onChange={(e) => {
+                      //   handleSSCChange(e.target.value)
+                      //   field.onChange(e)
+                      // }}
+
                       onChange={(e) => {
-                        handleSSCChange(e.target.value)
-                        field.onChange(e)
+                        const selectedIds = Array.from(e.target.value); // multiple values
+
+                        handleSSCChange(selectedIds);
+                        field.onChange(selectedIds);
                       }}
-                      SelectProps={{ MenuProps, displayEmpty: true }}
+
+                      // SelectProps={{ MenuProps, displayEmpty: true }}
+
+                      SelectProps={{ MenuProps, multiple: true }}
                     >
                       {sscData && sscData.length > 0 ? (
                         sscData.map((ssc, index) => (
@@ -886,7 +931,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                   )}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              {/* <Grid item xs={12} sm={6}>
                 <Controller
                   control={control}
                   name='jobRoles'
@@ -901,13 +946,13 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                       SelectProps={{
                         MenuProps,
                         multiple: true,
-                        onChange: e => {setJobRolesLength(e.target.value as string[]); field.onChange(e)}
+                        onChange: e => {setJobRolesLength(e.target.value as number[]); field.onChange(e)}
                       }}
-                      {...(errors.jobRoles && { error: true, helperText: errors.jobRoles.message })}
+                      {...(errors.jobRoles && { error: true, helperText: errors.jobRoles?.[0]?.message })}
                     >
                       {qpData && qpData.length > 0 ? (
                         qpData.map((qualificationPack) => (
-                          <MenuItem key={qualificationPack.id.toString()} disabled={data && data.user_additional_data.job_roles && JSON.parse(data.user_additional_data.job_roles).includes(qualificationPack.id.toString()) ? true : false} value={qualificationPack.id.toString()}>
+                          <MenuItem key={qualificationPack.id.toString()} disabled={data && data.user_additional_data.job_roles && JSON.parse(data.user_additional_data.job_roles).includes(qualificationPack.id) ? false : false} value={qualificationPack.id}>
                             {qualificationPack.qualification_pack_name}
                           </MenuItem>
                         ))
@@ -917,10 +962,73 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                     </CustomTextField>
                   )}
                 />
+              </Grid> */}
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  control={control}
+                  name="jobRoles"
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <Autocomplete
+                      multiple
+                      disableCloseOnSelect
+
+                      options={qpData}
+                      groupBy={(qp) => qp?.ssc?.ssc_name || "Unknown SSC"}
+                      getOptionLabel={(qp) => qp?.qualification_pack_name || ''}
+
+                      isOptionEqualToValue={(option, value) =>
+                        option?.id === value?.id
+                      }
+
+                      value={
+                        (field.value || [])
+                          .map(id => qpData.find(qp => qp.id === id))
+                          .filter((v) => v !== undefined)
+                      }
+
+                      onChange={(_, selectedOptions) => {
+                        const ids = selectedOptions.map(opt => opt?.id);
+
+                        setJobRolesLength(ids);
+                        field.onChange(ids);
+                      }}
+
+                      renderTags={(value, getTagProps) =>
+                        value.filter((option): option is QPType => option !== undefined)
+                        .map((option, index: number) => (
+                          <Chip
+                            label={option.qualification_pack_name}
+                            {...getTagProps({ index })}
+                            key={option.id}
+                          />
+                        ))
+                      }
+
+                      renderInput={(params) => (
+                        <CustomTextField
+                          {...params}
+
+                          // required
+
+                          fullWidth
+                          label="Select Job Roles (can be multiple) *"
+                          error={!!errors.jobRoles}
+                          helperText={
+                            errors.jobRoles?.root?.message ||
+                            errors.jobRoles?.message
+                          }
+                        />
+                      )}
+                    />
+                  )}
+                />
               </Grid>
               {jobRolesLength.map((job, index) => {
 
-                const qp = qpData?.find(qp => qp.id.toString() === job);
+                const qp = qpData?.find(qp => qp.id === job);
+
+                // console.log("jobRolesLength:", jobRolesLength, job, qpData, qp);
 
                 return (
                   <Grid key={index} item xs={12} sm={6} md={3}>
@@ -1721,7 +1829,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
           </CardContent>
           <Divider />
           <CardActions>
-            <Button type='submit' variant='contained' className='mie-2 gap-2' disabled={loading}>
+            <Button type='submit' variant='contained' className='mie-2 gap-2' disabled={loading || jobRolesLength.length === 0}>
               {loading && <CircularProgress size={20} color='inherit' />}
               Submit
             </Button>

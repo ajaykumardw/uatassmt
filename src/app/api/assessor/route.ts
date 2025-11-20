@@ -25,10 +25,22 @@ export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
   const agencyId = Number(session?.user?.agency_id);
 
+  if (sscId) {
+    const assessors = await prisma.$queryRaw`
+      SELECT DISTINCT u.*, uad.*
+      FROM users u
+      JOIN users_additional_data uad ON u.id = uad.user_id
+      JOIN qualification_packs qp ON JSON_CONTAINS(uad.job_roles, JSON_ARRAY(qp.id))
+      WHERE qp.ssc_id = ${Number(sscId)};
+    `;
+
+    return NextResponse.json(assessors);
+  }
+
+
   const whereCondition = {
     master_id: agencyId,
     role_id: 1,
-    ...(sscId ? { ssc_id: Number(sscId) } : {}),
   };
 
   const assessors = await prisma.users.findMany({
@@ -54,7 +66,9 @@ export async function POST(req: NextRequest) {
     email,
     password,
     employeeId,
-    sscId,
+
+    // sscId,
+
     jobRoles,
     jobValidUpto,
     firstName,
@@ -146,7 +160,9 @@ export async function POST(req: NextRequest) {
   const result = await prisma.users.create({
     data: {
       user_name: username.toString(),
-      ssc_id: Number(sscId),
+
+      // ssc_id: Number(sscId),
+
       email: email as string,
       password: hashPassword,
       user_type: userType,

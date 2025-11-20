@@ -89,12 +89,12 @@ const AssignAssessorDialog = ({ open, batchId, batch, handleClose, updateBatchLi
 
       const filteredAssessorData = data?.filter(assessor => {
         const batchStartDate = batch.assessment_start_datetime;
-        const jobId = batch.qualification_pack.id.toString();
+        const jobId = batch.qualification_pack.id;
         const additionalData = assessor?.user_additional_data;
 
         if (!additionalData) return false;
 
-        const jobRoles = JSON.parse(additionalData.job_roles || "[]");
+        const jobRoles = (additionalData.job_roles as number[]) || [];
         const jobValidUpto = JSON.parse(additionalData.job_valid_upto || "[]");
 
         const jobIndex = jobRoles.indexOf(jobId);

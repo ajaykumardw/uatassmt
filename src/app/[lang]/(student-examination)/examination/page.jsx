@@ -738,19 +738,19 @@ const Examination = () => {
                 <Grid item>
                   <ButtonGroup variant='contained'>
                     <Button onClick={handlePreviousQuestion} disabled={activeStep === 0}>Previous</Button>
-                    <Button
-                      onClick={handleMarkedQuestions}
-                      color="warning"
-                    >
-                      Mark for review & Next
+                    <Button onClick={() => handleNextQuestion("a")} disabled={currentQuestionIndex === (examData?.exam_sets_questions.length || 0) - 1}>
+                      Next
                     </Button>
 
                   </ButtonGroup>
                 </Grid>
                 <Grid item>
                   <ButtonGroup variant='contained'>
-                    <Button onClick={() => handleNextQuestion("a")} disabled={currentQuestionIndex === (examData?.exam_sets_questions.length || 0) - 1}>
-                      Next
+                    <Button
+                      onClick={handleMarkedQuestions}
+                      color="warning"
+                    >
+                      Mark for review
                     </Button>
                     <Button variant='contained' onClick={onSubmit} disabled={Object.keys(answerData).length !== (examData?.exam_sets_questions.length || 0)}>Finish</Button>
                   </ButtonGroup>
