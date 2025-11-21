@@ -28,10 +28,12 @@ const ExamTest = () => {
   const getExamInstructions = async () => {
     const data = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student-exam-set`).then(function (res) { return res.json() });
 
+    console.log('fetched student exam set data:', data);
+
     setBatchData(data.batch);
     setStudentExamResults(
       data.exam_set_results ?
-        data.exam_set_results.find((studentResult: student_exam_set_results) => studentResult.exam_set_id === data.batch.theory_exam_set_id)
+        data.exam_set_results.find((studentResult: student_exam_set_results) => studentResult.exam_set_id === data.batch.theory_exam_set.id)
         : null
     );
 
