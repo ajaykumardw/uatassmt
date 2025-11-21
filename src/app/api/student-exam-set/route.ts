@@ -18,6 +18,7 @@ export async function GET() {
     },
     select: {
       id: true,
+      student_exam_set_results: true,
       exam_set_results: true,
       batch: {
         select: {
