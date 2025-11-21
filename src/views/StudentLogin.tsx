@@ -4,7 +4,7 @@
 import { useState } from 'react'
 
 // Next Imports
-// import Link from 'next/link'
+import Link from 'next/link'
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 
@@ -258,6 +258,9 @@ const StudentLogin = ({ mode }: { mode: SystemMode }) => {
             </div> */}
             <Button fullWidth variant='contained' type='submit'>
               Login
+            </Button>
+            <Button fullWidth variant='outlined' type='button' component={Link} href={getLocalizedUrl('/login', locale as Locale)}>
+              User Login
             </Button>
             {/* <div className='flex justify-center items-center flex-wrap gap-2'>
               <Typography>New on our platform?</Typography>
