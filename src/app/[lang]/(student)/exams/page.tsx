@@ -40,6 +40,14 @@ const ExamTest = () => {
   }
 
   useEffect(() => {
+    console.log('studentExamResults updated:', studentExamResults);
+  }, [studentExamResults])
+
+  useEffect(() => {
+    console.log('remainingAttempts updated:', remainingAttempts);
+  }, [remainingAttempts])
+
+  useEffect(() => {
 
     if(batchData?.login_restrict && studentExamResults?.total_attempts){
       setRemainingAttempts(batchData.login_restrict - studentExamResults.total_attempts <= 0 ? 0 : batchData.login_restrict - studentExamResults.total_attempts)
