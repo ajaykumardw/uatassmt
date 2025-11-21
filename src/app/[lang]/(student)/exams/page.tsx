@@ -109,6 +109,9 @@ const ExamTest = () => {
           }
         });
 
+        // Decrease remaining attempts temporarily here; ideally, this should be done after exam submission
+        setRemainingAttempts(prev => prev > 0 ? prev - 1 : 0);
+
         // Disable resizing the window (it's already in the `window.open()` options, but you can reinforce it)
         // newWindow.resizeTo(1024, 750);
       } else {

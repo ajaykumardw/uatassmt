@@ -44,82 +44,83 @@ const Examination = () => {
   const { lang: locale } = useParams();
 
 
-  // useEffect(() => {
-  //   // Disable right-click (context menu)
-  //   const disableRightClick = (e) => {
-  //     e.preventDefault();
-  //   };
+  useEffect(() => {
+    // Disable right-click (context menu)
+    const disableRightClick = (e) => {
+      e.preventDefault();
+    };
 
-  //   // Disable F5, Ctrl+R, Cmd+R, and other reload shortcuts
-  //   const disableReloadShortcuts = (e) => {
-  //     // Detect F5, Ctrl+R, Cmd+R, and others
-  //     if (
-  //       e.key === 'F5' ||
-  //       e.key === 'F12' || // Disable F12 (DevTools)
-  //       (e.ctrlKey && e.key === 'r') ||
-  //       (e.metaKey && e.key === 'r') ||
-  //       (e.ctrlKey && e.key === 'R') ||
-  //       (e.metaKey && e.key === 'R') ||
-  //       (e.ctrlKey && e.shiftKey && e.key === 'I') // Disable Ctrl+Shift+I (DevTools)
-  //     ) {
-  //       e.preventDefault();
-  //     }
-  //   };
+    // Disable F5, Ctrl+R, Cmd+R, and other reload shortcuts
+    const disableReloadShortcuts = (e) => {
+      // Detect F5, Ctrl+R, Cmd+R, and others
+      if (
+        e.key === 'F5' ||
+        e.key === 'F12' || // Disable F12 (DevTools)
+        (e.ctrlKey && e.key === 'r') ||
+        (e.metaKey && e.key === 'r') ||
+        (e.ctrlKey && e.key === 'R') ||
+        (e.metaKey && e.key === 'R') ||
+        (e.ctrlKey && e.shiftKey && e.key === 'I') // Disable Ctrl+Shift+I (DevTools)
+      ) {
+        e.preventDefault();
+      }
+    };
 
-  //   // Prevent page reload via the "beforeunload" event (in most browsers)
-  //   const preventPageReload = (e) => {
-  //     e.preventDefault();
-  //     e.returnValue = ''; // Chrome requires this for blocking the action
-  //   };
+    // Prevent page reload via the "beforeunload" event (in most browsers)
+    const preventPageReload = (e) => {
+      e.preventDefault();
+      e.returnValue = ''; // Chrome requires this for blocking the action
+    };
 
-  //   // Add event listeners
-  //   document.addEventListener('contextmenu', disableRightClick); // Disable right-click
-  //   document.addEventListener('keydown', disableReloadShortcuts); // Disable reload shortcuts
-  //   window.addEventListener('beforeunload', preventPageReload); // Disable reload on refresh or back
+    // Add event listeners
+    document.addEventListener('contextmenu', disableRightClick); // Disable right-click
+    document.addEventListener('keydown', disableReloadShortcuts); // Disable reload shortcuts
+    window.addEventListener('beforeunload', preventPageReload); // Disable reload on refresh or back
 
-  //   window.onresize = function() {
-  //     window.resizeTo(window.screen.availWidth, window.screen.availHeight); // Resizes the window back to the original size
-  //   };
+    window.onresize = function() {
+      window.resizeTo(window.screen.availWidth, window.screen.availHeight); // Resizes the window back to the original size
+    };
 
-  //   window.onfocus = function() {
-  //     console.log('Window gained focus (likely not minimized)');
-  //   };
-  //   // window.addEventListener("focus", function() {
-  //   //   // Create a new div element
-  //   //   const d = document.createElement('div');
-  //   //   // Set the text content of the new div
-  //   //   d.textContent = "Window gained focus!!!";
-  //   //   // Append the div to the document body
-  //   //   document.body.appendChild(d);
-  //   // });
-  //   // window.addEventListener("blur", function() {
-  //   //   // Create a new div element
-  //   //   const d = document.createElement('div');
-  //   //   // Set the text content of the new div
-  //   //   d.textContent = "Window lost focus!!!";
-  //   //   // Append the div to the document body
-  //   //   document.body.appendChild(d);
-  //   // });
+    window.onfocus = function() {
+      console.log('Window gained focus (likely not minimized)');
+    };
+
+    // window.addEventListener("focus", function() {
+    //   // Create a new div element
+    //   const d = document.createElement('div');
+    //   // Set the text content of the new div
+    //   d.textContent = "Window gained focus!!!";
+    //   // Append the div to the document body
+    //   document.body.appendChild(d);
+    // });
+    // window.addEventListener("blur", function() {
+    //   // Create a new div element
+    //   const d = document.createElement('div');
+    //   // Set the text content of the new div
+    //   d.textContent = "Window lost focus!!!";
+    //   // Append the div to the document body
+    //   document.body.appendChild(d);
+    // });
 
 
-  //   // window.addEventListener("blur", function(){
-  //   //   alert("window focus lost");
-  //   // });
+    // window.addEventListener("blur", function(){
+    //   alert("window focus lost");
+    // });
 
-  //   // Disable text selection (optional, but useful)
+    // Disable text selection (optional, but useful)
 
-  //   document.body.style.userSelect = 'none'; // Disable text selection
+    document.body.style.userSelect = 'none'; // Disable text selection
 
-  //   // Cleanup event listeners on component unmount
-  //   return () => {
-  //     document.removeEventListener('contextmenu', disableRightClick);
-  //     document.removeEventListener('keydown', disableReloadShortcuts);
-  //     window.removeEventListener('beforeunload', preventPageReload);
+    // Cleanup event listeners on component unmount
+    return () => {
+      document.removeEventListener('contextmenu', disableRightClick);
+      document.removeEventListener('keydown', disableReloadShortcuts);
+      window.removeEventListener('beforeunload', preventPageReload);
 
-  //     // Re-enable text selection when component is unmounted
-  //     document.body.style.userSelect = 'initial';
-  //   };
-  // }, []);
+      // Re-enable text selection when component is unmounted
+      document.body.style.userSelect = 'initial';
+    };
+  }, []);
 
   const getIp = async () => {
 
