@@ -9,6 +9,8 @@ import { Prisma } from "@prisma/client";
 
 import prisma from "@/libs/prisma";
 
+import { ModeOfAssessment } from "@/configs/customDataConfig";
+
 export async function GET(req: NextRequest) {
 
   const authHeader = req.headers.get("authorization");
@@ -82,22 +84,10 @@ export async function GET(req: NextRequest) {
         batch_completed: true,
         batch_name: true,
         batch_size: true,
+        assessment_mode: true,
         assessment_start_datetime: true,
         assessment_end_datetime: true,
         assessor_id: true,
-        qualification_pack: {
-          select: {
-            id: true,
-            qualification_pack_id: true,
-            qualification_pack_name: true,
-            ssc: {
-              select: {
-                id: true,
-                ssc_code: true
-              }
-            }
-          }
-        },
         training_partner: {
           select: {
             first_name: true,
@@ -123,46 +113,6 @@ export async function GET(req: NextRequest) {
             last_name: true
           }
         },
-        theory_exam_set: {
-          select: {
-            id: true,
-            set_name: true,
-            set_type: true,
-            exam_sets_questions: {
-              select: {
-                id: true,
-                exam_set_id: true,
-                question_id: true,
-                marks: true,
-                questions: true,
-              }
-            },
-          }
-        },
-        practical_exam_set: {
-          select: {
-            id: true,
-            set_name: true,
-            set_type: true,
-            exam_sets_questions: {
-              select: {
-                id: true,
-                exam_set_id: true,
-                question_id: true,
-                marks: true,
-                questions: true,
-              }
-            },
-          }
-        },
-        viva_exam_set: {
-          select: {
-            id: true,
-            set_name: true,
-            set_type: true,
-            exam_sets_questions: true,
-          }
-        },
         scheme: {
           select: {
             id: true,
@@ -177,19 +127,6 @@ export async function GET(req: NextRequest) {
             scheme_code: true
           }
         },
-        students: {
-          select: {
-            id: true,
-            batch_id: true,
-            candidate_id: true,
-            user_name: true,
-            candidate_name: true,
-            gender: true,
-            category: true,
-            date_of_birth: true,
-            mobile_no: true,
-          }
-        }
       },
       orderBy: {
         assessment_start_datetime: "desc"
@@ -220,11 +157,69 @@ export async function GET(req: NextRequest) {
     //     "notCompleted": notCompletedBatches,
     //   }
     // });
+
+    const mappedBatches = batches.map((batch) => ({
+      ...batch,
+      theory_completed: "40",
+      practical_completed: "30",
+      viva_completed: "20",
+      total_completed: "90",
+      assessment_mode: ModeOfAssessment.find(m => m.id === String(batch.assessment_mode))?.label || null,
+      video_limits: {
+        center_video: {
+          min: 1,
+          max: 1
+        }
+      },
+      photo_limits: {
+        selfie_with_center_board: {
+          min: 1,
+          max: 1
+        },
+        equipment_photos: {
+          min: 5,
+          max: 10,
+        },
+        group_photo_before_batch_start: {
+          min: 1,
+          max: 20
+        },
+        center_facility: {
+          min: 5,
+          max: 10
+        },
+        class_room: {
+          min: 5,
+          max: 8
+        },
+        it_lab: {
+          min: 5,
+          max: 8
+        },
+        induction_kit: {
+          min: 1,
+          max: 1
+        },
+        biometric_device: {
+          min: 1,
+          max: 1
+        },
+        trainer_aadhaar: {
+          min: 2,
+          max: 2
+        },
+        trainer_tot_certificate: {
+          min: 1,
+          max: 1
+        }
+      }
+    }));
+
     return NextResponse.json({
       status: 'Success',
       statusCode: 200,
       message: 'Batches fetched successfully',
-      data: batches
+      data: mappedBatches
     });
 
   } catch (error: any) {
