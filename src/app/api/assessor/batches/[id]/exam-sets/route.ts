@@ -109,7 +109,7 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
         return NextResponse.json({
             status: 'Success',
             statusCode: 200,
-            message: 'Students fetched successfully',
+            message: 'Exam Sets fetched successfully',
             data: mappedExamSets
         });
 
