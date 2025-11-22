@@ -204,7 +204,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
       // console.log("user data:", data);
 
 
-      const rawJobRoles = data.user_additional_data.job_roles;
+      const rawJobRoles = JSON.parse(data.user_additional_data.job_roles as string);
 
       const jobRoleIds: number[] = Array.isArray(rawJobRoles)
         ? rawJobRoles
@@ -232,9 +232,9 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
       }
 
       if(data.user_additional_data && data.user_additional_data.job_roles){
-        setJobRolesLength(data.user_additional_data.job_roles as number[]);
+        setJobRolesLength(JSON.parse(data.user_additional_data.job_roles as string) as number[]);
 
-        const jobRolesOld = data.user_additional_data.job_roles as number[];
+        const jobRolesOld = JSON.parse(data.user_additional_data.job_roles as string) as number[];
         const jobValidUptoOld = data.user_additional_data.job_valid_upto ? JSON.parse(data.user_additional_data.job_valid_upto) : [];
         const result:{ [key: number]: Date } = {};
 
@@ -256,7 +256,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
         password: 'null',
         employeeId: data.user_additional_data && data.user_additional_data.employee_id?.toString() || '',
         sscId: sscIds.length > 0 ? sscIds : [],
-        jobRoles: data.user_additional_data && data.user_additional_data.job_roles && (data.user_additional_data.job_roles as number[])?.length > 0 ? (data.user_additional_data.job_roles as number[]) : [],
+        jobRoles: data.user_additional_data && JSON.parse(data.user_additional_data.job_roles as string) && (JSON.parse(data.user_additional_data.job_roles as string) as number[])?.length > 0 ? (JSON.parse(data.user_additional_data.job_roles as string) as number[]) : [],
         jobValidUpto: [],
         firstName: data.first_name || '',
         lastName: data.last_name || '',
@@ -952,7 +952,7 @@ const AssessorForm = ({data, assessorId}:{data?:UsersType, assessorId?: number})
                     >
                       {qpData && qpData.length > 0 ? (
                         qpData.map((qualificationPack) => (
-                          <MenuItem key={qualificationPack.id.toString()} disabled={data && data.user_additional_data.job_roles && JSON.parse(data.user_additional_data.job_roles).includes(qualificationPack.id) ? false : false} value={qualificationPack.id}>
+                          <MenuItem key={qualificationPack.id.toString()} disabled={data && JSON.parse(data.user_additional_data.job_roles as string) && JSON.parse(JSON.parse(data.user_additional_data.job_roles as string)).includes(qualificationPack.id) ? false : false} value={qualificationPack.id}>
                             {qualificationPack.qualification_pack_name}
                           </MenuItem>
                         ))

@@ -94,7 +94,7 @@ const AssignAssessorDialog = ({ open, batchId, batch, handleClose, updateBatchLi
 
         if (!additionalData) return false;
 
-        const jobRoles = (additionalData.job_roles as number[]) || [];
+        const jobRoles = additionalData.job_roles ? JSON.parse(additionalData.job_roles as string) as number[] : [];
         const jobValidUpto = JSON.parse(additionalData.job_valid_upto || "[]");
 
         const jobIndex = jobRoles.indexOf(jobId);
