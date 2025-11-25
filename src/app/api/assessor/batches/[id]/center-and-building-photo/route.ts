@@ -19,6 +19,20 @@ import prisma from '@/libs/prisma';
 
 import { authOptions } from '@/libs/auth';
 
+const storageFolders = {
+  storage: "storage",
+  uploads: "uploads",
+  ssc: "ssc",
+  agency: "agency",
+  users: "users",
+  student: "student",
+  captured: "captured",
+  batches: "batches",
+  centerPhoto: "center-photo",
+  buildingPhoto: "building-photo",
+  trainingResources: "training-resources",
+}
+
 export async function GET(req: Request) {
 
   const url = new URL(await req.url);
@@ -77,7 +91,7 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
 
     // const agency_id = Number(decoded?.id);
 
-    if(decoded.user_type !== 'U' && decoded.role_id !== 1) {
+    if (decoded.user_type !== 'U' && decoded.role_id !== 1) {
       return NextResponse.json({
         status: 'Error',
         statusCode: 403,
@@ -133,7 +147,7 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
       },
     })
 
-    if(!batch){
+    if (!batch) {
       return NextResponse.json({
         status: 'Error',
         statusCode: 404,
@@ -212,18 +226,18 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
       }
 
       const centerPhotoBlob = center_photo as Blob;
-      const centerPhotoName = center_photo ? getTime(new Date())+"_"+(center_photo as File).name : "";
+      const centerPhotoName = center_photo ? getTime(new Date()) + "_" + (center_photo as File).name : "";
 
       const buildingPhotoBlob = building_photo as Blob;
-      const buildingPhotoName = building_photo ? getTime(new Date())+"_"+(building_photo as File).name : "";
+      const buildingPhotoName = building_photo ? getTime(new Date()) + "_" + (building_photo as File).name : "";
 
       // const session = await getServerSession(authOptions);
       // const agency_id = Number(session?.user?.agency_id)
       // const createdBy = Number(session?.user.id)
 
 
-      const uploadDirBuilding = path.join(process.cwd(), 'storage', 'uploads', 'agency', 'batches', id.toString(), 'building-photo');
-      const uploadDirCenter = path.join(process.cwd(), 'storage', 'uploads', 'agency', 'batches', id.toString(), 'center-photo');
+      const uploadDirBuilding = path.join(process.cwd(), storageFolders.storage, storageFolders.uploads, storageFolders.agency, storageFolders.batches, id.toString(), storageFolders.buildingPhoto);
+      const uploadDirCenter = path.join(process.cwd(), storageFolders.storage, storageFolders.uploads, storageFolders.agency, storageFolders.batches, id.toString(), storageFolders.centerPhoto);
 
       if (!fs.existsSync(uploadDirBuilding)) {
         try {
@@ -243,7 +257,7 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
         }
       }
 
-      if(centerPhotoBlob){
+      if (centerPhotoBlob) {
         const buffer = Buffer.from(await centerPhotoBlob.arrayBuffer());
 
         fs.writeFileSync(
@@ -252,7 +266,7 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
         );
       }
 
-      if(buildingPhotoBlob){
+      if (buildingPhotoBlob) {
         const buffer = Buffer.from(await buildingPhotoBlob.arrayBuffer());
 
         fs.writeFileSync(
@@ -312,42 +326,42 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
     }
   } catch (error: any) {
 
-      if (error.name === 'TokenExpiredError') {
-        return NextResponse.json({
-          status: 'Error',
-          statusCode: 401,
-          message: 'Token expired',
-          error: error
-        }, { status: 401 });
-      }
-
-      if (error.name === 'JsonWebTokenError') {
-        return NextResponse.json({
-          status: 'Error',
-          statusCode: 401,
-          message: 'Invalid token',
-          error: error
-        }, { status: 401 });
-      }
-
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        return NextResponse.json({
-          status: 'Error',
-          statusCode: 400,
-          message: error.message,
-          error: error
-        }, { status: 400 });
-      }
-
-      // Fallback for any other server-side errors
-
-      console.error('Server Error:', error);
-
+    if (error.name === 'TokenExpiredError') {
       return NextResponse.json({
         status: 'Error',
-        statusCode: 500,
-        message: 'Internal server error',
+        statusCode: 401,
+        message: 'Token expired',
         error: error
-      }, { status: 500 });
+      }, { status: 401 });
     }
+
+    if (error.name === 'JsonWebTokenError') {
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 401,
+        message: 'Invalid token',
+        error: error
+      }, { status: 401 });
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 400,
+        message: error.message,
+        error: error
+      }, { status: 400 });
+    }
+
+    // Fallback for any other server-side errors
+
+    console.error('Server Error:', error);
+
+    return NextResponse.json({
+      status: 'Error',
+      statusCode: 500,
+      message: 'Internal server error',
+      error: error
+    }, { status: 500 });
+  }
 }

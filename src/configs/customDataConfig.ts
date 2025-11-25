@@ -124,3 +124,37 @@ export const routes = {
     '/agency/create'
   ]
 }
+
+export const storageFolders = {
+  storage: "storage",
+  uploads: "uploads",
+  ssc: "ssc",
+  agency: "agency",
+  users: "users",
+  student: "student",
+  captured: "captured",
+  batches: "batches",
+  centerPhoto: "center-photo",
+  buildingPhoto: "building-photo",
+  trainingResources: "training-resources",
+}
+
+
+const storagePath = `${process.env.NEXT_PUBLIC_APP_URL}/${storageFolders.storage}/${storageFolders.uploads}`;
+const sscPath = `${storagePath}/${storageFolders.ssc}`;
+const agencyPath = `${storagePath}/${storageFolders.agency}`;
+const trainingResourcesPath = `${agencyPath}/${storageFolders.trainingResources}`;
+
+// const batchesPath = `${agencyPath}/${storageFolders.batches}`;
+
+export const sscImagePath = (sscImage: string) => {
+  return sscImage ? `${sscPath}/${sscImage}` : null;
+}
+
+export const agencyUsersFilePath = (userId: number, fileName: string) => {
+  return fileName ? `${agencyPath}/${storageFolders.users}/${userId}/${fileName}` : "";
+}
+
+export const trainingResourceFilePath = (sscId: number, fileName: string) => {
+  return fileName ? `${trainingResourcesPath}/${sscId}/${fileName}` : null;
+}

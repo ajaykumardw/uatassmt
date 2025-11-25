@@ -53,6 +53,20 @@ export async function GET(req: Request) {
   return NextResponse.json(assessors);
 }
 
+const storageFolders = {
+  storage: "storage",
+  uploads: "uploads",
+  ssc: "ssc",
+  agency: "agency",
+  users: "users",
+  student: "student",
+  captured: "captured",
+  batches: "batches",
+  centerPhoto: "center-photo",
+  buildingPhoto: "building-photo",
+  trainingResources: "training-resources",
+}
+
 
 export async function POST(req: NextRequest) {
 
@@ -183,7 +197,7 @@ export async function POST(req: NextRequest) {
 
   if (result) {
 
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'agency', 'users', result.id.toString());
+    const uploadDir = path.join(process.cwd(), storageFolders.storage, storageFolders.uploads, storageFolders.agency, storageFolders.users, result.id.toString());
 
     if (!fs.existsSync(uploadDir)) {
       try {

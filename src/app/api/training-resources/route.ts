@@ -15,6 +15,20 @@ import prisma from '@/libs/prisma';
 
 import { authOptions } from '@/libs/auth';
 
+const storageFolders = {
+  storage: "storage",
+  uploads: "uploads",
+  ssc: "ssc",
+  agency: "agency",
+  users: "users",
+  student: "student",
+  captured: "captured",
+  batches: "batches",
+  centerPhoto: "center-photo",
+  buildingPhoto: "building-photo",
+  trainingResources: "training-resources",
+}
+
 export async function GET() {
   const session = await getServerSession(authOptions);
 
@@ -57,13 +71,13 @@ export async function POST(req: Request) {
   // const { username, email, password, firstName, lastName, phoneNumber, state, city, pinCode, address, panCardNumber, gstNumber } = await req.json()
   const formData = await req.formData();
   const body = Object.fromEntries(formData);
-  const {sscId, resourceName, file, description, assessor} = body;
+  const { sscId, resourceName, file, description, assessor } = body;
 
   const session = await getServerSession(authOptions);
   const createdBy = Number(session?.user.id)
 
   const fileBlob = file as Blob;
-  const fileName = file ? getTime(new Date())+"."+(file as File).name.split('.').pop() : "";
+  const fileName = file ? getTime(new Date()) + "." + (file as File).name.split('.').pop() : "";
 
   const assessorArray = JSON.parse(assessor as string);
 
@@ -89,9 +103,9 @@ export async function POST(req: Request) {
     }
   });
 
-  if(result){
+  if (result) {
 
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'agency', 'training-resources', result.id.toString());
+    const uploadDir = path.join(process.cwd(), storageFolders.storage, storageFolders.uploads, storageFolders.agency, storageFolders.trainingResources, result.id.toString());
 
     if (!fs.existsSync(uploadDir)) {
       try {
@@ -102,7 +116,7 @@ export async function POST(req: Request) {
       }
     }
 
-    if(fileBlob){
+    if (fileBlob) {
       const buffer = Buffer.from(await fileBlob.arrayBuffer());
 
       fs.writeFileSync(

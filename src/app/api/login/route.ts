@@ -1,7 +1,7 @@
 // Next Imports
 import { NextResponse } from 'next/server'
 
-import {compare} from 'bcrypt'
+import { compare } from 'bcrypt'
 
 import jwt from 'jsonwebtoken';
 
@@ -9,8 +9,12 @@ import prisma from '@/libs/prisma';
 
 import type { UserTable } from './users'
 
+// import { agencyUsersFilePath, sscImagePath } from '@/utils/pathHelpers';
 
-type ResponseUser = Omit<UserTable & { agency_id: number; accessToken: string; refreshToken: string }, 'password'>
+import { agencyUsersFilePath, sscImagePath } from '@/configs/customDataConfig';
+
+
+type ResponseUser = Omit<UserTable & { agency_id: number; avatar: string | null; accessToken: string; refreshToken: string }, 'password'>
 
 export async function POST(req: Request) {
 
@@ -69,7 +73,7 @@ export async function POST(req: Request) {
       where: {
         OR: [
           { email: email },
-          { user_name : email }
+          { user_name: email }
         ]
       }
     })
@@ -77,7 +81,7 @@ export async function POST(req: Request) {
 
     let response: null | ResponseUser = null
 
-    if(!rows){
+    if (!rows) {
       const sscRow = await prisma.sector_skill_councils.findFirst({
         where: {
           ssc_username: email
@@ -85,8 +89,8 @@ export async function POST(req: Request) {
       })
 
 
-      if( sscRow ){
-        let response: null | {id: number, ssc_username: string | null, accessToken: string, refreshToken: string} = null
+      if (sscRow) {
+        let response: null | { id: number, ssc_username: string | null, avatar: string | null, accessToken: string, refreshToken: string } = null
 
         const isPasswordValid = await compare(password, sscRow.ssc_pwd || '');
 
@@ -111,9 +115,12 @@ export async function POST(req: Request) {
 
           response = {
             ...filteredUserData,
+            avatar: filteredUserData.ssc_image ? sscImagePath(filteredUserData.ssc_image) : null,
             accessToken,
             refreshToken
           }
+
+          console.log('response for ssc login:', response);
 
           return NextResponse.json({
             status: 'Success',
@@ -155,7 +162,7 @@ export async function POST(req: Request) {
     }
 
 
-    if( rows ){
+    if (rows) {
 
       const isPasswordValid = await compare(password, rows.password || '');
 
@@ -179,9 +186,12 @@ export async function POST(req: Request) {
           { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION as jwt.SignOptions['expiresIn'] || '14d' }
         );
 
+        const avatar = filteredUserData.user_type === 'U' && filteredUserData.avatar ? agencyUsersFilePath(filteredUserData.id, filteredUserData.avatar) : null;
+
         response = {
           ...filteredUserData,
           agency_id,
+          avatar: avatar,
           accessToken,
           refreshToken
         }

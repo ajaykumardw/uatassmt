@@ -182,7 +182,7 @@ const UserListTable = ({ tableData, updateSSCList }: { tableData?: SSCType[], up
         header: 'Username',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            {getAvatar({ avatar: row.original.avatar, ssc_name: row.original.ssc_username })}
+            {getAvatar({ avatar: row.original.ssc_image ? `/storage/uploads/ssc/${row.original.ssc_image}` : '', ssc_name: row.original.ssc_username })}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
                 {row.original.ssc_username}
@@ -290,7 +290,7 @@ const UserListTable = ({ tableData, updateSSCList }: { tableData?: SSCType[], up
     const { avatar, ssc_name } = params
 
     if (avatar) {
-      return <CustomAvatar src={avatar} size={34} />
+      return <CustomAvatar src={avatar} size={34} className={avatar} />
     } else {
       return <CustomAvatar size={34}>{getInitials(ssc_name as string)}</CustomAvatar>
     }

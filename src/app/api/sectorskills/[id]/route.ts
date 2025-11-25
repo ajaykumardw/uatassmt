@@ -13,6 +13,20 @@ import { authOptions } from '@/libs/auth';
 
 import prisma from '@/libs/prisma';
 
+const storageFolders = {
+  storage: "storage",
+  uploads: "uploads",
+  ssc: "ssc",
+  agency: "agency",
+  users: "users",
+  student: "student",
+  captured: "captured",
+  batches: "batches",
+  centerPhoto: "center-photo",
+  buildingPhoto: "building-photo",
+  trainingResources: "training-resources",
+}
+
 export async function GET(
   req: Request,
   context: { params: { id: number } }
@@ -61,7 +75,7 @@ export async function POST(
   const formData = await req.formData();
 
   const body = Object.fromEntries(formData);
-  const {sscName, sscCode, username, status, profileImage} = body;
+  const { sscName, sscCode, username, status, profileImage } = body;
 
   const profileBlob = profileImage as Blob;
   const profileName = profileImage ? getTime(new Date()) + "_" + (profileImage as File).name : "";
@@ -104,7 +118,7 @@ export async function POST(
     }
 
     const result = await prisma.sector_skill_councils.update({
-      where:{
+      where: {
         id: id
       },
       data: {
@@ -116,9 +130,9 @@ export async function POST(
       }
     });
 
-    if(result){
+    if (result) {
 
-      const uploadDir = path.join(process.cwd(), 'uploads', 'ssc');
+      const uploadDir = path.join(process.cwd(), storageFolders.storage, storageFolders.uploads, storageFolders.ssc);
 
       if (!fs.existsSync(uploadDir)) {
         try {
@@ -139,7 +153,7 @@ export async function POST(
       }
 
       return NextResponse.json({ message: 'SSC updated successfully!' });
-    }else{
+    } else {
       return NextResponse.json({ message: 'SSC not updated' }, { status: 500 });
     }
   } else {

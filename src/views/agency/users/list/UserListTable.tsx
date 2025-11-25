@@ -68,6 +68,7 @@ import { formatDate } from '@/utils/formateDate'
 import { MenuProps, TableRowLimit, userRoleObj } from '@/configs/customDataConfig'
 import ChangePasswordDialog from '@/components/ChangePasswordDialog'
 import OptionMenu from '@/@core/components/option-menu'
+import { agencyUsersFilePath } from '@/configs/customDataConfig'
 
 // declare module '@tanstack/table-core' {
 //   interface FilterFns {
@@ -173,7 +174,7 @@ const userShowStatusObj: UserShowStatusType = {
 // Column Definitions
 const columnHelper = createColumnHelper<UsersTypeWithAction>()
 
-const UserListTable = ({ tableData }: { tableData?: users[]}) => {
+const UserListTable = ({ tableData }: { tableData?: users[] }) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -207,7 +208,7 @@ const UserListTable = ({ tableData }: { tableData?: users[]}) => {
     const message = localStorage.getItem('formSubmitMessage');
 
     if (message) {
-      toast.success(message,{
+      toast.success(message, {
         hideProgressBar: false
       });
       localStorage.removeItem('formSubmitMessage');
@@ -228,10 +229,10 @@ const UserListTable = ({ tableData }: { tableData?: users[]}) => {
         header: 'User',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            {getAvatar({ avatar: row.original.avatar ? `/uploads/agency/users/${row.original.id}/${row.original.avatar}` : '', first_name: (row.original.first_name || '') + ' ' + (row.original.last_name || '') })}
+            {getAvatar({ avatar: row.original.avatar ? agencyUsersFilePath(row.original.id, row.original.avatar) : '', first_name: (row.original.first_name || '') + ' ' + (row.original.last_name || '') })}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-                {row.original.first_name + " "+row.original.last_name}
+                {row.original.first_name + " " + row.original.last_name}
               </Typography>
               <Typography variant='body2'>{row.original.user_name}</Typography>
             </div>
@@ -494,7 +495,7 @@ const UserListTable = ({ tableData }: { tableData?: users[]}) => {
       </Card>
       {/* <AddUserDrawer open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} /> */}
       <AddUsersDialog rolesData={roles} open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} />
-      <ChangePasswordDialog open={openChangePassword} onClose={() => {setOpenChangePassword(false); setSelectedUserId(null); }} userId={selectedUserId} userType='user' />
+      <ChangePasswordDialog open={openChangePassword} onClose={() => { setOpenChangePassword(false); setSelectedUserId(null); }} userId={selectedUserId} userType='user' />
     </>
   )
 }

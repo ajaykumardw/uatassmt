@@ -17,6 +17,20 @@ import { authOptions } from '@/libs/auth';
 
 import prisma from '@/libs/prisma';
 
+const storageFolders = {
+  storage: "storage",
+  uploads: "uploads",
+  ssc: "ssc",
+  agency: "agency",
+  users: "users",
+  student: "student",
+  captured: "captured",
+  batches: "batches",
+  centerPhoto: "center-photo",
+  buildingPhoto: "building-photo",
+  trainingResources: "training-resources",
+}
+
 export async function GET() {
 
   const session = await getServerSession(authOptions);
@@ -52,7 +66,7 @@ export async function GET() {
       },
       nos: true
     },
-    orderBy:{
+    orderBy: {
       ssc_name: "asc"
     }
   });
@@ -117,9 +131,9 @@ export async function POST(req: NextRequest) {
   });
 
 
-  if(result){
+  if (result) {
 
-    const uploadDir = path.join(process.cwd(), 'uploads', 'ssc');
+    const uploadDir = path.join(process.cwd(), storageFolders.storage, storageFolders.uploads, storageFolders.ssc);
 
     if (!fs.existsSync(uploadDir)) {
       try {
@@ -139,10 +153,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({message: 'SSC created successfully!'})
+    return NextResponse.json({ message: 'SSC created successfully!' })
   }
-  else{
+  else {
 
-    return NextResponse.json({message: 'SSC not created!'},{status: 500})
+    return NextResponse.json({ message: 'SSC not created!' }, { status: 500 })
   }
 }

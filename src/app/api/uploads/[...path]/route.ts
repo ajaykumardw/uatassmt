@@ -3,6 +3,21 @@ import path from 'path';
 
 import { type NextRequest, NextResponse } from 'next/server';
 
+
+const storageFolders = {
+  storage: "storage",
+  uploads: "uploads",
+  ssc: "ssc",
+  agency: "agency",
+  users: "users",
+  student: "student",
+  captured: "captured",
+  batches: "batches",
+  centerPhoto: "center-photo",
+  buildingPhoto: "building-photo",
+  trainingResources: "training-resources",
+}
+
 // Basic MIME type mapping for common file types
 const mimeTypes: Record<string, string> = {
   '.png': 'image/png',
@@ -25,7 +40,7 @@ const mimeTypes: Record<string, string> = {
 };
 
 export async function GET(req: NextRequest, { params }: { params: { path: string[] } }) {
-  const filePath = path.join(process.cwd(), 'storage', 'uploads', ...params.path);
+  const filePath = path.join(process.cwd(), storageFolders.storage, storageFolders.uploads, ...params.path);
 
   if (!fs.existsSync(filePath)) {
     return new NextResponse('File not found', { status: 404 });

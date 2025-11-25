@@ -127,7 +127,7 @@ const EditUserDrawer = ({ open, handleClose, sscId, sscName, sscCode, username, 
       updateSSCList();
     } else if (res.status === 422) {
       const result = await res.json();
-      
+
       Object.entries(result.errors).forEach(([field, messages]) => {
         setError(field as keyof FormDataType, {
           type: 'server',
@@ -199,7 +199,7 @@ const EditUserDrawer = ({ open, handleClose, sscId, sscName, sscCode, username, 
             {imgSrc ? (
               <img width={100} className='rounded' src={imgSrc} alt='Profile' />
             ) : (sscImage ? (
-              <img width={100} className='rounded' src={`/uploads/ssc/${sscImage}`} alt='Profile' />
+              <img width={100} className='rounded' src={`/storage/uploads/ssc/${sscImage}`} alt='Profile' />
             ) : (
               <Avatar />
             ))}

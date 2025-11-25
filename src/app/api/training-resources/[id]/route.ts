@@ -14,6 +14,20 @@ import prisma from '@/libs/prisma';
 
 import { authOptions } from '@/libs/auth';
 
+const storageFolders = {
+  storage: "storage",
+  uploads: "uploads",
+  ssc: "ssc",
+  agency: "agency",
+  users: "users",
+  student: "student",
+  captured: "captured",
+  batches: "batches",
+  centerPhoto: "center-photo",
+  buildingPhoto: "building-photo",
+  trainingResources: "training-resources",
+}
+
 export async function GET(
   req: Request,
   context: { params: { id: number } }
@@ -41,7 +55,7 @@ export async function POST(req: Request, context: { params: { id: number } }) {
   // const { username, email, password, firstName, lastName, phoneNumber, state, city, pinCode, address, panCardNumber, gstNumber } = await req.json()
   const formData = await req.formData();
   const body = Object.fromEntries(formData);
-  const {sscId, resourceName, file, description} = body;
+  const { sscId, resourceName, file, description } = body;
   const id = Number(context.params.id);
 
   const session = await getServerSession(authOptions);
@@ -49,7 +63,7 @@ export async function POST(req: Request, context: { params: { id: number } }) {
 
   const fileBlob = file as Blob;
   const oldFileName = (file as File).name;
-  const fileName = file ? getTime(new Date())+"."+(file as File).name.split('.').pop() : "";
+  const fileName = file ? getTime(new Date()) + "." + (file as File).name.split('.').pop() : "";
 
   // const assessorArray = JSON.parse(assessor as string);
 
@@ -65,7 +79,7 @@ export async function POST(req: Request, context: { params: { id: number } }) {
     }
   })
 
-  if(trainingResourceExist){
+  if (trainingResourceExist) {
 
     // const newAssessorToConnect = assessorArray.filter((assessorId: any) => {
     //   return !trainingResourceExist.user_training_resources.some(existingUser => existingUser.user_id === assessorId);
@@ -106,9 +120,9 @@ export async function POST(req: Request, context: { params: { id: number } }) {
       }
     });
 
-    if(result){
+    if (result) {
 
-      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'agency', 'training-resources', result.id.toString());
+      const uploadDir = path.join(process.cwd(), storageFolders.storage, storageFolders.uploads, storageFolders.agency, storageFolders.trainingResources, result.id.toString());
 
       if (!fs.existsSync(uploadDir)) {
         try {
@@ -119,7 +133,7 @@ export async function POST(req: Request, context: { params: { id: number } }) {
         }
       }
 
-      if(fileBlob){
+      if (fileBlob) {
         const buffer = Buffer.from(await fileBlob.arrayBuffer());
 
         fs.writeFileSync(
@@ -131,8 +145,8 @@ export async function POST(req: Request, context: { params: { id: number } }) {
       return NextResponse.json({ success: true, message: "Training Resource created successfully." })
     }
 
-  }else {
-    return NextResponse.json({ success: false, message: "Training Resource not found." }, {status: 404})
+  } else {
+    return NextResponse.json({ success: false, message: "Training Resource not found." }, { status: 404 })
   }
 
   // if(oldFileName){

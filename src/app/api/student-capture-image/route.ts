@@ -13,15 +13,29 @@ import { authOptions } from '@/libs/auth';
 
 import prisma from '@/libs/prisma';
 
+const storageFolders = {
+  storage: "storage",
+  uploads: "uploads",
+  ssc: "ssc",
+  agency: "agency",
+  users: "users",
+  student: "student",
+  captured: "captured",
+  batches: "batches",
+  centerPhoto: "center-photo",
+  buildingPhoto: "building-photo",
+  trainingResources: "training-resources",
+}
+
 export async function POST(req: Request) {
-  const {captured_image} = await req.json();
+  const { captured_image } = await req.json();
   const session = await getServerSession(authOptions);
   const student = Number(session?.user.id);
 
-  const timestamp =  getTime(new Date());
+  const timestamp = getTime(new Date());
   const imageName = `${timestamp}.jpg`;
 
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'student', student.toString(), 'captured');
+  const uploadDir = path.join(process.cwd(), storageFolders.storage, storageFolders.uploads, storageFolders.student, student.toString(), storageFolders.captured);
 
   const imageBuffer = Buffer.from(captured_image.split(',')[1], 'base64');
 
@@ -48,14 +62,14 @@ export async function POST(req: Request) {
     }
   })
 
-  if(result){
+  if (result) {
 
-    return NextResponse.json({message: 'Student Captured Image added successfully!'})
+    return NextResponse.json({ message: 'Student Captured Image added successfully!' })
 
   }
-  else{
+  else {
 
-    return NextResponse.json({message: 'Student Captured Image not stored'},{status: 500})
+    return NextResponse.json({ message: 'Student Captured Image not stored' }, { status: 500 })
 
   }
 }
