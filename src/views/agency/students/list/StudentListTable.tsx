@@ -67,6 +67,7 @@ import { GenderMap, MenuProps, TableRowLimit } from '@/configs/customDataConfig'
 import EditStudentDrawer from './EditStudentDrawer'
 import OptionMenu from '@/@core/components/option-menu'
 import ChangePasswordDialog from '@/components/ChangePasswordDialog'
+import CapturedImageDialog from '@/components/student/CapturedImageDialog'
 
 // declare module '@tanstack/table-core' {
 //   interface FilterFns {
@@ -166,7 +167,9 @@ const StudentListTable = () => {
 
   const [updateStudentList, setUpdateStudentList] = useState(false);
   const [openChangePassword, setOpenChangePassword] = useState<boolean>(false);
+  const [openCapturedImage, setOpenCapturedImage] = useState<boolean>(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [selectedBatchId, setSelectedBatchId] = useState<number | null>(null);
 
 
   // Hooks
@@ -361,6 +364,13 @@ const StudentListTable = () => {
                     onClick: () => handleChangePassword(row.original.id)
                   },
                 },
+                {
+                  text: 'Captured Images',
+                  icon: 'tabler-photo',
+                  menuItemProps: {
+                    onClick: () => handleOpenCaptureImage(row.original.id, row.original.batch_id)
+                  }
+                }
               ]}
             />
           </div>
@@ -405,6 +415,13 @@ const StudentListTable = () => {
     setOpenChangePassword(true);
     setSelectedUserId(id);
     console.log("Change password for user ID:", id);
+  }
+
+  const handleOpenCaptureImage = (id: number, batchId: number) => {
+    setOpenCapturedImage(true);
+    setSelectedUserId(id);
+    setSelectedBatchId(batchId);
+    console.log("Open captured images for student ID:", id);
   }
 
   return (
@@ -518,6 +535,7 @@ const StudentListTable = () => {
       <EditStudentDrawer open={editStudentOpen} id={studentId} handleClose={() => setEditStudentOpen(!editStudentOpen)} updateStudentList={setUpdateStudentList} />
       <AddUsersDialog open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} />
       <ChangePasswordDialog open={openChangePassword} onClose={() => {setOpenChangePassword(false); setSelectedUserId(null); }} userId={selectedUserId} userType='candidate' />
+      <CapturedImageDialog open={openCapturedImage} onClose={() => {setOpenCapturedImage(false); setSelectedUserId(null); }} batchId={selectedBatchId} studentId={selectedUserId} />
     </>
   )
 }

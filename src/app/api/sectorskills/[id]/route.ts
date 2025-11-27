@@ -132,7 +132,7 @@ export async function POST(
 
     if (result) {
 
-      const uploadDir = path.join(process.cwd(), storageFolders.storage, storageFolders.uploads, storageFolders.ssc);
+      const uploadDir = path.join(process.cwd(), storageFolders.storage, storageFolders.uploads, storageFolders.ssc, result.id.toString());
 
       if (!fs.existsSync(uploadDir)) {
         try {

@@ -147,8 +147,8 @@ const trainingResourcesPath = `${agencyPath}/${storageFolders.trainingResources}
 
 // const batchesPath = `${agencyPath}/${storageFolders.batches}`;
 
-export const sscImagePath = (sscImage: string) => {
-  return sscImage ? `${sscPath}/${sscImage}` : null;
+export const sscImagePath = (userId: number, sscImage: string) => {
+  return sscImage ? `${sscPath}/${userId}/${sscImage}` : "";
 }
 
 export const agencyUsersFilePath = (userId: number, fileName: string) => {
@@ -156,5 +156,5 @@ export const agencyUsersFilePath = (userId: number, fileName: string) => {
 }
 
 export const trainingResourceFilePath = (sscId: number, fileName: string) => {
-  return fileName ? `${trainingResourcesPath}/${sscId}/${fileName}` : null;
+  return fileName ? `${trainingResourcesPath}/${sscId}/${fileName}` : "";
 }

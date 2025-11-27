@@ -115,7 +115,7 @@ export async function POST(req: Request) {
 
           response = {
             ...filteredUserData,
-            avatar: filteredUserData.ssc_image ? sscImagePath(filteredUserData.ssc_image) : null,
+            avatar: filteredUserData.ssc_image ? sscImagePath(filteredUserData.id, filteredUserData.ssc_image) : null,
             accessToken,
             refreshToken
           }

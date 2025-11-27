@@ -52,7 +52,7 @@ import { getInitials } from '@/utils/getInitials'
 import tableStyles from '@core/styles/table.module.css'
 import EditUserDrawer from './EditUserDrawer'
 import type { SSCType } from '@/types/sectorskills/sscType'
-import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
+import { MenuProps, sscImagePath, TableRowLimit } from '@/configs/customDataConfig';
 import ChangePasswordDialog from '@/components/ChangePasswordDialog';
 import OptionMenu from '@/@core/components/option-menu';
 
@@ -182,7 +182,7 @@ const UserListTable = ({ tableData, updateSSCList }: { tableData?: SSCType[], up
         header: 'Username',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            {getAvatar({ avatar: row.original.ssc_image ? `/storage/uploads/ssc/${row.original.ssc_image}` : '', ssc_name: row.original.ssc_username })}
+            {getAvatar({ avatar: row.original.ssc_image ? sscImagePath(row.original.id, row.original.ssc_image) : '', ssc_name: row.original.ssc_username })}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
                 {row.original.ssc_username}
