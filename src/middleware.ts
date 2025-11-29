@@ -16,7 +16,8 @@ import { getLocalizedUrl, isUrlMissingLocale } from '@/utils/i18n'
 import { ensurePrefix, withoutSuffix } from '@/utils/string'
 
 // Constants
-const HOME_PAGE_URL = '/dashboards/crm'
+// const HOME_PAGE_URL = '/dashboards/crm'
+const HOME_PAGE_URL = '/dashboard'
 
 const getLocale = (request: NextRequest): string | undefined => {
   // Try to get locale from URL
@@ -207,7 +208,7 @@ export default withAuth(
       // }
     }
 
-    if(!isStudent && studentPaths.some(path => pathname.includes(`${locale}${path}`))){
+    if(!isStudent && studentPaths.some(path => pathname.includes(`${locale}${path}/`))){
       return localizedRedirect(HOME_PAGE_URL,locale,request)
     }
 

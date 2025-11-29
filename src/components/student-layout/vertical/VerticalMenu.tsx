@@ -73,29 +73,29 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
 
   return (
     <ScrollWrapper
-    {...(isBreakpointReached
-      ? {
+      {...(isBreakpointReached
+        ? {
           className: 'bs-full overflow-y-auto overflow-x-hidden',
           onScroll: container => scrollMenu(container, false)
         }
-      : {
+        : {
           options: { wheelPropagation: false, suppressScrollX: true },
           onScrollY: container => scrollMenu(container, true)
         })}
     >
-    {/* Incase you also want to scroll NavHeader to scroll with Vertical Menu, remove NavHeader from above and paste it below this comment */}
-    {/* Vertical Menu */}
-    <Menu
-      popoutMenuOffset={{ mainAxis: 23 }}
-      menuItemStyles={menuItemStyles(verticalNavOptions, theme, settings)}
-      renderExpandIcon={({ open }) => <RenderExpandIcon open={open} transitionDuration={transitionDuration} />}
-      renderExpandedMenuItemIcon={{ icon: <i className='tabler-circle text-xs' /> }}
-      menuSectionStyles={menuSectionStyles(verticalNavOptions, theme)}
-    >
-      <MenuItem href={`/${locale}/student-dashboard`} icon={<i className='tabler-smart-home' />}>{dictionary['navigation'].dashboard}</MenuItem>
-      <MenuItem href={`/${locale}/exams`} icon={<i className='tabler-book' />}>{dictionary['navigation'].exams}</MenuItem>
+      {/* Incase you also want to scroll NavHeader to scroll with Vertical Menu, remove NavHeader from above and paste it below this comment */}
+      {/* Vertical Menu */}
+      <Menu
+        popoutMenuOffset={{ mainAxis: 23 }}
+        menuItemStyles={menuItemStyles(verticalNavOptions, theme, settings)}
+        renderExpandIcon={({ open }) => <RenderExpandIcon open={open} transitionDuration={transitionDuration} />}
+        renderExpandedMenuItemIcon={{ icon: <i className='tabler-circle text-xs' /> }}
+        menuSectionStyles={menuSectionStyles(verticalNavOptions, theme)}
+      >
+        <MenuItem href={`/${locale}/student-dashboard`} icon={<i className='tabler-smart-home' />}>{dictionary['navigation'].dashboard}</MenuItem>
+        <MenuItem href={`/${locale}/exams`} icon={<i className='tabler-book' />}>{dictionary['navigation'].exams}</MenuItem>
 
-    </Menu>
+      </Menu>
     </ScrollWrapper>
   )
 

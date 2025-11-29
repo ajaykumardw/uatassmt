@@ -107,7 +107,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
         {/* <MenuItem href={`/${locale}/dashboards/analytics`}>{dictionary['navigation'].analytics}</MenuItem>
           <MenuItem href={`/${locale}/dashboards/ecommerce`}>{dictionary['navigation'].eCommerce}</MenuItem> */}
         {/* </SubMenu> */}
-        <MenuItem href={`/${locale}/dashboards/crm`} icon={<i className='tabler-smart-home' />}>
+        <MenuItem href={`/${locale}/dashboard`} icon={<i className='tabler-smart-home' />}>
           {dictionary['navigation'].dashboard}
         </MenuItem>
         <MenuItem href={`/${locale}/sectorskills`} icon={<i className='tabler-chart-pie' />}>
@@ -151,6 +151,10 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
         <SubMenu label={dictionary['navigation'].reports} icon={<i className='tabler-report' />}>
           <MenuItem href={`/${locale}/reports/nos`}>{dictionary['navigation'].nosWise}</MenuItem>
           <MenuItem href={`/${locale}/reports/pc`}>{dictionary['navigation'].pcWise}</MenuItem>
+        </SubMenu>
+        <SubMenu label="Feedback Forms" icon={<i className='tabler-report' />}>
+          <MenuItem href={`/${locale}/feedback-forms/list`}>List</MenuItem>
+          <MenuItem href={`/${locale}/feedback-forms/create`}>Create</MenuItem>
         </SubMenu>
         {/* <MenuSection label={dictionary['navigation'].appsPages}>
           <MenuItem href={`/${locale}/apps/calendar`} icon={<i className='tabler-calendar' />}>

@@ -560,6 +560,61 @@ model user_training_resources {
   @@unique([user_id, training_resource_id]) // Ensure unique pairs
 }
 
+model feedback_forms {
+  id          Int      @id @default(autoincrement())
+  form_name  String   @db.VarChar(100)
+  form_type   Int @db.TinyInt
+  created_by  Int
+  created_at  DateTime @default(now()) @db.DateTime(0)
+  updated_at  DateTime @default(now()) @updatedAt @db.DateTime(0)
+
+  feedback_questions feedback_questions[]
+  feedback_responses feedback_responses[]
+}
+
+model feedback_questions {
+  id                   Int      @id @default(autoincrement())
+  feedback_form_id     Int
+  question             String   @db.Text
+  question_type        Int @db.TinyInt
+  option1              String?  @db.VarChar(100)
+  option2              String?  @db.VarChar(100)
+  option3              String?  @db.VarChar(100)
+  option4              String?  @db.VarChar(100)
+  created_by           Int
+  created_at           DateTime @default(now()) @db.DateTime(0)
+  updated_at           DateTime @default(now()) @updatedAt @db.DateTime(0)
+
+  feedback_form       feedback_forms @relation(fields: [feedback_form_id], references: [id])
+  feedback_response_answers feedback_response_answers[]
+}
+
+model feedback_responses {
+  id                   Int      @id @default(autoincrement())
+  feedback_form_id     Int
+  user_type            Int @db.TinyInt
+  user_id              Int
+  submitted_at         DateTime @db.DateTime(0)
+  created_at           DateTime @default(now()) @db.DateTime(0)
+  updated_at           DateTime @default(now()) @updatedAt @db.DateTime(0)
+
+  feedback_form       feedback_forms @relation(fields: [feedback_form_id], references: [id])
+  feedback_response_answers feedback_response_answers[]
+}
+
+model feedback_response_answers {
+  id                   Int      @id @default(autoincrement())
+  feedback_response_id Int
+  feedback_question_id Int
+  answer_value         String   @db.VarChar(100)
+  created_by           Int
+  created_at           DateTime @default(now()) @db.DateTime(0)
+  updated_at           DateTime @default(now()) @updatedAt @db.DateTime(0)
+
+  feedback_response   feedback_responses @relation(fields: [feedback_response_id], references: [id])
+  feedback_question   feedback_questions @relation(fields: [feedback_question_id], references: [id])
+}
+
 enum question_level {
   E
   M
