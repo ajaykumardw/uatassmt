@@ -1,11 +1,14 @@
 import Link from "next/link"
+
 import { Breadcrumbs, Typography } from "@mui/material"
+
+import AddEditFeedback from "@/views/feedback-forms/AddEditFeedback"
 
 const CreateFeedbackFormPage = () => {
   return (
     <div>
-      <Breadcrumbs>
-        <Link href="/">
+      <Breadcrumbs className="mb-4">
+        <Link href="/" className="flex">
           <i className="tabler-smart-home mr-1" />
           Dashboard
         </Link>
@@ -16,7 +19,7 @@ const CreateFeedbackFormPage = () => {
           Create
         </Typography>
       </Breadcrumbs>
-      <h1>Create Feedback Form Page</h1>
+      <AddEditFeedback />
       {/* Add your form creation components here */}
     </div>
   )

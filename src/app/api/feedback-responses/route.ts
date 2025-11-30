@@ -1,10 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
+
 import prisma from '@/libs/prisma';
 
 export async function GET() {
   const responses = await prisma.feedback_responses.findMany({
     include: { feedback_response_answers: true },
   });
+  
   return NextResponse.json(responses);
 }
 

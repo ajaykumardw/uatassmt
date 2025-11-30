@@ -105,6 +105,17 @@ export const ExamDurations : { [key: number]: string } = {
   60: "60 Minutes"
 }
 
+export const FeedbackFormTypes : { [key: number]: string } = {
+  1: "Student",
+  2: "Assessor",
+  3: "Training Partner",
+}
+
+export const QuestionTypes : { [key: number]: string } = {
+  1: "Yes/No",
+  2: "MCQ",
+}
+
 type UserRoleType = {
   [key: string]: { icon: string; color: string }
 }

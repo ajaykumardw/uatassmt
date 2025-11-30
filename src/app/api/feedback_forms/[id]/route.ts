@@ -1,12 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
+
 import prisma from '@/libs/prisma';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const id = Number(params.id);
+  
   const form = await prisma.feedback_forms.findUnique({
     where: { id },
     include: { feedback_questions: true, feedback_responses: true },
   });
+  
   return NextResponse.json(form);
 }
 
