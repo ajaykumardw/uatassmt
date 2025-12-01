@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 
@@ -10,7 +8,7 @@ import { toast } from "react-toastify";
 
 import { valibotResolver } from "@hookform/resolvers/valibot";
 
-import { object, string, minLength, array, pipe } from "valibot";
+import { object, string, minLength, array, pipe, optional } from "valibot";
 
 // Mui
 import {
@@ -23,19 +21,22 @@ import {
   Typography
 } from "@mui/material";
 
+import type { feedback_forms, feedback_questions } from "@prisma/client";
+
 import CustomTextField from "@core/components/mui/TextField";
 
 import { FeedbackFormTypes, QuestionTypes } from "@/configs/customDataConfig";
+
 
 /* ------------------ Validation Schema ------------------ */
 
 const QuestionSchema = object({
   question: pipe(string(), minLength(1, "Question is required")),
   question_type: pipe(string(), minLength(1, "Type required")),
-  option1: string(),
-  option2: string(),
-  option3: string(),
-  option4: string()
+  option1: optional(string()),
+  option2: optional(string()),
+  option3: optional(string()),
+  option4: optional(string())
 });
 
 const formSchema = object({
@@ -46,13 +47,12 @@ const formSchema = object({
 
 /* ------------------ Component ------------------ */
 
-export default function AddEditFeedbackForm() {
-  
-  // const router = useRouter();
-  
-  const searchParams = useSearchParams();
+export default function AddEditFeedbackForm({id}: {id?: string}) {
 
-  const editId = searchParams.get("id"); // if exists → edit mode
+  // const router = useRouter();
+  const [formData, setFormData] = useState<feedback_forms & { feedback_questions: feedback_questions[] } | null>(null);
+
+  const editId = id; // if exists → edit mode
 
   const {
     control,
@@ -62,10 +62,17 @@ export default function AddEditFeedbackForm() {
     formState: { errors }
   } = useForm({
     resolver: valibotResolver(formSchema),
-    defaultValues: {
-      form_name: "",
-      form_type: "",
-      questions: [
+    values: {
+      form_name: formData ? formData.form_name : "",
+      form_type: formData ? formData.form_type.toString() : "",
+      questions: formData ? formData.feedback_questions.map(q => ({
+        question: q.question,
+        question_type: q.question_type.toString(),
+        option1: q.option1 || "",
+        option2: q.option2 || "",
+        option3: q.option3 || "",
+        option4: q.option4 || ""
+      })) : [
         { question: "", question_type: "1", option1: "", option2: "", option3: "", option4: "" }
       ]
     }
@@ -76,6 +83,10 @@ export default function AddEditFeedbackForm() {
     name: "questions"
   });
 
+  useEffect(() => {
+    console.log("Form Errors:", errors);
+  }, [errors]);
+
   /* ------------ Load for EDIT Mode ------------ */
   useEffect(() => {
     if (!editId) return;
@@ -84,11 +95,13 @@ export default function AddEditFeedbackForm() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/feedback_forms/${editId}`);
       const data = await res.json();
 
-      reset({
-        form_name: data.form_name,
-        form_type: data.form_type.toString(),
-        questions: data.feedback_questions
-      });
+      setFormData(data);
+
+      // reset({
+      //   form_name: data.form_name,
+      //   form_type: data.form_type.toString(),
+      //   questions: data.feedback_questions
+      // });
     })();
   }, [editId, reset]);
 
@@ -107,7 +120,7 @@ export default function AddEditFeedbackForm() {
 
     if (res.ok) {
       toast.success(editId ? "Feedback Form Updated" : "Feedback Form Created");
-      
+
       // router.push("/feedback/forms");
     } else {
       toast.error("Failed to save");
@@ -179,7 +192,7 @@ export default function AddEditFeedbackForm() {
 
             {fields.map((field, index) => {
               const questionType = watch(`questions.${index}.question_type`);
-              
+
               return (
                 <Grid item xs={12} key={field.id} container spacing={3}>
                   <Grid item xs={12} sm={6}>
@@ -224,29 +237,7 @@ export default function AddEditFeedbackForm() {
                     </Button>
                   </Grid>
 
-                  {questionType === "1" ? (<>
-                    <Grid item xs={12}>
-                      <Controller
-                        name={`questions.${index}.option1`}
-                        control={control}
-                        render={({ field }) => (
-                          <CustomTextField {...field} fullWidth label="Option 1" value="Yes" disabled InputProps={{
-                            readOnly: true
-                          }} />
-                        )}
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Controller
-                        name={`questions.${index}.option2`}
-                        control={control}
-                        render={({ field }) => (
-                          <CustomTextField {...field} fullWidth label="Option 2" value="No" />
-                        )}
-                      />
-                    </Grid>
-                  </>)
-                  : (<>
+                  {questionType === "2" && (<>
 
                     {/* Options (only for MCQ) */}
                     <Grid item xs={12} sm={3}>

@@ -7,14 +7,32 @@ import { authOptions } from '@/libs/auth';
 import prisma from '@/libs/prisma';
 
 // GET all forms
-export async function GET() {
+export async function GET(request: Request) {
+
+  const searchParams = new URL(request.url).searchParams;
+  const type = searchParams.get('type');
+
+  if (type) {
+    const form = await prisma.feedback_forms.findFirst({
+      where: {
+        form_type: type === 'candidate' ? 1 : 2,
+      },
+      include: {
+        feedback_questions: true,
+        feedback_responses: true,
+      },
+    });
+
+    return NextResponse.json({feedbackForm: form});
+  }
+
   const forms = await prisma.feedback_forms.findMany({
     include: {
       feedback_questions: true,
       feedback_responses: true,
     },
   });
-  
+
   return NextResponse.json({feedbackForms: forms});
 }
 
@@ -31,11 +49,11 @@ export async function POST(req: NextRequest) {
 
     // Get user session
     const session = await getServerSession(authOptions);
-    
+
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
+
     const created_by = Number(session.user.id);
 
     // Create the form
@@ -64,7 +82,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({form});
   } catch (error: any) {
     console.error("Error creating form:", error);
-    
+
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }

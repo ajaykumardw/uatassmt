@@ -1,18 +1,40 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { getServerSession } from 'next-auth';
+
 import prisma from '@/libs/prisma';
+
+import { authOptions } from '@/libs/auth';
 
 export async function GET() {
   const responses = await prisma.feedback_responses.findMany({
     include: { feedback_response_answers: true },
   });
-  
+
   return NextResponse.json(responses);
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { feedback_form_id, user_type, user_id, answers } = body;
+  const { feedback_form_id, user_type, answers } = body;
+
+  const session = await getServerSession(authOptions);
+  const user_id = Number(session?.user.id);
+
+  const alreadySubmitted = await prisma.feedback_responses.findFirst({
+    where: {
+      feedback_form_id,
+      user_id,
+      user_type
+    },
+  });
+
+  if (alreadySubmitted) {
+    return NextResponse.json(
+      { error: 'You have already submitted feedback for this form.' },
+      { status: 400 }
+    );
+  }
 
   const response = await prisma.feedback_responses.create({
     data: {
@@ -21,7 +43,12 @@ export async function POST(req: NextRequest) {
       user_id,
       submitted_at: new Date(),
       feedback_response_answers: {
-        create: answers, // expects [{feedback_question_id, answer_value, created_by}]
+        // create: answers, // expects [{feedback_question_id, answer_value, created_by}]
+        create: answers.map((ans: any) => ({
+          feedback_question_id: ans.question_id,
+          answer_value: ans.answer,
+          created_by: user_id,
+        })),
       },
     },
     include: { feedback_response_answers: true },

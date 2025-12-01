@@ -106,7 +106,7 @@ export const ExamDurations : { [key: number]: string } = {
 }
 
 export const FeedbackFormTypes : { [key: number]: string } = {
-  1: "Student",
+  1: "Candidate",
   2: "Assessor",
   3: "Training Partner",
 }

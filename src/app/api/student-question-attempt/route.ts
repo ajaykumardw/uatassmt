@@ -95,14 +95,14 @@ export async function POST(req: Request) {
 
       const timeIntervals = JSON.parse(attempt.attempt_time_data);
 
-      console.log("Time interval", timeIntervals);
+      // console.log("Time interval", timeIntervals);
 
 
       timeIntervals.forEach((interval: string[]) => {
         const startTime = new Date(interval[1]);
         const endTime = new Date(interval[2]);
 
-        console.log("startTime and endTime:", startTime, endTime, interval[1], interval[2]);
+        // console.log("startTime and endTime:", startTime, endTime, interval[1], interval[2]);
 
         // Update earliest start time if necessary
         if (!earliestStartTime || startTime < earliestStartTime) {
@@ -117,7 +117,7 @@ export async function POST(req: Request) {
 
     });
 
-    console.log('earliestStartTime && latestEndTime', earliestStartTime , latestEndTime);
+    // console.log('earliestStartTime && latestEndTime', earliestStartTime , latestEndTime);
 
     if (earliestStartTime && latestEndTime) {
       // Calculate the total time in milliseconds
@@ -148,7 +148,7 @@ export async function POST(req: Request) {
   // const formattedSpentTime = formatTime(totalSpentTimeInMil);
 
 
-  console.log("attemptQuestionsData:", attemptQuestionsData, correctCount, incorrectCount, formattedSpentTime);
+  // console.log("attemptQuestionsData:", attemptQuestionsData, correctCount, incorrectCount, formattedSpentTime);
 
 
   const studentExamResult = await prisma.student_exam_set_results.findUnique({

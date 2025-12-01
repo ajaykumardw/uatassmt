@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 
-import { useParams, useRouter } from 'next/navigation';
 
 import { Card, CardHeader, CardContent, Typography, Button, CardActions, Alert, AlertTitle, RadioGroup, FormControlLabel, Radio, ButtonGroup, Grid, Skeleton } from "@mui/material";
 
@@ -16,7 +15,9 @@ import { DateTime } from 'luxon';
 
 import Webcam from 'react-webcam';
 
-import { getLocalizedUrl } from '@/utils/i18n';
+import { format } from 'date-fns';
+
+import FeedBackPage from '@/components/FeedbackPage';
 
 // const questionSchema = object({
 //   question: boolean()
@@ -38,10 +39,9 @@ const Examination = () => {
   const [isLoading, setLoading] = useState(true);
   const [ipAddress, setIpAddress] = useState('');
   const [captureImageInSeconds, setCaptureImageInSeconds] = useState(null);
+  const [examSubmitted, setExamSubmitted] = useState(false);
+  const [isActiveExam, setIsActiveExam] = useState(false);
   const webcamRef = useRef(null);
-
-  const router = useRouter();
-  const { lang: locale } = useParams();
 
 
   useEffect(() => {
@@ -158,6 +158,7 @@ const Examination = () => {
     const data = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student-exam-set`).then(res => res.json());
 
     setExamData(data.batch.theory_exam_set);
+    setIsActiveExam(data.batch.assessment_start_time >= DateTime.now().setZone('Asia/Kolkata').toISO() && data.batch.assessment_end_time <= DateTime.now().setZone('Asia/Kolkata').toISO());
     setCaptureImageInSeconds(data.batch.capture_image_in_seconds);
   };
 
@@ -237,7 +238,9 @@ const Examination = () => {
 
       // }
 
-      router.push(getLocalizedUrl('/feedback', locale));
+      setExamSubmitted(true);
+
+      // router.push(getLocalizedUrl('/feedback', locale), {headers: {'Referrer': '/examination'}});
     }
   }, [timeLeft]);
 
@@ -259,7 +262,9 @@ const Examination = () => {
 
     // }
 
-    router.push(getLocalizedUrl('/feedback', locale));
+    setExamSubmitted(true);
+
+    // router.push(getLocalizedUrl('/feedback', locale), {headers: {'Referrer': '/examination'}});
 
   };
 
@@ -643,6 +648,21 @@ const Examination = () => {
     )
   }
 
+  if(examSubmitted){
+    return (<FeedBackPage />)
+  }
+
+  if(!isActiveExam){
+    return (
+      <div className='p-4'>
+        <Alert severity='info'>
+          <AlertTitle>Info</AlertTitle>
+          The exam is not active at this moment.
+        </Alert>
+      </div>
+    )
+  }
+
   return (
     <div className='p-4'>
       <Grid container spacing={6}>
@@ -671,6 +691,9 @@ const Examination = () => {
         <Grid item sm={12} md={7}>
           <Card>
             <CardHeader title={`Question ${activeStep + 1} of ${examData?.exam_sets_questions.length}`} />
+            <CardContent>
+              {format}
+            </CardContent>
             <CardContent>
               <form method='post' id='questionForm'>
                 {examData?.exam_sets_questions.map((question, index) => {

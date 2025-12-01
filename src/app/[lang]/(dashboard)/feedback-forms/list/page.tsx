@@ -12,6 +12,7 @@ import SkeletonTable from "@/components/skeleton/SkeletonTable";
 import { getLocalizedUrl } from '@/utils/i18n'
 
 import type { Locale } from "@/configs/i18n";
+import FeedbackFormTable from "@/views/feedback-forms/FeedbackFormTable";
 
 const FeedbackFormsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -30,15 +31,15 @@ const FeedbackFormsPage = () => {
     if (!res.ok) {
       toast.error('Failed to fetch feedback forms');
       setLoading(false);
-      
+
       return;
     }
 
     const data = await res.json();
-    
+
     setFeedbackForms(data.feedbackForms || []);
     setLoading(false);
-    
+
     // Process the data as needed
   };
 
@@ -58,9 +59,7 @@ const FeedbackFormsPage = () => {
     }
 
     return (
-      <div>
-        {/* Your feedback forms content goes here */}
-      </div>
+      <FeedbackFormTable data={feedbackForms} />
     );
   }
 };
