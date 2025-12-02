@@ -1,7 +1,7 @@
 // Third-party Imports
-import { getServerSession } from 'next-auth'
-
 import { headers } from 'next/headers'
+
+import { getServerSession } from 'next-auth'
 
 // Type Imports
 import type { Locale } from '@configs/i18n'
