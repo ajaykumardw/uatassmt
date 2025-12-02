@@ -26,6 +26,7 @@ export default async function ImageGuard({ children, locale }: ChildrenType & { 
   if (ip.startsWith('::ffff:')) ip = ip.split('::ffff:')[1]
 
   console.log("Client IP:", ip)
+  console.log(Object.fromEntries(headers()))
 
   // IP whitelist for bypass
   const excludeIps = [
