@@ -117,7 +117,7 @@ const CapturedImageDialog = ({
             style={{
               width: "100%",
               height: "100%",
-              objectFit: "cover",
+              objectFit: "contain",
               transition: "filter 0.4s ease, opacity 0.4s ease",
               filter: loaded ? "blur(0px)" : "blur(10px)",
               opacity: loaded ? 1 : 0.6,
