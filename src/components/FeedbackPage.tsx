@@ -57,9 +57,13 @@ const FeedBackPage = () => {
         `${process.env.NEXT_PUBLIC_API_URL}/feedback_forms?type=candidate`
       );
 
+      const data = await res.json();
+
+      console.log("data: ", data);
+      console.log("data: ", data);
+
       if (!res.ok) throw new Error("Failed to fetch feedback form");
 
-      const data = await res.json();
 
       setFeedbackForm(data.feedbackForm ?? null);
     } catch (err: any) {
@@ -105,9 +109,17 @@ const FeedBackPage = () => {
         }
       );
 
-      if (!res.ok) throw new Error("Failed to submit feedback");
+      const resData = await res.json();
 
-      setSubmitted(true);
+      if (res.ok){
+        setSubmitted(true);
+      } else {
+        setError(resData.message)
+      }
+
+      // if (!res.ok) throw new Error("Failed to submit feedback");
+
+      // setSubmitted(true);
     } catch (err: any) {
       setError(err.message);
     }
@@ -121,6 +133,7 @@ const FeedBackPage = () => {
 
           {/* Optional success text */}
           <Typography variant="h6">Feedback submitted successfully!</Typography>
+          <Button onClick={() => window.close()} variant="contained" className="mt-4">Close Window</Button>
         </Card>
       </div>
     );
@@ -161,7 +174,11 @@ const FeedBackPage = () => {
     );
 
   return (
-    <div className="p-4 flex justify-center">
+    <div className="p-4 flex flex-col justify-center items-center gap-4">
+      <div className="flex items-center">
+        <SuccessAnimation size={30}/>
+        <Typography variant="h6">The exam was submitted successfully. Please fill out the feedback form to complete the exam.</Typography>
+      </div>
       <Card className="w-full max-w-3xl">
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)}>

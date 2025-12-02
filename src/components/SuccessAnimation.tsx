@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import { Box } from "@mui/material";
 
-const SuccessAnimation = () => {
+const SuccessAnimation = ({ size = 150 }:{ size?: number }) => {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -15,7 +15,7 @@ const SuccessAnimation = () => {
         className="tabler-circle-check"
         style={{
           color: "green",
-          fontSize: 150,
+          fontSize: size,
           opacity: show ? 1 : 0,
           transform: show ? "scale(1)" : "scale(0)",
           transition: "transform 0.5s cubic-bezier(0.68,-0.55,0.27,1.55)",

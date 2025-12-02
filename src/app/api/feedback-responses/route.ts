@@ -31,7 +31,11 @@ export async function POST(req: NextRequest) {
 
   if (alreadySubmitted) {
     return NextResponse.json(
-      { error: 'You have already submitted feedback for this form.' },
+      {
+        status: "Error",
+        statusCode: "400",
+        message: 'You have already submitted feedback for this form.'
+      },
       { status: 400 }
     );
   }
