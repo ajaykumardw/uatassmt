@@ -1,6 +1,14 @@
 // // MUI Imports
 // import Grid from '@mui/material/Grid'
 
+import Link from "next/link"
+
+import { Button } from "@mui/material"
+
+import type { Locale } from '@configs/i18n'
+
+import { getLocalizedUrl } from "@/utils/i18n";
+
 // // Component Imports
 // import DistributedBarChartOrder from '@views/dashboards/crm/DistributedBarChartOrder'
 // import LineAreaYearlySalesChart from '@views/dashboards/crm/LineAreaYearlySalesChart'
@@ -17,10 +25,11 @@
 // // Server Action Imports
 // import { getServerMode } from '@core/utils/serverHelpers'
 
-const StudentDashboard = async () => {
+const StudentDashboard = async ({params}:{params: {lang: string}}) => {
 
   // Vars
   // const serverMode = getServerMode()
+  const locale = params.lang as Locale
 
   return (
 
@@ -87,7 +96,7 @@ const StudentDashboard = async () => {
     //   </Grid>
     // </Grid>
 
-    <div>Dashboard Coming Soon...</div>
+    <Button variant='contained' component={Link} href={getLocalizedUrl('/exams', locale)}>Exam</Button>
   )
 }
 

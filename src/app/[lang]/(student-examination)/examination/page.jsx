@@ -157,8 +157,12 @@ const Examination = () => {
   const getExamData = async () => {
     const data = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student-exam-set`).then(res => res.json());
 
+    const now = DateTime.now().setZone('Asia/Kolkata');
+    const start = DateTime.fromISO(data.batch.assessment_start_time).setZone('Asia/Kolkata');
+    const end = DateTime.fromISO(data.batch.assessment_end_time).setZone('Asia/Kolkata');
+
     setExamData(data.batch.theory_exam_set);
-    setIsActiveExam(data.batch.assessment_start_time >= DateTime.now().setZone('Asia/Kolkata').toISO() && data.batch.assessment_end_time <= DateTime.now().setZone('Asia/Kolkata').toISO());
+    setIsActiveExam(now >= start && now <= end);
     setCaptureImageInSeconds(data.batch.capture_image_in_seconds);
   };
 
