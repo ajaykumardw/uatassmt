@@ -1,6 +1,8 @@
 // Third-party Imports
 import { getServerSession } from 'next-auth'
 
+import { headers } from 'next/headers'
+
 // Type Imports
 import type { Locale } from '@configs/i18n'
 import type { ChildrenType } from '@core/types'
@@ -13,20 +15,28 @@ import prisma from '@/libs/prisma'
 export default async function ImageGuard({ children, locale }: ChildrenType & { locale: Locale }) {
   const session = await getServerSession(authOptions)
 
-  // const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/auth-image?studentId=${session?.user.id}`);
+  // Get client IP from headers
+  let ip =
+    headers().get('x-forwarded-for')?.split(',')[0] || // first IP in the chain
+    headers().get('x-real-ip') ||                       // fallback
+    '0.0.0.0'
 
-  const res = await fetch('https://api.ipify.org');
-  const ip = await res.text();
+  // Normalize localhost and IPv4-mapped IPv6
+  if (ip === '::1') ip = '127.0.0.1'
+  if (ip.startsWith('::ffff:')) ip = ip.split('::ffff:')[1]
 
+  console.log("Client IP:", ip)
+
+  // IP whitelist for bypass
   const excludeIps = [
-    '127.0.0.1',
-    '103.246.170.213'
+    '127.0.0.1',       // localhost dev
+    '103.246.170.213'  // example production IP
   ]
 
-  console.log("ips: ", ip);
+  if (excludeIps.includes(ip)) {
 
-  if (excludeIps.includes(ip)){
     return <>{children}</>
+
   }
 
   const studentLog = await prisma.log_sessions.findFirst({
