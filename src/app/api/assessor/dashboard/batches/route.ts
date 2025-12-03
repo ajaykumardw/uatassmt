@@ -90,6 +90,7 @@ export async function GET(req: NextRequest) {
         assessor_id: true,
         training_partner: {
           select: {
+            company_name: true,
             first_name: true,
             last_name: true
           }
