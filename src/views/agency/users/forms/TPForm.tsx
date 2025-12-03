@@ -100,9 +100,9 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
       city: data?.city_id?.toString() || '',
       pinCode: data?.pin_code || '',
       address: data?.address || '',
-      contactPersonAddress: data?.user_additional_data.contact_person_address || '',
-      panCardNumber: data?.user_additional_data.pan_card_no || '',
-      gstNumber: data?.user_additional_data.gst_no || '',
+      contactPersonAddress: data?.user_additional_data?.contact_person_address || '',
+      panCardNumber: data?.user_additional_data?.pan_card_no || '',
+      gstNumber: data?.user_additional_data?.gst_no || '',
       phoneNumber: data?.mobile_no || ''
     }
   })
