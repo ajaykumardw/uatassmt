@@ -126,7 +126,7 @@ export default withAuth(
     const trainingPartnerPaths = ['/training-partner', '/tc'];
 
     // Assessor routes
-    const assessorPaths = ['/assessor'];
+    const assessorPaths = ['/assessor', '/assessor/*'];
 
     // Student routes
     const studentPaths = ['/student-dashboard', '/capture', '/exams', '/examination', '/feedback'];

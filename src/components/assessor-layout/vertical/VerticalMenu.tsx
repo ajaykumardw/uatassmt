@@ -94,6 +94,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
         menuSectionStyles={menuSectionStyles(verticalNavOptions, theme)}
       >
         <MenuItem href={`/${locale}/assessor`} icon={<i className='tabler-smart-home' />}>{dictionary['navigation'].dashboard}</MenuItem>
+        <MenuItem href={`/${locale}/assessor/batches`} icon={<i className='tabler-stack-2' />}>{dictionary['navigation'].batches}</MenuItem>
         {/* <MenuItem href={`/${locale}/tc`} icon={<i className='tabler-building-bank' />}>{dictionary['navigation'].tc}</MenuItem> */}
         {/* <SubMenu label={dictionary['navigation'].agency} icon={<i className='tabler-user' />}>
           <MenuItem href={`/${locale}/agency/list`}>{dictionary['navigation'].list}</MenuItem>

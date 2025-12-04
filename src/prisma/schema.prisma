@@ -47,6 +47,7 @@ model batches {
   updated_at                DateTime  @default(now()) @updatedAt @db.DateTime(0)
 
   students                  students[]
+  center_inspections         inspection_media[]
 }
 
 model schemes {
@@ -66,8 +67,13 @@ model schemes {
 
 model categories {
   id     Int    @id @default(autoincrement())
-  name   String @default("") @db.VarChar(200)
-  active Int    @default(1)
+  category_name  String @db.VarChar(255)
+  agency_id Int
+  is_active Int    @default(1) @db.TinyInt
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
+
+  inspection_media inspection_media[]
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -399,6 +405,7 @@ model users {
   exam_instructions exam_instructions[]
   log_sessions log_sessions[]
   user_training_resources user_training_resources[]
+  center_inspections inspection_media[]
 }
 
 model users_additional_data {
@@ -615,6 +622,23 @@ model feedback_response_answers {
   feedback_question   feedback_questions @relation(fields: [feedback_question_id], references: [id])
 }
 
+model inspection_media {
+  id Int @id @default(autoincrement())
+  category_id Int
+  batch_id Int
+  assessor_id Int
+  media_type inspection_media_type
+  file_name String @db.VarChar(255)
+  uploaded_by Int
+  uploaded_at DateTime @default(now()) @db.DateTime(0)
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
+
+  category categories @relation(fields: [category_id], references: [id])
+  batch batches @relation(fields: [batch_id], references: [id])
+  assessor users @relation(fields: [assessor_id], references: [id])
+}
+
 enum question_level {
   E
   M
@@ -674,4 +698,10 @@ enum exam_set_type {
   T
   P
   V
+}
+
+enum inspection_media_type {
+  image
+  video
+  document
 }
