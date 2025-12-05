@@ -9,7 +9,7 @@ import type { NextRequest } from 'next/server';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 
 // Data Imports
-import { getServerSession } from 'next-auth';
+// import { getServerSession } from 'next-auth';
 
 import { getTime } from 'date-fns';
 
@@ -17,7 +17,7 @@ import { Prisma } from '@prisma/client';
 
 import prisma from '@/libs/prisma';
 
-import { authOptions } from '@/libs/auth';
+// import { authOptions } from '@/libs/auth';
 
 const storageFolders = {
   storage: "storage",
@@ -35,26 +35,107 @@ const storageFolders = {
 
 export async function GET(req: Request) {
 
-  const url = new URL(await req.url);
-  const sscId = url.searchParams.get('sscId');
+  const authHeader = req.headers.get("authorization");
 
-  const session = await getServerSession(authOptions);
-  const agencyId = Number(session?.user?.agency_id);
+  if (!authHeader) {
+    return NextResponse.json({
+      status: 'Error',
+      statusCode: 401,
+      message: "Missing token"
+    }, { status: 401 });
+  }
 
-  const whereCondition = {
-    master_id: agencyId,
-    role_id: 1,
-    ...(sscId ? { ssc_id: Number(sscId) } : {}),
-  };
+  const token = authHeader.split(" ")[1];
 
-  const assessors = await prisma.users.findMany({
-    where: whereCondition,
-    include: {
-      user_additional_data: true
+  try {
+
+    const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET as string) as JwtPayload;
+
+    // const agency_id = Number(decoded?.id);
+
+    if (decoded.user_type !== 'U' && decoded.role_id !== 1) {
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 403,
+        message: 'Forbidden: Insufficient permissions'
+      }, { status: 403 });
     }
-  })
 
-  return NextResponse.json(assessors);
+    const centerAndBuildingPhoto = await prisma.inspection_media.findMany({
+      where: {
+        batch: {
+          assessor_id: Number(decoded.id)
+        },
+        category: {
+          category_name: {
+            in: ['center_photo', 'building_photo']
+          }
+        }
+      },
+      include: {
+        category: true
+      }
+    });
+
+    const mappedData = centerAndBuildingPhoto.map(item => ({
+      id: item.id,
+      batch_id: item.batch_id,
+      assessor_id: item.assessor_id,
+      category: item.category.category_name,
+      media_type: item.media_type,
+      file_name: item.file_name,
+      uploaded_by: item.uploaded_by,
+      uploaded_at: item.uploaded_at,
+      url: `/storage/uploads/agency/batches/${item.batch_id}/${item.category.category_name === 'center_photo' ? 'center-photo' : 'building-photo'}/${item.file_name}`
+    }));
+
+    return NextResponse.json({
+      status: "Success",
+      statusCode: 200,
+      data: mappedData
+    });
+
+  } catch (error: any) {
+
+    if (error.name === 'TokenExpiredError') {
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 401,
+        message: 'Token expired',
+        error: error
+      }, { status: 401 });
+    }
+
+    if (error.name === 'JsonWebTokenError') {
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 401,
+        message: 'Invalid token',
+        error: error
+      }, { status: 401 });
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 400,
+        message: error.message,
+        error: error
+      }, { status: 400 });
+    }
+
+    // Fallback for any other server-side errors
+
+    console.error('Server Error:', error);
+
+    return NextResponse.json({
+      status: 'Error',
+      statusCode: 500,
+      message: 'Internal server error',
+      error: error
+    }, { status: 500 });
+  }
+
 }
 
 const centerAndBuildingPhotoSchema = {
@@ -274,6 +355,60 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
           buffer
         )
       }
+
+      const categories = await prisma.categories.findMany({
+        where: {
+          category_name: {
+            in: ['center_photo', 'building_photo']
+          }
+        },
+        select: {
+          id: true,
+          category_name: true,
+        }
+      });
+
+      // Convert array → lookup object
+      const categoryMap = Object.fromEntries(
+        categories.map(c => [c.category_name, c.id])
+      );
+
+      const tasks = [];
+
+      // Handle center photo
+      if (centerPhotoBlob && categoryMap['center_photo']) {
+        tasks.push(
+          prisma.inspection_media.create({
+            data: {
+              category_id: categoryMap['center_photo'],
+              batch_id: Number(id),
+              assessor_id: Number(decoded.id),
+              media_type: 'image',
+              file_name: centerPhotoName,
+              uploaded_by: Number(decoded.id),
+            }
+          })
+        );
+      }
+
+      // Handle building photo
+      if (buildingPhotoBlob && categoryMap['building_photo']) {
+        tasks.push(
+          prisma.inspection_media.create({
+            data: {
+              category_id: categoryMap['building_photo'],
+              batch_id: Number(id),
+              assessor_id: Number(decoded.id),
+              media_type: 'image',
+              file_name: buildingPhotoName,
+              uploaded_by: Number(decoded.id),
+            }
+          })
+        );
+      }
+
+      // Run all creates in parallel
+      await Promise.all(tasks);
 
       // await prisma.users_additional_data.update({
       //   where: {
