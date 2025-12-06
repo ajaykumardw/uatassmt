@@ -56,6 +56,7 @@ export async function GET(
   return NextResponse.json({
     status: "Success",
     statusCode: 200,
+    message: "Center inspection media fetched successfully",
     data: groupedData
   });
 }

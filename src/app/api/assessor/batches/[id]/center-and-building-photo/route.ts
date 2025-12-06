@@ -77,22 +77,32 @@ export async function GET(req: Request) {
       }
     });
 
-    const mappedData = centerAndBuildingPhoto.map(item => ({
-      id: item.id,
-      batch_id: item.batch_id,
-      assessor_id: item.assessor_id,
-      category: item.category.category_name,
-      media_type: item.media_type,
-      file_name: item.file_name,
-      uploaded_by: item.uploaded_by,
-      uploaded_at: item.uploaded_at,
-      url: `/storage/uploads/agency/batches/${item.batch_id}/${item.category.category_name === 'center_photo' ? 'center-photo' : 'building-photo'}/${item.file_name}`
-    }));
+    const groupedData: Record<string, string> = {};
+
+    const relativePath = `${process.env.NEXT_PUBLIC_APP_URL}/${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.agency}/${storageFolders.batches}`;
+
+    centerAndBuildingPhoto.forEach(item => {
+      const categoryName = item.category.category_name;
+
+      groupedData[categoryName] = path.posix.join(
+        relativePath,
+        item.batch_id.toString(),
+        categoryName === "center_photo" ? "center-photo" : "building-photo",
+        item.file_name
+      );
+    });
+
+    // const mappedData = centerAndBuildingPhoto.map(item => ({
+    //   id: item.id,
+    //   category: item.category.category_name,
+    //   url: `${process.env.NEXT_PUBLIC_APP_URL}/storage/uploads/agency/batches/${item.batch_id}/${item.category.category_name === 'center_photo' ? 'center-photo' : 'building-photo'}/${item.file_name}`
+    // }));
 
     return NextResponse.json({
       status: "Success",
       statusCode: 200,
-      data: mappedData
+      message: "Center and building photos fetched successfully",
+      data: groupedData
     });
 
   } catch (error: any) {
