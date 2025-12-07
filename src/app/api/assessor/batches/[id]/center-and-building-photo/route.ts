@@ -33,7 +33,7 @@ const storageFolders = {
   trainingResources: "training-resources",
 }
 
-export async function GET(req: Request) {
+export async function GET(req: Request, context: { params: { id: number } }) {
 
   const authHeader = req.headers.get("authorization");
 
@@ -61,6 +61,25 @@ export async function GET(req: Request) {
       }, { status: 403 });
     }
 
+    const batchId = Number(context.params.id);
+
+    const batch = await prisma.batches.findUnique({
+      where: {
+        id: batchId,
+        assessor: {
+          id: Number(decoded.id)
+        }
+      },
+    })
+
+    if (!batch) {
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 404,
+        message: 'Batch not found'
+      }, { status: 404 });
+    }
+
     const centerAndBuildingPhoto = await prisma.inspection_media.findMany({
       where: {
         batch: {
@@ -77,19 +96,27 @@ export async function GET(req: Request) {
       }
     });
 
+    if(centerAndBuildingPhoto.length === 0) {
+      return NextResponse.json({
+        status: "Error",
+        statusCode: 404,
+        message: "Center and building photos not found"
+      }, { status: 404 });
+    }
+
     const groupedData: Record<string, string> = {};
 
-    const relativePath = `${process.env.NEXT_PUBLIC_APP_URL}/${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.agency}/${storageFolders.batches}`;
+    const relativePath = `${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.agency}/${storageFolders.batches}`;
 
     centerAndBuildingPhoto.forEach(item => {
       const categoryName = item.category.category_name;
 
-      groupedData[categoryName] = path.posix.join(
+      groupedData[categoryName] = `${process.env.NEXT_PUBLIC_APP_URL}/${path.posix.join(
         relativePath,
         item.batch_id.toString(),
         categoryName === "center_photo" ? "center-photo" : "building-photo",
         item.file_name
-      );
+      )}`;
     });
 
     // const mappedData = centerAndBuildingPhoto.map(item => ({

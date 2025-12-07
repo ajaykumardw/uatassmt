@@ -33,7 +33,6 @@ export async function GET(
   const groupedData: Record<string, string[]> = {};
 
   const relativePath = path.posix.join(
-    process.env.NEXT_PUBLIC_APP_URL as string,
     storageFolders.storage,
     storageFolders.uploads,
     storageFolders.agency,
@@ -50,7 +49,7 @@ export async function GET(
     }
 
     // Use posix join for URL-friendly path
-    groupedData[categoryName].push(path.posix.join(relativePath, item.file_name));
+    groupedData[categoryName].push(`${process.env.NEXT_PUBLIC_APP_URL}/${path.posix.join(relativePath, item.file_name)}`);
   });
 
   return NextResponse.json({
