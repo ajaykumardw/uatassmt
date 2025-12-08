@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server'
 
 import type { NextRequest } from 'next/server';
 
-import jwt, { type JwtPayload } from 'jsonwebtoken';
+import { verify, type JwtPayload } from 'jsonwebtoken';
 
 // Data Imports
 // import { getServerSession } from 'next-auth';
@@ -49,7 +49,7 @@ export async function GET(req: Request, context: { params: { id: number } }) {
 
   try {
 
-    const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET as string) as JwtPayload;
+    const decoded = verify(token, process.env.NEXTAUTH_SECRET as string) as JwtPayload;
 
     // const agency_id = Number(decoded?.id);
 
@@ -104,19 +104,26 @@ export async function GET(req: Request, context: { params: { id: number } }) {
       }, { status: 404 });
     }
 
-    const groupedData: Record<string, string> = {};
+    const groupedData: Record<string, { id: number; url: string }[]> = {};
 
     const relativePath = `${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.agency}/${storageFolders.batches}`;
 
     centerAndBuildingPhoto.forEach(item => {
       const categoryName = item.category.category_name;
 
-      groupedData[categoryName] = `${process.env.NEXT_PUBLIC_APP_URL}/${path.posix.join(
-        relativePath,
-        item.batch_id.toString(),
-        categoryName === "center_photo" ? "center-photo" : "building-photo",
-        item.file_name
-      )}`;
+      if (!groupedData[categoryName]) {
+        groupedData[categoryName] = [];
+      }
+
+      groupedData[categoryName].push({
+        id: item.id,
+        url: `${process.env.NEXT_PUBLIC_APP_URL}/${path.posix.join(
+          relativePath,
+          item.batch_id.toString(),
+          categoryName === "center_photo" ? "center-photo" : "building-photo",
+          item.file_name
+        )}`
+      });
     });
 
     // const mappedData = centerAndBuildingPhoto.map(item => ({
@@ -175,327 +182,170 @@ export async function GET(req: Request, context: { params: { id: number } }) {
 
 }
 
-const centerAndBuildingPhotoSchema = {
-  center_photo: {
-    type: 'file',
-    required: true,
-    mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'image/gif'],
-  },
-  building_photo: {
-    type: 'file',
-    required: true,
-    mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'image/gif'],
-  },
-};
-
+const allowedMimeTypes = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/jpg",
+  "image/gif",
+];
 
 export async function POST(req: NextRequest, context: { params: { id: number } }) {
-
-  const authHeader = req.headers.get("authorization");
-
-  if (!authHeader) {
-    return NextResponse.json({
-      status: 'Error',
-      statusCode: 401,
-      message: "Missing token"
-    }, { status: 401 });
-  }
-
-  const token = authHeader.split(" ")[1];
-
   try {
+    const authHeader = req.headers.get("authorization");
 
-    const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET as string) as JwtPayload;
+    if (!authHeader) {
+      return errorResponse("Missing token", 401);
+    }
 
-    // const agency_id = Number(decoded?.id);
+    const token = authHeader.split(" ")[1];
+    const decoded = verify(token, process.env.NEXTAUTH_SECRET as string) as any;
 
-    if (decoded.user_type !== 'U' && decoded.role_id !== 1) {
-      return NextResponse.json({
-        status: 'Error',
-        statusCode: 403,
-        message: 'Forbidden: Insufficient permissions'
-      }, { status: 403 });
+    if (decoded.user_type !== "U" && decoded.role_id !== 1) {
+      return errorResponse("Forbidden: Insufficient permissions", 403);
     }
 
     const formData = await req.formData();
-
-    const validator = (data: FormData, schema: any) => {
-      const errors: string[] = [];
-
-      for (const field in schema) {
-        const rules = schema[field];
-        const value = data.get(field);
-
-        if (rules.required && (value === null || value === undefined || value === '')) {
-          errors.push(`${field} is required.`);
-          continue;
-        }
-
-        if (rules.type === 'file' && value instanceof File) {
-          if (rules.mimeTypes && !rules.mimeTypes.includes(value.type)) {
-            errors.push(`${field} must be of type: ${rules.mimeTypes.join(', ')}.`);
-          }
-        }
-      }
-
-      return errors;
-    };
-
-    const validationErrors = validator(formData, centerAndBuildingPhotoSchema);
-
-    if (validationErrors.length > 0) {
-      return NextResponse.json({
-        status: 'Error',
-        statusCode: 400,
-        message: 'Validation failed',
-        errors: validationErrors
-      }, { status: 400 });
-    }
-
-    const body = Object.fromEntries(formData);
-
     const id = Number(context.params.id);
 
     const batch = await prisma.batches.findUnique({
       where: {
         id: id,
         assessor: {
-          id: Number(decoded.id)
-        }
+          id: Number(decoded.id),
+        },
       },
-    })
+    });
 
     if (!batch) {
-      return NextResponse.json({
-        status: 'Error',
-        statusCode: 404,
-        message: 'Batch not found'
-      }, { status: 404 });
+      return errorResponse("Batch not found", 404);
     }
 
-    if (batch) {
+    // ----------------------------------------------------------
+    // 📌 Read files (optional)
+    // ----------------------------------------------------------
+    const center_photo = formData.get("center_photo");
+    const building_photo = formData.get("building_photo");
 
-      const {
-        center_photo,
-        building_photo,
-      } = body;
+    if (!center_photo && !building_photo) {
+      return errorResponse("At least one photo must be provided.", 400);
+    }
 
-      // ✅ Check if both are missing
-      if (!center_photo && !building_photo) {
-        return NextResponse.json({
-          status: 'Error',
-          statusCode: 400,
-          message: 'No photos provided for upload.',
-        }, { status: 400 });
-      }
+    const filesToProcess: any[] = [];
 
-      // ✅ Check if center photo missing
-      if (!center_photo) {
-        return NextResponse.json({
-          status: 'Error',
-          statusCode: 400,
-          message: 'Center photo is required.',
-        }, { status: 400 });
-      }
-
-      // ✅ Check if building photo missing
-      if (!building_photo) {
-        return NextResponse.json({
-          status: 'Error',
-          statusCode: 400,
-          message: 'Building photo is required.',
-        }, { status: 400 });
-      }
-
-      // ✅ Check if files are actually File objects
+    // ----------------------------------------------------------
+    // 📌 Validate + Prepare Center Photo
+    // ----------------------------------------------------------
+    if (center_photo) {
       if (!(center_photo instanceof File)) {
-        return NextResponse.json({
-          status: 'Error',
-          statusCode: 400,
-          message: 'Invalid center photo file.',
-        }, { status: 400 });
+        return errorResponse("Invalid center photo file.", 400);
       }
-
-      if (!(building_photo instanceof File)) {
-        return NextResponse.json({
-          status: 'Error',
-          statusCode: 400,
-          message: 'Invalid building photo file.',
-        }, { status: 400 });
-      }
-
-      // ✅ Allowed MIME types (only image formats)
-      const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'image/gif'];
 
       if (!allowedMimeTypes.includes(center_photo.type)) {
-        return NextResponse.json({
-          status: 'Error',
-          statusCode: 400,
-          message: 'Center photo must be an image (jpeg, png, webp, jpg, gif).',
-        }, { status: 400 });
+        return errorResponse("Center photo must be an image.", 400);
+      }
+
+      filesToProcess.push({
+        blob: center_photo,
+        original: center_photo.name,
+        name: getTime(new Date()) + "_" + center_photo.name,
+        category: "center_photo",
+        dir: storageFolders.centerPhoto,
+      });
+    }
+
+    // ----------------------------------------------------------
+    // 📌 Validate + Prepare Building Photo
+    // ----------------------------------------------------------
+    if (building_photo) {
+      if (!(building_photo instanceof File)) {
+        return errorResponse("Invalid building photo file.", 400);
       }
 
       if (!allowedMimeTypes.includes(building_photo.type)) {
-        return NextResponse.json({
-          status: 'Error',
-          statusCode: 400,
-          message: 'Building photo must be an image (jpeg, png, webp, jpg, gif).',
-        }, { status: 400 });
+        return errorResponse("Building photo must be an image.", 400);
       }
 
-      const centerPhotoBlob = center_photo as Blob;
-      const centerPhotoName = center_photo ? getTime(new Date()) + "_" + (center_photo as File).name : "";
-
-      const buildingPhotoBlob = building_photo as Blob;
-      const buildingPhotoName = building_photo ? getTime(new Date()) + "_" + (building_photo as File).name : "";
-
-      // const session = await getServerSession(authOptions);
-      // const agency_id = Number(session?.user?.agency_id)
-      // const createdBy = Number(session?.user.id)
-
-
-      const uploadDirBuilding = path.join(process.cwd(), storageFolders.storage, storageFolders.uploads, storageFolders.agency, storageFolders.batches, id.toString(), storageFolders.buildingPhoto);
-      const uploadDirCenter = path.join(process.cwd(), storageFolders.storage, storageFolders.uploads, storageFolders.agency, storageFolders.batches, id.toString(), storageFolders.centerPhoto);
-
-      if (!fs.existsSync(uploadDirBuilding)) {
-        try {
-          fs.mkdirSync(uploadDirBuilding, { recursive: true });
-        } catch (err) {
-          console.error('Error creating upload directory:', err);
-          throw new Error('Failed to create upload directory');
-        }
-      }
-
-      if (!fs.existsSync(uploadDirCenter)) {
-        try {
-          fs.mkdirSync(uploadDirCenter, { recursive: true });
-        } catch (err) {
-          console.error('Error creating upload directory:', err);
-          throw new Error('Failed to create upload directory');
-        }
-      }
-
-      if (centerPhotoBlob) {
-        const buffer = Buffer.from(await centerPhotoBlob.arrayBuffer());
-
-        fs.writeFileSync(
-          path.resolve(uploadDirCenter, centerPhotoName),
-          buffer
-        );
-      }
-
-      if (buildingPhotoBlob) {
-        const buffer = Buffer.from(await buildingPhotoBlob.arrayBuffer());
-
-        fs.writeFileSync(
-          path.resolve(uploadDirBuilding, buildingPhotoName),
-          buffer
-        )
-      }
-
-      const categories = await prisma.categories.findMany({
-        where: {
-          category_name: {
-            in: ['center_photo', 'building_photo']
-          }
-        },
-        select: {
-          id: true,
-          category_name: true,
-        }
+      filesToProcess.push({
+        blob: building_photo,
+        original: building_photo.name,
+        name: getTime(new Date()) + "_" + building_photo.name,
+        category: "building_photo",
+        dir: storageFolders.buildingPhoto,
       });
+    }
 
-      // Convert array → lookup object
-      const categoryMap = Object.fromEntries(
-        categories.map(c => [c.category_name, c.id])
+    // ----------------------------------------------------------
+    // 📌 Insert categories lookup
+    // ----------------------------------------------------------
+    const categories = await prisma.categories.findMany({
+      where: {
+        category_name: { in: ["center_photo", "building_photo"] },
+      },
+      select: { id: true, category_name: true },
+    });
+
+    const categoryMap = Object.fromEntries(categories.map((c) => [c.category_name, c.id]));
+
+    // ----------------------------------------------------------
+    // 📌 Upload files to storage + Create DB rows
+    // ----------------------------------------------------------
+    const tasks = [];
+
+    for (const file of filesToProcess) {
+      const uploadDir = path.join(
+        process.cwd(),
+        storageFolders.storage,
+        storageFolders.uploads,
+        storageFolders.agency,
+        storageFolders.batches,
+        id.toString(),
+        file.dir
       );
 
-      const tasks = [];
-
-      // Handle center photo
-      if (centerPhotoBlob && categoryMap['center_photo']) {
-        tasks.push(
-          prisma.inspection_media.create({
-            data: {
-              category_id: categoryMap['center_photo'],
-              batch_id: Number(id),
-              assessor_id: Number(decoded.id),
-              media_type: 'image',
-              file_name: centerPhotoName,
-              uploaded_by: Number(decoded.id),
-            }
-          })
-        );
+      // Create folder if not exists
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
       }
 
-      // Handle building photo
-      if (buildingPhotoBlob && categoryMap['building_photo']) {
-        tasks.push(
-          prisma.inspection_media.create({
-            data: {
-              category_id: categoryMap['building_photo'],
-              batch_id: Number(id),
-              assessor_id: Number(decoded.id),
-              media_type: 'image',
-              file_name: buildingPhotoName,
-              uploaded_by: Number(decoded.id),
-            }
-          })
-        );
-      }
+      // Write file
+      const buffer = Buffer.from(await file.blob.arrayBuffer());
 
-      // Run all creates in parallel
-      await Promise.all(tasks);
+      fs.writeFileSync(path.resolve(uploadDir, file.name), buffer);
 
-      // await prisma.users_additional_data.update({
-      //   where: {
-      //     user_id: result.id
-      //   },
-      //   data: {
-      //     employee_id: Number(employeeId),
-      //     job_roles: jobRoles.toString(),
-      //     job_valid_upto: jobValidUpto.toString(),
-      //     toa_nomination: toa_nomination ? Number(toa_nomination) : null,
-      //     last_qualification: lastQualification.toString(),
-      //     aadhaar_no: aadhaarNumber.toString(),
-      //     pan_card_no: panCardNumber.toString(),
-      //     bank_name: bankName.toString(),
-      //     account_no: Number(accountNumber),
-      //     ifsc_code: ifscCode.toString(),
-      //     certificate_8th: certificate8thName || assessor?.user_additional_data?.certificate_8th || null,
-      //     certificate_10th: certificate10thName || assessor?.user_additional_data?.certificate_10th || null,
-      //     certificate_12th: certificate12thName || assessor?.user_additional_data?.certificate_12th || null,
-      //     certificate_DIPLOMA: certificateDiplomaName || assessor?.user_additional_data?.certificate_DIPLOMA || null,
-      //     certificate_UG: certificateUGName || assessor?.user_additional_data?.certificate_UG || null,
-      //     certificate_PG: certificatePGName || assessor?.user_additional_data?.certificate_PG || null,
-      //     assessor_certificate: assessorCertificateName || assessor?.user_additional_data?.assessor_certificate || null,
-      //     agreement_copy: agreementCopyName || assessor?.user_additional_data?.agreement_copy || null,
-      //     aadhaar_card: aadhaarCardImageName || assessor?.user_additional_data?.aadhaar_card || null,
-      //     resume_cv: resumeCVName || assessor?.user_additional_data?.resume_cv || null,
-      //     pan_card: panCardImageName || assessor?.user_additional_data?.pan_card || null,
-      //     cancel_check: cancelCheckName || assessor?.user_additional_data?.cancel_check || null
-      //   }
-      // })
-
-      return NextResponse.json({
-        status: 'Success',
-        statusCode: 200,
-        message: 'Center and building photos uploaded successfully.',
-        data: {
-          center_photo: centerPhotoBlob ? `/storage/uploads/agency/batches/${id}/center-photo/${centerPhotoName}` : null,
-          building_photo: buildingPhotoBlob ? `/storage/uploads/agency/batches/${id}/building-photo/${buildingPhotoName}` : null,
-        }
-      })
-
-
-    } else {
-
-      return NextResponse.json({
-        status: 'Error',
-        statusCode: 404,
-        message: 'Batch not found'
-      }, { status: 404 });
+      // DB entry
+      tasks.push(
+        prisma.inspection_media.create({
+          data: {
+            category_id: categoryMap[file.category],
+            batch_id: id,
+            assessor_id: Number(decoded.id),
+            media_type: "image",
+            file_name: file.name,
+            uploaded_by: Number(decoded.id),
+          },
+        })
+      );
     }
+
+    await Promise.all(tasks);
+
+    // ----------------------------------------------------------
+    // 📌 Build response object dynamically
+    // ----------------------------------------------------------
+    const responseData: any = {};
+
+    for (const file of filesToProcess) {
+      responseData[file.category] = `${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.agency}/${storageFolders.batches}/${id}/${file.dir}/${file.name}`;
+    }
+
+    return NextResponse.json({
+      status: "Success",
+      statusCode: 200,
+      message: "Photos uploaded successfully.",
+      data: responseData,
+    });
+
   } catch (error: any) {
 
     if (error.name === 'TokenExpiredError') {
@@ -536,4 +386,16 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
       error: error
     }, { status: 500 });
   }
+}
+
+function errorResponse(message: string, statusCode: number, error?: any) {
+  return NextResponse.json(
+    {
+      status: "Error",
+      statusCode,
+      message,
+      error,
+    },
+    { status: statusCode }
+  );
 }

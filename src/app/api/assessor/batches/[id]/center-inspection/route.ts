@@ -18,46 +18,143 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const id = Number(params.id);
 
-  const inspectionData = await prisma.inspection_media.findMany({
-    where: {
-      batch_id: id
-    },
-    include: {
-      category: true
-    }
-  });
+  const authHeader = request.headers.get("authorization");
 
-  // Group by category
-  const groupedData: Record<string, string[]> = {};
+  if (!authHeader) {
+    return NextResponse.json({
+      status: 'Error',
+      statusCode: 401,
+      message: "Missing token"
+    }, { status: 401 });
+  }
 
-  const relativePath = path.posix.join(
-    storageFolders.storage,
-    storageFolders.uploads,
-    storageFolders.agency,
-    storageFolders.batches,
-    id.toString(),
-    storageFolders.centerInspection
-  );
+  const token = authHeader.split(" ")[1];
 
-  inspectionData.forEach(item => {
-    const categoryName = item.category.category_name;
+  try {
 
-    if (!groupedData[categoryName]) {
-      groupedData[categoryName] = [];
+    const decoded = verify(token, process.env.NEXTAUTH_SECRET as string) as JwtPayload;
+
+    if (decoded.user_type !== 'U' && decoded.role_id !== 1) {
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 403,
+        message: 'Forbidden: Insufficient permissions'
+      }, { status: 403 });
     }
 
-    // Use posix join for URL-friendly path
-    groupedData[categoryName].push(`${process.env.NEXT_PUBLIC_APP_URL}/${path.posix.join(relativePath, item.file_name)}`);
-  });
+    const id = Number(params.id);
 
-  return NextResponse.json({
-    status: "Success",
-    statusCode: 200,
-    message: "Center inspection media fetched successfully",
-    data: groupedData
-  });
+    const batch = await prisma.batches.findUnique({
+      where: {
+        id: id,
+        assessor: {
+          id: Number(decoded.id)
+        }
+      },
+    })
+
+    if (!batch) {
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 404,
+        message: 'Batch not found'
+      }, { status: 404 });
+    }
+
+    const inspectionData = await prisma.inspection_media.findMany({
+      where: {
+        batch_id: id
+      },
+      include: {
+        category: true
+      }
+    });
+
+    if (inspectionData.length === 0) {
+      return NextResponse.json({
+        status: "Success",
+        statusCode: 404,
+        message: "No center inspection media found for this batch",
+      }, { status: 404 });
+    }
+
+    const groupedData: Record<string, { id: number; url: string }[]> = {};
+
+    const relativePath = path.posix.join(
+      storageFolders.storage,
+      storageFolders.uploads,
+      storageFolders.agency,
+      storageFolders.batches,
+      id.toString(),
+      storageFolders.centerInspection
+    );
+
+    inspectionData.forEach(item => {
+      const categoryName = item.category.category_name;
+
+      if (!groupedData[categoryName]) {
+        groupedData[categoryName] = [];
+      }
+
+      const url = `${process.env.NEXT_PUBLIC_APP_URL}/${path.posix.join(
+        relativePath,
+        item.file_name
+      )}`;
+
+      groupedData[categoryName].push({
+        id: item.id,
+        url: url
+      });
+    });
+
+    return NextResponse.json({
+      status: "Success",
+      statusCode: 200,
+      message: "Center inspection media fetched successfully",
+      data: groupedData
+    });
+
+  } catch (error: any) {
+
+    if (error.name === 'TokenExpiredError') {
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 401,
+        message: 'Token expired',
+        error: error
+      }, { status: 401 });
+    }
+
+    if (error.name === 'JsonWebTokenError') {
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 401,
+        message: 'Invalid token',
+        error: error
+      }, { status: 401 });
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 400,
+        message: error.message,
+        error: error
+      }, { status: 400 });
+    }
+
+    // Fallback for any other server-side errors
+
+    console.error('Server Error:', error);
+
+    return NextResponse.json({
+      status: 'Error',
+      statusCode: 500,
+      message: 'Internal server error',
+      error: error
+    }, { status: 500 });
+  }
 }
 
 export async function POST(
