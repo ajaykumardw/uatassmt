@@ -193,7 +193,9 @@ export async function POST(
 
       // allowed keys
       const allowedKeys = [
+        "building_photo_outside",
         "selfie_with_center",
+        "selfie_with_center_board_evening",
         "center_video",
         "equipment_photo",
         "group_photo_before_batch_start",
@@ -232,6 +234,10 @@ export async function POST(
         );
       }
 
+      // Define max file sizes
+      const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
+      const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20 MB
+
       // ----- process files -----
       const outputs: string[] = [];
 
@@ -245,6 +251,59 @@ export async function POST(
 
         // get extension from MIME type
         const ext = file.type.split("/")[1] || "bin";
+
+        // Check file size
+        const fileSize = file.size; // In bytes
+
+        let maxSize = MAX_IMAGE_SIZE;  // Default to image size limit
+
+        // validate file type based on the key
+        let mediaType: "image" | "video" | "document" = "image";  // Default to image
+
+        if (key === "center_video") {
+          
+          const allowedVideoTypes = ["mp4", "mov", "3gp"];
+          maxSize = MAX_VIDEO_SIZE;  // Set max size for video files
+
+          // Video files should only be mp4, mov, or other valid video types
+          if (!allowedVideoTypes.includes(ext)) {
+
+            return NextResponse.json({
+              status: "Error",
+              statusCode: 400,
+              message: "Invalid video file type for center_video. Only mp4, mov, and 3gp are allowed.",
+              received: ext,
+            }, { status: 400 });
+          }
+          mediaType = "video";
+        } else {
+
+          // For other keys, only image files are allowed
+          const allowedImageTypes = ["jpeg", "jpg", "png", "webp"];
+
+          if (!allowedImageTypes.includes(ext)) {
+
+            return NextResponse.json({
+              status: "Error",
+              statusCode: 400,
+              message: `Invalid image file type for ${key}`,
+              received: ext,
+            }, { status: 400 });
+          }
+        }
+
+        // File size check
+        if (fileSize > maxSize) {
+
+          return NextResponse.json({
+            status: "Error",
+            statusCode: 400,
+            message: `File size exceeds the maximum allowed size. Max allowed size for ${mediaType} is ${
+              mediaType === "video" ? "20 MB" : "5 MB"
+            }.`,
+            receivedSize: fileSize,
+          }, { status: 400 });
+        }
 
         // generate secure unique filename
         const filename = `${randomUUID()}.${ext}`;
@@ -280,7 +339,7 @@ export async function POST(
                 category_id: category.id,
                 batch_id: Number(id),
                 assessor_id: decoded.id, // to be updated
-                media_type: ext === 'mp4' || ext === 'mov' ? 'video' : (ext === 'pdf' ? 'document' : 'image'),
+                media_type: mediaType,
                 file_name: filename,
                 uploaded_by: decoded.id, // to be updated
               }

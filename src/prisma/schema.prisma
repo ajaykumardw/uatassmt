@@ -468,6 +468,9 @@ model students {
   created_by     Int
   created_at     DateTime           @default(now()) @db.DateTime(0)
   updated_at     DateTime           @default(now()) @updatedAt @db.DateTime(0)
+  image          String?            @db.VarChar(255)
+  id_front_image String?            @db.VarChar(255)
+  id_back_image  String?            @db.VarChar(255)
 
   student_exam_set_results student_exam_set_results[]
   exam_set_results exam_set_results[]

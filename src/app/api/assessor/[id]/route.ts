@@ -28,6 +28,8 @@ const storageFolders = {
   centerPhoto: "center-photo",
   buildingPhoto: "building-photo",
   trainingResources: "training-resources",
+  centerInspection: "center-inspection",
+  images: "images",
 }
 
 export async function GET(req: Request) {

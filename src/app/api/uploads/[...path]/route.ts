@@ -16,6 +16,8 @@ const storageFolders = {
   centerPhoto: "center-photo",
   buildingPhoto: "building-photo",
   trainingResources: "training-resources",
+  centerInspection: "center-inspection",
+  images: "images",
 }
 
 // Basic MIME type mapping for common file types

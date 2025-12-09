@@ -8,6 +8,8 @@ import jwt, { type JwtPayload } from 'jsonwebtoken';
 import { Prisma } from "@prisma/client";
 
 import prisma from "@/libs/prisma";
+import path from "path";
+import { storageFolders } from "@/configs/customDataConfig";
 
 export async function GET(req: NextRequest, context: { params: { id: number } }) {
 
@@ -47,6 +49,9 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
         candidate_id: true,
         user_name: true,
         candidate_name: true,
+        image: true,
+        id_front_image: true,
+        id_back_image: true,
         gender: true,
         category: true,
         date_of_birth: true,
@@ -54,11 +59,33 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
       }
     });
 
+
+    const mappedData = students.map(student => {
+
+      const relativePath = path.posix.join(
+        storageFolders.storage,
+        storageFolders.uploads,
+        storageFolders.agency,
+        storageFolders.batches,
+        student.batch_id.toString(),
+        storageFolders.student,
+        student.id.toString(),
+        storageFolders.images
+      );
+
+      return {
+        ...student,
+        image: student.image ? `${process.env.NEXT_PUBLIC_APP_URL}/${relativePath}/${student.image}` : null,
+        id_front_image: student.id_front_image ? `${process.env.NEXT_PUBLIC_APP_URL}/${relativePath}/${student.id_front_image}` : null,
+        id_back_image: student.id_back_image ? `${process.env.NEXT_PUBLIC_APP_URL}/${relativePath}/${student.id_back_image}` : null,
+      };
+    });
+
     return NextResponse.json({
       status: 'Success',
       statusCode: 200,
       message: 'Students fetched successfully',
-      data: students
+      data: mappedData
     });
 
   } catch (error: any) {

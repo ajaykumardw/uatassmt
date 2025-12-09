@@ -43,7 +43,11 @@ export async function DELETE(
     }
 
     const fileRecord = await prisma.inspection_media.findUnique({
-      where: { id: fileId }
+      where: {
+        id: fileId,
+        assessor_id: Number(decoded.id),
+        uploaded_by: Number(decoded.id)
+      }
     });
 
     if (!fileRecord || fileRecord.batch_id !== id) {

@@ -148,7 +148,8 @@ export const storageFolders = {
   centerPhoto: "center-photo",
   buildingPhoto: "building-photo",
   trainingResources: "training-resources",
-  centerInspection: "center-inspection"
+  centerInspection: "center-inspection",
+  images: "images",
 }
 
 
