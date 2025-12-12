@@ -261,8 +261,9 @@ export async function POST(
         let mediaType: "image" | "video" | "document" = "image";  // Default to image
 
         if (key === "center_video") {
-          
+
           const allowedVideoTypes = ["mp4", "mov", "3gp"];
+
           maxSize = MAX_VIDEO_SIZE;  // Set max size for video files
 
           // Video files should only be mp4, mov, or other valid video types
@@ -275,6 +276,7 @@ export async function POST(
               received: ext,
             }, { status: 400 });
           }
+
           mediaType = "video";
         } else {
 

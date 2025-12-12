@@ -1,3 +1,5 @@
+import path from "path";
+
 import { type NextRequest, NextResponse } from "next/server";
 
 // import { getServerSession } from "next-auth";
@@ -8,7 +10,7 @@ import jwt, { type JwtPayload } from 'jsonwebtoken';
 import { Prisma } from "@prisma/client";
 
 import prisma from "@/libs/prisma";
-import path from "path";
+
 import { storageFolders } from "@/configs/customDataConfig";
 
 export async function GET(req: NextRequest, context: { params: { id: number } }) {

@@ -280,6 +280,7 @@ export async function POST(
 
     // Prepare upload directory
     const uploadDir = path.join(process.cwd(), storageFolders.storage, storageFolders.uploads, storageFolders.agency, storageFolders.batches, batchId.toString(), storageFolders.student, studentId.toString(), storageFolders.images);
+
     createDirectoryIfNotExist(uploadDir);
 
     // Process each file
@@ -367,8 +368,10 @@ export async function DELETE(
     }
 
     const requestBody = await request.json().catch(err => {
+      if(err){
 
-      return null;  // Handle empty body case or malformed JSON
+        return null;  // Handle empty body case or malformed JSON
+      }
     });
 
     if (!requestBody) {
@@ -457,6 +460,7 @@ export async function DELETE(
       await fs.promises.unlink(filePath); // Delete the file
     } catch (err) {
       console.error('Error deleting file:', err);
+
       return NextResponse.json({
         status: 'Error',
         statusCode: 500,

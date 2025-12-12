@@ -85,6 +85,7 @@ export async function GET(req: Request, context: { params: { id: number } }) {
     const centerAndBuildingPhoto = await prisma.inspection_media.findMany({
       where: {
         batch: {
+          id: batchId,
           assessor_id: Number(decoded.id)
         },
         category: {
