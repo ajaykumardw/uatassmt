@@ -471,9 +471,29 @@ model students {
   image          String?            @db.VarChar(255)
   id_front_image String?            @db.VarChar(255)
   id_back_image  String?            @db.VarChar(255)
+  practical_group_id       Int?
+  viva_group_id            Int?
+  practical_group  student_groups?    @relation("practicalGroup", fields: [practical_group_id], references: [id])
+  viva_group       student_groups?    @relation("vivaGroup", fields: [viva_group_id], references: [id])
 
   student_exam_set_results student_exam_set_results[]
   exam_set_results exam_set_results[]
+}
+
+model student_groups {
+  id Int @id @default(autoincrement())
+  batch_id Int
+  group_id String @db.VarChar(60)
+  group_type String @db.VarChar(5)
+  group_photo String? @db.VarChar(255)
+  group_video String? @db.VarChar(255)
+  created_by Int
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
+
+  practical_students students[] @relation("practicalGroup")
+  viva_students students[] @relation("vivaGroup")
+
 }
 
 model exam_instructions {

@@ -379,7 +379,7 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
                     fullWidth
                     freeSolo
                     value={
-                      versionData?.find(version => version.id === field.value) ||
+                      versionData?.find(version => version.id.toString() === field.value) ||
                       (typeof field.value === 'string' ? field.value : null)
                     }
                     options={versionData || []}
@@ -426,7 +426,7 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
                         try {
                           const created = await createVersion(newValue);
 
-                          field.onChange(created.data.id);
+                          field.onChange(created.data.id.toString());
                           setVersion((prev) => [...(prev || []), created.data]);
                         } catch (err) {
                           console.error('Create failed', err);
@@ -436,14 +436,14 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
                         try {
                           const created = await createVersion(newValue.inputValue);
 
-                          field.onChange(created.data.id);
+                          field.onChange(created.data.id.toString());
                           setVersion((prev) => [...(prev || []), created.data]);
                         } catch (err) {
                           console.error('Create failed', err);
                         }
                       } else {
                         // User selected existing department
-                        field.onChange(newValue?.id || '');
+                        field.onChange(newValue?.id.toString() || '');
                       }
                     }}
                     renderInput={(params) => (
