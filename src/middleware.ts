@@ -67,14 +67,23 @@ const localizedRedirect = (url: string, locale: string | undefined, request: Nex
 // Function to check if user exists in the database
 const checkUserExists = async (userId: string, isSSC?: boolean, isStudent?: boolean): Promise<boolean> => {
 
-  const response = await fetch(`${process.env.API_URL}/check-user/${userId}`, {
-    method: "POST",
-    body: JSON.stringify({isSSC, isStudent})
-  });
+  try {
+    const response = await fetch(`${process.env.API_URL}/check-user/${userId}`, {
+      method: "POST",
+      body: JSON.stringify({isSSC, isStudent})
+    });
 
-  const data = await response.json();
+    const data = await response.json();
 
-  return data.exists;
+    return data.exists;
+
+  } catch (error) {
+
+    console.error("Error checking user existence:", error);
+    
+    return false;
+
+  }
 };
 
 
