@@ -261,6 +261,7 @@ model questions {
 
   exam_sets_questions exam_sets_questions[]
   exam_set_results     exam_set_results[]    @relation("QuestionToExamSetResults")
+  student_question_attempts student_question_attempts[]
 }
 
 model exam_set_results {
@@ -478,6 +479,7 @@ model students {
 
   student_exam_set_results student_exam_set_results[]
   exam_set_results exam_set_results[]
+  student_question_attempts student_question_attempts[]
 }
 
 model student_groups {
@@ -494,6 +496,26 @@ model student_groups {
   practical_students students[] @relation("practicalGroup")
   viva_students students[] @relation("vivaGroup")
 
+}
+
+model student_question_attempts {
+  id Int @id @default(autoincrement())
+  student_id Int
+  question_id Int
+  assessor_id Int?
+  max_marks Decimal@db.Decimal(10, 2)
+  obtained_marks Decimal? @db.Decimal(10, 2)
+  attempt_no Int @default(1)
+  attempted_at DateTime @default(now()) @db.DateTime(0)
+  evaluated_at DateTime? @db.DateTime(0)
+  remarks String? @db.Text
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
+
+  student students @relation(fields: [student_id], references: [id])
+  question questions @relation(fields: [question_id], references: [id])
+
+  @@unique([student_id, question_id, attempt_no])
 }
 
 model exam_instructions {

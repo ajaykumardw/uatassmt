@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const { createServer } = require('http')
 const { parse } = require('url')
 const path = require('path')
@@ -5,7 +7,7 @@ const next = require('next')
 const fs = require('fs');
 
 const dev = process.env.NODE_ENV !== 'production'
-const hostname = process.env.NODE_ENV !== 'production' ? 'localhost' : 'uatassmt.learningink.com'
+const hostname = process.env.NODE_ENV !== 'production' ? 'localhost' : 'localhost'
 const port = process.env.PORT || 3000
 
 // when using middleware `hostname` and `port` must be provided below
@@ -75,7 +77,7 @@ app.prepare().then(() => {
     })
     .listen(port, () => {
 
-      console.log(`> Ready on http://${hostname}:${port}`)
+      console.log(`> Ready on http://${hostname}:${port} environment: ${process.env.NODE_ENV}`)
 
     })
 })

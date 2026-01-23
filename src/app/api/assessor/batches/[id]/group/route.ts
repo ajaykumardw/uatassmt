@@ -366,6 +366,18 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
       return errorResponse("Batch not found", 404);
     }
 
+    const groupExists = await prisma.student_groups.findFirst({
+      where: {
+        batch_id: id,
+        group_id: String(formData.get('group_id') || 'A'),
+        group_type: String(formData.get('group_type') || 'practical'),
+      }
+    });
+
+    if (groupExists) {
+      return errorResponse("Group with the same ID and type already exists in this batch.", 400);
+    }
+
     // ----------------------------------------------------------
     // 📌 Read files (optional)
     // ----------------------------------------------------------
@@ -491,6 +503,13 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
     })
 
     if (group){
+
+      const data = formData.get('group_type') === 'viva' ? {
+        viva_group_id: group.id,
+      } : {
+        practical_group_id: group.id,
+      };
+
       await prisma.students.updateMany({
         where: {
           batch_id: id,
@@ -498,9 +517,7 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
             in: formData.getAll('student_ids').map(Number)
           }
         },
-        data: {
-          practical_group_id: group.id,
-        }
+        data: data
       })
     }
 

@@ -28,6 +28,7 @@ import type { InferInput } from 'valibot';
 import { Avatar } from '@mui/material';
 
 import CustomTextField from '@core/components/mui/TextField';
+import { sscImagePath } from '@/configs/customDataConfig';
 
 type Props = {
   open: boolean
@@ -199,7 +200,7 @@ const EditUserDrawer = ({ open, handleClose, sscId, sscName, sscCode, username, 
             {imgSrc ? (
               <img width={100} className='rounded' src={imgSrc} alt='Profile' />
             ) : (sscImage ? (
-              <img width={100} className='rounded' src={`/storage/uploads/ssc/${sscImage}`} alt='Profile' />
+              <img width={100} className='rounded' src={sscImagePath(sscId, sscImage)} alt='Profile' />
             ) : (
               <Avatar />
             ))}
