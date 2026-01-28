@@ -109,9 +109,12 @@ const CapturedImageDialog = ({
             image={image.captured_image_url}
             onLoad={() => setLoaded(true)}
             onError={(e) => {
-              const target = e.target as HTMLImageElement;
+              const img = e.currentTarget as HTMLImageElement;
 
-              target.src = "/images/icons/image-not-found.png"; // fallback
+              if (!img.src.includes("image-not-found.png")) {
+                img.src = "/images/icons/image-not-found.png";
+              }
+              
               setLoaded(true);
             }}
             style={{

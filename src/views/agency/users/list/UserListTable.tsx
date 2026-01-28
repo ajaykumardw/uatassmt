@@ -65,10 +65,9 @@ import tableStyles from '@core/styles/table.module.css'
 import AddUsersDialog from '@/components/users/dialogs/AddUsersDialog'
 
 import { formatDate } from '@/utils/formateDate'
-import { MenuProps, TableRowLimit, userRoleObj } from '@/configs/customDataConfig'
+import { MenuProps, TableRowLimit, userRoleObj, agencyUsersFilePath } from '@/configs/customDataConfig'
 import ChangePasswordDialog from '@/components/ChangePasswordDialog'
 import OptionMenu from '@/@core/components/option-menu'
-import { agencyUsersFilePath } from '@/configs/customDataConfig'
 
 // declare module '@tanstack/table-core' {
 //   interface FilterFns {
