@@ -474,6 +474,7 @@ model students {
   id_back_image  String?            @db.VarChar(255)
   practical_group_id       Int?
   viva_group_id            Int?
+  aadhaar_no     String?            @db.Text
   practical_group  student_groups?    @relation("practicalGroup", fields: [practical_group_id], references: [id])
   viva_group       student_groups?    @relation("vivaGroup", fields: [viva_group_id], references: [id])
 

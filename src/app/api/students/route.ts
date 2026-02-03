@@ -8,6 +8,8 @@ import { hash } from 'bcrypt';
 import { authOptions } from '@/libs/auth';
 
 import prisma from '@/libs/prisma';
+import { decrypt, encrypt, maskAadhaar } from '@/utils/encryption';
+import { isValidAadhaar } from '@/libs/aadhaar';
 
 export async function GET(req: Request) {
 
@@ -27,7 +29,14 @@ export async function GET(req: Request) {
     where: whereCondition
   })
 
-  return NextResponse.json(students);
+  const studentsWithFormattedAadhaar = students.map(student =>  {
+    return {
+      ...student,
+      aadhaar_no: student.aadhaar_no ? maskAadhaar(decrypt(student.aadhaar_no)) : null
+    };
+  });
+
+  return NextResponse.json(studentsWithFormattedAadhaar);
 }
 
 export async function POST(req: Request) {
@@ -54,7 +63,8 @@ export async function POST(req: Request) {
     state: item.State,
     mobile_no: item.MobileNo.toString(),
     agency_id: agencyId,
-    created_by: createdBy
+    created_by: createdBy,
+    aadhaar_no: item.AadhaarNo && isValidAadhaar(item.AadhaarNo.toString()) ? encrypt(item.AadhaarNo.toString()) : null
   })));
 
   const result = await prisma.students.createMany({

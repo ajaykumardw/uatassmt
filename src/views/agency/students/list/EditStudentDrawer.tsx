@@ -28,6 +28,7 @@ import type { InferInput } from 'valibot';
 import CustomTextField from '@core/components/mui/TextField'
 
 import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
+import { isValidAadhaar } from '@/libs/aadhaar'
 
 type Props = {
   open: boolean
@@ -63,6 +64,7 @@ const schema = object(
     city: optional(pipe(string('City should be type of string'), trim(), maxLength(100, 'The max length for City is 100 characters.'))),
     state: optional(pipe(string('State should be type of string'), trim(), maxLength(100, 'The max length for State is 100 characters.'))),
     mobileNo: pipe(string(), trim() , minLength(1, 'Phone Number is required') , regex(/^[0-9]+$/, 'Phone Number must contain only numbers') , minLength(10, 'Phone Number must be 10 digits') , maxLength(10, 'Phone Number must be 10 digits')),
+    aadhaarNo: optional(pipe(string(), trim() , maxLength(12, 'Aadhaar Number must be 12 digits'), check(value => !value || isValidAadhaar(value), 'Invalid Aadhaar Number'))),
   }
 )
 
@@ -79,7 +81,8 @@ const initialData = {
   address: '',
   city: '',
   state: '',
-  mobileNo: ''
+  mobileNo: '',
+  aadhaarNo: ''
 }
 
 const EditStudentDrawer = ({ open, id, handleClose, updateStudentList }: Props) => {
@@ -108,7 +111,8 @@ const EditStudentDrawer = ({ open, id, handleClose, updateStudentList }: Props) 
         category: res.category || '',
         state: res.state || '',
         city: res.city || '',
-        address: res.address || ''
+        address: res.address || '',
+        aadhaarNo: res.aadhaar_no || ''
       });
 
     } catch (error) {
@@ -206,11 +210,14 @@ const EditStudentDrawer = ({ open, id, handleClose, updateStudentList }: Props) 
             name='userName'
             control={control}
             rules={{ required: true }}
-            disabled
+
+            // disabled
+
             render={({ field }) => (
               <CustomTextField
                 {...field}
                 fullWidth
+                inputProps={{ readOnly: true }}
                 label='User Name'
                 placeholder='User Name'
                 {...(errors.userName && { error: true, helperText: errors.userName.message })}
@@ -242,6 +249,19 @@ const EditStudentDrawer = ({ open, id, handleClose, updateStudentList }: Props) 
                 label='Phone Number'
                 placeholder='Phone Number'
                 {...(errors.mobileNo && { error: true, helperText: errors.mobileNo.message })}
+              />
+            )}
+          />
+          <Controller
+            name='aadhaarNo'
+            control={control}
+            render={({ field }) => (
+              <CustomTextField
+                {...field}
+                fullWidth
+                label='Aadhaar Number'
+                placeholder='Aadhaar Number'
+                {...(errors.aadhaarNo && { error: true, helperText: errors.aadhaarNo.message })}
               />
             )}
           />

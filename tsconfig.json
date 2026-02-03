@@ -62,8 +62,11 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
-, "src/app/[lang]/(student-examination)/examination/page.jsx", "src/app/api/batches/[id]/report/route.ts"  ],
+    ".next/types/**/*.ts",
+    "src/app/[lang]/(student-examination)/examination/page.jsx",
+    "src/app/api/batches/[id]/report/route.ts",
+    "src/utils/encryption.js"
+  ],
   "exclude": [
     "node_modules"
   ]

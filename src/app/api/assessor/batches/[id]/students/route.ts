@@ -12,6 +12,7 @@ import { Prisma } from "@prisma/client";
 import prisma from "@/libs/prisma";
 
 import { storageFolders } from "@/configs/customDataConfig";
+import { decrypt, maskAadhaar } from "@/utils/encryption";
 
 export async function GET(req: NextRequest, context: { params: { id: number } }) {
 
@@ -60,6 +61,7 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
         mobile_no: true,
         practical_group: true,
         viva_group: true,
+        aadhaar_no: true,
       }
     });
 
@@ -79,7 +81,9 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
 
       return {
         ...student,
+        date_of_birth: student.date_of_birth ? student.date_of_birth.toISOString().split('T')[0] : null,
         image: student.image ? `${process.env.NEXT_PUBLIC_APP_URL}/${relativePath}/${student.image}` : null,
+        aadhaar_no: student.aadhaar_no ? maskAadhaar(decrypt(student.aadhaar_no)) : null,
         id_front_image: student.id_front_image ? `${process.env.NEXT_PUBLIC_APP_URL}/${relativePath}/${student.id_front_image}` : null,
         id_back_image: student.id_back_image ? `${process.env.NEXT_PUBLIC_APP_URL}/${relativePath}/${student.id_back_image}` : null,
       };

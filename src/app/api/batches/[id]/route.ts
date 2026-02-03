@@ -8,6 +8,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/libs/auth';
 
 import prisma from '@/libs/prisma';
+import { decrypt, maskAadhaar } from '@/utils/encryption';
 
 
 export async function GET(
@@ -109,10 +110,20 @@ export async function GET(
     }
   })
 
+  const batchWithFormattedStudentAadhaar = {
+    ...batch,
+    students: batch?.students.map(student =>  {
+      return {
+        ...student,
+        aadhaar_no: student.aadhaar_no ? maskAadhaar(decrypt(student.aadhaar_no)) : null
+      };
+    })
+  }
+
   // console.log(batch)
 
   if(batch){
-    return NextResponse.json(batch);
+    return NextResponse.json(batchWithFormattedStudentAadhaar);
   }
 
   return NextResponse.json({message: "Batch not found!"}, {status: 404});

@@ -251,6 +251,14 @@ const StudentListTable = () => {
           </Typography>
         )
       }),
+      columnHelper.accessor('aadhaar_no', {
+        header: 'Aadhaar No',
+        cell: ({ row }) => (
+          <Typography color='text.primary' className='font-medium'>
+            {row.original.aadhaar_no}
+          </Typography>
+        )
+      }),
       columnHelper.accessor('date_of_birth', {
         header: 'Date Of Birth',
         cell: ({ row }) => (

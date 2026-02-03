@@ -6,6 +6,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/libs/auth';
 
 import prisma from '@/libs/prisma';
+import { decrypt, encrypt } from '@/utils/encryption';
 
 // export async function GET() {
 
@@ -29,9 +30,14 @@ export async function GET(
     }
   })
 
+  const studentsWithFormattedAadhaar = {
+    ...students,
+    aadhaar_no: students?.aadhaar_no ? decrypt(students.aadhaar_no) : null
+  };
+
   // console.log(qualificationPacks);
 
-  return NextResponse.json(students);
+  return NextResponse.json(studentsWithFormattedAadhaar);
 }
 
 
@@ -73,7 +79,8 @@ export async function POST(
         mother_name: data.motherName,
         state: data.state,
         city: data.city,
-        address: data.address
+        address: data.address,
+        aadhaar_no: data.aadhaarNo ? encrypt(data.aadhaarNo) : null
       }
     })
 
