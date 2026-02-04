@@ -916,11 +916,11 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
                 <Controller
                   name='practicalExamSetId'
                   control={control}
-                  rules={{ required: true }}
+                  rules={{ required: false }}
                   render={({ field }) => (
                     <CustomTextField
                       select
-                      required={true}
+                      required={false}
                       fullWidth
                       label='Practical Exam Set'
                       {...field}
@@ -942,11 +942,11 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
                 <Controller
                   name='vivaExamSetId'
                   control={control}
-                  rules={{ required: true }}
+                  rules={{ required: false }}
                   render={({ field }) => (
                     <CustomTextField
                       select
-                      required={true}
+                      required={false}
                       fullWidth
                       label='Viva Exam Set'
                       {...field}
