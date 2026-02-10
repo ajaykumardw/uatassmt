@@ -62,6 +62,7 @@ const initialData: AddQPDialogData = {
   totalTheoryMarks: '',
   totalVivaMarks: '',
   totalPracticalMarks: '',
+  totalProjectMarks: '',
   totalMarks: '',
   isTheoryCutoff: false,
   isVivaCutoff: false,
@@ -86,6 +87,7 @@ const schema = object(
     totalTheoryMarks: pipe(string(), trim() , minLength(1, 'Total theory marks is required') , regex(/^[0-9]+(?:\.[0-9]+)?$/, 'Total theory marks must contain only numbers') , maxLength(10, 'Max length is 10 digits')),
     totalVivaMarks: pipe(string(), trim() , minLength(1, 'Total viva marks is required') , regex(/^[0-9]+(?:\.[0-9]+)?$/, 'Total viva marks must contain only numbers') , maxLength(10, 'Max length is 10 digits')),
     totalPracticalMarks: pipe(string(), trim() , minLength(1, 'Total practical marks is required') , regex(/^[0-9]+(?:\.[0-9]+)?$/, 'Total practical marks must contain only numbers') , maxLength(10, 'Max length is 10 digits')),
+    totalProjectMarks: pipe(string(), trim() , regex(/^[0-9]+(?:\.[0-9]+)?$/, 'Total project marks must contain only numbers') , maxLength(10, 'Max length is 10 digits')),
     totalMarks: pipe(string(), trim() , minLength(1, 'Total marks is required') , regex(/^[0-9]+(?:\.[0-9]+)?$/, 'Total marks must contain only numbers') , maxLength(10, 'Max length is 10 digits')),
     isTheoryCutoff: optional(boolean()),
     isVivaCutoff: optional(boolean()),
@@ -525,7 +527,8 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
                       const totalTheoryMarks = parseFloat(e.target.value || '0');
                       const totalVivaMarks = parseFloat(getValues('totalVivaMarks') || '0');
                       const totalPracticalMarks = parseFloat(getValues('totalPracticalMarks') || '0');
-                      const totalMarks = totalTheoryMarks + totalVivaMarks + totalPracticalMarks;
+                      const totalProjectMarks = parseFloat(getValues('totalProjectMarks') || '0');
+                      const totalMarks = totalTheoryMarks + totalVivaMarks + totalPracticalMarks + totalProjectMarks;
 
                       setValue('totalMarks', totalMarks === 0 || isNaN(totalMarks) ? '' : totalMarks.toString());
                     }}
@@ -550,7 +553,8 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
                       const totalTheoryMarks = parseFloat(getValues('totalTheoryMarks') || '0');
                       const totalVivaMarks = parseFloat(e.target.value || '0');
                       const totalPracticalMarks = parseFloat(getValues('totalPracticalMarks') || '0');
-                      const totalMarks = totalTheoryMarks + totalVivaMarks + totalPracticalMarks;
+                      const totalProjectMarks = parseFloat(getValues('totalProjectMarks') || '0');
+                      const totalMarks = totalTheoryMarks + totalVivaMarks + totalPracticalMarks + totalProjectMarks;
 
                       setValue('totalMarks', totalMarks === 0 || isNaN(totalMarks) ? '' : totalMarks.toString());
                     }}
@@ -575,7 +579,8 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
                       const totalTheoryMarks = parseFloat(getValues('totalTheoryMarks') || '0');
                       const totalVivaMarks = parseFloat(getValues('totalVivaMarks') || '0');
                       const totalPracticalMarks = parseFloat(e.target.value || '0');
-                      const totalMarks = totalTheoryMarks + totalVivaMarks + totalPracticalMarks;
+                      const totalProjectMarks = parseFloat(getValues('totalProjectMarks') || '0');
+                      const totalMarks = totalTheoryMarks + totalVivaMarks + totalPracticalMarks + totalProjectMarks;
 
                       setValue('totalMarks', totalMarks === 0 || isNaN(totalMarks) ? '' : totalMarks.toString());
                     }}
@@ -584,6 +589,32 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
               />
             </Grid>
             <Grid item xs={12} sm={6}>
+              <Controller
+                control={control}
+                name='totalProjectMarks'
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <CustomTextField
+                    fullWidth
+                    label='Total Project Marks'
+                    required={true}
+                    {...field}
+                    {...(errors.totalProjectMarks && { error: true, helperText: errors.totalProjectMarks.message })}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      const totalTheoryMarks = parseFloat(getValues('totalTheoryMarks') || '0');
+                      const totalVivaMarks = parseFloat(getValues('totalVivaMarks') || '0');
+                      const totalPracticalMarks = parseFloat(getValues('totalPracticalMarks') || '0');
+                      const totalProjectMarks = parseFloat(e.target.value || '0');
+                      const totalMarks = totalTheoryMarks + totalVivaMarks + totalPracticalMarks + totalProjectMarks;
+
+                      setValue('totalMarks', totalMarks === 0 || isNaN(totalMarks) ? '' : totalMarks.toString());
+                    }}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12}>
               <Controller
                 control={control}
                 name='totalMarks'

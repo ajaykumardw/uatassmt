@@ -40,7 +40,7 @@ export async function POST(
   const session = await getServerSession(authOptions);
   const agency_id = Number(session?.user?.agency_id);
 
-  const {sscId, qualificationPackName, nQRCode, nSQFLevel, version, totalTheoryMarks, totalVivaMarks, totalPracticalMarks, totalMarks, isTheoryCutoff, isVivaCutoff, isPracticalCutoff, isOverallCutoff, isNOSCutoff, isWeightedAvailable, theoryCutoffMarks, vivaCutoffMarks, practicalCutoffMarks, overallCutoffMarks, nosCutoffMarks, weightedAvailable} = await req.json();
+  const {sscId, qualificationPackName, nQRCode, nSQFLevel, version, totalTheoryMarks, totalVivaMarks, totalPracticalMarks, totalProjectMarks, totalMarks, isTheoryCutoff, isVivaCutoff, isPracticalCutoff, isOverallCutoff, isNOSCutoff, isWeightedAvailable, theoryCutoffMarks, vivaCutoffMarks, practicalCutoffMarks, overallCutoffMarks, nosCutoffMarks, weightedAvailable} = await req.json();
 
   const theoryCutoff = isTheoryCutoff === true ? theoryCutoffMarks : '';
   const vivaCutoff = isVivaCutoff === true ? vivaCutoffMarks : '';
@@ -73,6 +73,7 @@ export async function POST(
         total_theory_marks: Number(totalTheoryMarks),
         total_practical_marks: Number(totalPracticalMarks),
         total_viva_marks: Number(totalVivaMarks),
+        total_project_marks: Number(totalProjectMarks),
         theory_cutoff_marks: Number(theoryCutoff),
         viva_cutoff_marks: Number(vivaCutoff),
         practical_cutoff_marks: Number(practicalCutoff),

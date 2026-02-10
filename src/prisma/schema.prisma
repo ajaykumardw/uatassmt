@@ -161,6 +161,7 @@ model qualification_packs {
   total_marks              Decimal                  @db.Decimal(10, 2)
   total_theory_marks       Decimal                  @db.Decimal(10, 2)
   total_practical_marks    Decimal                  @db.Decimal(10, 2)
+  total_project_marks      Decimal                  @db.Decimal(10, 2)
   total_viva_marks         Decimal                  @db.Decimal(10, 2)
   theory_cutoff_marks      Decimal?                 @db.Decimal(10, 2)
   viva_cutoff_marks        Decimal?                 @db.Decimal(10, 2)

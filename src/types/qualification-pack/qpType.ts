@@ -19,6 +19,7 @@ export type QPType = {
   total_theory_marks: number
   total_viva_marks: number
   total_practical_marks: number
+  total_project_marks: number
   isTheoryCutoffAvailable?: boolean
   isVivaCutoffAvailable?: boolean
   isPracticalCutoffAvailable?: boolean

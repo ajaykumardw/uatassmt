@@ -169,6 +169,7 @@ const QualificationPackListTable = ({ tableData, updateQPList }: { tableData?: Q
     totalTheoryMarks: '',
     totalVivaMarks: '',
     totalPracticalMarks: '',
+    totalProjectMarks: '',
     totalMarks: '',
     isTheoryCutoff: false,
     isVivaCutoff: false,
@@ -217,6 +218,7 @@ const QualificationPackListTable = ({ tableData, updateQPList }: { tableData?: Q
           totalTheoryMarks: qpData.total_theory_marks,
           totalVivaMarks: qpData.total_viva_marks,
           totalPracticalMarks: qpData.total_practical_marks,
+          totalProjectMarks: qpData.total_project_marks,
           totalMarks: qpData.total_marks,
           isTheoryCutoff: qpData.theory_cutoff_marks !== "0",
           isVivaCutoff: qpData.viva_cutoff_marks !== "0",
@@ -373,6 +375,16 @@ const QualificationPackListTable = ({ tableData, updateQPList }: { tableData?: Q
           <div className='flex items-center gap-2'>
             <Typography className='capitalize' color='text.primary'>
               {row.original.total_viva_marks}
+            </Typography>
+          </div>
+        )
+      }),
+      columnHelper.accessor('total_project_marks', {
+        header: 'Total Project Marks',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-2'>
+            <Typography className='capitalize' color='text.primary'>
+              {row.original.total_project_marks}
             </Typography>
           </div>
         )
