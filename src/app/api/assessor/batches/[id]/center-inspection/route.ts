@@ -239,9 +239,20 @@ export async function POST(
       const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20 MB
 
       // ----- process files -----
-      const outputs: string[] = [];
+      // const outputs: string[] = [];
+      
+      const outputs: { id: number; url: string }[] = [];
 
       const files = formData.getAll(key);
+
+      const relativePath = path.posix.join(
+        storageFolders.storage,
+        storageFolders.uploads,
+        storageFolders.agency,
+        storageFolders.batches,
+        id.toString(),
+        storageFolders.centerInspection
+      );
 
       for (const file of files) {
         if (!(file instanceof Blob)) continue;
@@ -326,30 +337,85 @@ export async function POST(
           buffer
         )
 
-        await prisma.categories.findFirst({
+        // const createdMedia = await prisma.categories.findFirst({
+        //   where: {
+        //     category_name: key
+        //   },
+        //   select: {
+        //     id: true,
+        //     category_name: true,
+        //   }
+        // }).then(async (category) => {
+        //   if (category) {
+        //     const createdMedia = await prisma.inspection_media.create({
+        //       data: {
+        //         category_id: category.id,
+        //         batch_id: Number(id),
+        //         assessor_id: decoded.id, // to be updated
+        //         media_type: mediaType,
+        //         file_name: filename,
+        //         uploaded_by: decoded.id, // to be updated
+        //       }
+        //     });
+        //     return createdMedia;
+        //   }
+        // });
+
+        // // outputs.push(`${filename}`);
+        // if (createdMedia) {
+        //   const url = `${process.env.NEXT_PUBLIC_APP_URL}/${path.posix.join(
+        //     relativePath,
+        //     filename
+        //   )}`;
+        //   outputs.push({
+        //     id: createdMedia?.id,
+        //     url: url
+        //   });
+        // }
+
+        const category = await prisma.categories.findFirst({
           where: {
-            category_name: key
+            category_name: key,
           },
           select: {
             id: true,
-            category_name: true,
-          }
-        }).then(async (category) => {
-          if (category) {
-            await prisma.inspection_media.create({
-              data: {
-                category_id: category.id,
-                batch_id: Number(id),
-                assessor_id: decoded.id, // to be updated
-                media_type: mediaType,
-                file_name: filename,
-                uploaded_by: decoded.id, // to be updated
-              }
-            });
-          }
+          },
         });
 
-        outputs.push(`${filename}`);
+        if (!category) {
+          return NextResponse.json(
+            {
+              status: "Error",
+              statusCode: 400,
+              message: "Category not found",
+            },
+            { status: 400 }
+          );
+        }
+
+        const createdMedia = await prisma.inspection_media.create({
+          data: {
+            category_id: category.id,
+            batch_id: Number(id),
+            assessor_id: decoded.id,
+            media_type: mediaType,
+            file_name: filename,
+            uploaded_by: decoded.id,
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        const url = `${process.env.NEXT_PUBLIC_APP_URL}/${path.posix.join(
+          relativePath,
+          filename
+        )}`;
+
+        outputs.push({
+          id: createdMedia.id,
+          url,
+        });
       }
 
       return NextResponse.json({
