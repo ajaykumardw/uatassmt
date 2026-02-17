@@ -206,6 +206,10 @@ export async function POST(
         "biometric_device_photo",
         "trainer_aadhaar_photo",
         "trainer_tot_certificate",
+        "group_photo_student",
+        "group_photo_student_assessor",
+        "group_photo_student_assessor_trainer",
+        "group_photo_student_assessor_trainer_spoc",
       ];
 
       // ----- extract only one key -----
@@ -240,7 +244,7 @@ export async function POST(
 
       // ----- process files -----
       // const outputs: string[] = [];
-      
+
       const outputs: { id: number; url: string }[] = [];
 
       const files = formData.getAll(key);
