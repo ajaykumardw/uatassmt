@@ -21,6 +21,9 @@ export async function GET() {
     },
     include: {
       pc: {
+        orderBy: {
+          pc_id: 'asc'
+        },
         select: {
           id: true,
           pc_id: true,
