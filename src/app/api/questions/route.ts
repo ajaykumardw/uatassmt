@@ -44,11 +44,17 @@ export async function GET(req: Request) {
           qualification_pack_name: true,
           nsqf_level: true,
           nos: {
+            orderBy: {
+              nos_id: 'asc'
+            },
             select: {
               id: true,
               nos_id: true,
               nos_name: true,
               pc: {
+                orderBy: {
+                  pc_id: 'asc'
+                },
                 select: {
                   id: true,
                   pc_id: true,

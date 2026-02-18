@@ -6,7 +6,7 @@ import CardContent from '@mui/material/CardContent';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 
-import { Typography } from '@mui/material';
+import { Chip, Typography } from '@mui/material';
 
 // Type Imports
 import type { NOSType } from '@/types/nos/nosType';
@@ -261,7 +261,8 @@ const TableFilters = ({ setSSCID, setQPID, setPCID, setAllPC, setData, tableData
             <MenuItem value='-1'>Select NOS</MenuItem>
             {nosData.length > 0 ? (
               nosData.map((nos) => (
-                <MenuItem key={nos.id.toString()} value={nos.id.toString()}>
+                <MenuItem key={nos.id.toString()} value={nos.id.toString()} className='flex flex-wrap gap-2'>
+                  <Chip label={nos.nos_id} size='small' variant='tonal' color='success' />
                   <Typography variant='inherit' noWrap>{nos.nos_name}</Typography>
                 </MenuItem>
               ))

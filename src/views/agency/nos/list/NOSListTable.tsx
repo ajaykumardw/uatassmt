@@ -32,6 +32,8 @@ import {
   getSortedRowModel
 } from '@tanstack/react-table'
 
+import { toast } from 'react-toastify';
+
 import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 
 // import type { RankingInfo } from '@tanstack/match-sorter-utils'
@@ -62,6 +64,7 @@ import tableStyles from '@core/styles/table.module.css'
 import AddEditNOSDialog from '@/components/nos/dialogs/AddEditNOSDialog';
 import AddEditPCDialog from '@/components/pc/dialogs/AddEditPCDialog';
 import BulkUploadNOSDialog from '@/components/nos/dialogs/BulkUploadNOSDialog';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 import type { NOSType } from '@/types/nos/nosType';
 
@@ -191,6 +194,11 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
   const [nosId, setNOSId] = useState(0);
   const [pcId, setPCId] = useState(0);
   const [bulkUploadNOSOpen, setBulkUploadNOSOpen] = useState(false);
+  const [selectedPCs, setSelectedPCs] = useState<{ [nosId: number]: number[] }>({});
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteData, setDeleteData] = useState<{ pcIds: number[]; nosId: number } | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
 
   const [nosEditData, setNOSEditData] = useState({
     sscId: '',
@@ -223,6 +231,46 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [data, setData] = useState(...[tableData]);
   const [globalFilter, setGlobalFilter] = useState('');
+
+  const openDeleteConfirm = (pcIds: number[], nosId: number) => {
+    setDeleteData({ pcIds, nosId });
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteData) return;
+
+    try {
+      setDeleteLoading(true);
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pc/bulk-delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(deleteData) // sending nosId to identify which NOS's PCs are being deleted, can be used in backend for validation if needed
+      });
+
+      if (!res.ok) throw new Error('Delete failed');
+
+      toast.success('PC deleted successfully 🎉');
+
+      setSelectedPCs(prev => ({
+        ...prev,
+        [deleteData.nosId]: []
+      }));
+
+      updateNOSList();
+
+      setConfirmOpen(false);
+      setDeleteData(null);
+
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to delete PC ❌');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
 
   const handleOnEditClick = async (id: number) => {
 
@@ -523,7 +571,7 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
                           <tr key={`${row.id}-extended`} className={classnames({ selected: row.getIsSelected() })}>
                             {/* 2nd row is a custom 1 cell row */}
                             <td colSpan={row.getVisibleCells().length}>
-                              <div className='flex justify-end flex-col items-start md:flex-row md:items-center p-4 pb-6 gap-4'>
+                              <div className='flex justify-start flex-col items-start md:flex-row md:items-center p-4 pb-6 gap-4'>
                                 <div className='flex flex-col sm:flex-row sm:is-auto items-start sm:items-center gap-4'>
                                   <Button
                                     variant='tonal'
@@ -535,6 +583,20 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
                                     Add New PC
                                   </Button>
                                 </div>
+
+                                {selectedPCs[row.original.id]?.length > 0 && (
+                                  <Button
+                                    variant="tonal"
+                                    color="error"
+                                    size="small"
+                                    startIcon={<i className='tabler-trash' />}
+                                    onClick={() =>
+                                      openDeleteConfirm(selectedPCs[row.original.id], row.original.id)
+                                    }
+                                  >
+                                    Delete Selected PC
+                                  </Button>
+                                )}
                               </div>
                               <div className="pr-2 pb-4">
                                 <Card variant='outlined'>
@@ -542,8 +604,23 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
                                     <thead style={{ borderTop: '0' }}>
                                       <tr style={{ borderTop: '0' }}>
                                         <th>
-                                          <div>S.No.</div>
+                                          <input
+                                            type="checkbox"
+                                            checked={
+                                              row.original.pc.length > 0 &&
+                                              selectedPCs[row.original.id]?.length === row.original.pc.length
+                                            }
+                                            onChange={(e) => {
+                                              const allPCIds = row.original.pc.map((pc: PCType) => pc.id);
+
+                                              setSelectedPCs(prev => ({
+                                                ...prev,
+                                                [row.original.id]: e.target.checked ? allPCIds : []
+                                              }));
+                                            }}
+                                          />
                                         </th>
+                                        <th>S.No.</th>
                                         <th>
                                           <div>PC ID</div>
                                         </th>
@@ -573,7 +650,7 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
                                     {row.original.pc.length === 0 ? (
                                       <tbody>
                                         <tr>
-                                          <td colSpan={4} className='text-center'>
+                                          <td colSpan={10} className='text-center'>
                                             No data available
                                           </td>
                                         </tr>
@@ -582,6 +659,24 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
                                       <tbody>
                                         {row.original.pc.map((pc: PCType, index: number) => (
                                           <tr key={index + 1}>
+                                            <td>
+                                              <input
+                                                type="checkbox"
+                                                checked={selectedPCs[row.original.id]?.includes(pc.id) || false}
+                                                onChange={(e) => {
+                                                  setSelectedPCs(prev => {
+                                                    const existing = prev[row.original.id] || [];
+
+                                                    return {
+                                                      ...prev,
+                                                      [row.original.id]: e.target.checked
+                                                        ? [...existing, pc.id]
+                                                        : existing.filter(id => id !== pc.id)
+                                                    };
+                                                  });
+                                                }}
+                                              />
+                                            </td>
                                             <td>{index + 1}</td>
                                             <td>{pc.pc_id}</td>
                                             <td>{pc.pc_name}</td>
@@ -629,6 +724,14 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
       <AddEditPCDialog open={addPCOpen} nosId={nosId} data={pcAddData} updatePCList={updateNOSList} handleClose={() => setAddPCOpen(!addPCOpen)} />
       <AddEditPCDialog open={editPCOpen} pcId={pcId} updatePCList={updateNOSList} handleClose={() => setEditPCOpen(!editPCOpen)} data={pcEditData} />
       <BulkUploadNOSDialog open={bulkUploadNOSOpen} sscID={sscID} updateNOSList={updateNOSList} handleClose={() => setBulkUploadNOSOpen(!bulkUploadNOSOpen)} />
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete PC"
+        description={`Are you sure you want to delete ${deleteData?.pcIds.length ?? 0} PC(s)? This action cannot be undone.`}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleConfirmDelete}
+        loading={deleteLoading}
+      />
     </>
   )
 }
