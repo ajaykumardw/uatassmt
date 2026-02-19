@@ -22,9 +22,21 @@ export async function GET(req: Request) {
         question_type: qType == 'practical' ? 'practical' : qType == 'viva' ? 'viva' : 'theory'
       },
       include: {
-        pc: true
+        pc: {
+          orderBy: {
+            pc_id: 'asc'
+          },
+        }
       }
     })
+
+    questions.forEach(q =>
+      q.pc.sort((a, b) => {
+        const numA = parseInt(a.pc_id.replace(/^\D+/g, ''), 10);
+        const numB = parseInt(b.pc_id.replace(/^\D+/g, ''), 10);
+        return numA - numB;
+      })
+    );
 
     return NextResponse.json(questions);
 
@@ -68,6 +80,9 @@ export async function GET(req: Request) {
                     },
                     include: {
                       pc: {
+                        orderBy: {
+                          pc_id: 'asc'
+                        },
                         select: {
                           id: true,
                           pc_id: true,
@@ -86,6 +101,20 @@ export async function GET(req: Request) {
     orderBy:{
       ssc_name: "asc"
     }
+  });
+
+  questions.forEach(ssc => {
+    ssc.qualification_packs.forEach(qp => {
+      qp.nos.forEach(nos => {
+        nos.pc.forEach(pc => {
+          pc.questions.sort((a, b) => {
+            const numA = parseInt(a.pc[0].pc_id.replace(/^\D+/g, ''), 10);
+            const numB = parseInt(b.pc[0].pc_id.replace(/^\D+/g, ''), 10);
+            return numA - numB;
+          });
+        });
+      });
+    });
   });
 
   // console.log(qualificationPacks);
