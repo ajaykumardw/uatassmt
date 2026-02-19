@@ -34,6 +34,7 @@ export async function GET(req: Request) {
       q.pc.sort((a, b) => {
         const numA = parseInt(a.pc_id.replace(/^\D+/g, ''), 10);
         const numB = parseInt(b.pc_id.replace(/^\D+/g, ''), 10);
+        
         return numA - numB;
       })
     );
@@ -110,7 +111,7 @@ export async function GET(req: Request) {
           pc.questions.sort((a, b) => {
             const numA = parseInt(a.pc[0].pc_id.replace(/^\D+/g, ''), 10);
             const numB = parseInt(b.pc[0].pc_id.replace(/^\D+/g, ''), 10);
-            
+
             return numA - numB;
           });
         });
