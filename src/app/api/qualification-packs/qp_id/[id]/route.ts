@@ -17,8 +17,8 @@ export async function GET(
   const sscId = url.searchParams.get('sscId');
 
   // const qpId = url.searchParams.get('qpId');
-  
-  const id = decodeURIComponent(context.params.id.toString());
+
+  const id = decodeURIComponent(context.params.id.toString()).trim();
   const session = await getServerSession(authOptions);
   const agency_id = Number(session?.user?.agency_id)
 

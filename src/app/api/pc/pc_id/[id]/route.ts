@@ -18,9 +18,9 @@ export async function GET(
   // const sscId = url.searchParams.get('sscId');
   // const qpId = url.searchParams.get('qpId');
 
-  const nosId = url.searchParams.get('nosId');
+  const nosId = url.searchParams.get('nosId')?.trim();
   const unique = url.searchParams.get('unique');
-  const id = decodeURIComponent(context.params.id.toString());
+  const id = decodeURIComponent(context.params.id.toString()).trim();
 
 
   if(unique && nosId){
