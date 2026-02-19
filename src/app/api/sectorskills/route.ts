@@ -53,8 +53,15 @@ export async function GET() {
             }
           },
           nos: {
+            orderBy: {
+              nos_id: 'asc'
+            },
             include: {
-              pc: true
+              pc: {
+                orderBy: {
+                  pc_id: 'asc'
+                },
+              }
             }
           },
           exam_sets: {
