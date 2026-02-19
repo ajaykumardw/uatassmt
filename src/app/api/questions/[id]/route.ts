@@ -24,7 +24,11 @@ export async function GET(
       agency_id: agency_id
     },
     include: {
-      pc: true
+      pc: {
+        orderBy: {
+          pc_id: 'asc'
+        },
+      }
     }
   })
 

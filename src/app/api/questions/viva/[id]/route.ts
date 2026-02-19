@@ -25,7 +25,11 @@ export async function GET(
       question_type: 'viva'
     },
     include: {
-      pc: true
+      pc: {
+        orderBy: {
+          pc_id: 'asc'
+        },
+      }
     }
   })
 
