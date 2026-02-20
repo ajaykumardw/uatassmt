@@ -40,7 +40,6 @@ import type { QPType } from '@/types/qualification-pack/qpType'
 import { removeDuplicates } from '@/utils/removeDuplicates'
 
 import TheoryQuestionListTable from '@/views/agency/exam-sets/list/TheoryQuestionsListTable'
-import { ExamDurations } from '@/configs/customDataConfig'
 
 type AddQPDialogData = InferInput<typeof schema> & {
   selectedQuestions?: number[]
@@ -78,7 +77,7 @@ const schema = object(
     mode: pipe(string(), trim(), minLength(1, 'This field is required.')),
     totalQuestions: pipe(string(), trim(), minLength(1, 'This field is required.'), check((value) => !value || /^(?:[1-9]|[1-4]\d|50)$/.test(value), 'Total Questions must be between 1 and 50 and must be a number.') ),
     status: pipe(string(), trim(), minLength(1, 'This field is required.')),
-    examDuration: pipe(string(), trim(), minLength(1, 'This field is required.')),
+    examDuration: pipe( string(), trim(), minLength(1, 'This field is required.'), check((value) => /^(?:[1-9]|[1-9]\d|[1-2]\d{2}|300)$/.test(value), 'Exam duration must be between 1 and 300 minutes and must be a whole number.' ) ),
     easy: pipe(string(), trim(), minLength(1, 'This field is required.'), check((value) => !value || /^(?:0|[1-9]|[1-4]\d|50)(\.\d+)?$/.test(value), 'Easy must be between 0 and 50 and must be a number.') ),
     medium: pipe(string(), trim(), minLength(1, 'This field is required.'), check((value) => !value || /^(?:0|[1-9]|[1-4]\d|50)(\.\d+)?$/.test(value), 'Medium must be between 0 and 50 and must be a number.') ),
     hard: pipe(string(), trim(), minLength(1, 'This field is required.'), check((value) => !value || /^(?:0|[1-9]|[1-4]\d|50)(\.\d+)?$/.test(value), 'Hard must be between 0 and 50 and must be a number.') ),
@@ -107,7 +106,7 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
   // const [easyCount, setEasyCount] = useState('');
   // const [mediumCount, setMediumCount] = useState('');
   // const [hardCount, setHardCount] = useState('');
-  
+
   const [totalTheoryMarks, setTotalTheoryMarks] = useState(0);
   const [sumOfSelectedQuestionsMarks, setSumOfSelectedQuestionsMarks] = useState(0);
   const [isAutoDisabled, setIsAutoDisabled] = useState(false);
@@ -359,7 +358,7 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
 
   //     if (total === 0) {
   //       clearErrors(['easy', 'medium', 'hard']);
-        
+
   //       return;
   //     }
 
@@ -370,7 +369,7 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
   //       setIsAutoDisabled(false);
   //     } else {
   //       const message = 'The sum of Easy, Medium, and Hard must equal Total Questions.';
-        
+
   //       setError('easy', { type: 'manual', message });
   //       setError('medium', { type: 'manual', message });
   //       setError('hard', { type: 'manual', message });
@@ -392,7 +391,7 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
   //   }
 
   // }, [easyQuestions, easy])
-  
+
   // useEffect(() => {
 
   //   if(medium && mediumQuestions && Number(medium) > mediumQuestions.length){
@@ -400,7 +399,7 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
   //   }
 
   // }, [mediumQuestions, medium])
-  
+
   // useEffect(() => {
 
   //   if(hard && hardQuestions && Number(hard) > hardQuestions.length){
@@ -459,7 +458,7 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
 
       // Check sum of questions
       const sum = totalEasy + totalMedium + totalHard;
-      
+
       if (sum !== total) {
         const message = 'The sum of Easy, Medium, and Hard must equal Total Questions.';
 
@@ -494,12 +493,14 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
 
       const isEqual = totalTheoryMarks === sumOfSelectedQuestionsMarks;
 
-      console.log("sum of marks: ", isEqual, totalTheoryMarks, sumOfSelectedQuestionsMarks, typeof totalTheoryMarks, typeof sumOfSelectedQuestionsMarks);
-      
+      // console.log("sum of marks: ", isEqual, totalTheoryMarks, sumOfSelectedQuestionsMarks, typeof totalTheoryMarks, typeof sumOfSelectedQuestionsMarks);
+
       if(isEqual){
         clearErrors(['totalQuestions']);
       } else {
-        console.log("sum of marks in else: ", isEqual, totalTheoryMarks, sumOfSelectedQuestionsMarks);
+
+        // console.log("sum of marks in else: ", isEqual, totalTheoryMarks, sumOfSelectedQuestionsMarks);
+
         setError('totalQuestions', {type: 'custom', message: 'The sum of selected questions marks must equal to Total Theory Marks.'});
       }
 
@@ -756,7 +757,8 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
                 )}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+
+            {/* <Grid item xs={12} sm={6}>
               <Controller
                 control={control}
                 name='examDuration'
@@ -780,6 +782,28 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
                   </CustomTextField>
                 )}
               />
+            </Grid> */}
+
+            <Grid item xs={12} sm={6}>
+              <Controller
+                control={control}
+                name="examDuration"
+                rules={{
+                  required: true,
+                }}
+                render={({ field }) => (
+                  <CustomTextField
+                    {...field}
+                    fullWidth
+                    id="exam-duration"
+                    label="Exam Duration (in minutes)"
+                    required
+                    inputProps={{ min: 1 }}
+                    error={!!errors.examDuration}
+                    helperText={errors.examDuration?.message}
+                  />
+                )}
+              />
             </Grid>
             {changedMode === 'Auto'  &&
               <>
@@ -794,9 +818,9 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
                         fullWidth
                         required={true}
                         {...field}
-                        
+
                         // onChange={e => { field.onChange(e); Number(e.target.value) > easyQuestions.length ? (setValue('easy', '0'), setEasyCount('0')) : setEasyCount(e.target.value) }}
-                        
+
                         {...(errors.easy && { error: true, helperText: errors.easy.message })}
                         label={`Easy (Available ${easyQuestions.length})`}
                         placeholder='0'
@@ -815,9 +839,9 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
                         fullWidth
                         required={true}
                         {...field}
-                        
+
                         // onChange={e => { field.onChange(e); Number(e.target.value) > mediumQuestions.length ? (setValue('medium', '0'), setMediumCount('0')) : setMediumCount(e.target.value) }}
-                        
+
                         {...(errors.medium && { error: true, helperText: errors.medium.message })}
                         label={`Medium (Available ${mediumQuestions.length})`}
                         placeholder='0'
@@ -836,9 +860,9 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
                         fullWidth
                         required={true}
                         {...field}
-                        
+
                         // onChange={e => { field.onChange(e); Number(e.target.value) > hardQuestions.length ? (setValue('hard', '0'), setHardCount('0')) : setHardCount(e.target.value)}}
-                        
+
                         {...(errors.hard && { error: true, helperText: errors.hard.message })}
                         label={`Hard (Available ${hardQuestions.length})`}
                         placeholder='0'

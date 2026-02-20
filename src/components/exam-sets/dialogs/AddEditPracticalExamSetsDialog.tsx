@@ -40,7 +40,6 @@ import type { QPType } from '@/types/qualification-pack/qpType'
 import { removeDuplicates } from '@/utils/removeDuplicates'
 
 import TheoryQuestionListTable from '@/views/agency/exam-sets/list/TheoryQuestionsListTable'
-import { ExamDurations } from '@/configs/customDataConfig'
 
 type AddQPDialogData = InferInput<typeof schema> & {
   selectedQuestions?: number[]
@@ -74,7 +73,7 @@ const schema = object(
     mode: pipe(string(), trim(), minLength(1, 'This field is required.')),
     totalQuestions: pipe(string(), trim(), minLength(1, 'This field is required.'), check((value) => !value || /^(?:[1-9]|[1-4]\d|50)$/.test(value), 'Total Questions must be between 1 and 50 and must be a number.') ),
     status: pipe(string(), trim(), minLength(1, 'This field is required.')),
-    examDuration: pipe(string(), trim(), minLength(1, 'This field is required.')),
+    examDuration: pipe( string(), trim(), minLength(1, 'This field is required.'), check((value) => /^(?:[1-9]|[1-9]\d|[1-2]\d{2}|300)$/.test(value), 'Exam duration must be between 1 and 300 minutes and must be a whole number.' ) ),
   }
 );
 
@@ -129,7 +128,7 @@ const AddEditPracticalExamSetsDialog = ({ open, examSetId, handleClose, updateEx
         mode: examSet.mode,
         totalQuestions: examSet.total_questions,
         status: examSet.status,
-        examDuration: examSet.exam_duration,
+        examDuration: examSet.exam_duration.toString(),
       })
       setMode(examSet.mode);
 
@@ -577,7 +576,8 @@ const AddEditPracticalExamSetsDialog = ({ open, examSetId, handleClose, updateEx
                 )}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+
+            {/* <Grid item xs={12} sm={6}>
               <Controller
                 control={control}
                 name='examDuration'
@@ -599,6 +599,28 @@ const AddEditPracticalExamSetsDialog = ({ open, examSetId, handleClose, updateEx
                       </MenuItem>
                     ))}
                   </CustomTextField>
+                )}
+              />
+            </Grid> */}
+
+            <Grid item xs={12} sm={6}>
+              <Controller
+                control={control}
+                name="examDuration"
+                rules={{
+                  required: true,
+                }}
+                render={({ field }) => (
+                  <CustomTextField
+                    {...field}
+                    fullWidth
+                    id="exam-duration"
+                    label="Exam Duration (in minutes)"
+                    required
+                    inputProps={{ min: 1 }}
+                    error={!!errors.examDuration}
+                    helperText={errors.examDuration?.message}
+                  />
                 )}
               />
             </Grid>

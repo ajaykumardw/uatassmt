@@ -69,6 +69,7 @@ import { getLocalizedUrl } from '@/utils/i18n'
 
 import tableStyles from '@core/styles/table.module.css'
 import { MenuProps, TableRowLimit } from '@/configs/customDataConfig'
+import { useShadowAuth } from '@/hooks/useShadowAuth'
 
 
 // import DialogEditUserInfo from '@/views/pages/dialog-examples/DialogEditUserInfo'
@@ -188,6 +189,7 @@ const UserListTable = ({ tableData }: { tableData?: UsersType[] }) => {
 
   // Hooks
   const { lang: locale } = useParams()
+  const { startShadow } = useShadowAuth()
 
   const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(
     () => [
@@ -318,9 +320,9 @@ const UserListTable = ({ tableData }: { tableData?: UsersType[] }) => {
       }),
       columnHelper.accessor('shadow_login', {
         header: 'Shadow Login',
-        cell: () => (
+        cell: ({ row }) => (
           <div className='flex justify-center items-center'>
-            <IconButton>
+            <IconButton onClick={() => startShadow(row.original.id)}>
               <i className='tabler-login text-[22px] text-textSecondary' />
             </IconButton>
           </div>

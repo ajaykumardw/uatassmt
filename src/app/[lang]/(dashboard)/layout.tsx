@@ -17,6 +17,7 @@ import Header from '@components/layout/horizontal/Header'
 import Navbar from '@components/layout/vertical/Navbar'
 import VerticalFooter from '@components/layout/vertical/Footer'
 import HorizontalFooter from '@components/layout/horizontal/Footer'
+import ShadowBanner from '@/components/ShadowBanner'
 import Customizer from '@core/components/customizer'
 import ScrollToTop from '@core/components/scroll-to-top'
 
@@ -44,11 +45,13 @@ const Layout = async ({ children, params }: ChildrenType & { params: { lang: Loc
             navbar={<Navbar />}
             footer={<VerticalFooter />}
           >
+            <ShadowBanner />
             {children}
           </VerticalLayout>
         }
         horizontalLayout={
           <HorizontalLayout header={<Header dictionary={dictionary} />} footer={<HorizontalFooter />}>
+            <ShadowBanner />
             {children}
           </HorizontalLayout>
         }

@@ -19,6 +19,8 @@ declare module 'next-auth' {
     user_name?: string | null;
     candidate_name?: string | null;
     is_ssc?: boolean;
+    actual_user_id?: string | null;
+    is_shadow?: boolean;
   }
   interface Session{
     studentImage?: string | null,
@@ -36,6 +38,8 @@ declare module 'next-auth' {
       user_name?: string | null;
       candidate_name?: string | null;
       is_ssc?: boolean;
+      actual_user_id?: string | null;
+      is_shadow?: boolean;
     } & DefaultSession['user']
   }
 }
@@ -55,5 +59,7 @@ declare module 'next-auth/jwt' {
     user_name?: string | null;
     candidate_name?: string | null;
     is_ssc?: boolean;
+    actual_user_id?: string | null;
+    is_shadow?: boolean;
   }
 }
