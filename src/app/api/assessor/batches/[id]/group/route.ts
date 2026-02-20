@@ -396,7 +396,8 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
     }
 
     let groupPhotoName = null;
-    let groupVideoName = null;
+
+    // let groupVideoName = null;
 
     // ----------------------------------------------------------
     // 📌 Validate + Prepare Center Photo
@@ -539,19 +540,19 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
       responseData.group_photo_url = `${process.env.NEXT_PUBLIC_APP_URL}/${relativePhotoPath}`;
     }
 
-    if (groupVideoName) {
-      const relativeVideoPath = path.posix.join(
-        storageFolders.storage,
-        storageFolders.uploads,
-        storageFolders.agency,
-        storageFolders.batches,
-        id.toString(),
-        'group-video',
-        groupVideoName
-      );
+    // if (groupVideoName) {
+    //   const relativeVideoPath = path.posix.join(
+    //     storageFolders.storage,
+    //     storageFolders.uploads,
+    //     storageFolders.agency,
+    //     storageFolders.batches,
+    //     id.toString(),
+    //     'group-video',
+    //     groupVideoName
+    //   );
 
-      responseData.group_video_url = `${process.env.NEXT_PUBLIC_APP_URL}/${relativeVideoPath}`;
-    }
+    //   responseData.group_video_url = `${process.env.NEXT_PUBLIC_APP_URL}/${relativeVideoPath}`;
+    // }
 
     return NextResponse.json({
       status: "Success",

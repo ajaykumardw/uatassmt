@@ -1,10 +1,16 @@
 import fs from "fs";
 import path from "path";
+
 import { randomUUID } from "crypto";
+
 import { createWriteStream } from "fs";
+
 import { pipeline } from "stream/promises";
-import { NextRequest, NextResponse } from "next/server";
+
+import { type NextRequest, NextResponse } from "next/server";
+
 import { verify } from "jsonwebtoken";
+
 import prisma from "@/libs/prisma";
 
 const allowedVideoMimeTypes = [
@@ -21,14 +27,16 @@ export async function POST(
   context: { params: { id: string } }
 ) {
   try {
-    
+
     // 🔐 Auth
     const authHeader = req.headers.get("authorization");
+
     if (!authHeader) {
       return errorResponse("Missing token", 401);
     }
 
     const token = authHeader.split(" ")[1];
+
     const decoded: any = verify(
       token,
       process.env.NEXTAUTH_SECRET as string
