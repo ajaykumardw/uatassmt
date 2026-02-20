@@ -49,6 +49,11 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
       select: {
         id: true,
         batch_id: true,
+        batch: {
+          select: {
+            batch_completed: true,
+          }
+        },
         candidate_id: true,
         user_name: true,
         candidate_name: true,
@@ -62,6 +67,18 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
         practical_group: true,
         viva_group: true,
         aadhaar_no: true,
+        student_exam_set_results: {
+          select: {
+            id: true,
+            exam_set: {
+              select: {
+                id: true,
+                set_type: true,
+                set_name: true
+              }
+            }
+          }
+        }
       }
     });
 
@@ -86,6 +103,9 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
         aadhaar_no: student.aadhaar_no ? maskAadhaar(decrypt(student.aadhaar_no)) : null,
         id_front_image: student.id_front_image ? `${process.env.NEXT_PUBLIC_APP_URL}/${relativePath}/${student.id_front_image}` : null,
         id_back_image: student.id_back_image ? `${process.env.NEXT_PUBLIC_APP_URL}/${relativePath}/${student.id_back_image}` : null,
+        batch: undefined,
+        student_exam_set_results: undefined,
+        online_theory_exam_status: student.student_exam_set_results.some(result => result.exam_set.set_type === 'T') ? 'Submitted' : student.batch.batch_completed ? 'Absent' : 'Pending',
       };
     });
 

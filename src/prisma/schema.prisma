@@ -300,6 +300,7 @@ model student_exam_set_results {
   is_active Int @default(1) @db.TinyInt
 
   student students @relation(fields: [student_id], references: [id])
+  exam_set exam_sets @relation(fields: [exam_set_id], references: [id])
 
   @@unique([student_id, exam_set_id])
 }
@@ -571,6 +572,7 @@ model exam_sets {
   practical_batch     batches[] @relation("practical_exam_set")
   viva_batch          batches[] @relation("viva_exam_set")
   qp                  qualification_packs @relation(fields: [qp_id], references: [id])
+  student_exam_set_results student_exam_set_results[]
 }
 
 model exam_sets_questions {
