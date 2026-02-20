@@ -1,7 +1,8 @@
 'use client'
 
-import { useShadowAuth } from '@/hooks/useShadowAuth'
 import { Alert, Button } from '@mui/material'
+
+import { useShadowAuth } from '@/hooks/useShadowAuth'
 
 export default function ShadowBanner() {
   const { isShadow, stopShadow, shadowUser } = useShadowAuth()
