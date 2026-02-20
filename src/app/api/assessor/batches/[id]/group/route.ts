@@ -382,7 +382,9 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
     // 📌 Read files (optional)
     // ----------------------------------------------------------
     const group_photo = formData.get("group_photo");
+
     // const group_video = formData.get("group_video");
+    
     const student_ids = formData.getAll('student_ids');
     const group_id = formData.get('group_id') || 'A';
     const group_type = formData.get('group_type') || 'practical';
