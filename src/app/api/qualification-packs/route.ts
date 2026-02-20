@@ -71,6 +71,24 @@ export async function POST(req: Request) {
   const nosCutoff = isNOSCutoff === true ? nosCutoffMarks : '';
   const weighted = isWeightedAvailable === true ? weightedAvailable : '';
 
+  const existingQP = await prisma.qualification_packs.findFirst({
+    where: {
+      qualification_pack_id: qualificationPackId,
+      agency_id: agency_id
+    }
+  });
+
+  if(existingQP){
+    return NextResponse.json(
+      {
+        status: 'Error',
+        message: 'Qualification Pack ID must be unique',
+        errors: { qualificationPackId: ['This Qualification Pack ID is already exists'] },
+      },
+      { status: 422 }
+    )
+  }
+
   const result = await prisma.qualification_packs.create({
     data: {
       agency_id: agency_id,

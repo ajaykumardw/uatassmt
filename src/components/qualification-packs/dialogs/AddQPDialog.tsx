@@ -192,6 +192,7 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
     handleSubmit,
     setValue,
     getValues,
+    setError,
     formState: { errors },
   } = useForm<AddQPDialogData>({
     resolver: valibotResolver(schema),
@@ -233,6 +234,33 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
           hideProgressBar: false
         });
         updateQPList();
+
+      } else if (res.status === 422) {
+
+        setLoading(false);
+
+        const errorData = await res.json();
+
+        toast.error(errorData.message || 'Validation error. Please check your input.', {
+          hideProgressBar: false
+        });
+
+        setIsTheoryCutoff(data.isTheoryCutoff || false);
+        setIsVivaCutoff(data.isVivaCutoff || false);
+        setIsPracticalCutoff(data.isPracticalCutoff || false);
+        setIsOverallCutoff(data.isOverallCutoff || false);
+        setIsNOSCutoff(data.isNOSCutoff || false);
+        setIsWeighted(data.isWeightedAvailable || false);
+
+        Object.entries(errorData.errors).forEach(([field, messages]) => {
+          setError(field as keyof AddQPDialogData, {
+            type: 'server',
+            message: (messages as string[])[0],
+          });
+        });
+
+        return;
+
       } else {
         setLoading(false);
         toast.error('Qualification pack not updated. Something went wrong here!', {
@@ -266,6 +294,31 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
           hideProgressBar: false
         });
         updateQPList();
+
+      } else if (res.status === 422) {
+
+        setLoading(false);
+        const errorData = await res.json();
+
+        toast.error(errorData.message || 'Validation error. Please check your input.', {
+          hideProgressBar: false
+        });
+
+        setIsTheoryCutoff(data.isTheoryCutoff || false);
+        setIsVivaCutoff(data.isVivaCutoff || false);
+        setIsPracticalCutoff(data.isPracticalCutoff || false);
+        setIsOverallCutoff(data.isOverallCutoff || false);
+        setIsNOSCutoff(data.isNOSCutoff || false);
+        setIsWeighted(data.isWeightedAvailable || false);
+
+        Object.entries(errorData.errors).forEach(([field, messages]) => {
+          setError(field as keyof AddQPDialogData, {
+            type: 'server',
+            message: (messages as string[])[0],
+          });
+        });
+
+        return;
 
       } else {
         setLoading(false)
