@@ -382,7 +382,7 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
     // 📌 Read files (optional)
     // ----------------------------------------------------------
     const group_photo = formData.get("group_photo");
-    const group_video = formData.get("group_video");
+    // const group_video = formData.get("group_video");
     const student_ids = formData.getAll('student_ids');
     const group_id = formData.get('group_id') || 'A';
     const group_type = formData.get('group_type') || 'practical';
@@ -391,8 +391,8 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
       return errorResponse("At least one student must be assigned to the group.", 400);
     }
 
-    if (!group_photo && !group_video) {
-      return errorResponse("At least one photo or video must be provided.", 400);
+    if (!group_photo) {
+      return errorResponse("At least one photo must be provided.", 400);
     }
 
     let groupPhotoName = null;
@@ -451,44 +451,44 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
     // 📌 Validate + Prepare Building Photo
     // ----------------------------------------------------------
 
-    if (group_video) {
-      if (!(group_video instanceof File)) {
-        return errorResponse("Invalid group video file.", 400);
-      }
+    // if (group_video) {
+    //   if (!(group_video instanceof File)) {
+    //     return errorResponse("Invalid group video file.", 400);
+    //   }
 
-      if (!allowedMimeTypes.includes(group_video.type)) {
-        return errorResponse("Group video must be a video file.", 400);
-      }
+    //   if (!allowedMimeTypes.includes(group_video.type)) {
+    //     return errorResponse("Group video must be a video file.", 400);
+    //   }
 
-      const ext = group_video.type.split("/")[1];
-      const filename = `${randomUUID()}.${ext}`;
-
-
-      const uploadDir = path.join(
-        process.cwd(),
-        storageFolders.storage,
-        storageFolders.uploads,
-        storageFolders.agency,
-        storageFolders.batches,
-        id.toString(),
-        'group-video'
-      );
+    //   const ext = group_video.type.split("/")[1];
+    //   const filename = `${randomUUID()}.${ext}`;
 
 
-      // Create folder if not exists
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
+    //   const uploadDir = path.join(
+    //     process.cwd(),
+    //     storageFolders.storage,
+    //     storageFolders.uploads,
+    //     storageFolders.agency,
+    //     storageFolders.batches,
+    //     id.toString(),
+    //     'group-video'
+    //   );
 
 
-      // Write file
-      const buffer = Buffer.from(await group_video.arrayBuffer());
+    //   // Create folder if not exists
+    //   if (!fs.existsSync(uploadDir)) {
+    //     fs.mkdirSync(uploadDir, { recursive: true });
+    //   }
 
-      fs.writeFileSync(path.resolve(uploadDir, filename), buffer);
 
-      groupVideoName = filename;
+    //   // Write file
+    //   const buffer = Buffer.from(await group_video.arrayBuffer());
 
-    }
+    //   fs.writeFileSync(path.resolve(uploadDir, filename), buffer);
+
+    //   groupVideoName = filename;
+
+    // }
 
 
     const group = await prisma.student_groups.create({
@@ -497,7 +497,6 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
         group_id: String(group_id),
         group_type: String(group_type),
         group_photo: groupPhotoName,
-        group_video: groupVideoName,
         created_by: Number(decoded.id),
       }
     })

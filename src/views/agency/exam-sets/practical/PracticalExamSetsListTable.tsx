@@ -57,7 +57,7 @@ import tableStyles from '@core/styles/table.module.css'
 
 // import CustomAvatar from '@/@core/components/mui/Avatar';
 
-import { ExamDurations, MenuProps, TableRowLimit } from '@/configs/customDataConfig';
+import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
 import AddEditPracticalExamSetsDialog from '@/components/exam-sets/dialogs/AddEditPracticalExamSetsDialog';
 
 // declare module '@tanstack/table-core' {
@@ -242,7 +242,7 @@ const PracticalExamSetsListTable = ({ tableData, updateExamSetsList }: { tableDa
             <Chip
               variant='tonal'
               className='capitalize'
-              label={ExamDurations[row.original.exam_duration]}
+              label={row.original.exam_duration ? `${row.original.exam_duration} Minutes` : 'N/A'}
               color='success'
               size='small'
             />
