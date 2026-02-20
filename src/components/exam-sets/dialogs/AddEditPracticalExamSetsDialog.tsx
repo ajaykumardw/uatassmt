@@ -71,9 +71,30 @@ const schema = object(
     qpId: pipe(string(), trim() , minLength(1, 'This field is required')),
     setName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Question name must be at least 3 characters long')),
     mode: pipe(string(), trim(), minLength(1, 'This field is required.')),
-    totalQuestions: pipe(string(), trim(), minLength(1, 'This field is required.'), check((value) => !value || /^(?:[1-9]|[1-4]\d|50)$/.test(value), 'Total Questions must be between 1 and 50 and must be a number.') ),
+
+    // ✅ FIXED HERE
+    totalQuestions: pipe(
+      string(),
+      trim(),
+      minLength(1, 'This field is required.'),
+      check(
+        (value) => {
+          const num = Number(value);
+
+          return Number.isInteger(num) && num > 0;
+        },
+        'Total Questions must be a valid whole number greater than 0.'
+      )
+    ),
+
     status: pipe(string(), trim(), minLength(1, 'This field is required.')),
-    examDuration: pipe( string(), trim(), minLength(1, 'This field is required.'), check((value) => /^(?:[1-9]|[1-9]\d|[1-2]\d{2}|300)$/.test(value), 'Exam duration must be between 1 and 300 minutes and must be a whole number.' ) ),
+    examDuration: pipe( string(), trim(), minLength(1, 'This field is required.'),
+      check((value) => {
+        const num = Number(value);
+
+        return Number.isInteger(num) && num >= 1 && num <= 300;
+      }, 'Exam duration must be between 1 and 300 minutes.' )
+    ),
   }
 );
 
@@ -418,6 +439,28 @@ const AddEditPracticalExamSetsDialog = ({ open, examSetId, handleClose, updateEx
   }
 
   const totQuestions = useWatch({control, name: 'totalQuestions'});
+
+  useEffect(() => {
+    const max = theoryQuestions.length;
+    const num = Number(totQuestions);
+
+    if (!totQuestions) return;
+
+    if (!Number.isInteger(num) || num < 1) {
+      setError('totalQuestions', {
+        type: 'custom',
+        message: 'Total Questions must be greater than 0',
+      });
+    } else if (num > max) {
+      setError('totalQuestions', {
+        type: 'custom',
+        message: `Total Questions cannot exceed available questions (${max})`,
+      });
+    } else {
+      clearErrors('totalQuestions');
+    }
+  }, [totQuestions, theoryQuestions.length]);
+
   const isDisabled = changedMode === 'Manual' && selectedQuestions.length !== Number(totQuestions);
 
   return (
@@ -543,7 +586,7 @@ const AddEditPracticalExamSetsDialog = ({ open, examSetId, handleClose, updateEx
                       id='select-qp'
                       label='Mode'
                       required={true}
-                      disabled={!(getValues("qpId") && /^(?:[1-9]|[1-4]\d|50)$/.test(totQuestions))}
+                      disabled={ !( getValues("qpId") && Number(totQuestions) > 0 && Number(totQuestions) <= theoryQuestions.length )}
                       {...field}
                       onChange={(e) => { field.onChange(e); setMode(e.target.value)}}
                       {...(errors.mode && { error: true, helperText: errors.mode.message })}
