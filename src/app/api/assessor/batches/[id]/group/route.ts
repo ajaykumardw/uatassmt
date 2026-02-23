@@ -384,14 +384,41 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
     const group_photo = formData.get("group_photo");
 
     // const group_video = formData.get("group_video");
-    
-    const student_ids = formData.getAll('student_ids');
+
+    // const student_ids = formData.getAll('student_ids');
+    const rawStudentIds = formData.get('student_ids');
+
     const group_id = formData.get('group_id') || 'A';
     const group_type = formData.get('group_type') || 'practical';
 
-    if(!student_ids || student_ids.length === 0) {
-      return errorResponse("At least one student must be assigned to the group.", 400);
+
+    if (!rawStudentIds) {
+      return errorResponse("student_ids is required", 400);
     }
+
+    let student_ids: number[];
+
+    try {
+
+      student_ids = JSON.parse(rawStudentIds.toString());
+
+    } catch {
+
+      return errorResponse("student_ids must be valid JSON like [1,2,5]", 400);
+    }
+
+    if (
+      !Array.isArray(student_ids) ||
+      student_ids.length === 0 ||
+      !student_ids.every(id => typeof id === 'number')
+    ) {
+
+      return errorResponse("student_ids must be an array of numbers", 400);
+    }
+
+    // if(!student_ids || student_ids.length === 0) {
+    //   return errorResponse("At least one student must be assigned to the group.", 400);
+    // }
 
     if (!group_photo) {
       return errorResponse("At least one photo must be provided.", 400);
@@ -516,7 +543,7 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
         where: {
           batch_id: id,
           id: {
-            in: formData.getAll('student_ids').map(Number)
+            in: student_ids
           }
         },
         data: data
