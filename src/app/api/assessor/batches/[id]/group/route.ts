@@ -632,6 +632,202 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
   }
 }
 
+export async function PATCH(
+  req: NextRequest,
+  context: { params: { id: number } }
+) {
+  try {
+
+    // 🔐 Auth
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader) return errorResponse("Missing token", 401);
+
+    const token = authHeader.split(" ")[1];
+    const decoded = verify(
+      token,
+      process.env.NEXTAUTH_SECRET as string
+    ) as any;
+
+    if (decoded.user_type !== "U" && decoded.role_id !== 1) {
+
+      return errorResponse("Forbidden: Insufficient permissions", 403);
+    }
+
+    // Input
+    const batchId = Number(context.params.id);
+
+    const body = await req.json();
+
+    const { student_ids, group_id } = body;
+
+    if (
+      !Array.isArray(student_ids) ||
+      student_ids.length === 0 ||
+      !student_ids.every((id) => typeof id === "number")
+    ) {
+
+      return errorResponse("student_ids must be array of numbers", 400);
+    }
+
+    // 🔍 Fetch Group
+    const group = await prisma.student_groups.findUnique({
+      where: { id: group_id },
+      select: {
+        id: true,
+        batch_id: true,
+        group_type: true,
+      }
+    });
+
+    if (!group || group.batch_id !== batchId) {
+
+      return errorResponse("Group not found in this batch", 404);
+    }
+
+    const isViva = group.group_type === "viva";
+    const groupField = isViva ? "viva_group_id" : "practical_group_id";
+
+    const selectField = isViva
+      ? {
+          viva_students: {
+            select: {
+              id: true,
+              batch_id: true,
+              candidate_id: true,
+              candidate_name: true,
+            },
+          },
+        }
+      : {
+          practical_students: {
+            select: {
+              id: true,
+              batch_id: true,
+              candidate_id: true,
+              candidate_name: true,
+            },
+          },
+        };
+
+    // ⚡ Transaction
+    const [currentStudents] = await prisma.$transaction([
+        prisma.students.findMany({
+          where: {
+            batch_id: batchId,
+            [groupField]: group.id,
+          },
+          select: { id: true },
+        }),
+      ]);
+
+      const currentIds = currentStudents.map((s) => s.id);
+
+      // 🔴 Students to remove
+      const toRemove = currentIds.filter(
+        (id) => !student_ids.includes(id)
+      );
+
+      // 🟢 Students to add
+      const toAdd = student_ids.filter(
+        (id) => !currentIds.includes(id)
+      );
+
+      // ⚡ Perform update in transaction
+      const [_, __, updatedGroup] = await prisma.$transaction([
+        // Remove
+        prisma.students.updateMany({
+          where: {
+            id: { in: toRemove },
+            batch_id: batchId,
+            [groupField]: group.id,
+          },
+          data: {
+            [groupField]: null,
+          },
+        }),
+
+        // Add
+        prisma.students.updateMany({
+          where: {
+            id: { in: toAdd },
+            batch_id: batchId,
+            [groupField]: null,
+          },
+          data: {
+            [groupField]: group.id,
+          },
+        }),
+
+        // Return updated group
+        prisma.student_groups.findUnique({
+          where: { id: group.id },
+          select: {
+            id: true,
+            group_id: true,
+            group_photo: true,
+            group_video: true,
+            ...selectField,
+          },
+        }),
+      ]);
+
+    if (!updatedGroup) {
+
+      return errorResponse("Failed to fetch updated group", 500);
+    }
+
+    // 🔁 Map Response
+    const mappedGroup: any = {
+      id: updatedGroup.id,
+      group_id: updatedGroup.group_id,
+    };
+
+    if (updatedGroup.group_photo) {
+      const relativePhotoPath = path.posix.join(
+        storageFolders.storage,
+        storageFolders.uploads,
+        storageFolders.agency,
+        storageFolders.batches,
+        batchId.toString(),
+        "group-photo",
+        updatedGroup.group_photo
+      );
+
+      mappedGroup.group_photo_url = `${process.env.NEXT_PUBLIC_APP_URL}/${relativePhotoPath}`;
+    }
+
+    if (updatedGroup.group_video) {
+      const relativeVideoPath = path.posix.join(
+        storageFolders.storage,
+        storageFolders.uploads,
+        storageFolders.agency,
+        storageFolders.batches,
+        batchId.toString(),
+        "group-video",
+        updatedGroup.group_video
+      );
+
+      mappedGroup.group_video_url = `${process.env.NEXT_PUBLIC_APP_URL}/${relativeVideoPath}`;
+    }
+
+    mappedGroup.students = isViva
+      ? updatedGroup.viva_students
+      : updatedGroup.practical_students;
+
+    return NextResponse.json({
+      status: "Success",
+      message: "Students added to group successfully",
+      data: mappedGroup,
+    });
+
+  } catch (error) {
+
+    console.error("Server Error:", error);
+
+    return errorResponse("Internal server error", 500);
+  }
+}
+
 function errorResponse(message: string, statusCode: number, error?: any) {
   return NextResponse.json(
     {
