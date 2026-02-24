@@ -640,9 +640,11 @@ export async function PATCH(
 
     // 🔐 Auth
     const authHeader = req.headers.get("authorization");
+
     if (!authHeader) return errorResponse("Missing token", 401);
 
     const token = authHeader.split(" ")[1];
+    
     const decoded = verify(
       token,
       process.env.NEXTAUTH_SECRET as string
