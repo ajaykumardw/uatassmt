@@ -711,65 +711,67 @@ export async function PATCH(
 
     // ⚡ Transaction
     const [currentStudents] = await prisma.$transaction([
-        prisma.students.findMany({
-          where: {
-            batch_id: batchId,
-            [groupField]: group.id,
-          },
-          select: { id: true },
-        }),
-      ]);
+      prisma.students.findMany({
+        where: {
+          batch_id: batchId,
+          [groupField]: group.id,
+        },
+        select: { id: true },
+      }),
+    ]);
 
-      const currentIds = currentStudents.map((s) => s.id);
+    const currentIds = currentStudents.map((s) => s.id);
 
-      // 🔴 Students to remove
-      const toRemove = currentIds.filter(
-        (id) => !student_ids.includes(id)
-      );
+    // 🔴 Students to remove
+    const toRemove = currentIds.filter(
+      (id) => !student_ids.includes(id)
+    );
 
-      // 🟢 Students to add
-      const toAdd = student_ids.filter(
-        (id) => !currentIds.includes(id)
-      );
+    // 🟢 Students to add
+    const toAdd = student_ids.filter(
+      (id) => !currentIds.includes(id)
+    );
 
-      // ⚡ Perform update in transaction
-      const [_, __, updatedGroup] = await prisma.$transaction([
-        // Remove
-        prisma.students.updateMany({
-          where: {
-            id: { in: toRemove },
-            batch_id: batchId,
-            [groupField]: group.id,
-          },
-          data: {
-            [groupField]: null,
-          },
-        }),
+    // ⚡ Perform update in transaction
+    const transactionalResult = await prisma.$transaction([
+      // Remove
+      prisma.students.updateMany({
+        where: {
+          id: { in: toRemove },
+          batch_id: batchId,
+          [groupField]: group.id,
+        },
+        data: {
+          [groupField]: null,
+        },
+      }),
 
-        // Add
-        prisma.students.updateMany({
-          where: {
-            id: { in: toAdd },
-            batch_id: batchId,
-            [groupField]: null,
-          },
-          data: {
-            [groupField]: group.id,
-          },
-        }),
+      // Add
+      prisma.students.updateMany({
+        where: {
+          id: { in: toAdd },
+          batch_id: batchId,
+          [groupField]: null,
+        },
+        data: {
+          [groupField]: group.id,
+        },
+      }),
 
-        // Return updated group
-        prisma.student_groups.findUnique({
-          where: { id: group.id },
-          select: {
-            id: true,
-            group_id: true,
-            group_photo: true,
-            group_video: true,
-            ...selectField,
-          },
-        }),
-      ]);
+      // Return updated group
+      prisma.student_groups.findUnique({
+        where: { id: group.id },
+        select: {
+          id: true,
+          group_id: true,
+          group_photo: true,
+          group_video: true,
+          ...selectField,
+        },
+      }),
+    ]);
+
+    const updatedGroup = transactionalResult[2];
 
     if (!updatedGroup) {
 
@@ -820,11 +822,45 @@ export async function PATCH(
       data: mappedGroup,
     });
 
-  } catch (error) {
+  } catch (error: any) {
 
-    console.error("Server Error:", error);
+    if (error.name === 'TokenExpiredError') {
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 401,
+        message: 'Token expired',
+        error: error
+      }, { status: 401 });
+    }
 
-    return errorResponse("Internal server error", 500);
+    if (error.name === 'JsonWebTokenError') {
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 401,
+        message: 'Invalid token',
+        error: error
+      }, { status: 401 });
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 400,
+        message: error.message,
+        error: error
+      }, { status: 400 });
+    }
+
+    // Fallback for any other server-side errors
+
+    console.error('Server Error:', error);
+
+    return NextResponse.json({
+      status: 'Error',
+      statusCode: 500,
+      message: 'Internal server error',
+      error: error
+    }, { status: 500 });
   }
 }
 
