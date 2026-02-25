@@ -2,6 +2,8 @@ import fs from 'fs';
 
 import { randomUUID } from "crypto";
 
+import { pipeline } from "stream/promises";
+
 import path from "path";
 
 import { type NextRequest, NextResponse } from "next/server";
@@ -240,7 +242,7 @@ export async function POST(
 
       // Define max file sizes
       const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
-      const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20 MB
+      const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB
 
       // ----- process files -----
       // const outputs: string[] = [];
@@ -261,8 +263,8 @@ export async function POST(
       for (const file of files) {
         if (!(file instanceof Blob)) continue;
 
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
+        // const arrayBuffer = await file.arrayBuffer();
+        // const buffer = Buffer.from(arrayBuffer);
 
         // get extension from MIME type
         const ext = file.type.split("/")[1] || "bin";
@@ -316,9 +318,9 @@ export async function POST(
             status: "Error",
             statusCode: 400,
             message: `File size exceeds the maximum allowed size. Max allowed size for ${mediaType} is ${
-              mediaType === "video" ? "20 MB" : "5 MB"
+              mediaType === "video" ? "100 MB" : "5 MB"
             }.`,
-            receivedSize: fileSize,
+            receivedSize: (fileSize / (1024 * 1024)).toFixed(2) + " MB",
           }, { status: 400 });
         }
 
@@ -336,10 +338,39 @@ export async function POST(
           }
         }
 
-        fs.writeFileSync(
-          path.resolve(uploadDir, filename),
-          buffer
-        )
+        // if (mediaType === "video") {
+        //   // For videos, use streaming to avoid memory issues
+        //   const filePath = path.join(uploadDir, filename);
+
+        //   // 🚀 STREAM TO DISK (Memory Safe)
+        //   await pipeline(
+        //     file.stream() as any,
+        //     createWriteStream(filePath)
+        //   );
+
+        //   // await new Promise((resolve, reject) => {
+        //   //   writeStream.on('finish', resolve);
+        //   //   writeStream.on('error', reject);
+        //   //   writeStream.write(buffer);
+        //   //   writeStream.end();
+        //   // });
+        // } else {
+        //   // For images, we can safely write the buffer to disk
+
+        //   fs.writeFileSync(
+        //     path.resolve(uploadDir, filename),
+        //     buffer
+        //   )
+
+        // }
+
+        const filePath = path.join(uploadDir, filename);
+
+        // 🚀 STREAM TO DISK (Memory Safe)
+        await pipeline(
+          file.stream() as any,
+          fs.createWriteStream(filePath)
+        );
 
         // const createdMedia = await prisma.categories.findFirst({
         //   where: {

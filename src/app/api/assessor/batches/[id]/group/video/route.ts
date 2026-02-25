@@ -3,8 +3,6 @@ import path from "path";
 
 import { randomUUID } from "crypto";
 
-import { createWriteStream } from "fs";
-
 import { pipeline } from "stream/promises";
 
 import { type NextRequest, NextResponse } from "next/server";
@@ -104,7 +102,7 @@ export async function POST(
     // 🚀 STREAM TO DISK (Memory Safe)
     await pipeline(
       file.stream() as any,
-      createWriteStream(filePath)
+      fs.createWriteStream(filePath)
     );
 
     // Save in DB
