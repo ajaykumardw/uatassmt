@@ -3,7 +3,11 @@ import path from "path";
 
 import { type NextRequest, NextResponse } from "next/server";
 
-// import { verify, type JwtPayload } from "jsonwebtoken";
+import { verify, type JwtPayload } from "jsonwebtoken";
+
+import { getServerSession } from "next-auth";
+
+import { authOptions } from "@/libs/auth";
 
 
 // Basic MIME type mapping for common file types
@@ -53,19 +57,34 @@ export async function GET(
     //   relativePath.includes("batches");
 
     // if (isProduction && needsProtection) {
-    //   const authHeader = req.headers.get("authorization");
 
-    //   if (!authHeader) {
-    //     return new NextResponse("Unauthorized", { status: 401 });
-    //   }
+      const session = await getServerSession(authOptions)
 
-    //   const token = authHeader.split(" ")[1];
+      if (!session) {
 
-    //   const decoded = verify(token, process.env.NEXTAUTH_SECRET as string) as JwtPayload;
+        const authHeader = req.headers.get("authorization");
 
-    //   if (!decoded) {
-    //     return new NextResponse("Unauthorized", { status: 401 });
-    //   }
+        if ( !authHeader ) {
+
+          return new NextResponse("Unauthorized", { status: 401 });
+        }
+
+        const token = authHeader?.split(" ")[1];
+
+        try {
+
+          const decoded = verify(token, process.env.NEXTAUTH_SECRET as string) as JwtPayload;
+
+          if (!decoded) {
+
+            return new NextResponse("Unauthorized", { status: 401 });
+          }
+
+        } catch (err) {
+
+          return new NextResponse("Unauthorized", { status: 401 });
+        }
+      }
 
     //   // if (!["admin", "assessor"].includes(decoded.role)) {
     //   //   return new NextResponse("Forbidden", { status: 403 });
