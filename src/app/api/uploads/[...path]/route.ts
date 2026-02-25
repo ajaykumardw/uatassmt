@@ -3,7 +3,7 @@ import path from "path";
 
 import { type NextRequest, NextResponse } from "next/server";
 
-import { verify, type JwtPayload } from "jsonwebtoken";
+// import { verify, type JwtPayload } from "jsonwebtoken";
 
 
 // Basic MIME type mapping for common file types
