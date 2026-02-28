@@ -632,6 +632,240 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
   }
 }
 
+// export async function PATCH(
+//   req: NextRequest,
+//   context: { params: { id: number } }
+// ) {
+//   try {
+
+//     // 🔐 Auth
+//     const authHeader = req.headers.get("authorization");
+
+//     if (!authHeader) return errorResponse("Missing token", 401);
+
+//     const token = authHeader.split(" ")[1];
+    
+//     const decoded = verify(
+//       token,
+//       process.env.NEXTAUTH_SECRET as string
+//     ) as any;
+
+//     if (decoded.user_type !== "U" || decoded.role_id !== 1) {
+
+//       return errorResponse("Forbidden: Insufficient permissions", 403);
+//     }
+
+//     // Input
+//     const batchId = Number(context.params.id);
+
+//     const body = await req.json();
+
+//     const { student_ids, group_id } = body;
+
+//     if (
+//       !Array.isArray(student_ids) ||
+//       student_ids.length === 0 ||
+//       !student_ids.every((id) => typeof id === "number")
+//     ) {
+
+//       return errorResponse("student_ids must be array of numbers", 400);
+//     }
+
+//     // 🔍 Fetch Group
+//     const group = await prisma.student_groups.findUnique({
+//       where: { id: group_id },
+//       select: {
+//         id: true,
+//         batch_id: true,
+//         group_type: true,
+//       }
+//     });
+
+//     if (!group || group.batch_id !== batchId) {
+
+//       return errorResponse("Group not found in this batch", 404);
+//     }
+
+//     const isViva = group.group_type === "viva";
+//     const groupField = isViva ? "viva_group_id" : "practical_group_id";
+
+//     const selectField = isViva
+//       ? {
+//           viva_students: {
+//             select: {
+//               id: true,
+//               batch_id: true,
+//               candidate_id: true,
+//               candidate_name: true,
+//             },
+//           },
+//         }
+//       : {
+//           practical_students: {
+//             select: {
+//               id: true,
+//               batch_id: true,
+//               candidate_id: true,
+//               candidate_name: true,
+//             },
+//           },
+//         };
+
+//     // ⚡ Transaction
+//     const [currentStudents] = await prisma.$transaction([
+//       prisma.students.findMany({
+//         where: {
+//           batch_id: batchId,
+//           [groupField]: group.id,
+//         },
+//         select: { id: true },
+//       }),
+//     ]);
+
+//     const currentIds = currentStudents.map((s) => s.id);
+
+//     // 🔴 Students to remove
+//     const toRemove = currentIds.filter(
+//       (id) => !student_ids.includes(id)
+//     );
+
+//     // 🟢 Students to add
+//     const toAdd = student_ids.filter(
+//       (id) => !currentIds.includes(id)
+//     );
+
+//     // ⚡ Perform update in transaction
+//     const transactionalResult = await prisma.$transaction([
+//       // Remove
+//       prisma.students.updateMany({
+//         where: {
+//           id: { in: toRemove },
+//           batch_id: batchId,
+//           [groupField]: group.id,
+//         },
+//         data: {
+//           [groupField]: null,
+//         },
+//       }),
+
+//       // Add
+//       prisma.students.updateMany({
+//         where: {
+//           id: { in: toAdd },
+//           batch_id: batchId,
+//           [groupField]: null,
+//         },
+//         data: {
+//           [groupField]: group.id,
+//         },
+//       }),
+
+//       // Return updated group
+//       prisma.student_groups.findUnique({
+//         where: { id: group.id },
+//         select: {
+//           id: true,
+//           group_id: true,
+//           group_photo: true,
+//           group_video: true,
+//           ...selectField,
+//         },
+//       }),
+//     ]);
+
+//     const updatedGroup = transactionalResult[2];
+
+//     if (!updatedGroup) {
+
+//       return errorResponse("Failed to fetch updated group", 500);
+//     }
+
+//     // 🔁 Map Response
+//     const mappedGroup: any = {
+//       id: updatedGroup.id,
+//       group_id: updatedGroup.group_id,
+//     };
+
+//     if (updatedGroup.group_photo) {
+//       const relativePhotoPath = path.posix.join(
+//         storageFolders.storage,
+//         storageFolders.uploads,
+//         storageFolders.agency,
+//         storageFolders.batches,
+//         batchId.toString(),
+//         "group-photo",
+//         updatedGroup.group_photo
+//       );
+
+//       mappedGroup.group_photo_url = `${process.env.NEXT_PUBLIC_APP_URL}/${relativePhotoPath}`;
+//     }
+
+//     if (updatedGroup.group_video) {
+//       const relativeVideoPath = path.posix.join(
+//         storageFolders.storage,
+//         storageFolders.uploads,
+//         storageFolders.agency,
+//         storageFolders.batches,
+//         batchId.toString(),
+//         "group-video",
+//         updatedGroup.group_video
+//       );
+
+//       mappedGroup.group_video_url = `${process.env.NEXT_PUBLIC_APP_URL}/${relativeVideoPath}`;
+//     }
+
+//     mappedGroup.students = isViva
+//       ? updatedGroup.viva_students
+//       : updatedGroup.practical_students;
+
+//     return NextResponse.json({
+//       status: "Success",
+//       message: "Students added to group successfully",
+//       data: mappedGroup,
+//     });
+
+//   } catch (error: any) {
+
+//     if (error.name === 'TokenExpiredError') {
+//       return NextResponse.json({
+//         status: 'Error',
+//         statusCode: 401,
+//         message: 'Token expired',
+//         error: error
+//       }, { status: 401 });
+//     }
+
+//     if (error.name === 'JsonWebTokenError') {
+//       return NextResponse.json({
+//         status: 'Error',
+//         statusCode: 401,
+//         message: 'Invalid token',
+//         error: error
+//       }, { status: 401 });
+//     }
+
+//     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+//       return NextResponse.json({
+//         status: 'Error',
+//         statusCode: 400,
+//         message: error.message,
+//         error: error
+//       }, { status: 400 });
+//     }
+
+//     // Fallback for any other server-side errors
+
+//     console.error('Server Error:', error);
+
+//     return NextResponse.json({
+//       status: 'Error',
+//       statusCode: 500,
+//       message: 'Internal server error',
+//       error: error
+//     }, { status: 500 });
+//   }
+// }
+
 export async function PATCH(
   req: NextRequest,
   context: { params: { id: number } }
@@ -644,14 +878,14 @@ export async function PATCH(
     if (!authHeader) return errorResponse("Missing token", 401);
 
     const token = authHeader.split(" ")[1];
-    
+
     const decoded = verify(
       token,
       process.env.NEXTAUTH_SECRET as string
     ) as any;
 
-    if (decoded.user_type !== "U" && decoded.role_id !== 1) {
-
+    // ✅ Allow ONLY user_type "U" AND role_id 1
+    if (decoded.user_type !== "U" || decoded.role_id !== 1) {
       return errorResponse("Forbidden: Insufficient permissions", 403);
     }
 
@@ -678,7 +912,7 @@ export async function PATCH(
         id: true,
         batch_id: true,
         group_type: true,
-      }
+      },
     });
 
     if (!group || group.batch_id !== batchId) {
@@ -697,6 +931,8 @@ export async function PATCH(
               batch_id: true,
               candidate_id: true,
               candidate_name: true,
+              practical_group_id: true,
+              viva_group_id: true,
             },
           },
         }
@@ -707,20 +943,20 @@ export async function PATCH(
               batch_id: true,
               candidate_id: true,
               candidate_name: true,
+              practical_group_id: true,
+              viva_group_id: true,
             },
           },
         };
 
-    // ⚡ Transaction
-    const [currentStudents] = await prisma.$transaction([
-      prisma.students.findMany({
-        where: {
-          batch_id: batchId,
-          [groupField]: group.id,
-        },
-        select: { id: true },
-      }),
-    ]);
+    // 🔎 Find current students in this group
+    const currentStudents = await prisma.students.findMany({
+      where: {
+        batch_id: batchId,
+        [groupField]: group.id,
+      },
+      select: { id: true },
+    });
 
     const currentIds = currentStudents.map((s) => s.id);
 
@@ -729,51 +965,76 @@ export async function PATCH(
       (id) => !student_ids.includes(id)
     );
 
-    // 🟢 Students to add
-    const toAdd = student_ids.filter(
+    // 🟢 Students requested to add
+    const requestedToAdd = student_ids.filter(
       (id) => !currentIds.includes(id)
     );
 
-    // ⚡ Perform update in transaction
-    const transactionalResult = await prisma.$transaction([
-      // Remove
-      prisma.students.updateMany({
-        where: {
-          id: { in: toRemove },
-          batch_id: batchId,
-          [groupField]: group.id,
-        },
-        data: {
+    // 🚨 Find students already assigned elsewhere
+    const conflictingStudents = await prisma.students.findMany({
+      where: {
+        id: { in: requestedToAdd },
+        batch_id: batchId,
+        NOT: {
           [groupField]: null,
         },
-      }),
+      },
+      select: {
+        id: true,
+        candidate_name: true,
+        practical_group_id: true,
+        viva_group_id: true,
+      },
+    });
 
-      // Add
-      prisma.students.updateMany({
-        where: {
-          id: { in: toAdd },
-          batch_id: batchId,
-          [groupField]: null,
-        },
-        data: {
-          [groupField]: group.id,
-        },
-      }),
+    const conflictingIds = conflictingStudents.map((s) => s.id);
 
-      // Return updated group
-      prisma.student_groups.findUnique({
+    // ✅ Only valid students to add
+    const validToAdd = requestedToAdd.filter(
+      (id) => !conflictingIds.includes(id)
+    );
+
+    // ⚡ Transaction
+    const updatedGroup = await prisma.$transaction(async (tx) => {
+      // Remove students
+      if (toRemove.length > 0) {
+        await tx.students.updateMany({
+          where: {
+            id: { in: toRemove },
+            batch_id: batchId,
+            [groupField]: group.id,
+          },
+          data: {
+            [groupField]: null,
+          },
+        });
+      }
+
+      // Add valid students
+      if (validToAdd.length > 0) {
+        await tx.students.updateMany({
+          where: {
+            id: { in: validToAdd },
+            batch_id: batchId,
+          },
+          data: {
+            [groupField]: group.id,
+          },
+        });
+      }
+
+      return tx.student_groups.findUnique({
         where: { id: group.id },
         select: {
           id: true,
           group_id: true,
+          group_type: true,
           group_photo: true,
           group_video: true,
           ...selectField,
         },
-      }),
-    ]);
-
-    const updatedGroup = transactionalResult[2];
+      });
+    });
 
     if (!updatedGroup) {
 
@@ -784,6 +1045,7 @@ export async function PATCH(
     const mappedGroup: any = {
       id: updatedGroup.id,
       group_id: updatedGroup.group_id,
+      group_type: updatedGroup.group_type,
     };
 
     if (updatedGroup.group_photo) {
@@ -820,49 +1082,51 @@ export async function PATCH(
 
     return NextResponse.json({
       status: "Success",
-      message: "Students added to group successfully",
-      data: mappedGroup,
+      message: "Students processed successfully",
+      data: {
+        ...mappedGroup,
+        meta: {
+          added_count: validToAdd.length,
+          removed_count: toRemove.length,
+          skipped_count: conflictingStudents.length,
+          skipped_students: conflictingStudents,
+        },
+      },
     });
 
   } catch (error: any) {
-
-    if (error.name === 'TokenExpiredError') {
-      return NextResponse.json({
-        status: 'Error',
-        statusCode: 401,
-        message: 'Token expired',
-        error: error
-      }, { status: 401 });
+    if (error.name === "TokenExpiredError") {
+      return NextResponse.json(
+        {
+          status: "Error",
+          statusCode: 401,
+          message: "Token expired",
+        },
+        { status: 401 }
+      );
     }
 
-    if (error.name === 'JsonWebTokenError') {
-      return NextResponse.json({
-        status: 'Error',
-        statusCode: 401,
-        message: 'Invalid token',
-        error: error
-      }, { status: 401 });
+    if (error.name === "JsonWebTokenError") {
+      return NextResponse.json(
+        {
+          status: "Error",
+          statusCode: 401,
+          message: "Invalid token",
+        },
+        { status: 401 }
+      );
     }
 
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      return NextResponse.json({
-        status: 'Error',
-        statusCode: 400,
-        message: error.message,
-        error: error
-      }, { status: 400 });
-    }
+    console.error("Server Error:", error);
 
-    // Fallback for any other server-side errors
-
-    console.error('Server Error:', error);
-
-    return NextResponse.json({
-      status: 'Error',
-      statusCode: 500,
-      message: 'Internal server error',
-      error: error
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        status: "Error",
+        statusCode: 500,
+        message: "Internal server error",
+      },
+      { status: 500 }
+    );
   }
 }
 
