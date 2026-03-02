@@ -406,11 +406,154 @@ class ApiError extends Error {
 //   }
 // }
 
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string; studentId: string } }
+) {
+  try {
+
+    /* ---------------- AUTH ---------------- */
+    const authHeader = req.headers.get("authorization");
+
+    if (!authHeader) return errorResponse("Missing token", 401);
+
+    const token = authHeader.split(" ")[1];
+
+    const decoded = verify(token, process.env.NEXTAUTH_SECRET as string) as JwtPayload;
+
+    if (decoded.user_type !== "U" && decoded.role_id !== 1) {
+      return errorResponse("Forbidden: Insufficient permissions", 403);
+    }
+
+    const examType = req.nextUrl.searchParams.get("type") || "practical";
+
+    const batchId = Number(params.id);
+    const studentId = Number(params.studentId);
+
+    if (!batchId || !studentId) {
+      return errorResponse("Invalid batch or student ID", 400);
+    }
+
+    if (examType !== "practical" && examType !== "viva") {
+      return errorResponse("Invalid exam type. Use 'practical' or 'viva'", 400);
+    }
+
+    /* ---------------- CHECK STUDENT ---------------- */
+
+    const student = await prisma.students.findFirst({
+      where: {
+        id: studentId,
+        batch_id: batchId,
+      },
+      select: { id: true },
+    });
+
+    if (!student) {
+      return errorResponse("Student not found in this batch", 404);
+    }
+
+    /* ---------------- FETCH EXAM SET QUESTIONS ---------------- */
+
+    const batch = await prisma.batches.findUnique({
+      where: { id: batchId },
+      select: {
+        practical_exam_set: {
+          select: {
+            exam_sets_questions: {
+              select: {
+                question_id: true,
+                marks: true,
+              },
+            },
+          },
+        },
+        viva_exam_set: {
+          select: {
+            exam_sets_questions: {
+              select: {
+                question_id: true,
+                marks: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!batch) {
+      return errorResponse("Batch not found", 404);
+    }
+
+    const examQuestions =
+      examType === "practical"
+        ? batch.practical_exam_set?.exam_sets_questions ?? []
+        : batch.viva_exam_set?.exam_sets_questions ?? [];
+
+    if (!examQuestions.length) {
+      return errorResponse(
+        `No ${examType} exam set configured for this batch`,
+        404
+      );
+    }
+
+    const questionIds = examQuestions.map((q) => q.question_id);
+
+    /* ---------------- FETCH ATTEMPTED QUESTIONS ---------------- */
+
+    const attempts = await prisma.student_question_attempts.findMany({
+      where: {
+        student_id: studentId,
+        question_id: { in: questionIds },
+      },
+      select: {
+        question_id: true,
+        max_marks: true,
+        obtained_marks: true,
+        remarks: true,
+        evaluated_at: true,
+        assessor_id: true,
+      },
+    });
+
+    /* ---------------- RESPONSE ---------------- */
+
+    return NextResponse.json({
+      status: "success",
+      message: `${examType} attempted questions fetched successfully`,
+      data: {
+        batch_id: batchId,
+        student_id: studentId,
+        exam_type: examType,
+        total_questions: examQuestions.length,
+        attempted_count: attempts.length,
+        questions: attempts,
+      },
+    });
+  } catch (error: any) {
+    if (error.name === "TokenExpiredError") {
+      return errorResponse("Token expired", 401);
+    }
+
+    if (error.name === "JsonWebTokenError") {
+      return errorResponse("Invalid token", 401);
+    }
+
+    if (error instanceof ApiError) {
+      return errorResponse(error.message, error.statusCode);
+    }
+
+    console.error("GET STUDENT MARKS ERROR:", error);
+
+    return errorResponse("Internal server error", 500);
+  }
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string; studentId: string } }
 ) {
   try {
+
     /* ---------------- AUTH ---------------- */
     const authHeader = req.headers.get("authorization");
 
