@@ -291,7 +291,7 @@ const QualificationPackListTable = ({ tableData, updateQPList }: { tableData?: Q
         )
       }),
       columnHelper.accessor('qualification_pack_id', {
-        header: 'Pack ID',
+        header: 'QP ID',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             {/* {getAvatar({ qualification_pack_name: row.original.qualification_pack_name })} */}
@@ -304,7 +304,7 @@ const QualificationPackListTable = ({ tableData, updateQPList }: { tableData?: Q
         )
       }),
       columnHelper.accessor('qualification_pack_name', {
-        header: 'Name',
+        header: 'QP Name',
         cell: ({ row }) => (
           <div className='flex items-center gap-2'>
             <Typography className='capitalize' color='text.primary'>
