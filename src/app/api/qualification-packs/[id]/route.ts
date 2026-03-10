@@ -40,7 +40,7 @@ export async function POST(
   const session = await getServerSession(authOptions);
   const agency_id = Number(session?.user?.agency_id);
 
-  const {sscId, qualificationPackName, nQRCode, nSQFLevel, version, totalTheoryMarks, totalVivaMarks, totalPracticalMarks, totalProjectMarks, totalMarks, isTheoryCutoff, isVivaCutoff, isPracticalCutoff, isOverallCutoff, isNOSCutoff, isWeightedAvailable, theoryCutoffMarks, vivaCutoffMarks, practicalCutoffMarks, overallCutoffMarks, nosCutoffMarks, weightedAvailable} = await req.json();
+  const {sscId, qualificationPackId, qualificationPackName, nQRCode, nSQFLevel, version, totalTheoryMarks, totalVivaMarks, totalPracticalMarks, totalProjectMarks, totalMarks, isTheoryCutoff, isVivaCutoff, isPracticalCutoff, isOverallCutoff, isNOSCutoff, isWeightedAvailable, theoryCutoffMarks, vivaCutoffMarks, practicalCutoffMarks, overallCutoffMarks, nosCutoffMarks, weightedAvailable} = await req.json();
 
   const theoryCutoff = isTheoryCutoff === true ? theoryCutoffMarks : '';
   const vivaCutoff = isVivaCutoff === true ? vivaCutoffMarks : '';
@@ -48,6 +48,30 @@ export async function POST(
   const overallCutoff = isOverallCutoff === true ? overallCutoffMarks : '';
   const nosCutoff = isNOSCutoff === true ? nosCutoffMarks : '';
   const weighted = isWeightedAvailable === true ? weightedAvailable : '';
+
+  const duplicateQualificationPackId = await prisma.qualification_packs.findFirst({
+    where: {
+      qualification_pack_id: qualificationPackId,
+      agency_id: agency_id,
+      NOT: {
+        id: id
+      }
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if(duplicateQualificationPackId){
+    return NextResponse.json(
+      {
+        status: 'Error',
+        message: 'QP ID already exists',
+        errors: { qualificationPackId: ['QP ID already exists'] }
+      },
+      { status: 422 }
+    );
+  }
 
   const qualificationPackExist = await prisma.qualification_packs.findUnique({
     where: {
@@ -65,6 +89,7 @@ export async function POST(
       },
       data: {
         ssc_id: Number(sscId),
+        qualification_pack_id: qualificationPackId,
         qualification_pack_name: qualificationPackName,
         nqr_code: nQRCode,
         nsqf_level: nSQFLevel,

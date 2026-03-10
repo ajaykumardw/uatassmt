@@ -399,8 +399,10 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
                 render={({ field }) => (
                   <CustomTextField
                     fullWidth
-                    inputProps={{ readOnly: qpId && true }}
-                    disabled={qpId ? true : false}
+
+                    // inputProps={{ readOnly: qpId && true }}
+                    // disabled={qpId ? true : false}
+                    
                     required={true}
                     {...field}
                     {...(errors.qualificationPackId && { error: true, helperText: errors.qualificationPackId.message })}
