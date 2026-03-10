@@ -89,6 +89,12 @@ export async function GET(req: Request) {
                           pc_id: true,
                           pc_name: true
                         }
+                      },
+                      exam_sets_questions: {
+                        select: {
+                          id: true,
+                          exam_set_id: true
+                        }
                       }
                     }
                   }
@@ -123,13 +129,18 @@ export async function GET(req: Request) {
     ssc.qualification_packs.forEach(qp => {
       qp.nos.forEach(nos => {
         nos.pc.forEach(pc => {
-          pc.questions.forEach(question => {
+          pc.questions = pc.questions.map(question => {
             question.pc.sort((a, b) => {
               const numA = parseInt(a.pc_id.replace(/^\D+/g, ''), 10);
               const numB = parseInt(b.pc_id.replace(/^\D+/g, ''), 10);
 
               return numA - numB;
             });
+
+            return {
+              ...question,
+              inExamSet: question.exam_sets_questions.length > 0
+            };
           });
         });
       });

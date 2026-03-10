@@ -11,6 +11,7 @@ import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import TablePagination from '@mui/material/TablePagination';
+import Checkbox from '@mui/material/Checkbox';
 
 import type { TextFieldProps } from '@mui/material/TextField';
 
@@ -33,6 +34,8 @@ import {
 } from '@tanstack/react-table'
 
 import type { ColumnDef, FilterFn } from '@tanstack/react-table'
+
+import { toast } from 'react-toastify';
 
 // import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
@@ -57,6 +60,8 @@ import AddEditVivaQuestionsDialog from '@/components/questions/dialogs/AddEditVi
 
 import type { QuestionsType } from '@/types/questions/questionsType';
 import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
+
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 // declare module '@tanstack/table-core' {
 //   interface FilterFns {
@@ -153,6 +158,9 @@ const VivaQuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?
 
   const [addQuestionOpen, setAddQuestionOpen] = useState(false);
   const [editQuestionOpen, setEditQuestionOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   // const [editQuestionData, setEditQuestionData] = useState({
   //   selectPC: [],
@@ -185,6 +193,28 @@ const VivaQuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?
   // Hooks
   const columns = useMemo<ColumnDef<QuestionsTypeWithAction, any>[]>(
     () => [
+      {
+        id: 'select',
+        header: ({ table }) => (
+          <Checkbox
+            {...{
+              checked: table.getIsAllRowsSelected(),
+              indeterminate: table.getIsSomeRowsSelected(),
+              onChange: table.getToggleAllRowsSelectedHandler()
+            }}
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            {...{
+              checked: row.getIsSelected(),
+              disabled: !row.getCanSelect(),
+              indeterminate: row.getIsSomeSelected(),
+              onChange: row.getToggleSelectedHandler()
+            }}
+          />
+        )
+      },
       {
         id: 'serialNumber', // Serial number column
         header: 'S.No.',
@@ -287,7 +317,7 @@ const VivaQuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?
         pageSize: TableRowLimit.pageSize
       }
     },
-    enableRowSelection: true, //enable row selection for all rows
+    enableRowSelection: row => !row.original.inExamSet, //enable row selection for all rows
     // enableRowSelection: row => row.original.age > 18, // or enable row selection conditionally per row
     globalFilterFn: fuzzyFilter,
     onRowSelectionChange: setRowSelection,
@@ -300,6 +330,39 @@ const VivaQuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
+
+  useMemo(() => {
+    setSelectedIds(table.getSelectedRowModel().flatRows.map(row => row.original.id));
+  }, [rowSelection, table]);
+
+  const handleBulkDeleteQuestions = async () => {
+
+    setDeleteLoading(true);
+
+    try {
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions/bulk-delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({selectedIds: selectedIds}) // sending nosId to identify which NOS's PCs are being deleted, can be used in backend for validation if needed
+      });
+
+      if (!res.ok) throw new Error('Delete failed');
+
+      toast.success('Questions deleted successfully 🎉');
+
+      updateQuestionsList();
+
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to delete Questions ❌');
+    } finally {
+      setDeleteLoading(false);
+      setConfirmDeleteOpen(false);
+      setSelectedIds([]);
+      setRowSelection({});
+    }
+  }
 
   return (
     <>
@@ -333,6 +396,20 @@ const VivaQuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?
             >
               Export
             </Button>
+            { selectedIds.length > 0 && (
+              <Button
+                color='error'
+                variant='tonal'
+                startIcon={<i className='tabler-upload' />}
+                className='is-full sm:is-auto'
+                onClick={() => {
+                  setConfirmDeleteOpen(true);
+                }}
+                disabled={deleteLoading}
+              >
+                Delete
+              </Button>
+            )}
             {/* {pcID &&
             <>
               <Button
@@ -422,6 +499,18 @@ const VivaQuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?
       </Card>
       <AddEditVivaQuestionsDialog open={addQuestionOpen} updateQuestionsList={updateQuestionsList} handleClose={() => setAddQuestionOpen(!addQuestionOpen)} />
       <AddEditVivaQuestionsDialog open={editQuestionOpen} questionId={questionId} updateQuestionsList={updateQuestionsList} handleClose={() => setEditQuestionOpen(!editQuestionOpen)} />
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        setOpen={setConfirmDeleteOpen}
+        title='Confirm Deletion'
+        message={`Are you sure you want to delete the selected questions?`}
+        confirmText="Yes, Delete"
+        cancelText="Cancel"
+        successMessage="Questions deleted successfully!"
+        cancelMessage="Questions deletion cancelled!"
+        onCancel={() => setConfirmDeleteOpen(false)}
+        onConfirm={() => handleBulkDeleteQuestions()}
+      />
     </>
   )
 }

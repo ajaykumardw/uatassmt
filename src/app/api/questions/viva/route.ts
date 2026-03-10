@@ -29,23 +29,35 @@ export async function GET() {
           pc_id: true,
           pc_name: true,
         }
-      }
+      },
+      exam_sets_questions: {
+        select: {
+          id: true,
+          exam_set_id: true
+        }
+      },
     }
   })
 
   // Sort PCs numerically by pc_id number
-  vivaQuestions.forEach(q =>
-    q.pc.sort((a, b) => {
-      const numA = parseInt(a.pc_id.replace(/^\D+/g, ''), 10);
-      const numB = parseInt(b.pc_id.replace(/^\D+/g, ''), 10);
-      
+  const formattedQuestions = vivaQuestions.map(question => {
+    const sortedPc = [...question.pc].sort((a, b) => {
+      const numA = parseInt(a.pc_id.replace(/^\D+/g, ""), 10);
+      const numB = parseInt(b.pc_id.replace(/^\D+/g, ""), 10);
+
       return numA - numB;
-    })
-  );
+    });
+
+    return {
+      ...question,
+      pc: sortedPc,
+      inExamSet: question.exam_sets_questions.length > 0
+    };
+  });
 
   // console.log(qualificationPacks);
 
-  return NextResponse.json(vivaQuestions);
+  return NextResponse.json(formattedQuestions);
 }
 
 export async function POST(req: Request) {

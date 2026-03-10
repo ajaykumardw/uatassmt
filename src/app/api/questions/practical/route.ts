@@ -15,37 +15,47 @@ export async function GET() {
   const agencyId = Number(session?.user?.agency_id);
 
   const practicalQuestions = await prisma.questions.findMany({
-    where:{
+    where: {
       agency_id: agencyId,
-      question_type: 'practical'
+      question_type: "practical"
     },
     include: {
       pc: {
         orderBy: {
-          pc_id: 'asc'
+          pc_id: "asc"
         },
         select: {
           id: true,
           pc_id: true,
-          pc_name: true,
+          pc_name: true
         }
-      }
+      },
+      exam_sets_questions: {
+        select: {
+          id: true,
+          exam_set_id: true
+        }
+      },
     }
-  })
+  });
 
-  // Sort PCs numerically by pc_id number
-  practicalQuestions.forEach(q =>
-    q.pc.sort((a, b) => {
-      const numA = parseInt(a.pc_id.replace(/^\D+/g, ''), 10);
-      const numB = parseInt(b.pc_id.replace(/^\D+/g, ''), 10);
-      
+  const formattedQuestions = practicalQuestions.map(question => {
+
+    const sortedPc = [...question.pc].sort((a, b) => {
+      const numA = parseInt(a.pc_id.replace(/^\D+/g, ""), 10);
+      const numB = parseInt(b.pc_id.replace(/^\D+/g, ""), 10);
+
       return numA - numB;
-    })
-  );
+    });
 
-  // console.log(qualificationPacks);
+    return {
+      ...question,
+      pc: sortedPc,
+      inExamSet: question.exam_sets_questions.length > 0
+    };
+  });
 
-  return NextResponse.json(practicalQuestions);
+  return NextResponse.json(formattedQuestions);
 }
 
 export async function POST(req: Request) {

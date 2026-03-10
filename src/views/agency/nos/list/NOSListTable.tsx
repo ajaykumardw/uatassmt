@@ -197,7 +197,6 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
   const [selectedPCs, setSelectedPCs] = useState<{ [nosId: number]: number[] }>({});
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteData, setDeleteData] = useState<{ pcIds: number[]; nosId: number } | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
 
 
   const [nosEditData, setNOSEditData] = useState({
@@ -241,7 +240,7 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
     if (!deleteData) return;
 
     try {
-      setDeleteLoading(true);
+      // setDeleteLoading(true);
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pc/bulk-delete`, {
         method: 'POST',
@@ -266,8 +265,6 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
     } catch (error) {
       console.error(error);
       toast.error('Failed to delete PC ❌');
-    } finally {
-      setDeleteLoading(false);
     }
   };
 
@@ -726,11 +723,15 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
       <BulkUploadNOSDialog open={bulkUploadNOSOpen} sscID={sscID} updateNOSList={updateNOSList} handleClose={() => setBulkUploadNOSOpen(!bulkUploadNOSOpen)} />
       <ConfirmDialog
         open={confirmOpen}
+        setOpen={setConfirmOpen}
         title="Delete PC"
-        description={`Are you sure you want to delete ${deleteData?.pcIds.length ?? 0} PC(s)? This action cannot be undone.`}
-        onClose={() => setConfirmOpen(false)}
+        message={`Are you sure you want to delete ${deleteData?.pcIds.length ?? 0} PC(s)? This action cannot be undone.`}
+        confirmText="Yes, Delete"
+        cancelText="Cancel"
+        successMessage="PC(s) deleted successfully!"
+        cancelMessage="PC deletion cancelled!"
+        onCancel={() => setConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
-        loading={deleteLoading}
       />
     </>
   )
