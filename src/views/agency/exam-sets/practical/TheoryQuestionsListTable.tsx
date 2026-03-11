@@ -219,30 +219,20 @@ const TheoryQuestionListTable = ({ tableData, selectedQuestion, setSelectedQuest
           />
         )
       },
-      columnHelper.accessor('id', {
-        header: 'ID',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-                {row.original.id}
-              </Typography>
-            </div>
-          </div>
-        )
-      }),
-      columnHelper.accessor('question', {
-        header: 'Question',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-                {row.original.question}
-              </Typography>
-            </div>
-          </div>
-        )
-      }),
+
+      // columnHelper.accessor('id', {
+      //   header: 'ID',
+      //   cell: ({ row }) => (
+      //     <div className='flex items-center gap-4'>
+      //       <div className='flex flex-col'>
+      //         <Typography color='text.primary' className='font-medium'>
+      //           {row.original.id}
+      //         </Typography>
+      //       </div>
+      //     </div>
+      //   )
+      // }),
+
       columnHelper.accessor('status', {
         header: 'Status',
         cell: ({ row }) => (
@@ -264,6 +254,18 @@ const TheoryQuestionListTable = ({ tableData, selectedQuestion, setSelectedQuest
             <Typography className='capitalize' color='text.primary'>
               {row.original.marks}
             </Typography>
+          </div>
+        )
+      }),
+      columnHelper.accessor('question', {
+        header: 'Question',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {row.original.question}
+              </Typography>
+            </div>
           </div>
         )
       }),

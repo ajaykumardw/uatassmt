@@ -41,6 +41,8 @@ import { toast } from 'react-toastify';
 
 import type { questions } from '@prisma/client';
 
+import { format } from 'date-fns';
+
 // Type Imports
 import type { ThemeColor } from '@core/types'
 
@@ -293,6 +295,16 @@ const PracticalQuestionsListTable = ({ tableData, updateQuestionsList }: { table
               color={userStatusObj[row.original.status]}
               size='small'
             />
+          </div>
+        )
+      }),
+      columnHelper.accessor('created_at', {
+        header: 'Created At',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-2'>
+            <Typography className='capitalize' color='text.primary'>
+              { row.original.created_at && format( row.original.created_at, 'dd-MMM-yyyy hh:mm a' ) }
+            </Typography>
           </div>
         )
       }),

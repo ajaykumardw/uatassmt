@@ -36,6 +36,8 @@ import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 
 import { toast } from 'react-toastify';
 
+import { format } from 'date-fns';
+
 // import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 import { Checkbox, Tooltip } from '@mui/material';
@@ -416,6 +418,16 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
               color={userStatusObj[row.original.status]}
               size='small'
             />
+          </div>
+        )
+      }),
+      columnHelper.accessor('created_at', {
+        header: 'Created At',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-2'>
+            <Typography className='capitalize' color='text.primary'>
+              { row.original.created_at && format( row.original.created_at, 'dd-MMM-yyyy hh:mm a' ) }
+            </Typography>
           </div>
         )
       }),

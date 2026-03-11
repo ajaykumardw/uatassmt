@@ -18,8 +18,21 @@ export async function GET(req: Request) {
   if(qpId){
     const questions = await prisma.questions.findMany({
       where: {
-        qp_id: Number(qpId),
-        question_type: qType == 'practical' ? 'practical' : qType == 'viva' ? 'viva' : 'theory'
+
+        // qp_id: Number(qpId),
+        
+        question_type: qType == 'practical' ? 'practical' : qType == 'viva' ? 'viva' : 'theory',
+        pc: {
+          some: {
+            nos: {
+              qualification_packs: {
+                some: {
+                  id: Number(qpId)
+                }
+              }
+            }
+          }
+        }
       },
       include: {
         pc: {
@@ -87,7 +100,21 @@ export async function GET(req: Request) {
                         select: {
                           id: true,
                           pc_id: true,
-                          pc_name: true
+                          pc_name: true,
+                          nos: {
+                            select: {
+                              id: true,
+                              nos_id: true,
+                              nos_name: true,
+                              qualification_packs: {
+                                select: {
+                                  id: true,
+                                  qualification_pack_id: true,
+                                  qualification_pack_name: true,
+                                }
+                              }
+                            }
+                          }
                         }
                       },
                       exam_sets_questions: {
