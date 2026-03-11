@@ -202,7 +202,8 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
   const [qpID, setQPID] = useState<number>();
   const [questionId, setQuestionId] = useState(0);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+  // const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const handleOnEditClick = async (id: number) => {
 
@@ -470,8 +471,14 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  useMemo(() => {
-    setSelectedIds(table.getSelectedRowModel().flatRows.map(row => row.original.id));
+  // useMemo(() => {
+  //   setSelectedIds(table.getSelectedRowModel().flatRows.map(row => row.original.id));
+  // }, [rowSelection, table]);
+
+  const selectedIds = useMemo(() => {
+    return table
+      .getSelectedRowModel()
+      .flatRows.map(row => row.original.id);
   }, [rowSelection, table]);
 
   const handleBulkDeleteQuestions = async () => {
@@ -498,7 +505,9 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
     } finally {
       setDeleteLoading(false);
       setConfirmDeleteOpen(false);
-      setSelectedIds([]);
+
+      // setSelectedIds([]);
+
       setRowSelection({});
     }
   }
@@ -539,7 +548,7 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
               <Button
                 color='error'
                 variant='tonal'
-                startIcon={<i className='tabler-upload' />}
+                startIcon={<i className='tabler-trash' />}
                 className='is-full sm:is-auto'
                 onClick={() => {
                   setConfirmDeleteOpen(true);

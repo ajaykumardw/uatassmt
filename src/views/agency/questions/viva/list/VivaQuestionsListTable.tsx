@@ -160,7 +160,8 @@ const VivaQuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?
   const [editQuestionOpen, setEditQuestionOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+  // const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   // const [editQuestionData, setEditQuestionData] = useState({
   //   selectPC: [],
@@ -331,8 +332,14 @@ const VivaQuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  useMemo(() => {
-    setSelectedIds(table.getSelectedRowModel().flatRows.map(row => row.original.id));
+  // useMemo(() => {
+  //   setSelectedIds(table.getSelectedRowModel().flatRows.map(row => row.original.id));
+  // }, [rowSelection, table]);
+
+  const selectedIds = useMemo(() => {
+    return table
+      .getSelectedRowModel()
+      .flatRows.map(row => row.original.id);
   }, [rowSelection, table]);
 
   const handleBulkDeleteQuestions = async () => {
@@ -359,7 +366,9 @@ const VivaQuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?
     } finally {
       setDeleteLoading(false);
       setConfirmDeleteOpen(false);
-      setSelectedIds([]);
+
+      // setSelectedIds([]);
+
       setRowSelection({});
     }
   }
@@ -400,7 +409,7 @@ const VivaQuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?
               <Button
                 color='error'
                 variant='tonal'
-                startIcon={<i className='tabler-upload' />}
+                startIcon={<i className='tabler-trash' />}
                 className='is-full sm:is-auto'
                 onClick={() => {
                   setConfirmDeleteOpen(true);
