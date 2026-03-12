@@ -20,7 +20,7 @@ export async function GET(req: Request) {
       where: {
 
         // qp_id: Number(qpId),
-        
+
         question_type: qType == 'practical' ? 'practical' : qType == 'viva' ? 'viva' : 'theory',
         pc: {
           some: {
@@ -178,6 +178,190 @@ export async function GET(req: Request) {
 
   return NextResponse.json(questions);
 }
+
+// export async function GET(req: Request) {
+
+//   const url = new URL(req.url);
+//   const qpId = url.searchParams.get('qpId');
+//   const qType = url.searchParams.get('qType');
+
+//   const questionType =
+//     qType == 'practical'
+//       ? 'practical'
+//       : qType == 'viva'
+//       ? 'viva'
+//       : 'theory';
+
+//   // ✅ Optimized query when qpId exists
+//   if(qpId){
+
+//     const questions = await prisma.questions.findMany({
+
+//       where:{
+//         question_type: questionType,
+
+//         pc:{
+//           some:{
+//             nos:{
+//               qualification_packs: {
+//                 some: {
+//                   id: Number(qpId)
+//                 }
+//               }
+//             }
+//           }
+//         }
+//       },
+
+//       include:{
+
+//         pc:{
+//           where:{
+//             nos:{
+//               qualification_packs: {
+//                 some: {
+//                   id: Number(qpId)
+//                 }
+//               }
+//             }
+//           },
+
+//           select:{
+//             id:true,
+//             pc_id:true,
+//             pc_name:true,
+
+//             nos:{
+//               select:{
+//                 id:true,
+//                 nos_id:true,
+//                 nos_name:true
+//               }
+//             }
+//           },
+
+//           orderBy:{
+//             pc_id:'asc'
+//           }
+//         },
+
+//         exam_sets_questions:{
+//           select:{
+//             id:true,
+//             exam_set_id:true
+//           }
+//         }
+
+//       },
+
+//       orderBy:{
+//         id:'desc'
+//       }
+
+//     });
+
+//     // ✅ Lightweight formatting
+//     const formatted = questions.map(q=>({
+
+//       ...q,
+
+//       pc:q.pc.sort((a,b)=>{
+
+//         const numA=parseInt(a.pc_id.replace(/^\D+/g,''),10);
+//         const numB=parseInt(b.pc_id.replace(/^\D+/g,''),10);
+
+//         return numA-numB;
+
+//       }),
+
+//       inExamSet:q.exam_sets_questions.length>0
+
+//     }));
+
+//     return NextResponse.json(formatted);
+
+//   }
+
+//   // ✅ Optimized default query (no qpId)
+//   const questions = await prisma.questions.findMany({
+
+//     where:{
+//       question_type:'theory'
+//     },
+
+//     include:{
+
+//       pc:{
+//         select:{
+//           id:true,
+//           pc_id:true,
+//           pc_name:true,
+
+//           nos:{
+//             select:{
+//               id:true,
+//               nos_id:true,
+//               nos_name:true,
+
+//               qualification_packs:{
+//                 select:{
+//                   id:true,
+//                   qualification_pack_id:true,
+//                   qualification_pack_name:true,
+
+//                   ssc:{
+//                     select:{
+//                       id:true,
+//                       ssc_name:true
+//                     }
+//                   }
+//                 }
+//               }
+//             }
+//           }
+//         },
+
+//         orderBy:{
+//           pc_id:'asc'
+//         }
+
+//       },
+
+//       exam_sets_questions:{
+//         select:{
+//           id:true,
+//           exam_set_id:true
+//         }
+//       }
+
+//     },
+
+//     orderBy:{
+//       id:'desc'
+//     }
+
+//   });
+
+//   const formatted = questions.map(q=>({
+
+//     ...q,
+
+//     pc:q.pc.sort((a,b)=>{
+
+//       const numA=parseInt(a.pc_id.replace(/^\D+/g,''),10);
+//       const numB=parseInt(b.pc_id.replace(/^\D+/g,''),10);
+
+//       return numA-numB;
+
+//     }),
+
+//     inExamSet:q.exam_sets_questions.length>0
+
+//   }));
+
+//   return NextResponse.json(formatted);
+
+// }
 
 export async function POST(req: Request) {
 

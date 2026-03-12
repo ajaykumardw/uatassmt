@@ -166,6 +166,12 @@ export async function GET(req: NextRequest) {
       viva_completed: "20",
       total_completed: "90",
       assessment_mode: ModeOfAssessment.find(m => m.id === String(batch.assessment_mode))?.label || null,
+      training_center: batch.training_center
+      ? {
+          ...batch.training_center,
+          spoc_person_name: `${batch.training_center.first_name ?? ""} ${batch.training_center.last_name ?? ""}`.trim(),
+        }
+      : null,
       video_limits: {
         center_video: {
           min: 1,
