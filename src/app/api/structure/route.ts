@@ -1,17 +1,10 @@
-import fs from 'fs';
-import path from 'path';
+
 
 // Next Imports
 import { NextResponse } from 'next/server';
 
-import type { NextRequest } from 'next/server';
-
 // Data Imports
 import { getServerSession } from 'next-auth';
-
-import { hash } from 'bcrypt';
-
-import { getTime } from 'date-fns';
 
 import { authOptions } from '@/libs/auth';
 
