@@ -150,6 +150,8 @@ export const storageFolders = {
   trainingResources: "training-resources",
   centerInspection: "center-inspection",
   images: "images",
+  tpSpocSignature: "tp-spoc-signature",
+  assessorSignature: "assessor-signature",
 }
 
 

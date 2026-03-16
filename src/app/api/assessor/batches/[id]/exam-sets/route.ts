@@ -27,7 +27,7 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
     try {
         const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET as string) as JwtPayload;
 
-        if (decoded.user_type !== 'U' && decoded.role_id !== 1) {
+        if (decoded.user_type !== 'U' || decoded.role_id !== 1) {
             return NextResponse.json({
                 status: 'Error',
                 statusCode: 403,
