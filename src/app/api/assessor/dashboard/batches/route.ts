@@ -88,6 +88,12 @@ export async function GET(req: NextRequest) {
                 assessment_start_datetime: true,
                 assessment_end_datetime: true,
                 assessor_id: true,
+                qualification_pack:{
+                  select: {
+                    qualification_pack_id: true,
+                    qualification_pack_name: true,
+                  }
+                },
                 training_partner: {
                     select: {
                         company_name: true,
