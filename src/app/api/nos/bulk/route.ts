@@ -27,7 +27,11 @@ export async function POST(req: Request) {
         practical_marks: item.Practical_Marks,
         viva_marks: item.Viva_Marks,
         project_marks: item.Project_Marks,
-        total_marks: (item.Theory_Marks + item.Practical_Marks + item.Viva_Marks + item.Project_Marks),
+        total_marks:
+          (Number(item.Theory_Marks) || 0) +
+          (Number(item.Practical_Marks) || 0) +
+          (Number(item.Viva_Marks) || 0) +
+          (Number(item.Project_Marks) || 0),
         nos: {
           connect: {
             nos_id: item.NOS_ID
