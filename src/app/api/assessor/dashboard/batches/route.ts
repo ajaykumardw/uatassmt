@@ -46,8 +46,13 @@ export async function GET(req: NextRequest) {
         const lastThirtyDays = new Date();
 
         lastThirtyDays.setDate(now.getDate() - 30);
-        const fromDate = from ? new Date(from).setHours(0, 0, 0, 0) : null;
-        const toDate = to ? new Date(to).setHours(23, 59, 59, 999) : null;
+        const fromDate = from ? new Date(from) : null;
+
+        if (fromDate) fromDate.setHours(0, 0, 0, 0);
+
+        const toDate = to ? new Date(to) : null;
+
+        if (toDate) toDate.setHours(23, 59, 59, 999);
 
         // Base where condition
         const whereClause: any = {
