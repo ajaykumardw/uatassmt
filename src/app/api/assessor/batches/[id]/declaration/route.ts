@@ -107,8 +107,6 @@ export async function GET(
     //   }, { status: 404 });
     // }
 
-    const declarationText = `I, {center_spoc_name} Center SPOC of this training center, on behalf of {training_partner_name}, acknowledge that the assessment process conducted by ({assessment_agency_name}) is in the manner of the SOP and assessor has not asked/demanded any bribe.`
-
     const groupedData: Record<string, { id: number; url: string } | null> = {};
 
     const relativePath = path.posix.join(
@@ -142,12 +140,20 @@ export async function GET(
       };
     });
 
+
+
+    const centerSpocName = (batch.training_center.first_name + " " + batch.training_center.last_name).trim();
+    const trainingPartnerName = batch.training_partner.company_name;
+    const assessmentAgencyName = "Assessment Agency Name";
+
+    const declarationText = `I, ${centerSpocName} Center SPOC of this training center, on behalf of ${trainingPartnerName}, acknowledge that the assessment process conducted by (${assessmentAgencyName}) is in the manner of the SOP and assessor has not asked/demanded any bribe.`;
+
     const data = {
-      "center_spoc_name": (batch.training_center.first_name + " " + batch.training_center.last_name).trim(),
+      "center_spoc_name": centerSpocName,
       "center_spoc_email": batch.training_center.email,
       "center_spoc_mobile": batch.training_center.mobile_no,
-      "training_partner_name": batch.training_partner.company_name,
-      "assessment_agency_name": "Assessment Agency Name",
+      "training_partner_name": trainingPartnerName,
+      "assessment_agency_name": assessmentAgencyName,
       "declaration": declarationText,
       "tp_spoc_signature": groupedData["tp_spoc_signature"] || null,
       "assessor_signature": groupedData["assessor_signature"] || null
