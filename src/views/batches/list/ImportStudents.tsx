@@ -125,18 +125,39 @@ const studentSchema = v.objectAsync(
       ),
     ]),
     CandidateName: v.pipe(v.string(), v.trim() , v.minLength(1, 'This field is required') , v.maxLength(191, 'The max length for this field is 191 characters.')),
-    Gender: v.pipe(v.string(), v.trim() , v.minLength(1, 'This field is required') , v.check(value => ['M', 'F', 'T'].includes(value), 'Gender must be M, F, or T')),
-    Category: v.pipe(v.string(), v.trim() , v.minLength(1, 'This field is required') , v.check(value => ['Gen', 'SC', 'ST', 'BC', 'OBC', 'OC'].includes(value), 'Category must be Gen, SC, ST, OC, or OBC')),
-    DOB: v.pipe(v.string(), v.trim() , v.minLength(1, 'DOB is required') ,),
+    Gender: v.pipe(
+      v.optional(v.string()),
+      v.transform(v => v?.trim()),
+      v.check(
+        v => !v || ['M','F','T'].includes(v),
+        'Gender must be M, F, or T'
+      )
+    ),
+    Category: v.pipe(
+      v.optional(v.string()),
+      v.transform(v => v?.trim()),
+      v.check(
+        v => !v || ['Gen', 'SC', 'ST', 'BC', 'OBC', 'OC'].includes(v),
+        'Category must be Gen, SC, ST, BC, OBC, or OC'
+      )
+    ),
+    DOB: v.pipe(
+      v.optional(v.string()),
+      v.transform(v => v?.trim()),
+    ),
     FatherName: v.optional(v.pipe(v.string('Father\'s name type should be string'), v.trim() , v.maxLength(191, 'The max length for Father Name is 191 characters.'))),
     MotherName: v.optional(v.pipe(v.string('Mother\'s name type should be string'), v.trim() , v.maxLength(191, 'The max length for Mother Name is 191 characters.'))),
     Address: v.optional(v.pipe(v.string(), v.trim() , v.maxLength(191, 'The max length for Address is 191 characters.'))),
     City: v.optional(v.pipe(v.string('City should be type of string'), v.trim() , v.maxLength(100, 'The max length for City is 100 characters.'))),
     State: v.optional(v.pipe(v.string('State should be type of string'), v.trim() , v.maxLength(100, 'The max length for State is 100 characters.'))),
     MobileNo: v.pipe(
-      v.number('Mobile No. is required and should be number only'),
-      v.check(value => value.toString().length == 10, 'Mobile No. must be 10 digits.'),
-    )
+      v.optional(v.union([v.string(), v.number()])),
+      v.transform(v => v ? String(v).trim() : v),
+      v.check(
+        v => !v || String(v).length === 10,
+        'Mobile must be 10 digits'
+      )
+    ),
   }
 )
 
@@ -174,19 +195,39 @@ const studentSchemaWithoutBatch = v.objectAsync(
         v.check(value => !/\s/.test(value.toString()), 'Password should not contain any spaces.')
       ),
     ]),
-    CandidateName: v.pipe(v.string(), v.trim() , v.minLength(1, 'This field is required') , v.maxLength(191, 'The max length for this field is 191 characters.')),
-    Gender: v.pipe(v.string(), v.trim() , v.minLength(1, 'This field is required') , v.check(value => ['M', 'F', 'T'].includes(value), 'Gender must be M, F, or T')),
-    Category: v.pipe(v.string(), v.trim() , v.minLength(1, 'This field is required') , v.check(value => ['Gen', 'SC', 'ST', 'BC', 'OBC', 'OC'].includes(value), 'Category must be Gen, SC, ST, OC, or OBC')),
-    DOB: v.pipe(v.string(), v.trim() , v.minLength(1, 'DOB is required') ,),
+    Gender: v.pipe(
+      v.optional(v.string()),
+      v.transform(v => v?.trim()),
+      v.check(
+        v => !v || ['M','F','T'].includes(v),
+        'Gender must be M, F, or T'
+      )
+    ),
+    Category: v.pipe(
+      v.optional(v.string()),
+      v.transform(v => v?.trim()),
+      v.check(
+        v => !v || ['Gen', 'SC', 'ST', 'BC', 'OBC', 'OC'].includes(v),
+        'Category must be Gen, SC, ST, BC, OBC, or OC'
+      )
+    ),
+    DOB: v.pipe(
+      v.optional(v.string()),
+      v.transform(v => v?.trim()),
+    ),
     FatherName: v.optional(v.pipe(v.string('Father\'s name type should be string'), v.trim() , v.maxLength(191, 'The max length for Father Name is 191 characters.'))),
     MotherName: v.optional(v.pipe(v.string('Mother\'s name type should be string'), v.trim() , v.maxLength(191, 'The max length for Mother Name is 191 characters.'))),
     Address: v.optional(v.pipe(v.string(), v.trim() , v.maxLength(191, 'The max length for Address is 191 characters.'))),
     City: v.optional(v.pipe(v.string('City should be type of string'), v.trim() , v.maxLength(100, 'The max length for City is 100 characters.'))),
     State: v.optional(v.pipe(v.string('State should be type of string'), v.trim() , v.maxLength(100, 'The max length for State is 100 characters.'))),
     MobileNo: v.pipe(
-      v.number('Mobile No. is required and should be number only'),
-      v.check(value => value.toString().length == 10, 'Mobile No. must be 10 digits.'),
-    )
+      v.optional(v.union([v.string(), v.number()])),
+      v.transform(v => v ? String(v).trim() : v),
+      v.check(
+        v => !v || String(v).length === 10,
+        'Mobile must be 10 digits'
+      )
+    ),
   }
 )
 
@@ -967,6 +1008,13 @@ const ImportStudents = ({ batch, onBack }: { batch: number | null, onBack: () =>
           <div className="flex gap-2 flex-col">
             <Alert severity='info'>
               Note: It will accept only Excel files with *.xls or *.xlsx extension only.
+              <div>Below fields are required.</div>
+              <ul>
+                <li>BATCH ID</li>
+                <li>CANDIDATE ID</li>
+                <li>PASSWORD</li>
+                <li>CANDIDATE NAME</li>
+              </ul>
             </Alert>
             {missingHeadersData.length > 0 &&
               <Alert severity='error'

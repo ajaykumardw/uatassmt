@@ -465,7 +465,7 @@ model students {
   state          String?            @db.VarChar(50)
   city           String?            @db.VarChar(50)
   address        String?            @db.VarChar(255)
-  mobile_no      String             @db.VarChar(15)
+  mobile_no      String?             @db.VarChar(15)
   agency         users              @relation(fields: [agency_id], references: [id])
   agency_id      Int
   created_by     Int
