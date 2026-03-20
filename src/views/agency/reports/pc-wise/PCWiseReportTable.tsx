@@ -46,7 +46,7 @@ import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 
 // import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
-import type { batches, nos, pc, schemes, students } from '@prisma/client';
+import type { batches, nos, pc, schemes, student_question_attempts, students } from '@prisma/client';
 
 // Type Imports
 // import type { ThemeColor } from '@core/types'
@@ -196,6 +196,7 @@ type ExamSetResult = {
 type Student = {
   candidate_id: string;
   exam_set_results?: ExamSetResult[];
+  student_question_attempts?: (student_question_attempts & { question: Question })[];
 };
 
 // type TheoryMarksResult = Record<string, Record<string, number>>;
@@ -237,8 +238,13 @@ interface TheoryMarksResult {
   [candidateId: string]: { pcs: Record<string, number>; nos: Record<string, number> };
 }
 
+interface PracticalMarksResult {
+  [candidateId: string]: { pcs: Record<string, number>; nos: Record<string, number> };
+}
+
 interface FinalResult {
   theoryMarks: TheoryMarksResult;
+  practicalMarks: PracticalMarksResult;
   totalTheoryMarks: Record<string, number>;
   absentStudents: string[];
   passedStudents: string[];
@@ -249,6 +255,7 @@ interface FinalResult {
 
 const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): FinalResult => {
   const theoryMarks: TheoryMarksResult = {};
+  const practicalMarks: PracticalMarksResult = {};
   const totalTheoryMarks: Record<string, number> = {};
   const absentStudents: string[] = [];
   const passedStudents: string[] = [];
@@ -267,6 +274,10 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): Final
 
     const pcMarks: Record<string, number> = {};
     const nosMarks: Record<string, number> = {};
+
+    const practicalPcMarks: Record<string, number> = {};
+    const practicalNosMarks: Record<string, number> = {};
+
     const grossMax = qp?.total_marks ?? 0;
     const overAllCutOff = qp?.overall_cutoff_marks ?? 0;
 
@@ -295,9 +306,33 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): Final
       }
     });
 
+    student.student_question_attempts?.forEach((attempt) => {
+      const question = attempt.question;
+
+      if (question?.question_type === "practical") {
+        question.pc.forEach((pc: pc & { nos: nos }) => {
+          const pcId = pc.id;
+          const nosId = pc?.nos?.nos_id;
+          const practicalMark = parseFloat(attempt?.obtained_marks?.toString() ?? "0");
+
+          if (!isNaN(practicalMark)) {
+            const earnedMark = practicalMark / question.pc.length; // Assuming equal distribution of marks among PCs
+
+            practicalPcMarks[pcId] = (practicalPcMarks[pcId] || 0) + earnedMark;
+
+            // NOS-wise total 👇
+
+            if (nosId) {
+              practicalNosMarks[nosId] = (practicalNosMarks[nosId] || 0) + earnedMark;
+            }
+          }
+        });
+      }
+    });
+
     const theoryTotal = Object.values(pcMarks).reduce((sum, m) => sum + m, 0);
 
-    const practicalTotal = 0;
+    const practicalTotal = Object.values(practicalPcMarks).reduce((sum, m) => sum + m, 0);
     const vivaTotal = 0;
 
     const gross = theoryTotal + practicalTotal + vivaTotal;
@@ -313,6 +348,10 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): Final
       pcs: pcMarks,
       nos: nosMarks
     };
+    practicalMarks[studentId] = {
+      pcs: practicalPcMarks,
+      nos: practicalNosMarks
+    };
     totalTheoryMarks[studentId] = theoryTotal;
     grossTotal[studentId] = gross;
     percentage[studentId] = parseFloat(percent.toFixed(2));
@@ -320,6 +359,7 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): Final
 
   return {
     theoryMarks,
+    practicalMarks,
     totalTheoryMarks,
     grossTotal,
     passedStudents,
@@ -328,6 +368,34 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): Final
     percentage
   };
 };
+
+// const getPracticalMarksPerStudent = (students: Student[]): Record<string, Record<string, number>> => {
+//   const result: Record<string, Record<string, number>> = {};
+
+//   students.forEach((student) => {
+//     const name = student.candidate_id;
+//     const pcMarks: Record<string, number> = {};
+
+//     student?.student_question_attempts?.forEach((attempt) => {
+//       const question = attempt.question;
+
+//       if (question.question_type === "practical") {
+//         question.pc.forEach((pc) => {
+//           const pcId = pc.pc_id;
+//           const practicalMark = parseFloat(attempt?.obtained_marks?.toString() ?? "0");
+
+//           if (!isNaN(practicalMark)) {
+//             pcMarks[pcId] = (pcMarks[pcId] || 0) + practicalMark;
+//           }
+//         });
+//       }
+//     });
+
+//     result[name] = pcMarks;
+//   });
+
+//   return result;
+// };
 
 const PCWiseReportTable = () => {
 
@@ -457,7 +525,7 @@ const PCWiseReportTable = () => {
 
 
   // const studentPcTheoryMarks = getTheoryMarksPerStudent(batchReportData?.students || []);
-  const { theoryMarks, absentStudents } = getTheoryMarksPerStudent(batchReportData?.students || [], batchReportData?.qualification_pack || null);
+  const { theoryMarks, practicalMarks, absentStudents } = getTheoryMarksPerStudent(batchReportData?.students || [], batchReportData?.qualification_pack || null);
 
   // Hooks
   const columns = useMemo<ColumnDef<StudentsTypeWithAction, any>[]>(
@@ -737,7 +805,7 @@ const PCWiseReportTable = () => {
           }}
         />
       </Card>
-      <PCReportDialog open={pcReportOpen} handleClose={() => {setPCReportOpen(false); setSelectedCandidate(null); }} theoryMarks={selectedCandidate ? theoryMarks?.[selectedCandidate] || {} : {}} batchReportData={batchReportData} selectedCandidate={selectedCandidate} />
+      <PCReportDialog open={pcReportOpen} handleClose={() => {setPCReportOpen(false); setSelectedCandidate(null); }} theoryMarks={selectedCandidate ? theoryMarks?.[selectedCandidate] || {} : {}} practicalMarks={selectedCandidate ? practicalMarks?.[selectedCandidate] || {} : {}} batchReportData={batchReportData} selectedCandidate={selectedCandidate} />
       {/* <AddEditExamSetsDialog open={addQuestionOpen} updateExamSetsList={updateExamSetsList} handleClose={() => setAddQuestionOpen(!addQuestionOpen)} />
       <AddEditExamSetsDialog open={editQuestionOpen} examSetId={examSetId} updateExamSetsList={updateExamSetsList} handleClose={() => setEditQuestionOpen(!editQuestionOpen)} /> */}
     </>

@@ -40,7 +40,7 @@ export async function POST(
       process.env.NEXTAUTH_SECRET as string
     );
 
-    if (decoded.user_type !== "U" && decoded.role_id !== 1) {
+    if (decoded.user_type !== "U" || decoded.role_id !== 1) {
       return errorResponse("Forbidden", 403);
     }
 

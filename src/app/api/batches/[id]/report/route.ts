@@ -67,6 +67,9 @@ export async function GET(
                           nos_name: true
                         }
                       }
+                    },
+                    orderBy: {
+                      pc_id: 'asc'
                     }
                   }
                 }
@@ -145,6 +148,44 @@ export async function GET(
                           nos_name: true
                         }
                       }
+                    },
+                    orderBy: {
+                      pc_id: 'asc'
+                    }
+                  }
+                }
+              }
+            }
+          },
+
+          student_question_attempts: {
+            select: {
+              id: true,
+              student_id: true,
+              question_id: true,
+              max_marks: true,
+              obtained_marks: true,
+              question: {
+                select: {
+                  id: true,
+                  question_type: true,
+                  answer: true,
+                  marks: true,
+                  pc: {
+                    select: {
+                      id: true,
+                      pc_id: true,
+                      pc_name: true,
+                      theory_marks: true,
+                      nos: {
+                        select: {
+                          nos_id: true,
+                          nos_name: true
+                        }
+                      }
+                    },
+                    orderBy: {
+                      pc_id: 'asc'
                     }
                   }
                 }
@@ -235,6 +276,26 @@ function groupAllExamSetPCsToNOS(...examSets: any[]) {
       }
     }
   }
+
+
+  // Convert Maps → Arrays + sort
+  return Array.from(nosMap.values()).map(nos=>({
+
+    nos_id: nos.nos_id,
+    nos_name: nos.nos_name,
+
+    pcs: Array.from(nos.pcs.values())
+      .sort((a:any,b:any)=>{
+
+        const numA = parseInt(a.pc_id.replace(/^\D+/g, ''), 10);
+        const numB = parseInt(b.pc_id.replace(/^\D+/g, ''), 10);
+
+        return numA - numB;
+
+      })
+
+  }))
+  .sort((a:any,b:any)=> a.nos_id.localeCompare(b.nos_id))
 
   return Array.from(nosMap.values());
 }

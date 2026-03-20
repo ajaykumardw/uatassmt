@@ -200,30 +200,30 @@ export async function GET(req: NextRequest) {
                 },
                 group_photo_before_batch_start: {
                     min: 1,
-                    max: 20
+                    max: 5
                 },
                 group_photo_student: {
                     min: 2,
-                    max: 20
+                    max: 5
                 },
                 group_photo_student_assessor: {
                     min: 2,
-                    max: 20
+                    max: 5
                 },
                 group_photo_student_assessor_trainer: {
                     min: 2,
-                    max: 20
+                    max: 5
                 },
                 center_facility: {
                     min: 3,
                     max: 10
                 },
                 class_room: {
-                    min: 3,
+                    min: 2,
                     max: 8
                 },
                 it_lab: {
-                    min: 3,
+                    min: 2,
                     max: 8
                 },
                 induction_kit: {

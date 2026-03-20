@@ -88,9 +88,10 @@ const Logo = () => {
       <Image
         alt='Logo'
         src={logoImage}
-        width={90}
-        height={44}
+        width={layout === 'collapsed' && !isHovered ? 40 : 90}
+        height={layout === 'collapsed' && !isHovered ? 24 : 44}
         priority={true}
+        className='transition-all'
       />
       {/* <VuexyLogo className='text-2xl text-primary' /> */}
       {/* <LogoText

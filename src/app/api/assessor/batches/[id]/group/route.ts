@@ -3,6 +3,8 @@ import path from 'path';
 
 import { randomUUID } from 'crypto';
 
+import { pipeline } from 'stream/promises';
+
 // Next Imports
 import { NextResponse } from 'next/server'
 
@@ -227,7 +229,7 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
         const token = authHeader.split(" ")[1];
         const decoded = verify(token, process.env.NEXTAUTH_SECRET as string) as JwtPayload;
 
-        if (decoded.user_type !== "U" && decoded.role_id !== 1) {
+        if (decoded.user_type !== "U" || decoded.role_id !== 1) {
             return errorResponse("Forbidden: Insufficient permissions", 403);
         }
 
@@ -357,7 +359,7 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
         const token = authHeader.split(" ")[1];
         const decoded = verify(token, process.env.NEXTAUTH_SECRET as string) as any;
 
-        if (decoded.user_type !== "U" && decoded.role_id !== 1) {
+        if (decoded.user_type !== "U" || decoded.role_id !== 1) {
             return errorResponse("Forbidden: Insufficient permissions", 403);
         }
 
@@ -471,11 +473,20 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
                 fs.mkdirSync(uploadDir, { recursive: true });
             }
 
+            // group_photo is a Blob from formData
+            const uploadPath = path.join(uploadDir, filename);
+
+            // Stream directly to disk
+            await pipeline(
+              group_photo.stream() as any, // Node.js readable stream
+              fs.createWriteStream(uploadPath)
+            );
+
 
             // Write file
-            const buffer = Buffer.from(await group_photo.arrayBuffer());
+            // const buffer = Buffer.from(await group_photo.arrayBuffer());
 
-            fs.writeFileSync(path.resolve(uploadDir, filename), buffer);
+            // fs.writeFileSync(path.resolve(uploadDir, filename), buffer);
 
             groupPhotoName = filename;
 
@@ -1486,7 +1497,7 @@ export async function DELETE(
 
         const decoded = verify(token, process.env.NEXTAUTH_SECRET as string) as JwtPayload;
 
-        if (decoded.user_type !== "U" && decoded.role_id !== 1) {
+        if (decoded.user_type !== "U" || decoded.role_id !== 1) {
             return errorResponse("Forbidden: Insufficient permissions", 403);
         }
 

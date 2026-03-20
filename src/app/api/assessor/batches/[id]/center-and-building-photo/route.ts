@@ -204,7 +204,7 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
         const token = authHeader.split(" ")[1];
         const decoded = verify(token, process.env.NEXTAUTH_SECRET as string) as any;
 
-        if (decoded.user_type !== "U" && decoded.role_id !== 1) {
+        if (decoded.user_type !== "U" || decoded.role_id !== 1) {
             return errorResponse("Forbidden: Insufficient permissions", 403);
         }
 

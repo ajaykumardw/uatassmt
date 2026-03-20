@@ -146,47 +146,79 @@ export async function GET(req: Request) {
 
   };
 
+  const pcFilter:any = {};
+
   if (qpId) {
 
-    where.pc = {
-
-      some: {
-        nos: {
-          qualification_packs: {
-            some: {
-              id: Number(qpId)
-            }
-          }
-        }
+    pcFilter.nos = {
+      qualification_packs:{
+        some:{ id:Number(qpId)}
       }
-
     };
 
   }
 
   if (nosId) {
 
-    where.pc = {
-
-      some: {
-        nos_id: Number(nosId)
-      }
-
-    };
+    pcFilter.nos_id = Number(nosId);
 
   }
 
   if (pcId) {
 
+    pcFilter.id = Number(pcId);
+
+  }
+
+  if(Object.keys(pcFilter).length){
+
     where.pc = {
-
-      some: {
-        id: Number(pcId)
-      }
-
+      some: pcFilter
     };
 
   }
+
+  // if (qpId) {
+
+  //   where.pc = {
+
+  //     some: {
+  //       nos: {
+  //         qualification_packs: {
+  //           some: {
+  //             id: Number(qpId)
+  //           }
+  //         }
+  //       }
+  //     }
+
+  //   };
+
+  // }
+
+  // if (nosId) {
+
+  //   where.pc = {
+
+  //     some: {
+  //       nos_id: Number(nosId)
+  //     }
+
+  //   };
+
+  // }
+
+  // if (pcId) {
+
+  //   where.pc = {
+
+  //     some: {
+  //       id: Number(pcId)
+  //     }
+
+  //   };
+
+  // }
 
   const [questions, total] = await Promise.all([
 
@@ -226,6 +258,30 @@ export async function GET(req: Request) {
 
   ]);
 
+  const [
+    totalStudents,
+    totalBatches,
+    totalSessions,
+    totalAssessors
+  ] = await Promise.all([
+
+    prisma.students.count(),
+
+    prisma.batches.count(),
+
+    prisma.log_sessions.count(),
+
+    prisma.users.count({
+      where:{
+        user_type:'A',   // OR role_id depending on your assessor logic
+        role: {
+          name: 'Assessor'
+        }
+      }
+    })
+
+  ]);
+
   return NextResponse.json({
 
     data: questions.map(q => ({
@@ -240,7 +296,13 @@ export async function GET(req: Request) {
 
     page,
 
-    limit
+    limit,
+    aggregateData: {
+      totalStudents,
+      totalBatches,
+      totalSessions,
+      totalAssessors
+    }
 
   });
 
