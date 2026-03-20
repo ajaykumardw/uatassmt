@@ -1,5 +1,6 @@
 // // /app/api/batch/[id]/download-stream/route.ts
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+
 // import prisma from "@/libs/prisma";
 // import path from "path";
 // import fs from "fs";
@@ -7,7 +8,6 @@ import { type NextRequest, NextResponse } from "next/server";
 // import { verify, type JwtPayload } from "jsonwebtoken";
 
 export async function GET(
-    request: NextRequest,
 ) {
     return NextResponse.json({
         status: "Error",
