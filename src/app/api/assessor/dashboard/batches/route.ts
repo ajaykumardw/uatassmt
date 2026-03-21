@@ -241,6 +241,36 @@ export async function GET(req: NextRequest) {
                 trainer_tot_certificate: {
                     min: 1,
                     max: 1
+                },
+                manual_attendance_register: {
+                    min: 1,
+                },
+                tc_declaration_form: {
+                    min: 1,
+                    max: 5
+                },
+                joint_undertaking_assessor_spoc: {
+                    min: 1,
+                    max: 5,
+                },
+                annexure_m1_m2: {
+                    min: 1,
+                    max: 5,
+                },
+                annexure_n: {
+                    min: 1,
+                },
+                attendance_sheet: {
+                    min: 1,
+                    max: 5,
+                },
+                biometric_attendance: {
+                    min: 1,
+                    max: 5,
+                },
+                other_documents: {
+                    min: 1,
+                    max: 5,
                 }
             }
         }));
