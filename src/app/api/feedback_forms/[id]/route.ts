@@ -24,22 +24,56 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   const session = await getServerSession(authOptions);
   const created_by = Number(session?.user.id);
 
+  const existingIds = questions
+    .filter((q: any) => q.questionId)
+    .map((q: any) => q.questionId);
+
+
   const updatedForm = await prisma.feedback_forms.update({
     where: { id },
     data: {
       form_name,
       form_type: Number(form_type),
       feedback_questions: {
-        deleteMany: {}, // Remove existing questions
-        create: questions.map((q: any) => ({
-          question: q.question,
-          question_type: Number(q.question_type),
-          option1: q.option1 || null,
-          option2: q.option2 || null,
-          option3: q.option3 || null,
-          option4: q.option4 || null,
-          created_by: created_by
+        deleteMany: {
+          id: { notIn: existingIds }
+        }, // Remove non existing questions
+        update: questions
+          .filter((q: any) => q.questionId)
+          .map((q: any) => ({
+            where: { id: q.questionId },
+            data: {
+              question: q.question,
+              question_type: Number(q.question_type),
+              option1: q.option1 || null,
+              option2: q.option2 || null,
+              option3: q.option3 || null,
+              option4: q.option4 || null,
+            }
+          })),
+
+        // 3. Create new
+        create: questions
+          .filter((q: any) => !q.questionId)
+          .map((q: any) => ({
+            question: q.question,
+            question_type: Number(q.question_type),
+            option1: q.option1 || null,
+            option2: q.option2 || null,
+            option3: q.option3 || null,
+            option4: q.option4 || null,
+            created_by
         })),
+
+        // create: questions.map((q: any) => ({
+        //   question: q.question,
+        //   question_type: Number(q.question_type),
+        //   option1: q.option1 || null,
+        //   option2: q.option2 || null,
+        //   option3: q.option3 || null,
+        //   option4: q.option4 || null,
+        //   created_by: created_by
+        // })),
       },
     },
   });

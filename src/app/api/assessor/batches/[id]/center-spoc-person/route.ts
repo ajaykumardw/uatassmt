@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     const authHeader = req.headers.get("authorization");
 
     if (!authHeader) {
-    
+
         return NextResponse.json({
             status: 'Error',
             statusCode: 401,
@@ -24,9 +24,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     try {
 
         const decoded = verify(token, process.env.NEXTAUTH_SECRET as string) as JwtPayload;
-        
+
         if (decoded.user_type !== 'U' || decoded.role_id !== 1) {
-        
+
             return NextResponse.json({
                 status: 'Error',
                 statusCode: 403,
@@ -55,9 +55,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
                 }
             }
         });
-        
+
         if (!batch) {
-            
+
             return NextResponse.json({
                 status: 'Error',
                 statusCode: 404,
@@ -88,7 +88,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         }, { status: 200 });
     } catch (error) {
         console.error("Error in GET /assessor/batches/[id]/center-spoc-person:", error);
-        
+
         return NextResponse.json({
             status: 'Error',
             statusCode: 500,
@@ -98,7 +98,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-    
+
     const authHeader = req.headers.get("authorization");
 
     if (!authHeader) {
@@ -115,16 +115,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     try {
 
         const decoded = verify(token, process.env.NEXTAUTH_SECRET as string) as JwtPayload;
-        
+
         if (decoded.user_type !== 'U' || decoded.role_id !== 1) {
-        
+
             return NextResponse.json({
                 status: 'Error',
                 statusCode: 403,
                 message: 'Forbidden: Insufficient permissions'
             }, { status: 403 });
         }
-        
+
         const batchId = Number(params.id);
 
         const { center_spoc_person_name, center_spoc_person_email, center_spoc_person_phone } = await req.json();
@@ -147,7 +147,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         });
 
         if (!updatedBatch) {
-            
+
             return NextResponse.json({
                 status: 'Error',
                 statusCode: 404,
@@ -191,7 +191,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         }
 
         console.error("Error in POST /assessor/batches/[id]/center-spoc-person:", error);
-        
+
         return NextResponse.json({
             status: 'Error',
             statusCode: 500,

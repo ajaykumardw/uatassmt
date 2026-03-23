@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 
 import { valibotResolver } from "@hookform/resolvers/valibot";
 
-import { object, string, minLength, array, pipe, optional } from "valibot";
+import { object, string, minLength, array, pipe, optional, number } from "valibot";
 
 // Mui
 import {
@@ -31,6 +31,7 @@ import { FeedbackFormTypes, QuestionTypes } from "@/configs/customDataConfig";
 /* ------------------ Validation Schema ------------------ */
 
 const QuestionSchema = object({
+  questionId: optional(number()),
   question: pipe(string(), minLength(1, "Question is required")),
   question_type: pipe(string(), minLength(1, "Type required")),
   option1: optional(string()),
@@ -66,6 +67,7 @@ export default function AddEditFeedbackForm({id}: {id?: string}) {
       form_name: formData ? formData.form_name : "",
       form_type: formData ? formData.form_type.toString() : "",
       questions: formData ? formData.feedback_questions.map(q => ({
+        questionId: q.id,
         question: q.question,
         question_type: q.question_type.toString(),
         option1: q.option1 || "",

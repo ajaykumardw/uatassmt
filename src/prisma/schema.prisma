@@ -412,6 +412,9 @@ model users {
   log_sessions log_sessions[]
   user_training_resources user_training_resources[]
   center_inspections inspection_media[]
+
+  created_by_user users? @relation("UserToAgency", fields: [created_by], references: [id])
+  created_users users[] @relation("UserToAgency")
 }
 
 model users_additional_data {
@@ -651,6 +654,7 @@ model feedback_questions {
 model feedback_responses {
   id                   Int      @id @default(autoincrement())
   feedback_form_id     Int
+  batch_id             Int
   user_type            Int @db.TinyInt
   user_id              Int
   submitted_at         DateTime @db.DateTime(0)
@@ -659,13 +663,16 @@ model feedback_responses {
 
   feedback_form       feedback_forms @relation(fields: [feedback_form_id], references: [id])
   feedback_response_answers feedback_response_answers[]
+
+  @@unique([batch_id, user_type, user_id], name: "unique_feedback_response")
 }
 
 model feedback_response_answers {
   id                   Int      @id @default(autoincrement())
   feedback_response_id Int
   feedback_question_id Int
-  answer_value         String   @db.VarChar(100)
+  answer_value         String?  @db.VarChar(100)
+  file                 String?  @db.Text
   created_by           Int
   created_at           DateTime @default(now()) @db.DateTime(0)
   updated_at           DateTime @default(now()) @updatedAt @db.DateTime(0)

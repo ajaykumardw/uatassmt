@@ -114,6 +114,8 @@ export const FeedbackFormTypes : { [key: number]: string } = {
 export const QuestionTypes : { [key: number]: string } = {
   1: "Yes/No",
   2: "MCQ",
+  3: "Text",
+  4: "Signature",
 }
 
 type UserRoleType = {

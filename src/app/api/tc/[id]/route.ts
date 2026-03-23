@@ -21,7 +21,10 @@ export async function GET(
   const trainingPartner = await prisma.users.findFirst({
     where: {
       id: id,
-      created_by: createdBy
+      OR: [
+        { tp_id: createdBy },
+        { created_by: createdBy }
+      ],
     }
   })
 

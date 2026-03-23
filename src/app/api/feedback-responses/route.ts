@@ -40,9 +40,30 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const batchId = await prisma.students.findUnique({
+    where: {
+      id: user_id,
+    },
+    select: {
+      batch_id: true,
+    },
+  }).then(student => student?.batch_id);
+
+  if (!batchId) {
+    return NextResponse.json(
+      {
+        status: "Error",
+        statusCode: "400",
+        message: 'You are not associated with any batch.'
+      },
+      { status: 400 }
+    );
+  }
+
   const response = await prisma.feedback_responses.create({
     data: {
       feedback_form_id,
+      batch_id: batchId, // use the actual batch_id from the request body
       user_type,
       user_id,
       submitted_at: new Date(),
