@@ -251,7 +251,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const formData = await req.formData();
 
     const feedback_form_id = formData.get("feedback_form_id")?.toString();
-    const user_type = formData.get("user_type")?.toString();
+    const user_type = 2; // Since this endpoint is specifically for assessor feedback, we can set user_type to 2 (Assessor)
     const answersRaw = formData.get("answers")?.toString();
 
     if (!feedback_form_id || !user_type || !answersRaw) {
