@@ -282,7 +282,9 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): Final
 
             if (!isNaN(theoryMark)) {
               const earnedMark = isCorrect ? theoryMark : 0;
+
               pcMarks[pcId] = (pcMarks[pcId] || 0) + earnedMark;
+
               if (nosId) {
                 nosMarks[nosId] = (nosMarks[nosId] || 0) + earnedMark;
               }
