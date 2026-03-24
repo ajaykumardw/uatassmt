@@ -491,9 +491,9 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
         //   return errorResponse("At least one student must be assigned to the group.", 400);
         // }
 
-        if (!group_photo) {
-            return errorResponse("At least one photo must be provided.", 400);
-        }
+        // if (!group_photo) {
+        //     return errorResponse("At least one photo must be provided.", 400);
+        // }
 
         let groupPhotoName = null;
 
@@ -613,11 +613,18 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
 
         if (group) {
 
-            const data = formData.get('group_type') === 'viva' ? {
+            const data = formData.get('group_type') === 'theory' ? {
+                theory_group_id: group.id,
+            } : formData.get('group_type') === 'viva' ? {
                 viva_group_id: group.id,
-            } : {
+            } : formData.get('group_type') === 'practical' ? {
                 practical_group_id: group.id,
-            };
+            } : {};
+
+            if (Object.keys(data).length === 0) {
+             
+                return errorResponse("Invalid group type. Must be 'theory', 'practical', or 'viva'.", 400);
+            }
 
             await prisma.students.updateMany({
                 where: {
