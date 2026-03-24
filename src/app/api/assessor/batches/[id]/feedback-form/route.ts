@@ -262,7 +262,31 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       }, { status: 400 });
     }
 
-    const answers: { question_id: number; answer?: string; isFile?: boolean }[] = JSON.parse(answersRaw);
+    // const answers: { question_id: number; answer?: string; isFile?: boolean }[] = JSON.parse(answersRaw);
+
+    let answers: { question_id: number; answer?: string; isFile?: boolean }[];
+
+    try {
+      answers = JSON.parse(answersRaw);
+
+      if (!Array.isArray(answers)) {
+      
+        return NextResponse.json({
+          status: "Error",
+          statusCode: 400,
+          message: "Answers must be a JSON array"
+        }, { status: 400 });
+      }
+    } catch (parseError: any) {
+
+      return NextResponse.json({
+        status: "Error",
+        statusCode: 400,
+        message: "Invalid JSON format in answers field",
+        error: parseError.message
+      }, { status: 400 });
+    }
+
 
     const isExistingFeedback = await prisma.feedback_responses.findFirst({
       where: {
