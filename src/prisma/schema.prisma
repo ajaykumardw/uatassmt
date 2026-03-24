@@ -223,7 +223,7 @@ model pc {
   created_at DateTime? @default(now()) @db.DateTime(0)
   updated_at DateTime? @default(now()) @db.DateTime(0)
 
-  questions questions[]
+  pc_questions pc_questions[] @relation("PCQuestions")
 
   @@unique([pc_id, nos_id])
 }
@@ -261,11 +261,35 @@ model questions {
   created_at           DateTime?      @default(now()) @db.DateTime(0)
   updated_at           DateTime?      @default(now()) @db.DateTime(0)
 
-  pc pc[]
+  // pc pc[]
+  pc_questions pc_questions[] @relation("PCQuestions")
 
   exam_sets_questions exam_sets_questions[]
   exam_set_results     exam_set_results[]    @relation("QuestionToExamSetResults")
   student_question_attempts student_question_attempts[]
+}
+
+model pc_questions {
+
+  id Int @id @default(autoincrement())
+
+  pc_id Int
+  question_id Int
+  agency_id Int
+
+  created_by Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  pc pc @relation("PCQuestions", fields:[pc_id],references:[id])
+  question questions @relation("PCQuestions", fields:[question_id],references:[id])
+
+  @@unique([pc_id,question_id,agency_id])
+
+  @@index([agency_id])
+  @@index([pc_id])
+  @@index([question_id])
+
 }
 
 model exam_set_results {

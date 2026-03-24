@@ -36,6 +36,8 @@ import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 
 // import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
+import { useSession } from 'next-auth/react';
+
 // Type Imports
 import type { ThemeColor } from '@core/types'
 
@@ -158,6 +160,8 @@ const QualificationPackListTable = ({ tableData, updateQPList }: { tableData?: Q
   const [qPId, setQPId] = useState(0);
   const [qPack, setQP] = useState<QPType>();
 
+  const {data: session } = useSession();
+  const userId = Number(session?.user?.id)
 
   const [qpEditData, setQPEditData] = useState({
     sscId: '',
@@ -460,15 +464,17 @@ const QualificationPackListTable = ({ tableData, updateQPList }: { tableData?: Q
               color={row.original.nos.length > 0 ? 'success' : 'secondary'}
               size='small'
             />
-            <Button
-              variant='tonal'
-              size='small'
-              startIcon={<i className='tabler-plus' />}
-              onClick={() => handleAddNos(row.original)}
-              className='is-full sm:is-auto'
-            >
-              Assign
-            </Button>
+            {row.original.created_by === userId && (
+              <Button
+                variant='tonal'
+                size='small'
+                startIcon={<i className='tabler-plus' />}
+                onClick={() => handleAddNos(row.original)}
+                className='is-full sm:is-auto'
+              >
+                Assign
+              </Button>
+            )}
           </div>
         )
       }),
@@ -490,9 +496,11 @@ const QualificationPackListTable = ({ tableData, updateQPList }: { tableData?: Q
         header: 'Action',
         cell: ({ row }) => (
           <div className='flex items-center'>
-            <IconButton onClick={() => handleOnEditClick(row.original.id)}>
-              <i className='tabler-edit text-[22px] text-textSecondary' />
-            </IconButton>
+            {row.original.created_by === userId && (
+              <IconButton onClick={() => handleOnEditClick(row.original.id)}>
+                <i className='tabler-edit text-[22px] text-textSecondary' />
+              </IconButton>
+            )}
           </div>
         ),
         enableSorting: false

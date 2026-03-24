@@ -180,7 +180,11 @@ type nosWithPcs = nos & {
 type Question = {
   question_type: string;
   marks: number;
-  pc: (pc & { nos: nos })[];
+  pc_questions: {
+    pc: pc & {
+      nos: nos;
+    };
+  }[];
 };
 
 type ExamSetResult = {
@@ -271,24 +275,38 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): Final
       const question = res.question;
 
       if (question.question_type === "theory") {
-        question.pc.forEach((pc: pc & { nos: nos }) => {
-          const pcId = pc.pc_id;
-          const nosId = pc?.nos?.nos_id;
-          const theoryMark = parseFloat(pc.theory_marks.toString());
+          question.pc_questions.forEach((pcQuestion) => {
+            const pcId = pcQuestion.pc.pc_id;
+            const nosId = pcQuestion.pc?.nos?.nos_id;
+            const theoryMark = parseFloat(pcQuestion.pc.theory_marks.toString());
 
-          if (!isNaN(theoryMark)) {
-            const earnedMark = isCorrect ? theoryMark : 0;
-
-            pcMarks[pcId] = (pcMarks[pcId] || 0) + earnedMark;
-
-            // NOS-wise total 👇
-
-            if (nosId) {
-              nosMarks[nosId] = (nosMarks[nosId] || 0) + earnedMark;
+            if (!isNaN(theoryMark)) {
+              const earnedMark = isCorrect ? theoryMark : 0;
+              pcMarks[pcId] = (pcMarks[pcId] || 0) + earnedMark;
+              if (nosId) {
+                nosMarks[nosId] = (nosMarks[nosId] || 0) + earnedMark;
+              }
             }
-          }
+          });
 
-        });
+        // question.pc_questions.forEach((pc: pc & { nos: nos }) => {
+        //   const pcId = pc.pc_id;
+        //   const nosId = pc?.nos?.nos_id;
+        //   const theoryMark = parseFloat(pc.theory_marks.toString());
+
+        //   if (!isNaN(theoryMark)) {
+        //     const earnedMark = isCorrect ? theoryMark : 0;
+
+        //     pcMarks[pcId] = (pcMarks[pcId] || 0) + earnedMark;
+
+        //     // NOS-wise total 👇
+
+        //     if (nosId) {
+        //       nosMarks[nosId] = (nosMarks[nosId] || 0) + earnedMark;
+        //     }
+        //   }
+
+        // });
       }
     });
 

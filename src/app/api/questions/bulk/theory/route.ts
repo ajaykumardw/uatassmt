@@ -51,9 +51,27 @@ export async function POST(req: Request) {
         marks: Number(item.Marks),
         agency_id: agencyId,
         created_by: createdBy,
-        pc: {
-          connect: pcs.map(selectPc => ({ id: Number(selectPc.id) })),
+        pc_questions:{
+          create:pcs.map(pc=>({
+
+            agency_id:agencyId,
+
+            created_by:createdBy,
+
+            pc:{
+              connect:{
+                id:pc.id
+              }
+            }
+
+          }))
         }
+
+        // pc_questions: {
+        //   connect: pcs.map(selectPc => ({ id: Number(selectPc.id) })),
+
+        //   //connect: pcs.map(selectPc => ({ id: Number(selectPc.id) })),
+        // }
       }
     });
 

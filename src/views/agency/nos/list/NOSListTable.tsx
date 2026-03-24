@@ -40,6 +40,8 @@ import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 
 import { Tooltip } from '@mui/material';
 
+import { useSession } from 'next-auth/react';
+
 // Type Imports
 import type { ThemeColor } from '@core/types'
 
@@ -198,6 +200,8 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteData, setDeleteData] = useState<{ pcIds: number[]; nosId: number } | null>(null);
 
+  const {data: session} = useSession();
+  const agency_id = Number(session?.user?.agency_id);
 
   const [nosEditData, setNOSEditData] = useState({
     sscId: '',
@@ -415,9 +419,11 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
         header: 'Action',
         cell: ({ row }) => (
           <div className='flex items-center'>
-            <IconButton onClick={() => handleOnEditClick(row.original.id)}>
-              <i className='tabler-edit text-[22px] text-textSecondary' />
-            </IconButton>
+            {row.original.created_by === agency_id && (
+              <IconButton onClick={() => handleOnEditClick(row.original.id)}>
+                <i className='tabler-edit text-[22px] text-textSecondary' />
+              </IconButton>
+            )}
           </div>
         ),
         enableSorting: false
@@ -604,11 +610,13 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
                                           <input
                                             type="checkbox"
                                             checked={
-                                              row.original.pc.length > 0 &&
+                                              row.original.pc.filter((pc: PCType) => pc.created_by === agency_id).length > 0 &&
                                               selectedPCs[row.original.id]?.length === row.original.pc.length
                                             }
                                             onChange={(e) => {
-                                              const allPCIds = row.original.pc.map((pc: PCType) => pc.id);
+                                              const allPCIds = row.original.pc
+                                                .filter((pc: PCType) => pc.created_by === agency_id)
+                                                .map((pc: PCType) => pc.id);
 
                                               setSelectedPCs(prev => ({
                                                 ...prev,
@@ -684,9 +692,11 @@ const NOSListTable = ({ tableData, updateNOSList }: { tableData?: NOSType[], upd
                                             <td>{pc.total_marks}</td>
                                             <td>
                                               <div className='flex items-center'>
+                                                {pc.created_by === agency_id && (
                                                 <IconButton onClick={() => handleOnEditPCClick(pc.id)}>
                                                   <i className='tabler-edit text-[22px] text-textSecondary' />
                                                 </IconButton>
+                                                )}
                                               </div>
                                             </td>
                                           </tr>

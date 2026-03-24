@@ -228,11 +228,15 @@ export async function GET(req: Request) {
 
       include: {
 
-        pc: {
+        pc_questions: {
           select: {
-            id: true,
-            pc_id: true,
-            pc_name: true
+            pc: {
+              select: {
+                id: true,
+                pc_id: true,
+                pc_name: true
+              }
+            }
           }
         },
 

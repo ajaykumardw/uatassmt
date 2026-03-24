@@ -35,6 +35,8 @@ import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 
 // import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
+import { useSession } from 'next-auth/react';
+
 // Type Imports
 import type { ThemeColor } from '@core/types'
 
@@ -170,6 +172,9 @@ const UserListTable = ({ tableData, updateSSCList }: { tableData?: SSCType[], up
   const [openChangePassword, setOpenChangePassword] = useState<boolean>(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
+  const {data: session } = useSession();
+  const agency_id = Number(session?.user?.agency_id)
+
   // Hooks
   const columns = useMemo<ColumnDef<SSCTypeWithAction, any>[]>(
     () => [
@@ -232,21 +237,23 @@ const UserListTable = ({ tableData, updateSSCList }: { tableData?: SSCType[], up
             {/* <IconButton>
               <i className='tabler-eye text-[22px] text-textSecondary' />
             </IconButton> */}
-            <IconButton onClick={() => { setEditUserOpen(!editUserOpen); setSSCId(row.original.id); setSSCName(row.original.ssc_name); setSscCode(row.original.ssc_code); setUsername(row.original.ssc_username); setStatus(row.original.status.toString()); setSSCImage(row.original.ssc_image); }}>
-              <i className='tabler-edit text-[22px] text-textSecondary' />
-            </IconButton>
-            <OptionMenu
-              iconClassName='text-textSecondary'
-              options={[
-                {
-                  text: 'Change Password',
-                  icon: 'tabler-key',
-                  menuItemProps: {
-                    onClick: () => handleChangePassword(row.original.id)
+            {row.original.created_by === agency_id && ( <>
+              <IconButton onClick={() => { setEditUserOpen(!editUserOpen); setSSCId(row.original.id); setSSCName(row.original.ssc_name); setSscCode(row.original.ssc_code); setUsername(row.original.ssc_username); setStatus(row.original.status.toString()); setSSCImage(row.original.ssc_image); }}>
+                <i className='tabler-edit text-[22px] text-textSecondary' />
+              </IconButton>
+              <OptionMenu
+                iconClassName='text-textSecondary'
+                options={[
+                  {
+                    text: 'Change Password',
+                    icon: 'tabler-key',
+                    menuItemProps: {
+                      onClick: () => handleChangePassword(row.original.id)
+                    },
                   },
-                },
-              ]}
-            />
+                ]}
+              />
+            </>)}
           </div>
         ),
         enableSorting: false

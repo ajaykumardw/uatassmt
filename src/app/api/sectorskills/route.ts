@@ -35,12 +35,14 @@ const storageFolders = {
 
 export async function GET() {
 
-  const session = await getServerSession(authOptions);
-  const agency_id = Number(session?.user?.agency_id) || 412
+  // const session = await getServerSession(authOptions);
+
+  // const agency_id = Number(session?.user?.agency_id) || 412
 
   const sectorSkills = await prisma.sector_skill_councils.findMany({
     where: {
-      agency_id: agency_id
+      // agency_id: agency_id
+      status: 1
     },
     include: {
       qualification_packs: {

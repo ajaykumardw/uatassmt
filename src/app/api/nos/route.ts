@@ -9,13 +9,15 @@ import prisma from '@/libs/prisma';
 
 export async function GET() {
 
-  const session = await getServerSession(authOptions);
-  const agency_id = Number(session?.user?.agency_id);
+  // const session = await getServerSession(authOptions);
+  // const agency_id = Number(session?.user?.agency_id);
 
   const nos = await prisma.nos.findMany({
-    where: {
-      agency_id: agency_id
-    },
+
+    // where: {
+    //   agency_id: agency_id
+    // },
+
     include: {
       ssc: true,
       qualification_packs: true,

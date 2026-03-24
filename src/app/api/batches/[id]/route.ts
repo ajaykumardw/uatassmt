@@ -42,9 +42,13 @@ export async function GET(
             select: {
               questions: {
                 select: {
-                  pc: {
+                  pc_questions: {
                     include: {
-                      nos: true
+                      pc: {
+                        include: {
+                          nos: true
+                        }
+                      }
                     }
                   }
                 }
@@ -59,9 +63,13 @@ export async function GET(
             select: {
               questions: {
                 select: {
-                  pc: {
+                  pc_questions: {
                     include: {
-                      nos: true
+                      pc: {
+                        include: {
+                          nos: true
+                        }
+                      }
                     }
                   }
                 }
@@ -76,9 +84,13 @@ export async function GET(
             select: {
               questions: {
                 select: {
-                  pc: {
+                  pc_questions: {
                     include: {
-                      nos: true
+                      pc: {
+                        include: {
+                          nos: true
+                        }
+                      }
                     }
                   }
                 }

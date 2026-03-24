@@ -34,14 +34,16 @@ export async function GET(
   context: { params: { id: number } }
 ) {
 
-  const session = await getServerSession(authOptions);
-  const agency_id = Number(session?.user?.agency_id)
+  // const session = await getServerSession(authOptions);
+
+  // const agency_id = Number(session?.user?.agency_id)
   const id = Number(context.params.id);
 
   const sectorSkills = await prisma.sector_skill_councils.findFirst({
     where: {
       id: id,
-      agency_id: agency_id
+
+      // agency_id: agency_id
     },
     include: {
       qualification_packs: {
@@ -72,6 +74,9 @@ export async function POST(
   req: Request,
   context: { params: { id: number } }
 ) {
+  const session = await getServerSession(authOptions);
+  const agency_id = Number(session?.user?.agency_id)
+
   const id = Number(context.params.id);
 
   const formData = await req.formData();
@@ -84,7 +89,8 @@ export async function POST(
 
   const sscExist = await prisma.sector_skill_councils.findUnique({
     where: {
-      id: id
+      id: id,
+      agency_id: agency_id
     }
   })
 

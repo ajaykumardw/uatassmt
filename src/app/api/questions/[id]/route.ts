@@ -24,22 +24,56 @@ export async function GET(
       agency_id: agency_id
     },
     include: {
-      pc: {
+      pc_questions: {
         orderBy: {
           pc_id: 'asc'
         },
+        include: {
+          pc: true
+        }
       }
     }
   })
 
-  question?.pc.sort((a, b) => {
-    const numA = parseInt(a.pc_id.replace(/^\D+/g, ''), 10);
-    const numB = parseInt(b.pc_id.replace(/^\D+/g, ''), 10);
+  // question?.pc.sort((a, b) => {
+  //   const numA = parseInt(a.pc_id.replace(/^\D+/g, ''), 10);
+  //   const numB = parseInt(b.pc_id.replace(/^\D+/g, ''), 10);
 
-    return numA - numB;
-  });
+  //   return numA - numB;
+  // });
 
-  return NextResponse.json(question);
+  // return NextResponse.json(question);
+
+  if(!question){
+
+    return NextResponse.json(
+      {message:'Question not found'},
+      {status:404}
+    );
+
+  }
+
+  const sortedPc=question.pc_questions
+    .map(rel=>rel.pc)
+    .sort((a,b)=>{
+
+      const numA=parseInt(a.pc_id.replace(/^\D+/g,''),10);
+      const numB=parseInt(b.pc_id.replace(/^\D+/g,''),10);
+
+      return numA-numB;
+
+    });
+
+  const formatted={
+
+    ...question,
+
+    pc:sortedPc
+
+  };
+
+  return NextResponse.json(formatted);
+
 }
 
 export async function POST(
@@ -68,19 +102,23 @@ export async function POST(
       agency_id: agency_id
     },
     include: {
-      pc: true
+      pc_questions: {
+        include: {
+          pc: true
+        }
+      }
     }
   })
 
   if (questionExist) {
 
     const newPCToConnect = selectPC.filter((pcId: any) => {
-      return !questionExist.pc.some(existingPC => existingPC.id === Number(pcId));
+      return !questionExist.pc_questions.some(existingPC => existingPC.pc.id === Number(pcId));
     });
 
     // Find nos to disconnect (those present in DB but not in selectedNos)
-    const pcToDisconnect = questionExist.pc.filter(existingPC => {
-      return !selectPC.includes(existingPC.id.toString());
+    const pcToDisconnect = questionExist.pc_questions.filter(existingPC => {
+      return !selectPC.includes(existingPC.pc.id.toString());
     });
 
 
@@ -118,7 +156,7 @@ export async function POST(
         option5: filterOption[2],
         answer: Number(correctAnswer),
         marks: Number(pcsTotalMarks._sum.theory_marks),
-        pc: {
+        pc_questions: {
           connect: newPCToConnect.map((pcId: any) => ({ id: Number(pcId) })),
           disconnect: pcToDisconnect.map(pc => ({ id: pc.id }))
         }

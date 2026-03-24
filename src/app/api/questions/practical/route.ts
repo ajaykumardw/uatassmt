@@ -20,14 +20,19 @@ export async function GET() {
       question_type: "practical"
     },
     include: {
-      pc: {
+      pc_questions: {
         orderBy: {
           pc_id: "asc"
         },
         select: {
-          id: true,
-          pc_id: true,
-          pc_name: true
+          pc: {
+            select: {
+              id: true,
+              pc_id: true,
+              pc_name: true
+            }
+
+          }
         }
       },
       exam_sets_questions: {
@@ -41,11 +46,22 @@ export async function GET() {
 
   const formattedQuestions = practicalQuestions.map(question => {
 
-    const sortedPc = [...question.pc].sort((a, b) => {
-      const numA = parseInt(a.pc_id.replace(/^\D+/g, ""), 10);
-      const numB = parseInt(b.pc_id.replace(/^\D+/g, ""), 10);
+    // const sortedPc = [...question.pc].sort((a, b) => {
+    //   const numA = parseInt(a.pc_id.replace(/^\D+/g, ""), 10);
+    //   const numB = parseInt(b.pc_id.replace(/^\D+/g, ""), 10);
 
-      return numA - numB;
+    //   return numA - numB;
+    // });
+
+    const sortedPc = question.pc_questions
+      .map(rel=>rel.pc)
+      .sort((a,b)=>{
+
+        const numA=parseInt(a.pc_id.replace(/^\D+/g,""),10);
+        const numB=parseInt(b.pc_id.replace(/^\D+/g,""),10);
+
+        return numA-numB;
+
     });
 
     return {
@@ -83,8 +99,16 @@ export async function POST(req: Request) {
       ssc_id: Number(sscId),
       qp_id: Number(qpId),
       nos_id: Number(nosId),
-      pc: {
-        connect: selectPC.map((pcId: any) => ({ id: Number(pcId)}))
+      pc_questions: {
+        create: selectPC.map((pcId: any) => ({
+          agency_id: agencyId,
+          created_by: createdBy,
+          pc: {
+            connect: { id: Number(pcId) }
+          }
+        }))
+
+        // connect: selectPC.map((pcId: any) => ({ id: Number(pcId)}))
       },
       language_id: 1,
       question: questionName,
