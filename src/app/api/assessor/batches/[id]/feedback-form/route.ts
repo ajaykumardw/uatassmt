@@ -264,6 +264,23 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     const answers: { question_id: number; answer?: string; isFile?: boolean }[] = JSON.parse(answersRaw);
 
+    const isExistingFeedback = await prisma.feedback_responses.findFirst({
+      where: {
+        batch_id: batchId,
+        user_type: user_type,
+        user_id: Number(decoded.id),
+      }
+    });
+
+    if (isExistingFeedback) {
+      
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 400,
+        message: 'Feedback form already submitted for this batch'
+      }, { status: 400 });
+    }
+
     // 1. Create feedback response first
     const feedbackResponse = await prisma.feedback_responses.create({
       data: {

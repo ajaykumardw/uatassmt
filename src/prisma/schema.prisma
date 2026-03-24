@@ -480,9 +480,11 @@ model students {
   image          String?            @db.VarChar(255)
   id_front_image String?            @db.VarChar(255)
   id_back_image  String?            @db.VarChar(255)
+  theory_group_id          Int?
   practical_group_id       Int?
   viva_group_id            Int?
   aadhaar_no     String?            @db.Text
+  theory_group  student_groups?    @relation("theoryGroup", fields: [theory_group_id], references: [id])
   practical_group  student_groups?    @relation("practicalGroup", fields: [practical_group_id], references: [id])
   viva_group       student_groups?    @relation("vivaGroup", fields: [viva_group_id], references: [id])
 
@@ -502,6 +504,7 @@ model student_groups {
   created_at DateTime @default(now()) @db.DateTime(0)
   updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
 
+  theory_students students[] @relation("theoryGroup")
   practical_students students[] @relation("practicalGroup")
   viva_students students[] @relation("vivaGroup")
 

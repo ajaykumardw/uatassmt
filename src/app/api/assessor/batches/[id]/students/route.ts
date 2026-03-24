@@ -64,6 +64,7 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
                 category: true,
                 date_of_birth: true,
                 mobile_no: true,
+                theory_group: true,
                 practical_group: true,
                 viva_group: true,
                 aadhaar_no: true,

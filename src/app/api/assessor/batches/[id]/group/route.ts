@@ -249,7 +249,63 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
             return errorResponse("Batch not found", 404);
         }
 
-        const selectField = type === "viva" ? {
+        if (!["theory", "practical", "viva"].includes(type)) {
+            return errorResponse("Invalid group type. Must be 'theory', 'practical', or 'viva'.", 400);
+        }
+
+        // let selectField;
+
+        // if(type === "viva") {
+        //     selectField = {
+        //         viva_students: {
+        //             select: {
+        //                 id: true,
+        //                 batch_id: true,
+        //                 candidate_id: true,
+        //                 candidate_name: true,
+        //             }
+        //         }
+        //     }
+        // }
+
+        // if(type === "practical") {
+        //     selectField = {
+        //         practical_students: {
+        //             select: {
+        //                 id: true,
+        //                 batch_id: true,
+        //                 candidate_id: true,
+        //                 candidate_name: true,
+        //             }
+        //         }
+        //     }
+        // }
+
+        // if(type === "theory") {
+        //     selectField = {
+        //         theory_students: {
+        //             select: {
+        //                 id: true,
+        //                 batch_id: true,
+        //                 candidate_id: true,
+        //                 candidate_name: true,
+        //             }
+        //         }
+        //     }
+        // }
+
+
+
+        const selectField = type === "theory" ? {
+            "theory_students": {
+                select: {
+                    id: true,
+                    batch_id: true,
+                    candidate_id: true,
+                    candidate_name: true,
+                }
+            }
+        } : type === "viva" ? {
             "viva_students": {
                 select: {
                     id: true,
@@ -319,8 +375,10 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
 
             if (type === "viva") {
                 mappedGroup.students = group.viva_students;
-            } else {
+            } else if (type === "practical") {
                 mappedGroup.students = group.practical_students;
+            } else if (type === "theory") {
+                mappedGroup.students = group.theory_students;
             }
 
             return mappedGroup;
@@ -1209,7 +1267,9 @@ export async function PATCH(
             return errorResponse("Group not found in this batch", 404);
         }
 
+        const isTheory = group.group_type === "theory";
         const isViva = group.group_type === "viva";
+        const isPractical = group.group_type === "practical";
 
         const groupField =
             group.group_type === "viva"
@@ -1217,7 +1277,20 @@ export async function PATCH(
                 : "practical_group_id";
 
 
-        const selectField = isViva
+        const selectField = isTheory
+            ? {
+                theory_students: {
+                    select: {
+                        id: true,
+                        batch_id: true,
+                        candidate_id: true,
+                        candidate_name: true,
+                        practical_group_id: true,
+                        viva_group_id: true,
+                    },
+                },
+            }
+            : isViva
             ? {
                 viva_students: {
                     select: {
@@ -1230,7 +1303,8 @@ export async function PATCH(
                     },
                 },
             }
-            : {
+            : isPractical
+            ? {
                 practical_students: {
                     select: {
                         id: true,
@@ -1241,7 +1315,8 @@ export async function PATCH(
                         viva_group_id: true,
                     },
                 },
-            };
+            }
+            : {};
 
         // Fetch students in one query (10k+ safe)
         const students = await prisma.students.findMany({
