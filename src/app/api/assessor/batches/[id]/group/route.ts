@@ -622,7 +622,7 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
             } : {};
 
             if (Object.keys(data).length === 0) {
-             
+
                 return errorResponse("Invalid group type. Must be 'theory', 'practical', or 'viva'.", 400);
             }
 
@@ -1278,8 +1278,14 @@ export async function PATCH(
         const isViva = group.group_type === "viva";
         const isPractical = group.group_type === "practical";
 
-        const groupField =
-            group.group_type === "viva"
+        // const groupField =
+        //     group.group_type === "viva"
+        //         ? "viva_group_id"
+        //         : "practical_group_id";
+
+        const groupField = isTheory
+            ? "theory_group_id"
+            : isViva
                 ? "viva_group_id"
                 : "practical_group_id";
 
@@ -1334,6 +1340,7 @@ export async function PATCH(
                 candidate_name: true,
                 viva_group_id: true,
                 practical_group_id: true,
+                theory_group_id: true,
             },
         });
 
