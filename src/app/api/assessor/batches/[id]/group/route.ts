@@ -1619,6 +1619,9 @@ export async function DELETE(
             return errorResponse("Group not found in this batch", 404);
 
         const groupField =
+            group.group_type === "theory"
+                ? "theory_group_id"
+                :
             group.group_type === "viva"
                 ? "viva_group_id"
                 : "practical_group_id";
@@ -1632,6 +1635,7 @@ export async function DELETE(
                 candidate_name: true,
                 viva_group_id: true,
                 practical_group_id: true,
+                theory_group_id: true,
             },
         });
 
