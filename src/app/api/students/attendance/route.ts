@@ -60,14 +60,7 @@ const validateFile = (file: Blob, allowedTypes: string[], maxSize: number) => {
     return ext;
 };
 
-export async function GET(
-    request: NextRequest,
-    { params }: { params: { id: string, studentId: string } }
-) {
-
-    const batchId = Number(params.id);
-    const studentId = Number(params.studentId);
-
+export async function GET(request: NextRequest) {
     const authHeader = request.headers.get("authorization");
 
     if (!authHeader) {
@@ -84,7 +77,9 @@ export async function GET(
 
         const decoded = verify(token, process.env.NEXTAUTH_SECRET as string) as JwtPayload;
 
-        if (decoded.user_type !== 'U' || decoded.role_id !== 1) {
+        const studentId = Number(decoded.id);
+
+        if (!decoded.candidate_id) {
             return NextResponse.json({
                 status: 'Error',
                 statusCode: 403,
@@ -95,12 +90,6 @@ export async function GET(
         const student = await prisma.students.findUnique({
             where: {
                 id: studentId,
-                batch_id: batchId,
-                batch: {
-                    assessor: {
-                        id: Number(decoded.id)
-                    }
-                }
             },
             select: {
                 id: true,
@@ -115,6 +104,7 @@ export async function GET(
                 category: true,
                 date_of_birth: true,
                 mobile_no: true,
+                attendance: true,
             }
         });
 
@@ -132,7 +122,7 @@ export async function GET(
             storageFolders.uploads,
             storageFolders.agency,
             storageFolders.batches,
-            batchId.toString(),
+            student.batch_id.toString(),
             storageFolders.student,
             studentId.toString(),
             storageFolders.images
@@ -148,7 +138,7 @@ export async function GET(
         return NextResponse.json({
             status: "Success",
             statusCode: 200,
-            message: "Center inspection media fetched successfully",
+            message: "Attendance data retrieved successfully.",
             data: mappedStudent,
         });
 
@@ -196,10 +186,8 @@ export async function GET(
 
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string; studentId: string } }
 ) {
-    const batchId = Number(params.id);
-    const studentId = Number(params.studentId);
+
     const authHeader = request.headers.get("authorization");
 
     if (!authHeader) {
@@ -215,7 +203,7 @@ export async function POST(
     try {
         const decoded = verify(token, process.env.NEXTAUTH_SECRET as string) as JwtPayload;
 
-        if (decoded.user_type !== 'U' || decoded.role_id !== 1) {
+        if (!decoded.candidate_id) {
             return NextResponse.json({
                 status: 'Error',
                 statusCode: 403,
@@ -223,20 +211,27 @@ export async function POST(
             }, { status: 403 });
         }
 
-        const studentExist = await prisma.students.findUnique({
+        const batchId = decoded.batch_id;
+        const studentId = Number(decoded.id);
+
+        const student = await prisma.students.findUnique({
             where: {
                 id: studentId,
-                batch_id: batchId
+                batch_id: batchId,
             },
             select: {
                 id: true,
+                batch_id: true,
+                candidate_id: true,
+                user_name: true,
+                candidate_name: true,
                 image: true,
                 id_front_image: true,
                 id_back_image: true,
             }
         });
 
-        if (!studentExist) {
+        if (!student) {
             return NextResponse.json({
                 status: 'Error',
                 statusCode: 404,
@@ -323,7 +318,7 @@ export async function POST(
 
             // Stream write (better than buffer)
             await pipeline(
-                file.stream() as any,
+                file.stream() as unknown as NodeJS.ReadableStream,
                 fs.createWriteStream(filePath)
             );
 
@@ -359,6 +354,26 @@ export async function POST(
         });
 
     } catch (error: any) {
+
+        if (error.name === 'TokenExpiredError') {
+            return NextResponse.json({
+                status: 'Error',
+                statusCode: 401,
+                message: 'Token expired',
+                error: error
+            }, { status: 401 });
+        }
+
+        if (error.name === 'JsonWebTokenError') {
+            return NextResponse.json({
+                status: 'Error',
+                statusCode: 401,
+                message: 'Invalid token',
+                error: error
+            }, { status: 401 });
+        }
+
+
         console.error('Error processing request:', error);
 
         return NextResponse.json({
@@ -508,7 +523,7 @@ export async function DELETE(
             },
             data: {
                 [key]: null,
-                ...(key === "image" && { attendance: 0 }) // Reset attendance if main image is deleted
+                ...(key === "image" && { attendance: 0 }) // Reset attendance if the main image is deleted
             },
         });
 

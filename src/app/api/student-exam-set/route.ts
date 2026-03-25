@@ -1,16 +1,143 @@
 // Next Imports
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 // Data Imports
 import { getServerSession } from 'next-auth';
+
+import { type JwtPayload, verify } from 'jsonwebtoken';
 
 import { authOptions } from '@/libs/auth';
 
 import prisma from '@/libs/prisma';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
 
+  const authHeader = req.headers.get("authorization");
   const session = await getServerSession(authOptions);
+
+  if (!authHeader && !session) {
+    return NextResponse.json({
+      status: 'Error',
+      statusCode: 401,
+      message: "Unauthorized"
+    }, { status: 401 });
+  }
+
+  if (authHeader) {
+    const token = authHeader.split(" ")[1];
+
+    try {
+      const decoded = verify(token, process.env.NEXTAUTH_SECRET as string) as JwtPayload;
+
+      console.log("Decoded JWT:", decoded);
+
+      if (!decoded.candidate_id) {
+        return NextResponse.json({
+          status: 'Error',
+          statusCode: 403,
+          message: 'Forbidden: Insufficient permissions'
+        }, { status: 403 });
+      }
+
+      const candidateId = decoded.id;
+
+      const exam = await prisma.students.findFirst({
+        where: {
+          id: Number(candidateId)
+        },
+        select: {
+          id: true,
+          student_exam_set_results: true,
+          exam_set_results: true,
+          batch: {
+            select: {
+              assessment_start_datetime: true,
+              assessment_end_datetime: true,
+              login_restrict: true,
+              capture_image_in_seconds: true,
+              theory_exam_set: {
+                include: {
+                  exam_sets_questions: {
+                    select: {
+                      question_id: true,
+                      marks: true,
+                      questions: {
+                        select: {
+                          question: true,
+                          option1: true,
+                          option2: true,
+                          option3: true,
+                          option4: true,
+                          option5: true,
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              practical_exam_set: {
+                include: {
+                  exam_sets_questions: {
+                    select: {
+                      question_id: true,
+                      marks: true,
+                      questions: {
+                        select: {
+                          question: true,
+                          option1: true,
+                          option2: true,
+                          option3: true,
+                          option4: true,
+                          option5: true,
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              viva_exam_set: {
+                include: {
+                  exam_sets_questions: {
+                    select: {
+                      question_id: true,
+                      marks: true,
+                      questions: {
+                        select: {
+                          question: true,
+                          option1: true,
+                          option2: true,
+                          option3: true,
+                          option4: true,
+                          option5: true,
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+            }
+          }
+        }
+      })
+
+      // Check if the exam_set is random and shuffle the questions
+      if (exam?.batch?.theory_exam_set?.question_random) {
+        // Shuffle the exam_sets_questions array
+        exam.batch.theory_exam_set.exam_sets_questions = exam.batch.theory_exam_set.exam_sets_questions.sort(() => Math.random() - 0.5);
+      }
+
+      return NextResponse.json(exam);
+    } catch (error) {
+      console.error("Error verifying token:", error);
+
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 401,
+        message: "Unauthorized"
+      }, { status: 401 });
+    }
+  }
+
 
   const exam = await prisma.students.findFirst({
     where: {

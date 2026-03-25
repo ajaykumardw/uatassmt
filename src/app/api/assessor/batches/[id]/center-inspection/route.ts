@@ -212,6 +212,14 @@ export async function POST(
       "group_photo_student_assessor",
       "group_photo_student_assessor_trainer",
       "group_photo_student_assessor_trainer_spoc",
+      "manual_attendance_register",
+      "tc_declaration_form",
+      "joint_undertaking_assessor_spoc",
+      "annexure_m1_m2",
+      "annexure_n",
+      "attendance_sheet",
+      "biometric_attendance",
+      "other_documents"
     ];
 
     // ----- extract only one key -----

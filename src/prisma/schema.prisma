@@ -511,6 +511,7 @@ model students {
   theory_group  student_groups?    @relation("theoryGroup", fields: [theory_group_id], references: [id])
   practical_group  student_groups?    @relation("practicalGroup", fields: [practical_group_id], references: [id])
   viva_group       student_groups?    @relation("vivaGroup", fields: [viva_group_id], references: [id])
+  attendance Int? @default(0) @db.TinyInt
 
   student_exam_set_results student_exam_set_results[]
   exam_set_results exam_set_results[]
