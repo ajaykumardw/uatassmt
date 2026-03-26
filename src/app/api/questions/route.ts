@@ -415,6 +415,7 @@ export async function GET(req: Request) {
         question:true,
         marks:true,
         question_type:true,
+        question_level: true,
 
         pc_questions:{
           select:{
@@ -665,7 +666,6 @@ export async function GET(req: Request) {
             return{
 
               ...question,
-              actualPc: pcs,
 
               pc:pcs,
 

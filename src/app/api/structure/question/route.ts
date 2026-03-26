@@ -172,8 +172,10 @@ export async function GET(req: Request) {
 
   if(Object.keys(pcFilter).length){
 
-    where.pc = {
-      some: pcFilter
+    where.pc_questions = {
+      some: {
+        pc: pcFilter
+      }
     };
 
   }
@@ -291,6 +293,11 @@ export async function GET(req: Request) {
     data: questions.map(q => ({
 
       ...q,
+
+      pc:(q.pc_questions || [])
+      .map(rel=>rel.pc)
+      .filter(Boolean),
+
 
       inExamSet: q.exam_sets_questions.length > 0
 

@@ -15,6 +15,8 @@ export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
   const session = await getServerSession(authOptions);
 
+  console.log("authHeader", authHeader);
+
   if (!authHeader && !session) {
     return NextResponse.json({
       status: 'Error',
@@ -75,7 +77,7 @@ export async function GET(req: NextRequest) {
                   }
                 }
               },
-              
+
               // practical_exam_set: {
               //   include: {
               //     exam_sets_questions: {
@@ -121,20 +123,107 @@ export async function GET(req: NextRequest) {
         }
       })
 
-      // Check if the exam_set is random and shuffle the questions
-      if (exam?.batch?.theory_exam_set?.question_random) {
-        // Shuffle the exam_sets_questions array
-        exam.batch.theory_exam_set.exam_sets_questions = exam.batch.theory_exam_set.exam_sets_questions.sort(() => Math.random() - 0.5);
+      if (!exam) {
+        return NextResponse.json({
+          status: 'Error',
+          statusCode: 404,
+          message: 'Exam not found for the student'
+        }, { status: 404 });
       }
+
+      // // Check if the exam_set is random and shuffle the questions
+      // if (exam?.batch?.theory_exam_set?.question_random) {
+      //   // Shuffle the exam_sets_questions array
+      //   exam.batch.theory_exam_set.exam_sets_questions = exam.batch.theory_exam_set.exam_sets_questions.sort(() => Math.random() - 0.5);
+      // }
+
+      let data;
+
+      // if (exam?.batch.theory_exam_set) {
+      //   if (exam.batch.theory_exam_set.option_random === 0) {
+      //     exam.batch.theory_exam_set.option_random = 1
+      //   }
+      // }
+
+      const questions = exam?.batch?.theory_exam_set?.exam_sets_questions.map(eq => {
+          const optRandom = exam?.batch.theory_exam_set?.option_random === 1;
+          return {
+            question_id: eq.question_id,
+            marks: eq.marks,
+            question: eq.questions?.question,
+            options: [
+              { id: "option1", value: eq.questions.option1},
+              { id: "option2", value: eq.questions.option2},
+              eq.questions.option3 && { id: "option3", value: eq.questions.option3},
+              eq.questions.option4 && { id: "option4", value: eq.questions.option4},
+              eq.questions.option5 && { id: "option5", value: eq.questions.option5},
+            ].sort(() => optRandom ? Math.random() - 0.5 : 0) // Shuffle options if option_random is 1
+          }
+      });
+
+      data = {
+        batch: {
+          assessment_start_datetime: exam.batch.assessment_start_datetime,
+          assessment_end_datetime: exam.batch.assessment_end_datetime,
+          remaining_attempts: (
+            (exam.batch?.login_restrict || 0) -
+            (
+              exam?.student_exam_set_results
+                ?.find(result => result?.exam_set_id === exam?.batch?.theory_exam_set?.id)
+                ?.total_attempts || 0
+            )
+          ),
+          capture_image_in_seconds: exam.batch.capture_image_in_seconds,
+        },
+        exam_set_id: exam?.batch?.theory_exam_set?.id,
+        total_questions: exam?.batch?.theory_exam_set?.total_questions,
+        question_random: exam?.batch?.theory_exam_set?.question_random,
+        option_random: exam?.batch?.theory_exam_set?.option_random,
+        exam_duration_in_minutes: exam?.batch?.theory_exam_set?.exam_duration,
+        instruction: exam?.batch?.theory_exam_set?.instruction,
+
+        theory_questions: questions || [],
+      }
+
+      if (data.question_random) {
+        data.theory_questions.sort(() => Math.random() - 0.5);
+      }
+
+
+
 
       return NextResponse.json({
         status: 'Success',
         statusCode: 200,
         message: 'Student exam set fetched successfully!',
-        data: exam
+        data: data
+        
+        // data: {
+        //   data,
+        //   exam: exam
+        // }
       });
 
-    } catch (error) {
+    } catch (error: any) {
+
+      if (error.name === 'TokenExpiredError') {
+          return NextResponse.json({
+              status: 'Error',
+              statusCode: 401,
+              message: 'Token expired',
+              error: error
+          }, { status: 401 });
+      }
+
+      if (error.name === 'JsonWebTokenError') {
+          return NextResponse.json({
+              status: 'Error',
+              statusCode: 401,
+              message: 'Invalid token',
+              error: error
+          }, { status: 401 });
+      }
+
       console.error("Error verifying token:", error);
 
       return NextResponse.json({
