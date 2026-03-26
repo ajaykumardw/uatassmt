@@ -75,46 +75,47 @@ export async function GET(req: NextRequest) {
                   }
                 }
               },
-              practical_exam_set: {
-                include: {
-                  exam_sets_questions: {
-                    select: {
-                      question_id: true,
-                      marks: true,
-                      questions: {
-                        select: {
-                          question: true,
-                          option1: true,
-                          option2: true,
-                          option3: true,
-                          option4: true,
-                          option5: true,
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              viva_exam_set: {
-                include: {
-                  exam_sets_questions: {
-                    select: {
-                      question_id: true,
-                      marks: true,
-                      questions: {
-                        select: {
-                          question: true,
-                          option1: true,
-                          option2: true,
-                          option3: true,
-                          option4: true,
-                          option5: true,
-                        }
-                      }
-                    }
-                  }
-                }
-              },
+              
+              // practical_exam_set: {
+              //   include: {
+              //     exam_sets_questions: {
+              //       select: {
+              //         question_id: true,
+              //         marks: true,
+              //         questions: {
+              //           select: {
+              //             question: true,
+              //             option1: true,
+              //             option2: true,
+              //             option3: true,
+              //             option4: true,
+              //             option5: true,
+              //           }
+              //         }
+              //       }
+              //     }
+              //   }
+              // },
+              // viva_exam_set: {
+              //   include: {
+              //     exam_sets_questions: {
+              //       select: {
+              //         question_id: true,
+              //         marks: true,
+              //         questions: {
+              //           select: {
+              //             question: true,
+              //             option1: true,
+              //             option2: true,
+              //             option3: true,
+              //             option4: true,
+              //             option5: true,
+              //           }
+              //         }
+              //       }
+              //     }
+              //   }
+              // },
             }
           }
         }
@@ -126,7 +127,13 @@ export async function GET(req: NextRequest) {
         exam.batch.theory_exam_set.exam_sets_questions = exam.batch.theory_exam_set.exam_sets_questions.sort(() => Math.random() - 0.5);
       }
 
-      return NextResponse.json(exam);
+      return NextResponse.json({
+        status: 'Success',
+        statusCode: 200,
+        message: 'Student exam set fetched successfully!',
+        data: exam
+      });
+
     } catch (error) {
       console.error("Error verifying token:", error);
 

@@ -626,11 +626,9 @@ export async function GET(req: Request) {
 
           // })
 
-          questions:pc.questions.map((q:any)=>{
+          questions:pc.pc_questions.map((q:any)=>{
 
             const question=q.question;
-
-            console.log("question", q);
 
             // const pcs=q.pc.sort((a:any,b:any)=>{
 
@@ -652,7 +650,7 @@ export async function GET(req: Request) {
             //     })
             //   : [];
 
-            const pcs=question.pc
+            const pcs=question.pc_questions
               ?.map((rel:any)=>rel.pc)
               .sort((a:any,b:any)=>{
 
@@ -669,7 +667,7 @@ export async function GET(req: Request) {
               ...question,
               actualPc: pcs,
 
-              pc:question.pc_questions,
+              pc:pcs,
 
               inExamSet:question.exam_sets_questions.length>0
 

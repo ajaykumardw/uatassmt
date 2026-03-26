@@ -281,8 +281,8 @@ model pc_questions {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  pc pc @relation("PCQuestions", fields:[pc_id],references:[id])
-  question questions @relation("PCQuestions", fields:[question_id],references:[id])
+  pc pc @relation("PCQuestions", fields:[pc_id],references:[id], onDelete: Cascade, onUpdate: Cascade)
+  question questions @relation("PCQuestions", fields:[question_id],references:[id], onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([pc_id,question_id,agency_id])
 
