@@ -67,6 +67,9 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
                 theory_group: true,
                 practical_group: true,
                 viva_group: true,
+                theory_group_id: true,
+                practical_group_id: true,
+                viva_group_id: true,
                 aadhaar_no: true,
                 student_exam_set_results: {
                     select: {
