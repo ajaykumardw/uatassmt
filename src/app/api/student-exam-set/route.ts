@@ -137,7 +137,7 @@ export async function GET(req: NextRequest) {
       //   exam.batch.theory_exam_set.exam_sets_questions = exam.batch.theory_exam_set.exam_sets_questions.sort(() => Math.random() - 0.5);
       // }
 
-      let data;
+      // let data;
 
       // if (exam?.batch.theory_exam_set) {
       //   if (exam.batch.theory_exam_set.option_random === 0) {
@@ -147,6 +147,7 @@ export async function GET(req: NextRequest) {
 
       const questions = exam?.batch?.theory_exam_set?.exam_sets_questions.map(eq => {
           const optRandom = exam?.batch.theory_exam_set?.option_random === 1;
+          
           return {
             question_id: eq.question_id,
             marks: eq.marks,
@@ -161,7 +162,7 @@ export async function GET(req: NextRequest) {
           }
       });
 
-      data = {
+      const data = {
         batch: {
           assessment_start_datetime: exam.batch.assessment_start_datetime,
           assessment_end_datetime: exam.batch.assessment_end_datetime,
@@ -197,7 +198,7 @@ export async function GET(req: NextRequest) {
         statusCode: 200,
         message: 'Student exam set fetched successfully!',
         data: data
-        
+
         // data: {
         //   data,
         //   exam: exam
