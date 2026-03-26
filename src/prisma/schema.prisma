@@ -734,10 +734,11 @@ model media_files {
   batch_id     Int
   group_id     Int?      // null if individual media
   candidate_id Int?      // null if group media
-  type        String    // "photo" | "video"
+  type        String     // "photo" | "video"
   filename    String
   created_at DateTime @default(now()) @db.DateTime(0)
   updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
+  created_by Int
 
   group       student_groups? @relation(fields: [group_id], references: [id])
   candidate   students?    @relation(fields: [candidate_id], references: [id])

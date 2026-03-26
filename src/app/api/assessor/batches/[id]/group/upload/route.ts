@@ -185,7 +185,7 @@ export async function POST(
   try {
     // 🔐 Auth
     const authHeader = req.headers.get("authorization");
-    
+
     if (!authHeader) return errorResponse("Missing token", 401);
 
     const token = authHeader.split(" ")[1];
@@ -215,7 +215,7 @@ export async function POST(
 
     // Parallel validation of group/candidate
     const validations = [];
-    
+
     if (groupId) {
       validations.push(
         prisma.student_groups.findFirst({
@@ -225,7 +225,7 @@ export async function POST(
         })
       );
     }
-    
+
     if (candidateId) {
       validations.push(
         prisma.students.findFirst({
@@ -255,14 +255,14 @@ export async function POST(
 
       // Determine media type
       let mediaType: "photo" | "video";
-      
+
       if (allowedPhotoTypes.has(file.type)) mediaType = "photo";
       else if (allowedVideoTypes.has(file.type)) mediaType = "video";
       else throw new Error(`Invalid file type: ${file.type}`);
 
       // Size limit
       const maxSize = mediaType === "photo" ? 5 * 1024 * 1024 : 20 * 1024 * 1024;
-      
+
       if (file.size > maxSize) throw new Error(`${mediaType} exceeds max size`);
 
       // Folder path
@@ -276,7 +276,7 @@ export async function POST(
       const ext = file.name.split(".").pop();
       const filename = `${randomUUID()}.${ext}`;
       const filePath = path.join(uploadDir, filename);
-      
+
       await pipeline(file.stream() as any, fs.createWriteStream(filePath));
 
       // Save in DB
@@ -287,6 +287,7 @@ export async function POST(
           candidate_id: candidateId ? Number(candidateId) : null,
           type: mediaType,
           filename,
+          created_by: Number(decoded.id),
         },
       });
 
@@ -304,7 +305,7 @@ export async function POST(
     const success = results
       .filter((r) => r.status === "fulfilled")
       .map((r: any) => r.value);
-    
+
       const failed = results
       .filter((r) => r.status === "rejected")
       .map((r: any) => r.reason.message);
@@ -320,7 +321,7 @@ export async function POST(
     if (error.name === "TokenExpiredError") return errorResponse("Token expired", 401);
     if (error.name === "JsonWebTokenError") return errorResponse("Invalid token", 401);
     console.error(error);
-    
+
     return errorResponse(error.message || "Internal server error", 500);
   }
 }
