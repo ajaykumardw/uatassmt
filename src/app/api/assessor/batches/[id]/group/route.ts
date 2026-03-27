@@ -234,7 +234,7 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
         }
 
         const type = req.nextUrl.searchParams.get("type") || "practical";
-        const groupId = req.nextUrl.searchParams.get("group_id");
+        const groupId = req.nextUrl.searchParams.get("groupId");
         const id = Number(context.params.id);
 
         const batch = await prisma.batches.findUnique({
