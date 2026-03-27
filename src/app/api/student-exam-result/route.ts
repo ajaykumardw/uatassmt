@@ -12,7 +12,7 @@ import prisma from '@/libs/prisma';
 
 export async function POST(req: Request) {
   const data = await req.json();
-  const {examSetId, examDurations, totalQuestions} = data;
+  const {examSetId, examDurations, totalQuestions, ip, userAgent} = data;
   const session = await getServerSession(authOptions);
   const student = Number(session?.user.id);
 
