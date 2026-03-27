@@ -333,6 +333,7 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
             select: {
                 id: true,
                 group_id: true,
+                media_files: true,
                 group_photo: true,
                 group_video: true,
                 ...selectField
@@ -344,6 +345,34 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
                 id: group.id,
                 group_id: group.group_id,
             };
+
+            if (group.media_files && group.media_files.length > 0) {
+                mappedGroup.photo_urls = group.media_files.filter(file => file.type === "photo").map(file => `${process.env.NEXT_PUBLIC_APP_URL}/${path.posix.join(
+                    storageFolders.storage,
+                    storageFolders.uploads,
+                    storageFolders.agency,
+                    storageFolders.batches,
+                    id.toString(),
+                    type,
+                    "groups",
+                    group.id.toString(),
+                    "photos",
+                    file.filename
+                )}`);
+
+                mappedGroup.video_urls = group.media_files.filter(file => file.type === "video").map(file => `${process.env.NEXT_PUBLIC_APP_URL}/${path.posix.join(
+                    storageFolders.storage,
+                    storageFolders.uploads,
+                    storageFolders.agency,
+                    storageFolders.batches,
+                    id.toString(),
+                    type,
+                    "groups",
+                    group.id.toString(),
+                    "videos",
+                    file.filename
+                )}`);
+            }
 
             if (group.group_photo) {
                 const relativePhotoPath = path.posix.join(

@@ -178,6 +178,52 @@ const allowedVideoTypes = new Set([
   "video/3gpp",
 ]);
 
+// export async function GET(
+//   req: NextRequest,
+//   { params }: { params: { id: number } }
+// ) {
+//   try {
+//     // 🔐 Auth
+//     const authHeader = req.headers.get("authorization");
+
+//     if (!authHeader) return errorResponse("Missing token", 401);
+
+//     const token = authHeader.split(" ")[1];
+//     const decoded: any = verify(token, process.env.NEXTAUTH_SECRET as string);
+
+//     if (decoded.user_type !== "U" || decoded.role_id !== 1) {
+//       return errorResponse("Forbidden", 403);
+//     }
+
+//     const batchId = params.id;
+
+//     // ✅ Check batch ownership
+//     const batch = await prisma.batches.findFirst({
+//       where: { id: batchId, assessor: { id: Number(decoded.id) } },
+//     });
+
+//     if (!batch) return errorResponse("Batch not found", 404);
+
+//     const searchParams = new URL(req.url).searchParams;
+
+//     const individual = searchParams.get("individual") === "true";
+
+//     const candidateId = searchParams.get("candidate_id");
+//     const examType = searchParams.get("exam_type");
+
+//     if (!examType) return errorResponse("exam_type is required", 400);
+
+//     const isIndividual = !!candidateId;
+
+//     const mediaFiles = await prisma.media_files.findMany({
+//       where: {
+//         batch_id: batchId,
+//         candidate_id: isIndividual ? Number(candidateId) : null,
+//         type: individual ? "photo" : undefined,
+//       }
+//   }
+// }
+
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
