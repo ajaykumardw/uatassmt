@@ -70,8 +70,8 @@ export async function POST(req: Request) {
             total_attempts: 1,
             exam_total_time: formattedTime,
             exam_appear_date: new Date(),
-            ip_address: data.ip,
-            user_agent: data.userAgent,
+            ip_address: data.ip || ip,
+            user_agent: data.userAgent || userAgent,
           }
         });
       }
