@@ -372,6 +372,10 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
                     "videos",
                     file.filename
                 )}`);
+            } else {
+              mappedGroup.photo_urls = [];
+              mappedGroup.video_urls = [];
+              mappedGroup.media_files = group.media_files; // Include media_files for debugging
             }
 
             if (group.group_photo) {
