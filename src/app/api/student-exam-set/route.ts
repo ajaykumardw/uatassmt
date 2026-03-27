@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
   const session = await getServerSession(authOptions);
 
-  console.log("authHeader", authHeader);
+  // console.log("authHeader", authHeader);
 
   if (!authHeader && !session) {
     return NextResponse.json({
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     try {
       const decoded = verify(token, process.env.NEXTAUTH_SECRET as string) as JwtPayload;
 
-      console.log("Decoded JWT:", decoded);
+      // console.log("Decoded JWT:", decoded);
 
       if (!decoded.candidate_id) {
         return NextResponse.json({
@@ -147,17 +147,17 @@ export async function GET(req: NextRequest) {
 
       const questions = exam?.batch?.theory_exam_set?.exam_sets_questions.map(eq => {
           const optRandom = exam?.batch.theory_exam_set?.option_random === 1;
-          
+
           return {
             question_id: eq.question_id,
             marks: eq.marks,
             question: eq.questions?.question,
             options: [
-              { id: "option1", value: eq.questions.option1},
-              { id: "option2", value: eq.questions.option2},
-              eq.questions.option3 && { id: "option3", value: eq.questions.option3},
-              eq.questions.option4 && { id: "option4", value: eq.questions.option4},
-              eq.questions.option5 && { id: "option5", value: eq.questions.option5},
+              { id: 1, value: eq.questions.option1},
+              { id: 2, value: eq.questions.option2},
+              eq.questions.option3 && { id: 3, value: eq.questions.option3},
+              eq.questions.option4 && { id: 4, value: eq.questions.option4},
+              eq.questions.option5 && { id: 5, value: eq.questions.option5},
             ].sort(() => optRandom ? Math.random() - 0.5 : 0) // Shuffle options if option_random is 1
           }
       });
