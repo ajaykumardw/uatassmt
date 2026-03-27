@@ -2,17 +2,20 @@
 import { NextResponse } from 'next/server';
 
 // Data Imports
-import { getServerSession } from 'next-auth';
+// import { getServerSession } from 'next-auth';
 
 import { type JwtPayload, verify } from 'jsonwebtoken';
 
-import { authOptions } from '@/libs/auth';
+// import { authOptions } from '@/libs/auth';
 
 import prisma from '@/libs/prisma';
 
 export async function POST(req: Request) {
   const data = await req.json();
-  const {examSetId, questionId, candidateAnswer, attemptTime} = data;
+
+  // const {examSetId, questionId, candidateAnswer, attemptTime} = data;
+
+  const {questionId} = data;
 
   // const session = await getServerSession(authOptions);
   // const createdBy = Number(session?.user.id);
@@ -28,7 +31,7 @@ export async function POST(req: Request) {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = verify(token, process.env.NEXTAUTH_SECRET as string) as any;
+    const decoded = verify(token, process.env.NEXTAUTH_SECRET as string) as JwtPayload;
 
     if (!decoded.candidate_id) {
       return NextResponse.json({
