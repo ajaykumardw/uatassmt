@@ -329,8 +329,7 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
         const groups = await prisma.student_groups.findMany({
             where: {
                 batch_id: id,
-                group_type: String(type),
-                ...(groupId ? { id: Number(groupId) } : {})
+                ...(groupId ? { id: Number(groupId) } : {group_type: String(type)})
             },
             select: {
                 id: true,
@@ -338,7 +337,37 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
                 media_files: true,
                 group_photo: true,
                 group_video: true,
-                ...selectField
+                group_type: true,
+                ...(groupId 
+                ? {
+                    theory_students: { 
+                        select: {
+                            id: true, 
+                            batch_id: true, 
+                            candidate_id: true, 
+                            candidate_name: true
+                        } 
+                    },
+                    practical_students: { 
+                        select: {
+                            id: true, 
+                            batch_id: true, 
+                            candidate_id: true, 
+                            candidate_name: true 
+                        }
+                    },
+                    viva_students: { 
+                        select: {
+                            id: true, 
+                            batch_id: true, 
+                            candidate_id: true, 
+                            candidate_name: true 
+                        }
+                    },
+                }
+                : selectField
+                )
+
             }
         });
 
@@ -408,11 +437,11 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
                 mappedGroup.group_video_url = `${process.env.NEXT_PUBLIC_APP_URL}/${relativeVideoPath}`;
             }
 
-            if (type === "viva") {
+            if (group.group_type === "viva") {
                 mappedGroup.students = group.viva_students;
-            } else if (type === "practical") {
+            } else if (group.group_type === "practical") {
                 mappedGroup.students = group.practical_students;
-            } else if (type === "theory") {
+            } else if (group.group_type === "theory") {
                 mappedGroup.students = group.theory_students;
             }
 
