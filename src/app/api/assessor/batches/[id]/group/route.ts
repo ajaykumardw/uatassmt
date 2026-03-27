@@ -375,6 +375,7 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
             const mappedGroup: any = {
                 id: group.id,
                 group_id: group.group_id,
+                group_type: group.group_type,
             };
 
             if (group.media_files && group.media_files.length > 0) {
