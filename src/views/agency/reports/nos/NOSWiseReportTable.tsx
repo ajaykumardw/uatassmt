@@ -45,7 +45,7 @@ import Button from '@mui/material/Button';
 
 // import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
-import type { batches, exam_sets, nos, pc, schemes, students } from '@prisma/client';
+import type { batches, exam_sets, nos, pc, schemes, students, users } from '@prisma/client';
 
 // Type Imports
 // import type { ThemeColor } from '@core/types'
@@ -67,6 +67,7 @@ import TableFilters from './TableFilters'
 import tableStyles from '@core/styles/table.module.css'
 
 import type { QPType } from '@/types/qualification-pack/qpType';
+import { agencyImagePath } from '@/configs/customDataConfig';
 
 // import AddEditExamSetsDialog from '@/components/exam-sets/dialogs/AddEditExamSetsDialog';
 
@@ -357,7 +358,7 @@ const NOSWiseReportTable = () => {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [data, setData] = useState<exam_sets[]>([]);
-  const [batchReportData, setBatchReportData] = useState<batches & {qualification_pack: QPType, scheme: schemes, sub_scheme: schemes, students: students[], nos: nosWithPcs[]} | null>(null);
+  const [batchReportData, setBatchReportData] = useState<batches & {agency: users, training_partner: users, qualification_pack: QPType, scheme: schemes, sub_scheme: schemes, students: students[], nos: nosWithPcs[]} | null>(null);
 
   // const [globalFilter, setGlobalFilter] = useState('');
   // const [examSetId, setExamSetId] = useState(0);
@@ -767,9 +768,9 @@ const NOSWiseReportTable = () => {
             <tbody>
               <tr>
                 <td rowSpan={3} colSpan={3} className='aliceblue'>Name of Assessing Body :</td>
-                <td rowSpan={3} colSpan={Math.floor((totalColumns - 3 - 4 - 3) / 2)}>Dream Weavers</td>
+                <td rowSpan={3} colSpan={Math.floor((totalColumns - 3 - 4 - 3) / 2)}>{batchReportData?.agency?.company_name || '0'} {batchReportData?.agency?.avatar && <img src={agencyImagePath(batchReportData?.agency.id, batchReportData?.agency?.avatar)} alt='Agency Avatar' className='w-14 h-14 object-contain' />}</td>
                 <td rowSpan={3} colSpan={4} className='aliceblue'>Name of Training Provider :</td>
-                <td rowSpan={3} colSpan={Math.round((totalColumns - 3 - 4 - 3) / 2)}>0</td>
+                <td rowSpan={3} colSpan={Math.round((totalColumns - 3 - 4 - 3) / 2)}>{batchReportData?.training_partner?.company_name || '0'}</td>
                 <td className='green'>Result</td>
                 <td className='green'>Count</td>
                 <td className='green'>%</td>

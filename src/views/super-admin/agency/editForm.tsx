@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useState } from 'react'
+import { type ChangeEvent, useState } from 'react'
 
 // MUI Imports
 import Card from '@mui/material/Card'
@@ -12,6 +12,7 @@ import MenuItem from '@mui/material/MenuItem'
 import CardHeader from '@mui/material/CardHeader'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
+import Avatar from '@mui/material/Avatar'
 
 // Third-party Imports
 import { toast } from 'react-toastify'
@@ -30,8 +31,11 @@ import type { InferInput } from 'valibot'
 import type { city, state, users } from '@prisma/client'
 
 import CustomTextField from '@core/components/mui/TextField'
+import { agencyImagePath } from '@/configs/customDataConfig'
 
-type FormData = InferInput<typeof schema>
+type FormData = InferInput<typeof schema> & {
+  profileImage: File | string
+}
 
 
 
@@ -54,6 +58,8 @@ const AgencyEditForm = ({ currentAgency, stateData, citiesData }: { stateData?: 
 
   // States
   const [cityData, setCityData] = useState<any[]>(citiesData)
+  const [imgSrc, setImgSrc] = useState<string | null>(null);
+  const [fileInput, setAgencyImageInput] = useState<File | string>('');
 
   // const [formData, setFormData] = useState<FormData>({
   //   companyName: '',
@@ -82,7 +88,8 @@ const AgencyEditForm = ({ currentAgency, stateData, citiesData }: { stateData?: 
       state: currentAgency?.state_id?.toString() || '',
       city: currentAgency?.city_id?.toString() || '',
       pincode: currentAgency?.pin_code || '',
-      address: currentAgency?.address || ''
+      address: currentAgency?.address || '',
+      profileImage: ''
     }
   })
 
@@ -122,17 +129,35 @@ const AgencyEditForm = ({ currentAgency, stateData, citiesData }: { stateData?: 
 
     // console.log(data);
 
+    const formData = new FormData();
+
+    data.profileImage = fileInput as File;
+
+    formData.append('companyName', data.companyName);
+    formData.append('contactPersonFirstName', data.contactPersonFirstName);
+    formData.append('contactPersonLastName', data.contactPersonLastName);
+    formData.append('email', data.email);
+    formData.append('phoneNumber', data.phoneNumber);
+    formData.append('landlineNumber', data?.landlineNumber || '');
+    formData.append('state', data.state);
+    formData.append('city', data.city);
+    formData.append('pincode', data.pincode);
+    formData.append('address', data.address);
+    formData.append('profileImage', data.profileImage || '');
+
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/agency/${currentAgency?.id}`, {
 
       method: 'POST',
 
-      headers: {
+      // headers: {
 
-        'Content-Type': 'application/json' // Assuming you're sending JSON data
+      //   'Content-Type': 'application/json' // Assuming you're sending JSON data
 
-      },
+      // },
 
-      body: JSON.stringify(data)
+      // body: JSON.stringify(data)
+
+      body: formData
 
     });
 
@@ -150,6 +175,25 @@ const AgencyEditForm = ({ currentAgency, stateData, citiesData }: { stateData?: 
 
     }
   }
+  
+  const handleFileInputChange = (file: ChangeEvent) => {
+    const reader = new FileReader()
+    const { files } = file.target as HTMLInputElement
+
+    if (files && files.length !== 0) {
+      reader.onload = () => setImgSrc(reader.result as string)
+      reader.readAsDataURL(files[0])
+      setAgencyImageInput(files[0])
+
+    }
+  }
+  
+  const handleFileInputReset = () => {
+
+    setAgencyImageInput('')
+
+    setImgSrc(null);
+  }
 
   return (
     <Card>
@@ -163,6 +207,35 @@ const AgencyEditForm = ({ currentAgency, stateData, citiesData }: { stateData?: 
               <Typography variant='body2' className='font-medium'>
                 1. Account Details
               </Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <div className='flex flex-col items-center gap-6'>
+                {imgSrc ? (
+                  <img width={100} className='rounded' src={imgSrc} alt='Profile' />
+                ) : (currentAgency?.avatar ? (
+                      <img width={100} className='rounded' src={agencyImagePath(currentAgency.id, currentAgency.avatar)} alt='Profile' />
+                    ) : (
+                  <Avatar />
+                ))}
+                <div className='flex flex-grow flex-col gap-4'>
+                  <div className='flex flex-col sm:flex-row gap-4'>
+                    <Button component='label' variant='contained' htmlFor='ssc-image'>
+                      Upload New Photo
+                      <input
+                        hidden
+                        type='file'
+                        accept='image/png, image/jpeg'
+                        onChange={handleFileInputChange}
+                        id='ssc-image'
+                      />
+                    </Button>
+                    <Button variant='tonal' color='secondary' onClick={handleFileInputReset}>
+                      Reset
+                    </Button>
+                  </div>
+                  <Typography>Allowed JPG, GIF or PNG. Max size of 800K</Typography>
+                </div>
+              </div>
             </Grid>
             <Grid item xs={12} sm={6}>
               <Controller

@@ -1,3 +1,10 @@
+import fs from "fs";
+import fsp from "fs/promises";
+import path from 'path';
+import { randomUUID } from "crypto";
+
+import { pipeline } from "stream/promises";
+
 // Next Imports
 import { NextResponse } from 'next/server'
 
@@ -34,8 +41,20 @@ export async function POST(
 ) {
 
   const id = context.params.id;
-  const { email, companyName, contactPersonFirstName, contactPersonLastName, phoneNumber, landlineNumber, state, city, pincode, address } = await req.json()
+  const formData = await req.formData()
+  const { email, companyName, contactPersonFirstName, contactPersonLastName, phoneNumber, landlineNumber, state, city, pincode, address, profileImage } = Object.fromEntries(formData)
 
+  
+  let filename = '';
+  
+  if (profileImage) {
+
+    const file = profileImage as File;
+    const ext = file.name.split(".").pop();
+    
+    filename = `${randomUUID()}.${ext}`;
+  
+  }
 
   const agencyExist = await prisma.users.findUnique({
     where: {
@@ -52,22 +71,47 @@ export async function POST(
         user_type: 'AG'
       },
       data: {
-        email: email,
-        company_name: companyName,
-        first_name: contactPersonFirstName,
-        last_name: contactPersonLastName,
-        mobile_no: phoneNumber,
-        landline_no: landlineNumber,
+        email: email.toString(),
+        company_name: companyName.toString(),
+        first_name: contactPersonFirstName.toString(),
+        last_name: contactPersonLastName.toString(),
+        mobile_no: phoneNumber.toString(),
+        landline_no: landlineNumber?.toString() || '',
         is_master: true,
         master_id: 0,
         state_id: Number(state),
         city_id: Number(city),
-        pin_code: pincode,
-        address: address,
+        pin_code: pincode.toString(),
+        address: address.toString(),
+        avatar: filename || agencyExist.avatar
       }
     })
 
     if( result ){
+
+      if(filename){
+
+        if(agencyExist.avatar){
+
+          const oldFilePath = path.join(process.cwd(), 'storage', 'uploads', 'agency', id.toString(), agencyExist.avatar);
+
+          if(fs.existsSync(oldFilePath)){
+            await fsp.unlink(oldFilePath);
+          }
+        }
+
+        const file = profileImage as File;
+  
+        const uploadDir = path.join(process.cwd(), 'storage', 'uploads', 'agency', result.id.toString());
+        
+        await fsp.mkdir(uploadDir, { recursive: true });
+  
+        // Save file
+        const filePath = path.join(uploadDir, filename);
+  
+        await pipeline(file.stream() as any, fs.createWriteStream(filePath));
+      }
+
       return NextResponse.json({message: 'Agency updated successfully!'})
     }
 

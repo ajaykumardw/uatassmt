@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useState } from 'react'
+import { type ChangeEvent, useState } from 'react'
 
 // MUI Imports
 import Card from '@mui/material/Card'
@@ -14,6 +14,7 @@ import CardContent from '@mui/material/CardContent'
 import InputAdornment from '@mui/material/InputAdornment'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
+import Avatar from '@mui/material/Avatar'
 
 // Third-party Imports
 import { toast } from 'react-toastify'
@@ -33,7 +34,9 @@ import type { state } from '@prisma/client'
 
 import CustomTextField from '@core/components/mui/TextField'
 
-type FormData = InferInput<typeof schema>
+type FormData = InferInput<typeof schema> & {
+  profileImage: File | string
+}
 
 
 
@@ -61,6 +64,8 @@ const FormValidationOnScheme = ({ stateData }: { stateData?: state[] }) => {
   const [isPasswordShown, setIsPasswordShown] = useState(false)
   const [isConfirmPasswordShown, setIsConfirmPasswordShown] = useState(false)
   const [cityData, setCityData] = useState<any[]>()
+  const [imgSrc, setImgSrc] = useState<string | null>(null);
+  const [fileInput, setAgencyImageInput] = useState<File | string>('');
 
   // const [formData, setFormData] = useState<FormData>({
   //   companyName: '',
@@ -91,7 +96,8 @@ const FormValidationOnScheme = ({ stateData }: { stateData?: state[] }) => {
       state: '',
       city: '',
       pincode: '',
-      address: ''
+      address: '',
+      profileImage: ''
     }
   })
 
@@ -131,17 +137,38 @@ const FormValidationOnScheme = ({ stateData }: { stateData?: state[] }) => {
 
   const onSubmit: SubmitHandler<FormData> = async (data: FormData) => {
 
+    const formData = new FormData();
+
+    data.profileImage = fileInput as File;
+
+    formData.append('companyName', data.companyName);
+    formData.append('contactPersonFirstName', data.contactPersonFirstName);
+    formData.append('contactPersonLastName', data.contactPersonLastName);
+    formData.append('email', data.email);
+    formData.append('password', data.password);
+    formData.append('confirmPassword', data.confirmPassword);
+    formData.append('phoneNumber', data.phoneNumber);
+    formData.append('landlineNumber', data?.landlineNumber || '');
+    formData.append('state', data.state);
+    formData.append('city', data.city);
+    formData.append('pincode', data.pincode);
+    formData.append('address', data.address);
+    formData.append('profileImage', data.profileImage || '');
+
+
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/agency`, {
 
       method: 'POST',
 
-      headers: {
+      // headers: {
 
-        'Content-Type': 'application/json' // Assuming you're sending JSON data
+      //   'Content-Type': 'application/json' // Assuming you're sending JSON data
 
-      },
+      // },
 
-      body: JSON.stringify(data)
+      // body: JSON.stringify(data)
+
+      body: formData
 
     });
 
@@ -159,6 +186,25 @@ const FormValidationOnScheme = ({ stateData }: { stateData?: state[] }) => {
 
     }
   }
+  
+  const handleFileInputChange = (file: ChangeEvent) => {
+    const reader = new FileReader()
+    const { files } = file.target as HTMLInputElement
+
+    if (files && files.length !== 0) {
+      reader.onload = () => setImgSrc(reader.result as string)
+      reader.readAsDataURL(files[0])
+      setAgencyImageInput(files[0])
+
+    }
+  }
+  
+  const handleFileInputReset = () => {
+
+    setAgencyImageInput('')
+
+    setImgSrc(null);
+  }
 
   return (
     <Card>
@@ -172,6 +218,33 @@ const FormValidationOnScheme = ({ stateData }: { stateData?: state[] }) => {
               <Typography variant='body2' className='font-medium'>
                 1. Account Details
               </Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <div className='flex flex-col items-start gap-6'>
+                {imgSrc ? (
+                  <img width={100} className='rounded' src={imgSrc} alt='Profile' />
+                ) : (
+                  <Avatar />
+                )}
+                <div className='flex flex-grow flex-col gap-4'>
+                  <div className='flex flex-col sm:flex-row gap-4'>
+                    <Button component='label' variant='contained' htmlFor='agency-image'>
+                      Upload New Photo
+                      <input
+                        hidden
+                        type='file'
+                        accept='image/png, image/jpeg'
+                        onChange={handleFileInputChange}
+                        id='agency-image'
+                      />
+                    </Button>
+                    <Button variant='tonal' color='secondary' onClick={handleFileInputReset}>
+                      Reset
+                    </Button>
+                  </div>
+                  <Typography>Allowed JPG, GIF or PNG. Max size of 800K</Typography>
+                </div>
+              </div>
             </Grid>
             <Grid item xs={12} sm={6}>
               <Controller

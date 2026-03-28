@@ -328,6 +328,19 @@ export async function GET(
       agency_id: agencyId
     },
     include: {
+      training_partner: {
+        select: {
+          id: true,
+          company_name: true,
+        }
+      },
+      agency: {
+        select: {
+          id: true,
+          company_name: true,
+          avatar: true
+        }
+      },
       qualification_pack: {
         include: {
           version: true,
@@ -339,7 +352,8 @@ export async function GET(
               agency: {
                 select: {
                   id: true,
-                  company_name: true
+                  company_name: true,
+                  avatar: true
                 }
               }
             }

@@ -168,6 +168,10 @@ export const sscImagePath = (userId: number, sscImage: string) => {
   return sscImage ? `${sscPath}/${userId}/${sscImage}` : "";
 }
 
+export const agencyImagePath = (userId: number, agencyImage: string) => {
+  return agencyImage ? `${agencyPath}/${userId}/${agencyImage}` : "";
+}
+
 export const agencyUsersFilePath = (userId: number, fileName: string) => {
   return fileName ? `${agencyPath}/${storageFolders.users}/${userId}/${fileName}` : "";
 }

@@ -51,6 +51,7 @@ model batches {
 
   students                  students[]
   center_inspections         inspection_media[]
+  agency                     users @relation("BatchToAgency", fields: [agency_id], references: [id])
 }
 
 model schemes {
@@ -439,6 +440,7 @@ model users {
 
   created_by_user users? @relation("UserToAgency", fields: [created_by], references: [id])
   created_users users[] @relation("UserToAgency")
+  batch_agency batches[] @relation("BatchToAgency")
 }
 
 model users_additional_data {

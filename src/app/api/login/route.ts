@@ -11,7 +11,7 @@ import type { UserTable } from './users'
 
 // import { agencyUsersFilePath, sscImagePath } from '@/utils/pathHelpers';
 
-import { agencyUsersFilePath, sscImagePath } from '@/configs/customDataConfig';
+import { agencyImagePath, agencyUsersFilePath, sscImagePath } from '@/configs/customDataConfig';
 
 
 type ResponseUser = Omit<UserTable & { agency_id: number; avatar: string | null; accessToken: string; refreshToken: string }, 'password'>
@@ -186,7 +186,17 @@ export async function POST(req: Request) {
           { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION as jwt.SignOptions['expiresIn'] || '14d' }
         );
 
-        const avatar = filteredUserData.user_type === 'U' && filteredUserData.avatar ? agencyUsersFilePath(filteredUserData.id, filteredUserData.avatar) : null;
+        let avatar = null;
+
+        if (filteredUserData.user_type === 'AG' && filteredUserData.avatar) {
+          avatar = agencyImagePath(filteredUserData.id, filteredUserData.avatar);
+        }
+
+        if (filteredUserData.user_type === 'U' && filteredUserData.avatar) {
+          avatar = agencyUsersFilePath(filteredUserData.id, filteredUserData.avatar);
+        }
+
+        // const avatar = filteredUserData.user_type === 'U' && filteredUserData.avatar ? agencyUsersFilePath(filteredUserData.id, filteredUserData.avatar) : null;
 
         response = {
           ...filteredUserData,

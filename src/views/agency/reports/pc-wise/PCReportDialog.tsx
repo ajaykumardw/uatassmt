@@ -4,13 +4,14 @@ import XLSX from 'xlsx';
 
 import { format } from "date-fns";
 
-import type { batches, nos, pc, schemes, students } from "@prisma/client";
+import type { batches, nos, pc, schemes, students, users } from "@prisma/client";
 
 import tableStyles from '@core/styles/table.module.css'
 
 import type { QPType } from "@/types/qualification-pack/qpType";
 
 import DialogCloseButton from "@/components/dialogs/DialogCloseButton";
+import { agencyImagePath } from "@/configs/customDataConfig";
 
 type nosWithPcs = nos & {
   pcs: pc[];
@@ -20,7 +21,7 @@ type PCReportDialogProps = {
   open: boolean
   handleClose: () => void
   theoryMarks: any
-  batchReportData: batches & {qualification_pack: QPType, scheme: schemes, sub_scheme: schemes, students: students[], nos: nosWithPcs[]} | null
+  batchReportData: batches & {agency: users, qualification_pack: QPType, scheme: schemes, sub_scheme: schemes, students: students[], nos: nosWithPcs[]} | null
   selectedCandidate: string | null
   practicalMarks: any
 }
@@ -80,7 +81,7 @@ const PCReportDialog = ({ open, handleClose, theoryMarks, practicalMarks, batchR
             <table className={`${tableStyles.table} text-center report-table text-xs m-0 table-pc-wise`}>
               <thead>
                 <tr>
-                  <th colSpan={11} className="text-center bs-[30px] p-1.5 text-[13px]">{batchReportData?.qualification_pack?.ssc?.agency?.company_name}</th>
+                  <th colSpan={11} className="text-center bs-[30px] p-1.5 text-[13px]">{batchReportData?.agency?.company_name} {batchReportData?.agency?.avatar ? <img src={agencyImagePath(batchReportData?.agency.id, batchReportData?.agency?.avatar)} alt="Agency Logo" className="w-14 h-14 object-contain" /> : null}</th>
                 </tr>
                 <tr>
                   <th colSpan={2} className="bs-[30px] p-1.5 text-[13px]">Batch ID</th>

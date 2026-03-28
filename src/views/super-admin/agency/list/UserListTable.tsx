@@ -68,7 +68,7 @@ import { getLocalizedUrl } from '@/utils/i18n'
 // Style Imports
 
 import tableStyles from '@core/styles/table.module.css'
-import { MenuProps, TableRowLimit } from '@/configs/customDataConfig'
+import { agencyImagePath, MenuProps, TableRowLimit } from '@/configs/customDataConfig'
 import { useShadowAuth } from '@/hooks/useShadowAuth'
 
 
@@ -219,7 +219,7 @@ const UserListTable = ({ tableData }: { tableData?: UsersType[] }) => {
         header: 'Agency',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            {getAvatar({ avatar: row.original.avatar, first_name: row.original.first_name, last_name: row.original.last_name })}
+            {getAvatar({ avatar: row.original.avatar ? agencyImagePath(row.original.id, row.original.avatar) : '', first_name: row.original.first_name, last_name: row.original.last_name })}
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
                 {row.original.first_name+" "+row.original.last_name}

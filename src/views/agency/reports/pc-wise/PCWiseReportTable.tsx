@@ -46,7 +46,7 @@ import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 
 // import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
-import type { batches, nos, pc, schemes, student_question_attempts, students } from '@prisma/client';
+import type { batches, nos, pc, schemes, student_question_attempts, students, users } from '@prisma/client';
 
 // Type Imports
 // import type { ThemeColor } from '@core/types'
@@ -184,7 +184,14 @@ type nosWithPcs = nos & {
 type Question = {
   question_type: string;
   marks: number;
-  pc: (pc & { nos: nos })[];
+  
+  pc_questions: {
+    pc: pc & {
+      nos: nos;
+    };
+  }[];
+
+  // pc: (pc & { nos: nos })[];
 };
 
 type ExamSetResult = {
@@ -286,10 +293,10 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): Final
       const question = res.question;
 
       if (question.question_type === "theory") {
-        question.pc.forEach((pc: pc & { nos: nos }) => {
-          const pcId = pc.id;
-          const nosId = pc?.nos?.nos_id;
-          const theoryMark = parseFloat(pc.theory_marks.toString());
+        question.pc_questions.forEach((pcQuestion) => {
+          const pcId = pcQuestion.pc.id;
+          const nosId = pcQuestion.pc?.nos?.nos_id;
+          const theoryMark = parseFloat(pcQuestion.pc.theory_marks.toString());
 
           if (!isNaN(theoryMark)) {
             const earnedMark = isCorrect ? theoryMark : 0;
@@ -310,13 +317,14 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): Final
       const question = attempt.question;
 
       if (question?.question_type === "practical") {
-        question.pc.forEach((pc: pc & { nos: nos }) => {
+        question.pc_questions.forEach((pcQuestion) => {
+          const pc = pcQuestion.pc;
           const pcId = pc.id;
           const nosId = pc?.nos?.nos_id;
           const practicalMark = parseFloat(attempt?.obtained_marks?.toString() ?? "0");
 
           if (!isNaN(practicalMark)) {
-            const earnedMark = practicalMark / question.pc.length; // Assuming equal distribution of marks among PCs
+            const earnedMark = practicalMark / question.pc_questions.length; // Assuming equal distribution of marks among PCs
 
             practicalPcMarks[pcId] = (practicalPcMarks[pcId] || 0) + earnedMark;
 
@@ -408,7 +416,7 @@ const PCWiseReportTable = () => {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [data, setData] = useState<StudentsTypeWithAction[]>([]);
-  const [batchReportData, setBatchReportData] = useState<batches & {qualification_pack: QPType, scheme: schemes, sub_scheme: schemes, students: students[], nos: nosWithPcs[]} | null>(null);
+  const [batchReportData, setBatchReportData] = useState<batches & {agency: users, qualification_pack: QPType, scheme: schemes, sub_scheme: schemes, students: students[], nos: nosWithPcs[]} | null>(null);
 
   const [globalFilter, setGlobalFilter] = useState('');
 
