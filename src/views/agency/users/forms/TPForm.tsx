@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useState } from 'react'
+import { type ChangeEvent, useState } from 'react'
 
 import { useParams, useRouter } from 'next/navigation'
 
@@ -36,8 +36,7 @@ import { valibotResolver } from '@hookform/resolvers/valibot'
 
 import type { city, state } from '@prisma/client'
 
-
-import { CircularProgress } from '@mui/material'
+import { Avatar, CircularProgress } from '@mui/material'
 
 import CustomTextField from '@core/components/mui/TextField'
 
@@ -49,7 +48,11 @@ import { getLocalizedUrl } from '@/utils/i18n'
 
 import type { Locale } from '@configs/i18n'
 
-type FormDataType = InferInput<typeof schema>
+import { agencyUsersFilePath } from '@/configs/customDataConfig'
+
+type FormDataType = InferInput<typeof schema> & {
+  profileImage: File | string
+}
 
 const schema = object(
   {
@@ -79,6 +82,8 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
   const [isPasswordShown, setIsPasswordShown] = useState(false);
   const [cityData, setCityData] = useState<city[]>(citiesData || []);
   const [loading, setLoading] = useState(false);
+  const [imgSrc, setImgSrc] = useState<string | null>(null);
+  const [fileInput, setProfileImageInput] = useState<File | string>('');
 
   const {
     control,
@@ -103,7 +108,8 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
       contactPersonAddress: data?.user_additional_data?.contact_person_address || '',
       panCardNumber: data?.user_additional_data?.pan_card_no || '',
       gstNumber: data?.user_additional_data?.gst_no || '',
-      phoneNumber: data?.mobile_no || ''
+      phoneNumber: data?.mobile_no || '',
+      profileImage: ''
     }
   })
 
@@ -142,19 +148,41 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
 
     setLoading(true);
 
+    const formData = new FormData();
+
+    data.profileImage = fileInput as File;
+
+    formData.append('tpName', data.tpName);
+    formData.append('username', data.username);
+    formData.append('email', data.email);
+    formData.append('password', data.password);
+    formData.append('firstName', data.firstName);
+    formData.append('lastName', data?.lastName || '');
+    formData.append('state', data.state);
+    formData.append('city', data.city || '');
+    formData.append('pinCode', data.pinCode || '');
+    formData.append('address', data.address);
+    formData.append('contactPersonAddress', data.contactPersonAddress);
+    formData.append('phoneNumber', data.phoneNumber);
+    formData.append('panCardNumber', data.panCardNumber || '');
+    formData.append('gstNumber', data.gstNumber || '');
+    formData.append('profileImage', data.profileImage);
+
     if(id){
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/training-partner/${id}`, {
 
         method: 'POST',
 
-        headers: {
+        // headers: {
 
-          'Content-Type': 'application/json'
+        //   'Content-Type': 'application/json'
 
-        },
+        // },
 
-        body: JSON.stringify(data)
+        // body: JSON.stringify(data)
+
+        body: formData
       });
 
       if(res.ok){
@@ -176,13 +204,15 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
 
         method: 'POST',
 
-        headers: {
+        // headers: {
 
-          'Content-Type': 'application/json'
+        //   'Content-Type': 'application/json'
 
-        },
+        // },
 
-        body: JSON.stringify(data)
+        // body: JSON.stringify(data)
+
+        body: formData
       });
 
       if(res.ok){
@@ -218,6 +248,24 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
     resetField("password", {defaultValue: newPassword})
   }
 
+  const handleFileInputChange = (file: ChangeEvent) => {
+    const reader = new FileReader()
+    const { files } = file.target as HTMLInputElement
+
+    if (files && files.length !== 0) {
+      reader.onload = () => setImgSrc(reader.result as string)
+      reader.readAsDataURL(files[0])
+      setProfileImageInput(files[0])
+
+    }
+  }
+
+  const handleFileInputReset = () => {
+
+    setProfileImageInput('')
+
+    setImgSrc(null);
+  }
 
   return (
     <Card>
@@ -230,6 +278,35 @@ const TPForm = ({ id, data, stateData, citiesData }:{id?: number, data?: UsersTy
               <Typography variant='body2' className='font-medium'>
                 1. Training Partner Details
               </Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <div className='flex flex-col items-start gap-6'>
+                {imgSrc ? (
+                  <img width={100} height={100} className='rounded object-cover' src={imgSrc} alt='Profile' />
+                ) : (data && data?.avatar ? (
+                      <img width={100} className='rounded' src={agencyUsersFilePath(data.id, data.avatar)} alt='Profile' />
+                    ) : (
+                  <Avatar sx={{ width: 100, height: 100 }} variant="rounded" />
+                ))}
+                <div className='flex flex-grow flex-col gap-4'>
+                  <div className='flex flex-col sm:flex-row gap-4'>
+                    <Button component='label' variant='contained' htmlFor='ssc-image'>
+                      Upload New Photo
+                      <input
+                        hidden
+                        type='file'
+                        accept='image/png, image/jpeg'
+                        onChange={handleFileInputChange}
+                        id='ssc-image'
+                      />
+                    </Button>
+                    <Button variant='tonal' color='secondary' onClick={handleFileInputReset}>
+                      Reset
+                    </Button>
+                  </div>
+                  <Typography>Allowed JPG, GIF or PNG. Max size of 800K</Typography>
+                </div>
+              </div>
             </Grid>
             <Grid item xs={12} sm={6}>
               <Controller
