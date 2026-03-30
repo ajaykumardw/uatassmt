@@ -145,13 +145,54 @@ export async function GET(req: NextRequest) {
       //   }
       // }
 
+      const attemptStatusMap = new Map(
+        exam?.exam_set_results?.map(result => {
+
+          let intervals:any[] = [];
+
+          try {
+            intervals =
+            JSON.parse(result.attempt_time_data || "[]");
+          } catch {
+            intervals = [];
+          }
+
+          const isAnswered =
+          intervals.some(i => i[0] === 1);
+
+          const isVisited =
+          intervals.length > 0;
+
+          let status = "not_visited";
+
+          if(isVisited && !isAnswered){
+            status = "visited";
+          }
+
+          if(isAnswered){
+            status = "answered";
+          }
+
+          return [
+            result.question_id,
+            {
+              status: status
+            }
+          ];
+
+        }) || []
+      );
+
       const questions = exam?.batch?.theory_exam_set?.exam_sets_questions.map(eq => {
+
+          const attemptStatus = attemptStatusMap.get(eq.question_id) || { status: "not_visited" };
           const optRandom = exam?.batch.theory_exam_set?.option_random === 1;
 
           return {
             question_id: eq.question_id,
             marks: eq.marks,
             question: eq.questions?.question,
+            status: attemptStatus.status,
             options: [
               { id: 1, value: eq.questions.option1},
               { id: 2, value: eq.questions.option2},
@@ -161,6 +202,14 @@ export async function GET(req: NextRequest) {
             ].sort(() => optRandom ? Math.random() - 0.5 : 0) // Shuffle options if option_random is 1
           }
       });
+
+      const spent = exam?.student_exam_set_results?.find(result => result?.exam_set_id === exam?.batch?.theory_exam_set?.id)?.exam_total_time?.toString() || null;
+      const totalExamSeconds = exam?.batch?.theory_exam_set?.exam_duration ? exam.batch.theory_exam_set.exam_duration * 60 : null;
+
+      const [h,m,s] = spent ? spent.split(':').map(Number) : [0,0,0];
+      const spentSeconds = (h * 3600) + (m * 60) + s;
+
+      const remainingTimeInSeconds = totalExamSeconds !== null ? (totalExamSeconds - spentSeconds) : 0;
 
       const data = {
         batch: {
@@ -181,6 +230,7 @@ export async function GET(req: NextRequest) {
         question_random: exam?.batch?.theory_exam_set?.question_random,
         option_random: exam?.batch?.theory_exam_set?.option_random,
         exam_duration_in_minutes: exam?.batch?.theory_exam_set?.exam_duration,
+        remaining_time_in_seconds: remainingTimeInSeconds,
         instruction: exam?.batch?.theory_exam_set?.instruction,
 
         theory_questions: questions || [],

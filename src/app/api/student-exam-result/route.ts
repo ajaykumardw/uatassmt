@@ -12,7 +12,7 @@ import prisma from '@/libs/prisma';
 
 export async function POST(req: Request) {
   const data = await req.json();
-  const {examSetId, examDurations, totalQuestions, ip, userAgent} = data;
+  const {examSetId, examDurations, totalQuestions, ip, userAgent, deviceId} = data;
   const session = await getServerSession(authOptions);
   const student = Number(session?.user.id);
 
@@ -72,6 +72,7 @@ export async function POST(req: Request) {
             exam_appear_date: new Date(),
             ip_address: data.ip || ip,
             user_agent: data.userAgent || userAgent,
+            device_id: deviceId
           }
         });
       }

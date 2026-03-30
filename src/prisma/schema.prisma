@@ -298,7 +298,7 @@ model exam_set_results {
   exam_set_id        Int
   student_id         Int
   question_id        Int
-  student_answer     Int
+  student_answer     Int?
   correct_answer     Int
   attempt_time_data  String    @db.Text
   created_by         Int
@@ -326,6 +326,7 @@ model student_exam_set_results {
   ip_address String @db.VarChar(60)
   user_agent String @db.Text
   is_active Int @default(1) @db.TinyInt
+  device_id String? @db.VarChar(255)
 
   student students @relation(fields: [student_id], references: [id])
   exam_set exam_sets @relation(fields: [exam_set_id], references: [id])

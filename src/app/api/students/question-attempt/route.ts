@@ -8,22 +8,102 @@ import { type JwtPayload, verify } from 'jsonwebtoken';
 
 // import { authOptions } from '@/libs/auth';
 
+import {
+  number,
+  object,
+  tuple,
+  string,
+  nullable,
+  minValue,
+  maxValue,
+  pipe,
+  regex,
+  check,
+  safeParse
+} from 'valibot';
+
 import prisma from '@/libs/prisma';
+
+const schemaValidation = object({
+
+  examSetId:
+    number(),
+
+  questionId:
+    number(),
+
+  candidateAnswer:
+    nullable(number()),
+
+  attemptTime:
+    pipe(
+      tuple([
+
+        pipe(
+          number("isAnswered must be 0 or 1"),
+          minValue(0,"isAnswered must be 0 or 1"),
+          maxValue(1,"isAnswered must be 0 or 1")
+        ),
+
+        pipe(
+          string("Start time must be a datetime string"),
+          regex(
+            /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/,
+            "Start time format must be YYYY-MM-DD HH:MM:SS"
+          )
+        ),
+
+        pipe(
+          string("End time must be a datetime string"),
+          regex(
+            /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/,
+            "End time format must be YYYY-MM-DD HH:MM:SS"
+          )
+        )
+
+      ]),
+      check(
+        ([, start, end]) => {
+
+          const s = new Date(start).getTime();
+          const e = new Date(end).getTime();
+
+          return (
+            !isNaN(s) &&
+            !isNaN(e) &&
+            e >= s
+          );
+
+        },
+        "End time must be after start time"
+      )
+    )
+
+});
 
 export async function POST(req: Request) {
   const data = await req.json();
 
-  // const {examSetId, questionId, candidateAnswer, attemptTime} = data;
+  const validation = safeParse(schemaValidation, data);
 
-  const {questionId} = data;
+  if (!validation.success) {
 
-  // const session = await getServerSession(authOptions);
-  // const createdBy = Number(session?.user.id);
+    return NextResponse.json({
+      status: 'Error',
+      statusCode: 400,
+      message: 'Validation error',
+      errors: validation.issues.map(issue => issue.message)
+    }, { status: 400 });
+  }
+
+  const { examSetId, questionId, candidateAnswer, attemptTime } = validation.output;
 
   const authHeader = req.headers.get("authorization");
 
   if (!authHeader) {
     return NextResponse.json({
+      status: 'Error',
+      statusCode: 401,
       message: 'Unauthorized'
     }, { status: 401 });
   }
@@ -35,6 +115,8 @@ export async function POST(req: Request) {
 
     if (!decoded.candidate_id) {
       return NextResponse.json({
+        status: 'Error',
+        statusCode: 401,
         message: 'Invalid token'
       }, { status: 401 });
     }
@@ -58,13 +140,14 @@ export async function POST(req: Request) {
       }
     });
 
-    if(question){
+    if (question) {
 
-      let updatedTime = JSON.parse(question.attempt_time_data)
+      // let updatedTime = JSON.parse(question.attempt_time_data)
+      const updatedTime = question.attempt_time_data ? JSON.parse(question.attempt_time_data) : [];
 
-      updatedTime = formatTimeData(updatedTime);
+      // updatedTime = formatTimeData(updatedTime);
 
-      updatedTime.push(data[3]);
+      updatedTime.push(attemptTime);
 
       await prisma.exam_set_results.update({
         where: {
@@ -72,8 +155,8 @@ export async function POST(req: Request) {
         },
         data: {
           student_id: candidateId,
-          question_id: Number(data[1]),
-          student_answer: Number(data[2]),
+          question_id: questionId,
+          student_answer: candidateAnswer ?? null,
           attempt_time_data: JSON.stringify(updatedTime),
         }
       });
@@ -82,12 +165,12 @@ export async function POST(req: Request) {
 
       await prisma.exam_set_results.create({
         data: {
-          exam_set_id: data[0],
+          exam_set_id: examSetId,
           student_id: candidateId,
-          question_id: Number(questionId),
-          student_answer: Number(data[2]),
+          question_id: questionId,
+          student_answer: candidateAnswer ?? null,
           correct_answer: Number(questionData?.answer),
-          attempt_time_data: JSON.stringify([data[3]]),
+          attempt_time_data: JSON.stringify([attemptTime]),
           created_by: candidateId,
           updated_by: candidateId,
         }
@@ -96,7 +179,7 @@ export async function POST(req: Request) {
 
     const attemptQuestionsData = await prisma.exam_set_results.findMany({
       where: {
-        exam_set_id: data[0],
+        exam_set_id: examSetId,
         student_id: candidateId,
       }
     });
@@ -111,7 +194,7 @@ export async function POST(req: Request) {
 
     let formattedSpentTime;
 
-    if(attemptQuestionsData.length > 0) {
+    if (attemptQuestionsData.length > 0) {
 
       attemptQuestionsData.forEach((attempt) => {
         if (attempt.student_answer === attempt.correct_answer) {
@@ -164,30 +247,18 @@ export async function POST(req: Request) {
         formattedSpentTime = "00:00:00";
       }
 
-
-      // attemptQuestionsData.forEach((attempt) => {
-      // });
-
-      // return totalTime; // Return the total time in milliseconds
-
     }
-
-    // const formattedSpentTime = formatTime(totalSpentTimeInMil);
-
-
-    // console.log("attemptQuestionsData:", attemptQuestionsData, correctCount, incorrectCount, formattedSpentTime);
-
 
     const studentExamResult = await prisma.student_exam_set_results.findUnique({
       where: {
         student_id_exam_set_id: {
-          exam_set_id: data[0],
+          exam_set_id: examSetId,
           student_id: candidateId
         }
       }
     })
 
-    if(studentExamResult){
+    if (studentExamResult) {
       await prisma.student_exam_set_results.update({
         where: {
           id: studentExamResult.id
@@ -204,21 +275,43 @@ export async function POST(req: Request) {
 
 
     // if(result){
-      return NextResponse.json({message: 'Student question attempt added successfully!'})
+    return NextResponse.json({
+      status: 'Success',
+      statusCode: 200,
+      message: 'Student question attempt added successfully!'
+    })
 
-      // }
+    // }
     // else{
     //   return NextResponse.json({message: 'Student question attempt not created!'},{status: 500})
     // }
   } catch (error: any) {
 
+    if (error.name === 'TokenExpiredError') {
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 401,
+        message: 'Token expired',
+        error: error
+      }, { status: 401 });
+    }
+
+    if (error.name === 'JsonWebTokenError') {
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 401,
+        message: 'Invalid token',
+        error: error
+      }, { status: 401 });
+    }
+
     console.error("Error in POST /api/students/question-attempt:", error);
 
     return NextResponse.json({
-        status: 'Error',
-        statusCode: 500,
-        message: 'Internal server error',
-        error: error.message
+      status: 'Error',
+      statusCode: 500,
+      message: 'Internal server error',
+      error: error.message
     }, { status: 500 });
 
   }
@@ -230,29 +323,29 @@ const padZero = (value: number): string => {
 }
 
 
-// Helper function to ensure time data is in the correct pair format
-const formatTimeData = (data: (string | [string, string])[]): [string, string][] => {
-  const formattedData: [string, string][] = [];
-  let temp: string[] = [];
+// // Helper function to ensure time data is in the correct pair format
+// const formatTimeData = (data: (string | [string, string])[]): [string, string][] => {
+//   const formattedData: [string, string][] = [];
+//   let temp: string[] = [];
 
-  data.forEach(item => {
-    if (Array.isArray(item)) {
-      formattedData.push(item); // Already a pair, push as-is
+//   data.forEach(item => {
+//     if (Array.isArray(item)) {
+//       formattedData.push(item); // Already a pair, push as-is
 
-    } else {
-      temp.push(item); // Collect timestamps into a pair
+//     } else {
+//       temp.push(item); // Collect timestamps into a pair
 
-      if (temp.length === 2) {
+//       if (temp.length === 2) {
 
-        formattedData.push([temp[0], temp[1]]);
-        temp = []; // Reset for the next pair
+//         formattedData.push([temp[0], temp[1]]);
+//         temp = []; // Reset for the next pair
 
-      }
-    }
-  });
+//       }
+//     }
+//   });
 
-  return formattedData;
-}
+//   return formattedData;
+// }
 
 // // Function to convert milliseconds to HH:MM:SS format
 // const formatTime = (ms: number): string => {
