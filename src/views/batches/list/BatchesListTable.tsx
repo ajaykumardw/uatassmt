@@ -78,7 +78,6 @@ import type { UsersType } from '@/types/users/usersType'
 import AssignAssessorDialog from '@/components/batches/dialogs/AssignAssessorDialog'
 
 import CustomIconButton from '@/@core/components/mui/IconButton'
-import DownloadEvidence from '@/components/zip/DownloadEvidence'
 
 
 // declare module '@tanstack/table-core' {
@@ -781,7 +780,6 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
         />
       </Card>
       <AssignAssessorDialog batch={singleBatch} open={assignAssessorOpen} handleClose={() => {setAssignAssessorOpen(!assignAssessorOpen); setSingleBatch(null)}} updateBatchList={updateBatchList} data={assessorData}/>
-      <DownloadEvidence open={downloadEvidenceDialogOpen} onClose={() => {setDownloadEvidenceDialogOpen(false); setBatchId(null);}} batchId={batchId} />
       {/* <AddUserDrawer open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} /> */}
       {/* <AddUsersDialog open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} /> */}
     </>
