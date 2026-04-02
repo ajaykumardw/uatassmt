@@ -54,6 +54,7 @@ export async function GET(req: NextRequest) {
         id_back_image: true,
         aadhaar_no: true,
         category: true,
+        gender: true,
         date_of_birth: true,
         mobile_no: true,
         attendance: true,

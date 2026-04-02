@@ -184,7 +184,7 @@ type nosWithPcs = nos & {
 type Question = {
   question_type: string;
   marks: number;
-  
+
   pc_questions: {
     pc: pc & {
       nos: nos;
@@ -201,6 +201,7 @@ type ExamSetResult = {
 };
 
 type Student = {
+  id: number;
   candidate_id: string;
   exam_set_results?: ExamSetResult[];
   student_question_attempts?: (student_question_attempts & { question: Question })[];
@@ -249,9 +250,14 @@ interface PracticalMarksResult {
   [candidateId: string]: { pcs: Record<string, number>; nos: Record<string, number> };
 }
 
+interface VivaMarksResult {
+  [candidateId: string]: { pcs: Record<string, number>; nos: Record<string, number> };
+}
+
 interface FinalResult {
   theoryMarks: TheoryMarksResult;
   practicalMarks: PracticalMarksResult;
+  vivaMarks: VivaMarksResult;
   totalTheoryMarks: Record<string, number>;
   absentStudents: string[];
   passedStudents: string[];
@@ -260,20 +266,96 @@ interface FinalResult {
   percentage: Record<string, number>;
 }
 
-const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): FinalResult => {
+const PRECISION = 2;
+
+const roundMark = (value:number)=>{
+  return Number(value.toFixed(PRECISION));
+};
+
+const distributeMarksByPcWeight = (
+  question:any,
+  obtainedMarks:number,
+  markField:"practical_marks" | "viva_marks",
+  pcStore:Record<string,number>,
+  nosStore:Record<string,number>
+)=>{
+
+  const totalPcMarks = question.pc_questions.reduce((sum:any,pcq:any)=>{
+    return sum + Number(pcq.pc[markField] || 0);
+  },0);
+
+  if(totalPcMarks === 0) return;
+
+  let assignedTotal = 0;
+
+  question.pc_questions.forEach((pcQuestion:any,index:number)=>{
+
+    const pc = pcQuestion.pc;
+
+    const pcId = pc.id;
+
+    const nosId = pc?.nos?.nos_id;
+
+    const pcMax = Number(pc[markField] || 0);
+
+    let earnedMark =
+      (pcMax / totalPcMarks) * obtainedMarks;
+
+    if(index === question.pc_questions.length-1){
+
+      earnedMark =
+        roundMark(obtainedMarks - assignedTotal);
+
+    }
+    else{
+
+      earnedMark =
+        roundMark(earnedMark);
+
+      assignedTotal += earnedMark;
+
+    }
+
+    console.log("distributing ", markField, " for pcId: ", pcId, " nosId: ", nosId, " pcMax: ", pcMax, " obtainedMarks: ", obtainedMarks, " totalPcMarks: ", totalPcMarks, " earnedMark: ", earnedMark);
+
+    pcStore[pcId] =
+      roundMark((pcStore[pcId] || 0) + earnedMark);
+
+    if(nosId){
+
+      nosStore[nosId] =
+        roundMark((nosStore[nosId] || 0) + earnedMark);
+
+    }
+
+  });
+
+};
+
+const getTheoryMarksPerStudent = (
+  students: Student[],
+  qp: QPType | null
+): FinalResult => {
+
   const theoryMarks: TheoryMarksResult = {};
   const practicalMarks: PracticalMarksResult = {};
+  const vivaMarks: VivaMarksResult = {};
+
   const totalTheoryMarks: Record<string, number> = {};
+
   const absentStudents: string[] = [];
   const passedStudents: string[] = [];
   const failedStudents: string[] = [];
+
   const grossTotal: Record<string, number> = {};
   const percentage: Record<string, number> = {};
 
-  students.forEach((student) => {
+  students.forEach((student)=>{
+
     const studentId = student.candidate_id;
 
-    if (!student.exam_set_results || student.exam_set_results.length === 0) {
+    if(!student.exam_set_results || student.exam_set_results.length===0){
+
       absentStudents.push(studentId);
 
       return;
@@ -285,97 +367,314 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): Final
     const practicalPcMarks: Record<string, number> = {};
     const practicalNosMarks: Record<string, number> = {};
 
-    const grossMax = qp?.total_marks ?? 0;
-    const overAllCutOff = qp?.overall_cutoff_marks ?? 0;
+    const vivaPcMarks: Record<string, number> = {};
+    const vivaNosMarks: Record<string, number> = {};
 
-    student.exam_set_results.forEach((res) => {
-      const isCorrect = res.student_answer === res.correct_answer;
+    const grossMax = qp?.total_marks ?? 0;
+
+    const overAllCutOff =
+      qp?.overall_cutoff_marks ?? 0;
+
+    // THEORY
+    student.exam_set_results.forEach((res)=>{
+
+      const isCorrect =
+        res.student_answer === res.correct_answer;
+
       const question = res.question;
 
-      if (question.question_type === "theory") {
-        question.pc_questions.forEach((pcQuestion) => {
+      if(question.question_type==="theory"){
+
+        question.pc_questions.forEach((pcQuestion:any)=>{
+
           const pcId = pcQuestion.pc.id;
-          const nosId = pcQuestion.pc?.nos?.nos_id;
-          const theoryMark = parseFloat(pcQuestion.pc.theory_marks.toString());
 
-          if (!isNaN(theoryMark)) {
-            const earnedMark = isCorrect ? theoryMark : 0;
+          const nosId =
+            pcQuestion.pc?.nos?.nos_id;
 
-            pcMarks[pcId] = (pcMarks[pcId] || 0) + earnedMark;
+          const theoryMark =
+            Number(pcQuestion.pc.theory_marks || 0);
 
-            // NOS-wise total 👇
+          const earnedMark =
+            isCorrect ? theoryMark : 0;
 
-            if (nosId) {
-              nosMarks[nosId] = (nosMarks[nosId] || 0) + earnedMark;
-            }
+          pcMarks[pcId] =
+            roundMark((pcMarks[pcId] || 0) + earnedMark);
+
+          if(nosId){
+
+            nosMarks[nosId] =
+              roundMark((nosMarks[nosId] || 0) + earnedMark);
+
           }
+
         });
+
       }
+
     });
 
-    student.student_question_attempts?.forEach((attempt) => {
+    // PRACTICAL + VIVA
+    student.student_question_attempts?.forEach((attempt)=>{
+
       const question = attempt.question;
 
-      if (question?.question_type === "practical") {
-        question.pc_questions.forEach((pcQuestion) => {
-          const pc = pcQuestion.pc;
-          const pcId = pc.id;
-          const nosId = pc?.nos?.nos_id;
-          const practicalMark = parseFloat(attempt?.obtained_marks?.toString() ?? "0");
+      const obtainedMarks =
+        Number(attempt?.obtained_marks ?? 0);
 
-          if (!isNaN(practicalMark)) {
-            const earnedMark = practicalMark / question.pc_questions.length; // Assuming equal distribution of marks among PCs
+        console.log("question type: ", question.question_type, " for student: ", studentId, "attempt question: ", attempt.question);
 
-            practicalPcMarks[pcId] = (practicalPcMarks[pcId] || 0) + earnedMark;
+      if(question?.question_type==="practical"){
 
-            // NOS-wise total 👇
+        distributeMarksByPcWeight(
+          question,
+          obtainedMarks,
+          "practical_marks",
+          practicalPcMarks,
+          practicalNosMarks
+        );
 
-            if (nosId) {
-              practicalNosMarks[nosId] = (practicalNosMarks[nosId] || 0) + earnedMark;
-            }
-          }
-        });
       }
+
+      if(question?.question_type==="viva"){
+
+        distributeMarksByPcWeight(
+          question,
+          obtainedMarks,
+          "viva_marks",
+          vivaPcMarks,
+          vivaNosMarks
+        );
+
+        console.log("viva marks distribution for student: ", studentId, " question: ", question, " vivaPcMarks: ", vivaPcMarks, " vivaNosMarks: ", vivaNosMarks);
+
+      }
+
     });
 
-    const theoryTotal = Object.values(pcMarks).reduce((sum, m) => sum + m, 0);
+    const theoryTotal =
+      Object.values(pcMarks)
+        .reduce((sum,m)=>sum+m,0);
 
-    const practicalTotal = Object.values(practicalPcMarks).reduce((sum, m) => sum + m, 0);
-    const vivaTotal = 0;
+    const practicalTotal =
+      Object.values(practicalPcMarks)
+        .reduce((sum,m)=>sum+m,0);
 
-    const gross = theoryTotal + practicalTotal + vivaTotal;
-    const percent = grossMax > 0 ? (gross / grossMax) * 100 : 0;
+    const vivaTotal =
+      Object.values(vivaPcMarks)
+        .reduce((sum,m)=>sum+m,0);
 
-    if (percent >= overAllCutOff) {
+    const gross =
+      roundMark(theoryTotal + practicalTotal + vivaTotal);
+
+    const percent =
+      grossMax>0
+        ? roundMark((gross/grossMax)*100)
+        : 0;
+
+    if(percent>=overAllCutOff){
+
       passedStudents.push(studentId);
-    } else {
+
+    }
+    else{
+
       failedStudents.push(studentId);
+
     }
 
-    theoryMarks[studentId] = {
-      pcs: pcMarks,
-      nos: nosMarks
+    theoryMarks[studentId]={
+      pcs:pcMarks,
+      nos:nosMarks
     };
-    practicalMarks[studentId] = {
-      pcs: practicalPcMarks,
-      nos: practicalNosMarks
+
+    practicalMarks[studentId]={
+      pcs:practicalPcMarks,
+      nos:practicalNosMarks
     };
-    totalTheoryMarks[studentId] = theoryTotal;
-    grossTotal[studentId] = gross;
-    percentage[studentId] = parseFloat(percent.toFixed(2));
+
+    vivaMarks[studentId]={
+      pcs:vivaPcMarks,
+      nos:vivaNosMarks
+    };
+
+    totalTheoryMarks[studentId]=
+      roundMark(theoryTotal);
+
+    grossTotal[studentId]=gross;
+
+    percentage[studentId]=percent;
+
   });
 
   return {
+
     theoryMarks,
     practicalMarks,
+    vivaMarks,
+
     totalTheoryMarks,
+
     grossTotal,
+
     passedStudents,
     failedStudents,
     absentStudents,
+
     percentage
+
   };
+
 };
+
+// const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): FinalResult => {
+//   const theoryMarks: TheoryMarksResult = {};
+//   const practicalMarks: PracticalMarksResult = {};
+//   const vivaMarks: VivaMarksResult = {};
+//   const totalTheoryMarks: Record<string, number> = {};
+//   const absentStudents: string[] = [];
+//   const passedStudents: string[] = [];
+//   const failedStudents: string[] = [];
+//   const grossTotal: Record<string, number> = {};
+//   const percentage: Record<string, number> = {};
+
+//   students.forEach((student) => {
+//     const studentId = student.candidate_id;
+//     const candidateId = student.id;
+
+//     if (!student.exam_set_results || student.exam_set_results.length === 0) {
+//       absentStudents.push(studentId);
+
+//       return;
+//     }
+
+//     const pcMarks: Record<string, number> = {};
+//     const nosMarks: Record<string, number> = {};
+
+//     const practicalPcMarks: Record<string, number> = {};
+//     const practicalNosMarks: Record<string, number> = {};
+
+//     const vivaPcMarks: Record<string, number> = {};
+//     const vivaNosMarks: Record<string, number> = {};
+
+//     const grossMax = qp?.total_marks ?? 0;
+//     const overAllCutOff = qp?.overall_cutoff_marks ?? 0;
+
+//     student.exam_set_results.forEach((res) => {
+//       const isCorrect = res.student_answer === res.correct_answer;
+//       const question = res.question;
+
+//       if (question.question_type === "theory") {
+//         question.pc_questions.forEach((pcQuestion) => {
+//           const pcId = pcQuestion.pc.id;
+//           const nosId = pcQuestion.pc?.nos?.nos_id;
+//           const theoryMark = parseFloat(pcQuestion.pc.theory_marks.toString());
+
+//           if (!isNaN(theoryMark)) {
+//             const earnedMark = isCorrect ? theoryMark : 0;
+
+//             pcMarks[pcId] = (pcMarks[pcId] || 0) + earnedMark;
+
+//             // NOS-wise total 👇
+
+//             if (nosId) {
+//               nosMarks[nosId] = (nosMarks[nosId] || 0) + earnedMark;
+//             }
+//           }
+//         });
+//       }
+//     });
+
+//     student.student_question_attempts?.forEach((attempt) => {
+//       const question = attempt.question;
+
+//       console.log("question type: ", question.question_type, " for student: ", candidateId, "attempt question: ", attempt.question);
+
+//       if (question?.question_type === "practical") {
+//         question.pc_questions.forEach((pcQuestion) => {
+//           const pc = pcQuestion.pc;
+//           const pcId = pc.id;
+//           const nosId = pc?.nos?.nos_id;
+//           const practicalMark = parseFloat(attempt?.obtained_marks?.toString() ?? "0");
+
+//           if (!isNaN(practicalMark)) {
+//             const earnedMark = practicalMark / question.pc_questions.length; // Assuming equal distribution of marks among PCs
+
+//             practicalPcMarks[pcId] = (practicalPcMarks[pcId] || 0) + earnedMark;
+
+//             // NOS-wise total 👇
+
+//             if (nosId) {
+//               practicalNosMarks[nosId] = (practicalNosMarks[nosId] || 0) + earnedMark;
+//             }
+//           }
+//         });
+//       }
+
+//       if (question?.question_type === "viva") {
+//         question.pc_questions.forEach((pcQuestion) => {
+//           const pc = pcQuestion.pc;
+//           const pcId = pc.id;
+//           const nosId = pc?.nos?.nos_id;
+//           const vivaMark = parseFloat(attempt?.obtained_marks?.toString() ?? "0");
+
+//           if (!isNaN(vivaMark)) {
+//             const earnedMark = vivaMark / question.pc_questions.length; // Assuming equal distribution of marks among PCs
+
+//             vivaPcMarks[pcId] = (vivaPcMarks[pcId] || 0) + earnedMark;
+
+//             // NOS-wise total 👇
+//             if (nosId) {
+//               vivaNosMarks[nosId] = (vivaNosMarks[nosId] || 0) + earnedMark;
+//             }
+//           }
+//         });
+//       }
+//     });
+
+//     const theoryTotal = Object.values(pcMarks).reduce((sum, m) => sum + m, 0);
+
+//     const practicalTotal = Object.values(practicalPcMarks).reduce((sum, m) => sum + m, 0);
+//     const vivaTotal = Object.values(vivaPcMarks).reduce((sum, m) => sum + m, 0);
+
+//     const gross = theoryTotal + practicalTotal + vivaTotal;
+//     const percent = grossMax > 0 ? (gross / grossMax) * 100 : 0;
+
+//     if (percent >= overAllCutOff) {
+//       passedStudents.push(studentId);
+//     } else {
+//       failedStudents.push(studentId);
+//     }
+
+//     theoryMarks[studentId] = {
+//       pcs: pcMarks,
+//       nos: nosMarks
+//     };
+//     practicalMarks[studentId] = {
+//       pcs: practicalPcMarks,
+//       nos: practicalNosMarks
+//     };
+//     vivaMarks[studentId] = {
+//       pcs: vivaPcMarks,
+//       nos: vivaNosMarks
+//     };
+//     totalTheoryMarks[studentId] = theoryTotal;
+//     grossTotal[studentId] = gross;
+//     percentage[studentId] = parseFloat(percent.toFixed(2));
+//   });
+
+//   return {
+//     theoryMarks,
+//     practicalMarks,
+//     vivaMarks,
+//     totalTheoryMarks,
+//     grossTotal,
+//     passedStudents,
+//     failedStudents,
+//     absentStudents,
+//     percentage
+//   };
+// };
 
 // const getPracticalMarksPerStudent = (students: Student[]): Record<string, Record<string, number>> => {
 //   const result: Record<string, Record<string, number>> = {};
@@ -533,7 +832,7 @@ const PCWiseReportTable = () => {
 
 
   // const studentPcTheoryMarks = getTheoryMarksPerStudent(batchReportData?.students || []);
-  const { theoryMarks, practicalMarks, absentStudents } = getTheoryMarksPerStudent(batchReportData?.students || [], batchReportData?.qualification_pack || null);
+  const { theoryMarks, practicalMarks, vivaMarks, absentStudents } = getTheoryMarksPerStudent(batchReportData?.students || [], batchReportData?.qualification_pack || null);
 
   // Hooks
   const columns = useMemo<ColumnDef<StudentsTypeWithAction, any>[]>(
@@ -813,7 +1112,7 @@ const PCWiseReportTable = () => {
           }}
         />
       </Card>
-      <PCReportDialog open={pcReportOpen} handleClose={() => {setPCReportOpen(false); setSelectedCandidate(null); }} theoryMarks={selectedCandidate ? theoryMarks?.[selectedCandidate] || {} : {}} practicalMarks={selectedCandidate ? practicalMarks?.[selectedCandidate] || {} : {}} batchReportData={batchReportData} selectedCandidate={selectedCandidate} />
+      <PCReportDialog open={pcReportOpen} handleClose={() => {setPCReportOpen(false); setSelectedCandidate(null); }} theoryMarks={selectedCandidate ? theoryMarks?.[selectedCandidate] || {} : {}} practicalMarks={selectedCandidate ? practicalMarks?.[selectedCandidate] || {} : {}} vivaMarks={selectedCandidate ? vivaMarks?.[selectedCandidate] || {} : {}} batchReportData={batchReportData} selectedCandidate={selectedCandidate} />
       {/* <AddEditExamSetsDialog open={addQuestionOpen} updateExamSetsList={updateExamSetsList} handleClose={() => setAddQuestionOpen(!addQuestionOpen)} />
       <AddEditExamSetsDialog open={editQuestionOpen} examSetId={examSetId} updateExamSetsList={updateExamSetsList} handleClose={() => setEditQuestionOpen(!editQuestionOpen)} /> */}
     </>

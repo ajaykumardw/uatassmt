@@ -747,6 +747,30 @@ model media_files {
   candidate   students?    @relation(fields: [candidate_id], references: [id])
 }
 
+model jobs {
+  id Int @id @default(autoincrement())
+  job_type String @db.VarChar(50)
+  reference_id Int
+  reference_type String @db.VarChar(50)
+  payload Json?
+  status job_status @default(pending)
+  progress Int @default(0) @db.TinyInt
+  result Json?
+  file_path String? @db.VarChar(255)
+  error_message String? @db.Text
+  retry_count Int @default(0) @db.TinyInt
+  requested_by Int?
+  started_at DateTime?
+  completed_at DateTime?
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
+
+  @@index([job_type])
+  @@index([status])
+  @@index([reference_id])
+
+}
+
 enum question_level {
   E
   M
@@ -812,4 +836,11 @@ enum inspection_media_type {
   image
   video
   document
+}
+
+enum job_status {
+  pending
+  in_progress
+  completed
+  failed
 }

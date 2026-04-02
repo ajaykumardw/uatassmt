@@ -78,6 +78,7 @@ import type { UsersType } from '@/types/users/usersType'
 import AssignAssessorDialog from '@/components/batches/dialogs/AssignAssessorDialog'
 
 import CustomIconButton from '@/@core/components/mui/IconButton'
+import DownloadEvidence from '@/components/zip/DownloadEvidence'
 
 
 // declare module '@tanstack/table-core' {
@@ -202,6 +203,10 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [selectedBatch, setSelectedBatch] = useState<number | null>(null);
 
+  // download evidence
+  const [downloadEvidenceDialogOpen, setDownloadEvidenceDialogOpen] = useState(false);
+  const [batchId, setBatchId] = useState<number | null>(null);
+
   // Hooks
   const { lang: locale } = useParams()
 
@@ -289,6 +294,11 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
       setLoadingId(null);
     }
 
+  }
+
+  const handleDownloadEvidence = (batchId: number) => {
+    setBatchId(batchId);
+    setDownloadEvidenceDialogOpen(true);
   }
 
   const columns = useMemo<ColumnDef<BatchesTypeWithAction, any>[]>(
@@ -578,6 +588,9 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
                 <i className='tabler-edit text-[22px] text-textSecondary' />
               </IconButton>
             </Link>
+            <IconButton onClick={() => handleDownloadEvidence(row.original.id)}>
+              <i className='tabler-download text-[22px] text-textSecondary' />
+            </IconButton>
             {/* <IconButton>
               <Link href={getLocalizedUrl('apps/user/view', locale as Locale)} className='flex'>
                 <i className='tabler-eye text-[22px] text-textSecondary' />
@@ -768,6 +781,7 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
         />
       </Card>
       <AssignAssessorDialog batch={singleBatch} open={assignAssessorOpen} handleClose={() => {setAssignAssessorOpen(!assignAssessorOpen); setSingleBatch(null)}} updateBatchList={updateBatchList} data={assessorData}/>
+      <DownloadEvidence open={downloadEvidenceDialogOpen} onClose={() => {setDownloadEvidenceDialogOpen(false); setBatchId(null);}} batchId={batchId} />
       {/* <AddUserDrawer open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} /> */}
       {/* <AddUsersDialog open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} /> */}
     </>

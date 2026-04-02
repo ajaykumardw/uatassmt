@@ -24,9 +24,10 @@ type PCReportDialogProps = {
   batchReportData: batches & {agency: users, qualification_pack: QPType, scheme: schemes, sub_scheme: schemes, students: students[], nos: nosWithPcs[]} | null
   selectedCandidate: string | null
   practicalMarks: any
+  vivaMarks: any
 }
 
-const PCReportDialog = ({ open, handleClose, theoryMarks, practicalMarks, batchReportData, selectedCandidate } : PCReportDialogProps) => {
+const PCReportDialog = ({ open, handleClose, theoryMarks, practicalMarks, vivaMarks, batchReportData, selectedCandidate } : PCReportDialogProps) => {
 
   const handleGenerateReport = () => {
     // Get the table element
@@ -168,7 +169,7 @@ const PCReportDialog = ({ open, handleClose, theoryMarks, practicalMarks, batchR
 
                       const obtainedTheoryMarks = theoryMarks?.pcs?.[pcItem.id] || 0;
                       const obtainedPracticalMarks = practicalMarks?.pcs?.[pcItem.id] || 0;
-                      const obtainedVivaMarks = 0;
+                      const obtainedVivaMarks = vivaMarks?.pcs?.[pcItem.id] || 0;
 
                       const totalOutOf = theoryOutOf + practicalOutOf + vivaOutOf;
 
@@ -187,7 +188,7 @@ const PCReportDialog = ({ open, handleClose, theoryMarks, practicalMarks, batchR
                           <td className="bs-[30px] p-1.5 text-[13px]">{vivaOutOf}</td>
                           <td className="bs-[30px] p-1.5 text-[13px]">{obtainedVivaMarks}</td>
                           <td className="bs-[30px] p-1.5 text-[13px]">{totalOutOf}</td>
-                          <td className="bs-[30px] p-1.5 text-[13px]">{totalObtained}</td>
+                          <td className="bs-[30px] p-1.5 text-[13px]">{totalObtained.toFixed(2)}</td>
                         </tr>
                       );
                     })
@@ -219,8 +220,8 @@ const PCReportDialog = ({ open, handleClose, theoryMarks, practicalMarks, batchR
 
                   const obtainedMarks = nosItem.pcs.reduce((sum, pcItem) => {
                     const obtainedTheoryMarks = theoryMarks?.pcs?.[pcItem.id] || 0;
-                    const obtainedPracticalMarks = 0;
-                    const obtainedVivaMarks = 0;
+                    const obtainedPracticalMarks = practicalMarks?.pcs?.[pcItem.id] || 0;
+                    const obtainedVivaMarks = vivaMarks?.pcs?.[pcItem.id] || 0;
 
                     return sum + obtainedTheoryMarks + obtainedPracticalMarks + obtainedVivaMarks;
                   }, 0);
@@ -254,7 +255,7 @@ const PCReportDialog = ({ open, handleClose, theoryMarks, practicalMarks, batchR
                     return sum + nosItem.pcs.reduce((pcSum, pcItem) => {
                       const obtainedTheoryMarks = theoryMarks?.pcs?.[pcItem.id] || 0;
                       const obtainedPracticalMarks = practicalMarks?.pcs?.[pcItem.id] || 0;
-                      const obtainedVivaMarks = 0;
+                      const obtainedVivaMarks = vivaMarks?.pcs?.[pcItem.id] || 0;
 
                       return pcSum + obtainedTheoryMarks + obtainedPracticalMarks + obtainedVivaMarks;
                     }, 0);
@@ -272,8 +273,8 @@ const PCReportDialog = ({ open, handleClose, theoryMarks, practicalMarks, batchR
                       const obtainedMarks = batchReportData?.nos.reduce((sum, nosItem) => {
                         return sum + nosItem.pcs.reduce((pcSum, pcItem) => {
                           const obtainedTheoryMarks = theoryMarks?.pcs?.[pcItem.id] || 0;
-                          const obtainedPracticalMarks = 0;
-                          const obtainedVivaMarks = 0;
+                          const obtainedPracticalMarks = practicalMarks?.pcs?.[pcItem.id] || 0;
+                          const obtainedVivaMarks = vivaMarks?.pcs?.[pcItem.id] || 0;
 
                           return pcSum + obtainedTheoryMarks + obtainedPracticalMarks + obtainedVivaMarks;
                         }, 0);
@@ -298,7 +299,7 @@ const PCReportDialog = ({ open, handleClose, theoryMarks, practicalMarks, batchR
                         return sum + nosItem.pcs.reduce((pcSum, pcItem) => {
                           const obtainedTheoryMarks = theoryMarks?.pcs?.[pcItem.id] || 0;
                           const obtainedPracticalMarks = practicalMarks?.pcs?.[pcItem.id] || 0;
-                          const obtainedVivaMarks = 0;
+                          const obtainedVivaMarks = vivaMarks?.pcs?.[pcItem.id] || 0;
 
                           return pcSum + obtainedTheoryMarks + obtainedPracticalMarks + obtainedVivaMarks;
                         }, 0);

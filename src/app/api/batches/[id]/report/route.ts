@@ -447,6 +447,7 @@ export async function GET(
           user_name: true,
           candidate_id: true,
           candidate_name: true,
+          attendance: true,
 
           // student_exam_set_results: true,
 
@@ -511,6 +512,8 @@ export async function GET(
                           pc_id: true,
                           pc_name: true,
                           theory_marks: true,
+                          practical_marks: true,
+                          viva_marks: true,
                           nos: {
                             select: {
                               nos_id: true,

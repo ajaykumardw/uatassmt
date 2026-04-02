@@ -45,7 +45,7 @@ import Button from '@mui/material/Button';
 
 // import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
-import type { batches, exam_sets, nos, pc, schemes, students, users } from '@prisma/client';
+import type { batches, exam_sets, nos, pc, schemes, student_question_attempts, students, users } from '@prisma/client';
 
 // Type Imports
 // import type { ThemeColor } from '@core/types'
@@ -197,6 +197,7 @@ type ExamSetResult = {
 type Student = {
   candidate_id: string;
   exam_set_results?: ExamSetResult[];
+  student_question_attempts?: (student_question_attempts & { question: Question })[];
 };
 
 // type TheoryMarksResult = Record<string, Record<string, number>>;
@@ -238,9 +239,21 @@ interface TheoryMarksResult {
   [candidateId: string]: { pcs: Record<string, number>; nos: Record<string, number> };
 }
 
+interface PracticalMarksResult {
+  [candidateId: string]: { pcs: Record<string, number>; nos: Record<string, number> };
+}
+
+interface VivaMarksResult {
+  [candidateId: string]: { pcs: Record<string, number>; nos: Record<string, number> };
+}
+
 interface FinalResult {
   theoryMarks: TheoryMarksResult;
+  practicalMarks: PracticalMarksResult;
+  vivaMarks: VivaMarksResult;
   totalTheoryMarks: Record<string, number>;
+  totalPracticalMarks: Record<string, number>;
+  totalVivaMarks: Record<string, number>;
   absentStudents: string[];
   passedStudents: string[];
   failedStudents: string[];
@@ -248,9 +261,79 @@ interface FinalResult {
   percentage: Record<string, number>;
 }
 
+const PRECISION = 2;
+
+const roundMark = (value:number)=>{
+  return Number(value.toFixed(PRECISION));
+};
+
+const distributeMarksByPcWeight = (
+  question:any,
+  obtainedMarks:number,
+  markField:"practical_marks" | "viva_marks",
+  pcStore:Record<string,number>,
+  nosStore:Record<string,number>
+)=>{
+
+  const totalPcMarks = question.pc_questions.reduce((sum:any,pcq:any)=>{
+    return sum + Number(pcq.pc[markField] || 0);
+  },0);
+
+  if(totalPcMarks === 0) return;
+
+  let assignedTotal = 0;
+
+  question.pc_questions.forEach((pcQuestion:any,index:number)=>{
+
+    const pc = pcQuestion.pc;
+
+    const pcId = pc.id;
+
+    const nosId = pc?.nos?.nos_id;
+
+    const pcMax = Number(pc[markField] || 0);
+
+    let earnedMark =
+      (pcMax / totalPcMarks) * obtainedMarks;
+
+    if(index === question.pc_questions.length-1){
+
+      earnedMark =
+        roundMark(obtainedMarks - assignedTotal);
+
+    }
+    else{
+
+      earnedMark =
+        roundMark(earnedMark);
+
+      assignedTotal += earnedMark;
+
+    }
+
+    pcStore[pcId] =
+      roundMark((pcStore[pcId] || 0) + earnedMark);
+
+    if(nosId){
+
+      nosStore[nosId] =
+        roundMark((nosStore[nosId] || 0) + earnedMark);
+
+    }
+
+  });
+
+};
+
 const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): FinalResult => {
   const theoryMarks: TheoryMarksResult = {};
+
+  const practicalMarks: PracticalMarksResult = {};
+  const vivaMarks: VivaMarksResult = {};
+
   const totalTheoryMarks: Record<string, number> = {};
+  const totalPracticalMarks: Record<string, number> = {};
+  const totalVivaMarks: Record<string, number> = {};
   const absentStudents: string[] = [];
   const passedStudents: string[] = [];
   const failedStudents: string[] = [];
@@ -260,7 +343,7 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): Final
   students.forEach((student) => {
     const studentId = student.candidate_id;
 
-    if (!student.exam_set_results || student.exam_set_results.length === 0) {
+    if (!student.exam_set_results || student.exam_set_results.length === 0 && student.student_question_attempts?.length === 0) {
       absentStudents.push(studentId);
 
       return;
@@ -268,6 +351,13 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): Final
 
     const pcMarks: Record<string, number> = {};
     const nosMarks: Record<string, number> = {};
+
+    const practicalPcMarks: Record<string, number> = {};
+    const practicalNosMarks: Record<string, number> = {};
+
+    const vivaPcMarks: Record<string, number> = {};
+    const vivaNosMarks: Record<string, number> = {};
+
     const grossMax = qp?.total_marks ?? 0;
     const overAllCutOff = qp?.overall_cutoff_marks ?? 0;
 
@@ -313,10 +403,43 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): Final
       }
     });
 
-    const theoryTotal = Object.values(pcMarks).reduce((sum, m) => sum + m, 0);
+    // PRACTICAL + VIVA
+    student.student_question_attempts?.forEach((attempt)=>{
 
-    const practicalTotal = 0;
-    const vivaTotal = 0;
+      const question = attempt.question;
+
+      const obtainedMarks =
+        Number(attempt?.obtained_marks ?? 0);
+
+      if(question?.question_type==="practical"){
+
+        distributeMarksByPcWeight(
+          question,
+          obtainedMarks,
+          "practical_marks",
+          practicalPcMarks,
+          practicalNosMarks
+        );
+
+      }
+
+      if(question?.question_type==="viva"){
+
+        distributeMarksByPcWeight(
+          question,
+          obtainedMarks,
+          "viva_marks",
+          vivaPcMarks,
+          vivaNosMarks
+        );
+
+      }
+
+    });
+
+    const theoryTotal = Object.values(pcMarks).reduce((sum, m) => sum + m, 0);
+    const practicalTotal = Object.values(practicalPcMarks).reduce((sum, m) => sum + m, 0);
+    const vivaTotal = Object.values(vivaPcMarks).reduce((sum, m) => sum + m, 0);
 
     const gross = theoryTotal + practicalTotal + vivaTotal;
     const percent = grossMax > 0 ? (gross / grossMax) * 100 : 0;
@@ -331,14 +454,31 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): Final
       pcs: pcMarks,
       nos: nosMarks
     };
-    totalTheoryMarks[studentId] = theoryTotal;
-    grossTotal[studentId] = gross;
+
+    practicalMarks[studentId]={
+      pcs:practicalPcMarks,
+      nos:practicalNosMarks
+    };
+
+    vivaMarks[studentId]={
+      pcs:vivaPcMarks,
+      nos:vivaNosMarks
+    };
+
+    totalTheoryMarks[studentId] = roundMark(theoryTotal);
+    totalPracticalMarks[studentId] = roundMark(practicalTotal);
+    totalVivaMarks[studentId] = roundMark(vivaTotal);
+    grossTotal[studentId] = roundMark(gross);
     percentage[studentId] = parseFloat(percent.toFixed(2));
   });
 
   return {
     theoryMarks,
+    practicalMarks,
+    vivaMarks,
     totalTheoryMarks,
+    totalPracticalMarks,
+    totalVivaMarks,
     grossTotal,
     passedStudents,
     failedStudents,
@@ -675,14 +815,16 @@ const NOSWiseReportTable = () => {
   // };
 
   // const studentPcTheoryMarks = getTheoryMarksPerStudent(batchReportData?.students || []);
-  const { theoryMarks, totalTheoryMarks, grossTotal, absentStudents, passedStudents, failedStudents } = getTheoryMarksPerStudent(batchReportData?.students || [], batchReportData?.qualification_pack || null);
+  const { theoryMarks, totalTheoryMarks, practicalMarks, totalPracticalMarks, vivaMarks, totalVivaMarks, grossTotal, absentStudents, passedStudents, failedStudents } = getTheoryMarksPerStudent(batchReportData?.students || [], batchReportData?.qualification_pack || null);
 
   const activeExamCount =
   (batchReportData?.theory_exam_set_id ? 1 : 0) +
   (batchReportData?.practical_exam_set_id ? 1 : 0) +
   (batchReportData?.viva_exam_set_id ? 1 : 0);
 
-  console.log("theoryMarks:", theoryMarks);
+  // console.log("theoryMarks:", theoryMarks);
+  // console.log("totalPracticalMarks:", totalPracticalMarks);
+  // console.log("totalVivaMarks:", totalVivaMarks);
 
   // const dynamicNOSColumns = batchReportData?.nos?.reduce((acc, nos) => {
   //   return acc + ((nos?.pcs?.length || 0) * activeExamCount);
@@ -962,19 +1104,19 @@ const NOSWiseReportTable = () => {
 
                       <React.Fragment key={`${student.candidate_id}-${nos.nos_id}`}>
                         {batchReportData.theory_exam_set_id && (
-                          <td>{theoryMarks[student.candidate_id]?.nos?.[nos.nos_id] ?? 0}</td>
+                          <td>{theoryMarks[student.candidate_id]?.nos?.[nos.nos_id] ?? '--'}</td>
                         )}
                         {batchReportData.practical_exam_set_id && (
-                          <td>--</td> // Replace with practical logic if needed
+                          <td>{practicalMarks[student.candidate_id]?.nos?.[nos.nos_id] ?? '--'}</td>
                         )}
                         {batchReportData.viva_exam_set_id && (
-                          <td>--</td> // Replace with viva logic if needed
+                          <td>{vivaMarks[student.candidate_id]?.nos?.[nos.nos_id] ?? '--'}</td> // Replace with viva logic if needed
                         )}
                       </React.Fragment>
                     )}
                     <td className='light-gray'>{totalTheoryMarks[student.candidate_id] ?? 0}</td>
-                    {batchReportData?.practical_exam_set_id && <td className='light-gray'>0</td>}
-                    {batchReportData?.viva_exam_set_id && <td className='light-gray'>0</td>}
+                    {batchReportData?.practical_exam_set_id && <td className='light-gray'>{totalPracticalMarks[student.candidate_id] ?? 0}</td>}
+                    {batchReportData?.viva_exam_set_id && <td className='light-gray'>{totalVivaMarks[student.candidate_id] ?? 0}</td>}
                     <td className='light-gray'>{grossTotal[student.candidate_id] ?? 0}</td>
                     <td>
                       {
