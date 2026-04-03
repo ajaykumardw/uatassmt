@@ -78,6 +78,8 @@ import type { UsersType } from '@/types/users/usersType'
 import AssignAssessorDialog from '@/components/batches/dialogs/AssignAssessorDialog'
 
 import CustomIconButton from '@/@core/components/mui/IconButton'
+import DownloadEvidence from '@/components/zip/DownloadEvidence'
+import ZipAction from '@/components/zip/ZipAction'
 
 
 // declare module '@tanstack/table-core' {
@@ -202,6 +204,11 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [selectedBatch, setSelectedBatch] = useState<number | null>(null);
 
+  // download evidence
+  // const [downloadEvidenceDialogOpen, setDownloadEvidenceDialogOpen] = useState(false);
+  // const [batchId, setBatchId] = useState<number | null>(null);
+  // const [jobStatus, setJobStatus] = useState<{ [key: number]: any }>({});
+
   // Hooks
   const { lang: locale } = useParams()
 
@@ -290,6 +297,13 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
     }
 
   }
+
+  // const handleDownloadEvidence = (batchId: number) => {
+  //   setBatchId(batchId);
+  //   setDownloadEvidenceDialogOpen(true);
+  // }
+
+
 
   const columns = useMemo<ColumnDef<BatchesTypeWithAction, any>[]>(
     () => [
@@ -578,6 +592,26 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
                 <i className='tabler-edit text-[22px] text-textSecondary' />
               </IconButton>
             </Link>
+            <ZipAction batchId={row.original.id} />
+            {/* <Button onClick={() => handleDownloadEvidence(row.original.id)} disabled={jobStatus[row.original.id]?.status === 'pending' || jobStatus[row.original.id]?.status === 'processing'}>
+              Generate Zip
+            </Button>
+            { jobStatus[row.original.id]?.status === 'pending' ?
+              'Pending'
+              :
+              jobStatus[row.original.id]?.status === 'processing' ?
+              `Processing ${jobStatus[row.original.id]?.progress || 0}%`
+              :
+              jobStatus[row.original.id]?.status === 'completed' ?
+              `Download Zip`
+              : ''
+            } */}
+            {/* <Button onClick={() => handleDownloadEvidence(row.original.id)}>
+              Generate Zip
+            </Button> */}
+            {/* <IconButton onClick={() => handleDownloadEvidence(row.original.id)}>
+              <i className='tabler-download text-[22px] text-textSecondary' />
+            </IconButton> */}
             {/* <IconButton>
               <Link href={getLocalizedUrl('apps/user/view', locale as Locale)} className='flex'>
                 <i className='tabler-eye text-[22px] text-textSecondary' />
@@ -768,8 +802,7 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
         />
       </Card>
       <AssignAssessorDialog batch={singleBatch} open={assignAssessorOpen} handleClose={() => {setAssignAssessorOpen(!assignAssessorOpen); setSingleBatch(null)}} updateBatchList={updateBatchList} data={assessorData}/>
-      {/* <AddUserDrawer open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} /> */}
-      {/* <AddUsersDialog open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} /> */}
+      {/* <DownloadEvidence open={downloadEvidenceDialogOpen} onClose={() => {setDownloadEvidenceDialogOpen(false); setBatchId(null);}} batchId={batchId} setJobStatus={setJobStatus} /> */}
     </>
   )
 }

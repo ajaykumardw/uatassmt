@@ -840,7 +840,7 @@ enum inspection_media_type {
 
 enum job_status {
   pending
-  in_progress
+  processing
   completed
   failed
 }

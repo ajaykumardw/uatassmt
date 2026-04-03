@@ -181,7 +181,7 @@ export const trainingResourceFilePath = (sscId: number, fileName: string) => {
 }
 
 export const getBatchCenterInspectionFilePath = (batchId: number, fileName: string) => {
-  return fileName ? `${storageFolders.agency}/${storageFolders.batches}/${batchId}/${storageFolders.centerInspection}/${fileName}` : "";
+  return fileName ? `${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.agency}/${storageFolders.batches}/${batchId}/${storageFolders.centerInspection}/${fileName}` : "";
 }
 
 export const folders = [
@@ -193,7 +193,7 @@ export const folders = [
   {
     id: "center_video",
     name: "Center Video",
-    status: 0
+    status: 1
   },
   {
     id: "equipment_photo",
