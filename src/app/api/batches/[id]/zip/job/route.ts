@@ -1,11 +1,13 @@
+import { type NextRequest, NextResponse } from "next/server";
+
 import prisma from "@/libs/prisma";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   const batchId = parseInt(params.id);
+  
   if (isNaN(batchId)) {
     return NextResponse.json({ message: "Invalid batch ID" }, { status: 400 });
   }

@@ -1,16 +1,20 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { type FormEvent, useState } from "react";
 
 import Grid from "@mui/material/Grid";
 
-import { FolderKey, folders } from "@/configs/customDataConfig";
-import { Button, Checkbox, Dialog, DialogContent, DialogTitle, FormControl, FormControlLabel } from "@mui/material";
+import { Button, Checkbox, Dialog, DialogContent, DialogTitle, FormControlLabel } from "@mui/material";
+
+import { type FolderKey, folders } from "@/configs/customDataConfig";
+
 import DialogCloseButton from "../dialogs/DialogCloseButton";
-import { toast } from "react-toastify";
+
+// import { toast } from "react-toastify";
 
 const DownloadEvidence = ({ open, onClose, onSubmit }: { open: boolean; onClose: () => void, onSubmit: (folders: FolderKey[]) => void }) => {
   const [selectedFolders, setSelectedFolders] = useState<FolderKey[]>(folders.filter(folder => folder.status === 1).map(folder => folder.id));
   const [intermediateCheckbox, setIntermediateCheckbox] = useState<boolean>(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // const pollJob = (jobId: number, batchId: number) => {
 

@@ -7,7 +7,7 @@ import archiver from "archiver";
 
 import prisma from "@/libs/prisma";
 
-import { EvidenceFile }
+import { type EvidenceFile }
   from "./generateEvidenceZip";
 
 const ZIP_BASE_PATH =

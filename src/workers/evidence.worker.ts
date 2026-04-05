@@ -10,6 +10,8 @@ import { generateEvidenceZip }
 import { createEvidenceZip }
   from "../services/zipGenerator.service";
 
+console.log("Redis Status:", redis.status);
+
 const worker = new Worker(
 
   "evidenceZip",
@@ -185,6 +187,24 @@ const worker = new Worker(
 
 );
 
+console.log("Evidence worker started...");
+
+worker.on("active", (job) => {
+
+  console.log(
+    `[${new Date().toISOString()}] Processing job: ${job.id}`
+  );
+
+});
+
+worker.on("progress", (job, progress) => {
+
+  console.log(
+    `Job ${job.id} progress: ${progress}%`
+  );
+
+});
+
 worker.on("completed", (job) => {
 
   console.log(
@@ -201,6 +221,15 @@ worker.on("failed", (job, err) => {
     job?.id,
     "error:",
     err.message
+  );
+
+});
+
+worker.on("error", (err) => {
+
+  console.log(
+    "Worker error:",
+    err
   );
 
 });

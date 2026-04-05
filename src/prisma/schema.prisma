@@ -334,12 +334,29 @@ model student_exam_set_results {
   @@unique([student_id, exam_set_id])
 }
 
+// model student_captured_images {
+//   id Int @id @default(autoincrement())
+//   student_id Int
+//   student_exam_set_result_id Int
+//   captured_image String @db.Text
+//   captured_time DateTime
+// }
+
 model student_captured_images {
   id Int @id @default(autoincrement())
   student_id Int
   student_exam_set_result_id Int
   captured_image String @db.Text
-  captured_time DateTime
+  file_type file_type_enum
+  mime_type String @db.VarChar(100)
+  file_size Int
+  captured_time DateTime @default(now())
+  created_at DateTime @default(now())
+
+  @@index([student_id])
+  @@index([student_exam_set_result_id])
+  @@index([file_type])
+  @@index([captured_time])
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -843,4 +860,9 @@ enum job_status {
   processing
   completed
   failed
+}
+
+enum file_type_enum {
+  image
+  video
 }

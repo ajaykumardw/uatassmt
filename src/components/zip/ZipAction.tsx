@@ -1,8 +1,11 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
+
 import { Button, Chip, CircularProgress } from '@mui/material'
+
 import { toast } from 'react-toastify'
+
 import DownloadEvidence from './DownloadEvidence'
 import type { FolderKey } from '@/configs/customDataConfig'
 
@@ -28,6 +31,7 @@ const ZipAction = ({ batchId }: { batchId: number }) => {
       )
 
       const data = await res.json()
+      
       setJob(data.job)
 
       if (data.job.status?.trim().toLowerCase() === 'completed') {
@@ -54,6 +58,7 @@ const ZipAction = ({ batchId }: { batchId: number }) => {
 
       if (!data?.job) {
         toast.error('Failed to create job')
+        
         return
       }
 
@@ -146,6 +151,7 @@ const ZipAction = ({ batchId }: { batchId: number }) => {
       // Create a link element and trigger the download
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
+      
       a.href = url;
       a.download = filename; // Use the extracted filename
       document.body.appendChild(a);

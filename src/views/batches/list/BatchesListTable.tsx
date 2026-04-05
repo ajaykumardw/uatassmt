@@ -78,7 +78,9 @@ import type { UsersType } from '@/types/users/usersType'
 import AssignAssessorDialog from '@/components/batches/dialogs/AssignAssessorDialog'
 
 import CustomIconButton from '@/@core/components/mui/IconButton'
-import DownloadEvidence from '@/components/zip/DownloadEvidence'
+
+// import DownloadEvidence from '@/components/zip/DownloadEvidence'
+
 import ZipAction from '@/components/zip/ZipAction'
 
 

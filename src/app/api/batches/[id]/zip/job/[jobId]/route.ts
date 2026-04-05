@@ -7,6 +7,7 @@ export async function GET(
   { params }: { params: { id: string, jobId: string } }
 ) {
   const jobId = parseInt(params.jobId);
+  
   if (isNaN(jobId)) {
     return NextResponse.json({ message: "Invalid job ID" }, { status: 400 });
   }

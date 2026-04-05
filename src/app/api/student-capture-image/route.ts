@@ -63,13 +63,15 @@ export async function GET(req: Request) {
       where: {
         student_id: studentId,
         student_exam_set_result_id: studentExamSetResult?.id,
+        file_type: "image"
       },
     });
 
     const capturedImages = await prisma.student_captured_images.findMany({
       where: {
         student_id: studentId,
-        student_exam_set_result_id: studentExamSetResult.id
+        student_exam_set_result_id: studentExamSetResult.id,
+        file_type: "image"
       },
       skip,
       take: limit,
@@ -160,11 +162,18 @@ export async function POST(req: Request) {
     }
   });
 
+  if (!studentExamSetResult) {
+    return NextResponse.json({ message: 'Student Exam Set Result not found' }, { status: 404 });
+  }
+
   const result = await prisma.student_captured_images.create({
     data: {
       student_id: student,
-      student_exam_set_result_id: studentExamSetResult ? studentExamSetResult.id : 0,
+      student_exam_set_result_id: studentExamSetResult.id,
       captured_image: imageName,
+      file_type: "image",
+      mime_type: "image/jpeg",
+      file_size: imageBuffer.length,
       captured_time: new Date()
     }
   })

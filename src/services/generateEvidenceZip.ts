@@ -1,6 +1,8 @@
 import { getBatchCenterInspectionFilePath } from "@/configs/customDataConfig";
+
 import prisma from "@/libs/prisma";
-import path from "path";
+
+// import path from "path";
 
 export type EvidenceFile = {
 
@@ -10,7 +12,7 @@ export type EvidenceFile = {
 
 };
 
-const BASE_PATH = "storage/uploads/agency/batches";
+// const BASE_PATH = "storage/uploads/agency/batches";
 
 export async function generateEvidenceZip(
 

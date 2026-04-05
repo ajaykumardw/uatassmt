@@ -1,9 +1,14 @@
-import { authOptions } from "@/libs/auth";
-import prisma from "@/libs/prisma";
-import { generateEvidenceZip } from "@/services/generateEvidenceZip";
-import { createZipJob } from "@/services/job.service";
+import { type NextRequest, NextResponse } from "next/server";
+
 import { getServerSession } from "next-auth";
-import { NextRequest, NextResponse } from "next/server";
+
+import { authOptions } from "@/libs/auth";
+
+// import prisma from "@/libs/prisma";
+
+// import { generateEvidenceZip } from "@/services/generateEvidenceZip";
+
+import { createZipJob } from "@/services/job.service";
 
 export async function POST(
   request: NextRequest,
@@ -14,6 +19,7 @@ export async function POST(
   const userId = Number(session?.user.id);
 
   const batchId = parseInt(params.id);
+  
   if (isNaN(batchId)) {
     return NextResponse.json({ message: "Invalid batch ID" }, { status: 400 });
   }
