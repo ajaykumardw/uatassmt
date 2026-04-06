@@ -74,6 +74,7 @@ export async function GET() {
               id: true,
               set_name: true,
               set_type: true,
+              agency_id: true
             }
           }
         }

@@ -396,7 +396,7 @@ export async function GET(req: Request) {
           some:{
 
             // agency_id: agency_id,
-            
+
             pc:{
               nos:{
                 qualification_packs:{
@@ -489,9 +489,9 @@ export async function GET(req: Request) {
               nos_name:true,
 
               pc:{
-                where: {
-                  agency_id: agency_id
-                },
+                // where: {
+                //   agency_id: agency_id
+                // },
                 orderBy:{pc_id:'asc'},
 
                 select:{
@@ -685,7 +685,7 @@ export async function GET(req: Request) {
 
   }));
 
-  // console.log(formatted);
+  console.log(formatted);
 
 
   return NextResponse.json(formatted);
