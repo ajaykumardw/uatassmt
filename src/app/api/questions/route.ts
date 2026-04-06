@@ -394,7 +394,9 @@ export async function GET(req: Request) {
 
         pc_questions:{
           some:{
-            agency_id: agency_id,
+
+            // agency_id: agency_id,
+            
             pc:{
               nos:{
                 qualification_packs:{
@@ -416,7 +418,7 @@ export async function GET(req: Request) {
         marks:true,
         question_type:true,
         question_level: true,
-
+        agency_id:true,
         pc_questions:{
           select:{
             pc:{
