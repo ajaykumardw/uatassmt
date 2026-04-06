@@ -43,4 +43,4 @@ src/assets/iconify-icons/generated-icons.css
 .codegpt
 
 # storage folder
-/storage
+/storage/*
