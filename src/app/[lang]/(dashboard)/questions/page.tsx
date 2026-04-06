@@ -37,7 +37,7 @@ const Question = () => {
     getQuestionsData();
   };
 
-  // console.log(data);
+  console.log(data);
 
   if(!loading){
     return <QuestionsList questionsData={data} updateQuestionsList={updateQuestionsList} />
