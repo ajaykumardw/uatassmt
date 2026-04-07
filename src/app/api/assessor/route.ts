@@ -30,7 +30,7 @@ export async function GET(req: Request) {
       SELECT DISTINCT u.*, uad.*
       FROM users u
       JOIN users_additional_data uad ON u.id = uad.user_id
-      JOIN qualification_packs qp ON JSON_CONTAINS(uad.job_roles, JSON_ARRAY(qp.id))
+      JOIN qualification_packs qp ON JSON_CONTAINS(CAST(JSON_UNQUOTE(uad.job_roles) as JSON), JSON_ARRAY(qp.id))
       WHERE qp.ssc_id = ${Number(sscId)};
     `;
 
