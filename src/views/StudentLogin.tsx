@@ -25,7 +25,7 @@ import Button from '@mui/material/Button'
 // import Alert from '@mui/material/Alert'
 
 // Third-party Imports
-import { signIn } from 'next-auth/react'
+import { getSession, signIn } from 'next-auth/react'
 import { Controller, useForm } from 'react-hook-form'
 import { valibotResolver } from '@hookform/resolvers/valibot'
 import { object, minLength, string, pipe, check } from "valibot"
@@ -144,18 +144,21 @@ const StudentLogin = ({ mode }: { mode: SystemMode }) => {
         password: data.password,
         isStudent: true,
         redirect: false
-
-        // callbackUrl:getLocalizedUrl('/student-dashboard', locale as Locale)
-
       })
 
       if (res && res.ok && res.error === null) {
         // Vars
-        const redirectURL = searchParams.get('redirectTo') ?? '/'
+        const redirectURL = searchParams.get('redirectTo') ?? '/student-dashboard'
 
-        router.push(getLocalizedUrl(redirectURL, locale as Locale))
+        const session = await getSession();
 
-        router.refresh()
+        if (session) {
+
+          router.push(getLocalizedUrl(redirectURL, locale as Locale))
+
+          // router.refresh()
+        }
+
 
       } else {
         if (res?.error) {
