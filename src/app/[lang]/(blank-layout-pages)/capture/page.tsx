@@ -678,7 +678,7 @@ const CapturePage = () => {
         )}
         {liveSelfie && aadhaarFront && aadhaarBack && (
           <Grid item xs={12}>
-            <Button variant="contained" onClick={handleCaptureComplete}>
+            <Button variant="contained" onClick={handleCaptureComplete} disabled={loading}>
               Complete and Go to Dashboard
             </Button>
           </Grid>
