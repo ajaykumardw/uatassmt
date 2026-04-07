@@ -445,6 +445,7 @@ const CapturePage = () => {
 
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [faceDetected, setFaceDetected] = useState(false); // real-time
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
 
   // Load face-api models once
   useEffect(() => {
@@ -473,6 +474,12 @@ const CapturePage = () => {
     };
 
     detect();
+  };
+
+  const switchCamera = () => {
+
+    setFacingMode(prev => prev === "user" ? "environment" : "user");
+
   };
 
   const captureImage = (type: 'selfie' | 'front' | 'back') => {
@@ -586,7 +593,8 @@ const CapturePage = () => {
                 screenshotFormat="image/jpeg"
                 width="100%"
                 mirrored={false}
-                videoConstraints={{ facingMode: "user" }}
+                videoConstraints={{ facingMode }}
+                key={facingMode}
                 onUserMediaError={handleUserMediaError}
                 className="rounded"
               />
@@ -594,14 +602,20 @@ const CapturePage = () => {
                 {faceDetected ? 'Face Detected ✅' : 'No Face Detected ❌'}
               </p>
               <div className="mt-4 flex gap-2 flex-wrap">
+                <Button
+                  variant="outlined"
+                  onClick={switchCamera}
+                >
+                  Switch Camera
+                </Button>
                 <Button variant="contained" onClick={() => captureImage('selfie')} disabled={!faceDetected}>
-                  Capture Selfie
+                  Capture Selfie {liveSelfie && "✅"}
                 </Button>
                 <Button variant="contained" onClick={() => captureImage('front')} disabled={!liveSelfie}>
-                  Capture Aadhaar Front
+                  Capture Aadhaar Front {aadhaarFront && "✅"}
                 </Button>
                 <Button variant="contained" onClick={() => captureImage('back')} disabled={!aadhaarFront}>
-                  Capture Aadhaar Back
+                  Capture Aadhaar Back {aadhaarBack && "✅"}
                 </Button>
               </div>
             </CardContent>
