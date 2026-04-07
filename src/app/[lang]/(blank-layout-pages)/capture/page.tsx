@@ -608,7 +608,7 @@ const CapturePage = () => {
                 >
                   Switch Camera
                 </Button>
-                <Button variant="contained" onClick={() => captureImage('selfie')} disabled={!faceDetected}>
+                <Button variant="contained" onClick={() => captureImage('selfie')} disabled={!faceDetected && facingMode === "user"}>
                   Capture Selfie {liveSelfie && "✅"}
                 </Button>
                 <Button variant="contained" onClick={() => captureImage('front')} disabled={!liveSelfie}>
