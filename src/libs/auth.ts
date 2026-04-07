@@ -180,7 +180,8 @@ export const authOptions: NextAuthOptions = {
         token.is_student = user.is_student
         token.is_ssc = user.is_ssc
         token.actual_user_id = user.id
-        token.is_shadow = false
+        token.is_shadow = false,
+        token.access_token = user.access_token
       }
 
       if(trigger === 'update' && session?.shadowUserId) {
@@ -213,6 +214,7 @@ export const authOptions: NextAuthOptions = {
         session.user.is_ssc = token.is_ssc
         session.user.actual_user_id = token.actual_user_id
         session.user.is_shadow = token.is_shadow
+        session.user.access_token = token.access_token
       }
 
       return session

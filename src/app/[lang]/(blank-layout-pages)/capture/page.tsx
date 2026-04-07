@@ -416,7 +416,7 @@ import { useState, useRef, useEffect } from "react";
 
 import { useParams, useRouter } from "next/navigation";
 
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 
 import classnames from 'classnames';
 
@@ -446,6 +446,10 @@ const CapturePage = () => {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [faceDetected, setFaceDetected] = useState(false); // real-time
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
+
+  const { data: session } = useSession();
+
+  const token = session?.user?.access_token;
 
   // Load face-api models once
   useEffect(() => {
@@ -527,6 +531,10 @@ const CapturePage = () => {
 
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/attendance`, {
       method: "POST",
+
+      headers: {
+        "authorization": `Bearer ${token || ""}`
+      },
 
       body: formdata,
     });
