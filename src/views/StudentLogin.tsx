@@ -33,6 +33,8 @@ import type { SubmitHandler } from 'react-hook-form'
 import type { InferInput } from 'valibot'
 import classnames from 'classnames'
 
+import { CircularProgress } from '@mui/material'
+
 // Type Imports
 import type { SystemMode } from '@core/types'
 import type { Locale } from '@/configs/i18n'
@@ -50,7 +52,6 @@ import { useSettings } from '@core/hooks/useSettings'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
-import { CircularProgress } from '@mui/material'
 
 // Styled Custom Components
 const LoginIllustration = styled('img')(({ theme }) => ({
@@ -91,7 +92,7 @@ const StudentLogin = ({ mode }: { mode: SystemMode }) => {
   // States
   const [isPasswordShown, setIsPasswordShown] = useState(false)
   const [errorState, setErrorState] = useState<ErrorType | null>(null)
-  const [loading, setLoading] = useState<Boolean>(false)
+  const [loading, setLoading] = useState<boolean>(false)
 
   // Vars
   const darkImg = '/images/pages/auth-mask-dark.png'
