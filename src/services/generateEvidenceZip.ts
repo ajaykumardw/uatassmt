@@ -92,7 +92,8 @@ export async function generateEvidenceZip(
 
   tasks.push(
 
-    collectInspectionFiles(batchId, files)
+    // collectInspectionFiles(batchId, files)
+    collectInspectionFiles(batchId, files, selectedFolders)
 
   );
 
@@ -356,7 +357,9 @@ async function collectInspectionFiles(
 
   batchId: number,
 
-  files: EvidenceFile[]
+  files: EvidenceFile[],
+
+  selectedFolders: string[]
 
 ) {
 
@@ -364,7 +367,12 @@ async function collectInspectionFiles(
     await prisma.inspection_media.findMany({
 
       where: {
-        batch_id: batchId
+        batch_id: batchId,
+        category: {
+          category_name: {
+            in: selectedFolders
+          }
+        }
       },
 
       include: {
