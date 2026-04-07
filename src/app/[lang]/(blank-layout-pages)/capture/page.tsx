@@ -515,6 +515,7 @@ const CapturePage = () => {
       alert("Please capture all three images before proceeding.");
 
       setLoading(false);
+      
       return;
     }
 
