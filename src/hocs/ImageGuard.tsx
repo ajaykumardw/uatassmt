@@ -48,5 +48,5 @@ export default async function ImageGuard({ children, locale }: ChildrenType & { 
     }
   })
 
-  return <>{studentLog && studentLog.auth_image ? children : <ImageRedirect lang={locale} />}</>
+  return <>{studentLog ? children : <ImageRedirect lang={locale} />}</>
 }

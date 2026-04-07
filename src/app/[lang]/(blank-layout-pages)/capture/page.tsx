@@ -446,6 +446,7 @@ const CapturePage = () => {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [faceDetected, setFaceDetected] = useState(false); // real-time
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
+  const [loading, setLoading] = useState(false);
 
   const { data: session } = useSession();
 
@@ -507,44 +508,60 @@ const CapturePage = () => {
   };
 
   const handleCaptureComplete = async () => {
+    setLoading(true);
 
     if (!liveSelfie || !aadhaarFront || !aadhaarBack) {
 
       alert("Please capture all three images before proceeding.");
 
+      setLoading(false);
       return;
     }
 
-    const formdata = new FormData();
+    try {
 
-    formdata.append("image", liveSelfie);
-    formdata.append("id_front_image", aadhaarFront);
-    formdata.append("id_back_image", aadhaarBack);
+      const formdata = new FormData();
 
-    // const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/auth-image`, {
-    //   method: "POST",
+      formdata.append("image", liveSelfie);
+      formdata.append("id_front_image", aadhaarFront);
+      formdata.append("id_back_image", aadhaarBack);
 
-    //   // headers: { "Content-Type": "application/json" },
+      // const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/auth-image`, {
+      //   method: "POST",
 
-    //   body: formdata,
-    // });
+      //   // headers: { "Content-Type": "application/json" },
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/attendance`, {
-      method: "POST",
+      //   body: formdata,
+      // });
 
-      headers: {
-        "authorization": `Bearer ${token || ""}`
-      },
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/attendance`, {
+        method: "POST",
 
-      body: formdata,
-    });
+        headers: {
+          "authorization": `Bearer ${token || ""}`
+        },
 
-    localStorage.setItem("liveSelfie", liveSelfie);
-    localStorage.setItem("aadhaarFront", aadhaarFront);
-    localStorage.setItem("aadhaarBack", aadhaarBack);
+        body: formdata,
+      });
 
-    if (res.ok) router.push("/student-dashboard");
-    else console.error("Failed to update capture status");
+      localStorage.setItem("liveSelfie", liveSelfie);
+      localStorage.setItem("aadhaarFront", aadhaarFront);
+      localStorage.setItem("aadhaarBack", aadhaarBack);
+
+      if (res.ok) router.push("/student-dashboard");
+      else console.error("Failed to update capture status");
+
+    } catch (error) {
+
+      console.error("Error during capture complete:", error);
+
+      alert("An error occurred while submitting your images. Please try again.");
+
+    } finally {
+
+      setLoading(false);
+    }
+
   };
 
   const handleUserMediaError = (error: any) => {
