@@ -56,7 +56,8 @@ export async function GET(req: Request) {
       training_partner: {
         select: {
           first_name: true,
-          last_name: true
+          last_name: true,
+          company_name: true
         }
       },
       training_center: {

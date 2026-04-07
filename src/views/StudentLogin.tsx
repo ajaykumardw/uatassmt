@@ -50,6 +50,7 @@ import { useSettings } from '@core/hooks/useSettings'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
+import { CircularProgress } from '@mui/material'
 
 // Styled Custom Components
 const LoginIllustration = styled('img')(({ theme }) => ({
@@ -90,6 +91,7 @@ const StudentLogin = ({ mode }: { mode: SystemMode }) => {
   // States
   const [isPasswordShown, setIsPasswordShown] = useState(false)
   const [errorState, setErrorState] = useState<ErrorType | null>(null)
+  const [loading, setLoading] = useState<Boolean>(false)
 
   // Vars
   const darkImg = '/images/pages/auth-mask-dark.png'
@@ -131,36 +133,57 @@ const StudentLogin = ({ mode }: { mode: SystemMode }) => {
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
 
   const onSubmit: SubmitHandler<FormData> = async (data: FormData) => {
-    const res = await signIn('credentials', {
-      email: data.email,
-      password: data.password,
-      isStudent: true,
-      redirect: false
-    })
 
-    if (res && res.ok && res.error === null) {
-      // Vars
-      const redirectURL = searchParams.get('redirectTo') ?? '/'
+    setLoading(true);
 
-      router.push(getLocalizedUrl(redirectURL, locale as Locale))
-    } else {
-      if (res?.error) {
-        try {
-          const error = JSON.parse(res.error);
+    try {
 
-          // Handle the parsed error object
+      const res = await signIn('credentials', {
+        email: data.email,
+        password: data.password,
+        isStudent: true,
+        redirect: false
 
-          setErrorState(error);
+        // callbackUrl:getLocalizedUrl('/student-dashboard', locale as Locale)
 
-        } catch (error) {
+      })
 
-          console.error('Error parsing JSON:', error);
+      if (res && res.ok && res.error === null) {
+        // Vars
+        const redirectURL = searchParams.get('redirectTo') ?? '/'
 
-          // Handle parsing error appropriately, such as setting a default error state
+        router.push(getLocalizedUrl(redirectURL, locale as Locale))
 
+        router.refresh()
+
+      } else {
+        if (res?.error) {
+          try {
+            const error = JSON.parse(res.error);
+
+            // Handle the parsed error object
+
+            setErrorState(error);
+
+          } catch (error) {
+
+            console.error('Error parsing JSON:', error);
+
+            // Handle parsing error appropriately, such as setting a default error state
+
+          }
         }
       }
+    } catch (error) {
+
+      console.error('Login error:', error);
+
+      setErrorState({ message: ['An unexpected error occurred. Please try again.'] });
+
+    } finally {
+      setLoading(false);
     }
+
   }
 
   return (
@@ -256,7 +279,7 @@ const StudentLogin = ({ mode }: { mode: SystemMode }) => {
                 Forgot password?
               </Typography>
             </div> */}
-            <Button fullWidth variant='contained' type='submit'>
+            <Button fullWidth variant='contained' type='submit' {...(loading && { disabled: true })} startIcon={loading ? <CircularProgress size={18} color='inherit' /> : null}>
               Login
             </Button>
             <Button fullWidth variant='outlined' type='button' component={Link} href={getLocalizedUrl('/login', locale as Locale)}>

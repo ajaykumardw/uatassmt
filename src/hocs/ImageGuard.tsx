@@ -12,6 +12,8 @@ import ImageRedirect from '@/components/ImageRedirect'
 import { authOptions } from '@/libs/auth'
 import prisma from '@/libs/prisma'
 
+export const dynamic = "force-dynamic";
+
 export default async function ImageGuard({ children, locale }: ChildrenType & { locale: Locale }) {
   const session = await getServerSession(authOptions)
 
@@ -26,10 +28,12 @@ export default async function ImageGuard({ children, locale }: ChildrenType & { 
   if (ip.startsWith('::ffff:')) ip = ip.split('::ffff:')[1]
 
   // IP whitelist for bypass
-  const excludeIps = [
-    '127.0.0.1',       // localhost dev
-    '103.246.170.213'  // example production IP
-  ]
+  // const excludeIps = [
+  //   '127.0.0.1',       // localhost dev
+  //   // '103.246.170.213'  // example production IP
+  // ]
+
+  const excludeIps = process.env.EXCLUDE_IPS ? process.env.EXCLUDE_IPS.split(',') : []
 
   if (excludeIps.includes(ip)) {
 
@@ -48,5 +52,16 @@ export default async function ImageGuard({ children, locale }: ChildrenType & { 
     }
   })
 
-  return <>{studentLog ? children : <ImageRedirect lang={locale} />}</>
+  const attendance = await prisma.students.findFirst({
+    where: {
+      id: Number(session?.user.id)
+    },
+    select: {
+      image: true,
+      id_front_image: true,
+      id_back_image: true
+    }
+  })
+
+  return <>{studentLog && attendance && attendance.image && attendance.id_front_image && attendance.id_back_image ? children : <ImageRedirect lang={locale} />}</>
 }

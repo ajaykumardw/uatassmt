@@ -386,7 +386,7 @@ const CompletedBatchesListTable = ({ tableData, updateBatchList }: { tableData?:
         header: 'Center ID',
         cell: ({ row }) => (
           <Typography color='text.primary' >
-            {row.original.training_center.user_name}
+            {row.original.training_center.company_name}
           </Typography>
         )
       }),

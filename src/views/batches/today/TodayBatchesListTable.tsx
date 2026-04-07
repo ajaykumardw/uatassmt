@@ -378,7 +378,7 @@ const TodayBatchesListTable = ({ tableData, updateBatchList }: { tableData?: Bat
         header: 'Training Partner',
         cell: ({ row }) => (
           <Typography color='text.primary' >
-            {row.original.training_partner.first_name}
+            {row.original.training_partner.company_name}
           </Typography>
         )
       }),

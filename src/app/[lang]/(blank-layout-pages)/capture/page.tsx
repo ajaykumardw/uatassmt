@@ -422,7 +422,7 @@ import classnames from 'classnames';
 
 import Webcam from "react-webcam";
 
-import { Button, Card, CardContent, CardHeader, Grid } from "@mui/material";
+import { Button, Card, CardContent, CardHeader, CircularProgress, Grid } from "@mui/material";
 
 import * as faceapi from "face-api.js";
 
@@ -448,9 +448,11 @@ const CapturePage = () => {
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [loading, setLoading] = useState(false);
 
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
-  const token = session?.user?.access_token;
+  const token = session?.user?.accessToken;
+
+  console.log("Session token in CapturePage:", token, status);
 
   // Load face-api models once
   useEffect(() => {
@@ -507,6 +509,32 @@ const CapturePage = () => {
     else setAadhaarBack(imageSrc);
   };
 
+  const base64ToFile = (base64:string, filename:string)=>{
+
+    const arr = base64.split(',')
+
+    const mime =
+      arr[0].match(/:(.*?);/)?.[1] || "image/jpeg"
+
+    const bstr =
+      atob(arr[1])
+
+    let n = bstr.length
+
+    const u8arr = new Uint8Array(n)
+
+    while(n--){
+      u8arr[n] = bstr.charCodeAt(n)
+    }
+
+    return new File(
+      [u8arr],
+      filename,
+      {type:mime}
+    )
+
+  }
+
   const handleCaptureComplete = async () => {
     setLoading(true);
 
@@ -515,7 +543,7 @@ const CapturePage = () => {
       alert("Please capture all three images before proceeding.");
 
       setLoading(false);
-      
+
       return;
     }
 
@@ -523,9 +551,13 @@ const CapturePage = () => {
 
       const formdata = new FormData();
 
-      formdata.append("image", liveSelfie);
-      formdata.append("id_front_image", aadhaarFront);
-      formdata.append("id_back_image", aadhaarBack);
+      const selfieFile = base64ToFile(liveSelfie, "selfie.jpg");
+      const frontFile = base64ToFile(aadhaarFront, "aadhaar_front.jpg");
+      const backFile = base64ToFile(aadhaarBack, "aadhaar_back.jpg");
+
+      formdata.append("image", selfieFile);
+      formdata.append("id_front_image", frontFile);
+      formdata.append("id_back_image", backFile);
 
       // const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/auth-image`, {
       //   method: "POST",
@@ -619,7 +651,9 @@ const CapturePage = () => {
                 screenshotFormat="image/jpeg"
                 width="100%"
                 mirrored={false}
-                videoConstraints={{ facingMode }}
+                videoConstraints={{
+                  facingMode: facingMode
+                }}
                 key={facingMode}
                 onUserMediaError={handleUserMediaError}
                 className="rounded"
@@ -643,6 +677,11 @@ const CapturePage = () => {
                 <Button variant="contained" onClick={() => captureImage('back')} disabled={!aadhaarFront}>
                   Capture Aadhaar Back {aadhaarBack && "✅"}
                 </Button>
+                {liveSelfie && aadhaarFront && aadhaarBack && (
+                  <Button variant="contained" color="success" onClick={handleCaptureComplete} disabled={loading} startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}>
+                    Complete and Go to Dashboard
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -653,7 +692,11 @@ const CapturePage = () => {
           <Card>
             <CardHeader title='Live Selfie' />
             <CardContent>
-              <img src={liveSelfie || defaultImage} alt="Live Selfie" className="rounded w-full" style={{ background: "aliceblue" }} />
+              <Grid container spacing={2}>
+                <Grid item xs={12} className={classnames(frontCommonStyles.defaultImageDiv)}>
+                  <img src={liveSelfie || defaultImage} alt="Live Selfie" className="rounded w-full" style={{ background: "aliceblue" }} />
+                </Grid>
+              </Grid>
             </CardContent>
           </Card>
         </Grid>
@@ -675,13 +718,6 @@ const CapturePage = () => {
                 <img src={aadhaarBack || defaultImage} alt="Aadhaar Back" className="rounded w-full" style={{ background: "aliceblue" }} />
               </CardContent>
             </Card>
-          </Grid>
-        )}
-        {liveSelfie && aadhaarFront && aadhaarBack && (
-          <Grid item xs={12}>
-            <Button variant="contained" onClick={handleCaptureComplete} disabled={loading}>
-              Complete and Go to Dashboard
-            </Button>
           </Grid>
         )}
       </Grid>
