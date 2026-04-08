@@ -352,6 +352,10 @@ model student_captured_images {
   file_size Int
   captured_time DateTime @default(now())
   created_at DateTime @default(now())
+  latitude String? @db.VarChar(100)
+  longitude String? @db.VarChar(100)
+  city String? @db.VarChar(100)
+  ip_address String? @db.VarChar(60)
 
   student students @relation(fields: [student_id], references: [id])
 
@@ -747,6 +751,11 @@ model inspection_media {
   created_at DateTime @default(now()) @db.DateTime(0)
   updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
 
+  latitude String? @db.VarChar(100)
+  longitude String? @db.VarChar(100)
+  city String? @db.VarChar(100)
+  ip_address String? @db.VarChar(60)
+
   category categories @relation(fields: [category_id], references: [id])
   batch batches @relation(fields: [batch_id], references: [id])
   assessor users @relation(fields: [assessor_id], references: [id])
@@ -762,6 +771,10 @@ model media_files {
   created_at DateTime @default(now()) @db.DateTime(0)
   updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
   created_by Int
+  latitude String? @db.VarChar(100)
+  longitude String? @db.VarChar(100)
+  city String? @db.VarChar(100)
+  ip_address String? @db.VarChar(60)
 
   group       student_groups? @relation(fields: [group_id], references: [id])
   candidate   students?    @relation(fields: [candidate_id], references: [id])
