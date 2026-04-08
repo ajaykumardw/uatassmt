@@ -21,6 +21,8 @@ import Divider from '@mui/material/Divider'
 
 // import MenuItem from '@mui/material/MenuItem'
 
+// import MenuItem from '@mui/material/MenuItem'
+
 import Button from '@mui/material/Button'
 
 // Third-party Imports
@@ -137,8 +139,8 @@ const UserDropdown = () => {
                   {/* <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e, '/pages/user-profile')}>
                     <i className='tabler-user text-[22px]' />
                     <Typography color='text.primary'>My Profile</Typography>
-                  </MenuItem>
-                  <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e, '/pages/account-settings')}>
+                  </MenuItem> */}
+                  {/* <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e, '/pages/account-settings')}>
                     <i className='tabler-settings text-[22px]' />
                     <Typography color='text.primary'>Settings</Typography>
                   </MenuItem>

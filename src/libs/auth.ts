@@ -76,6 +76,7 @@ export const authOptions: NextAuthOptions = {
 
               return {
                 ...studentData,
+                company_name: studentData.candidate_name,
                 is_student: isStudent,
                 sessionId: sessionId
               }

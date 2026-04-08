@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
 }
 
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest) {
 
   const authHeader = req.headers.get("authorization");
 
@@ -150,7 +150,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       }, { status: 403 });
     }
 
-    const batchId = Number(params.id);
+    const batchId = Number(decoded.batch_id);
     const formData = await req.formData();
 
     const feedback_form_id = formData.get("feedback_form_id")?.toString();
@@ -302,7 +302,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       }, { status: 401 });
     }
 
-    console.error('Error submitting candidate feedback form:', error);
+    console.error(`[${new Date().toISOString()}] Error submitting candidate feedback form:`, error);
 
     return NextResponse.json({
       status: 'Error',

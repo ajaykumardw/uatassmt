@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 
+import { useSession } from "next-auth/react";
+
 import {
   Card,
   CardContent,
@@ -22,6 +24,7 @@ import type { feedback_forms, feedback_questions } from "@prisma/client";
 import { FeedbackFormTypes } from "@/configs/customDataConfig";
 
 import SuccessAnimation from "@/components/SuccessAnimation";
+import SignaturePad from "@/components/SignaturePad";
 
 type FeedbackFormWithQuestions = feedback_forms & {
   feedback_questions: feedback_questions[];
@@ -34,6 +37,9 @@ const FeedBackPage = () => {
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { data: session } = useSession();
+  const token = session?.user?.accessToken;
 
   // Back prevent
   useEffect(() => {
@@ -87,31 +93,109 @@ const FeedBackPage = () => {
   const onSubmit = async (formData: any) => {
     if (!feedbackForm) return;
 
-    const answers = feedbackForm.feedback_questions.map((q) => ({
-      question_id: q.id,
-      answer: formData[`question_${q.id}`],
-    }));
+    // const answers = feedbackForm.feedback_questions.map((q) => ({
+    //   question_id: q.id,
+    //   answer: formData[`question_${q.id}`],
+    //   isFile: true,
+    // }));
+
+    const answers: any[] = []
+
+    const formDataPayload = new FormData()
+
+    feedbackForm.feedback_questions.forEach((q) => {
+
+      const value =
+        formData[`question_${q.id}`]
+
+      if (value instanceof File) {
+
+        answers.push({
+
+          question_id: q.id,
+
+          answer: null,
+
+          isFile: true
+
+        })
+
+        formDataPayload.append(
+
+          `file_${q.id}`,
+
+          value
+
+        )
+
+      } else {
+
+        answers.push({
+
+          question_id: q.id,
+
+          answer: value || "",
+
+          isFile: false
+
+        })
+
+      }
+
+    })
+
+
+    // const formDataPayload = new FormData();
+
+    // answers.forEach((ans, index) => {
+    //   formDataPayload.append(`answers[${index}][question_id]`, ans.question_id.toString());
+    //   formDataPayload.append(`answers[${index}][answer]`, ans.answer);
+    //   formDataPayload.append(`answers[${index}][isFile]`, ans.isFile.toString());
+
+    //   if (ans.answer instanceof File) {
+    //     formDataPayload.append(`file_[${index}][question_id]`, ans.answer);
+    //   }
+    // });
+
+    formDataPayload.append("feedback_form_id", feedbackForm.id.toString());
+    formDataPayload.append("answers", JSON.stringify(answers));
+
+    console.log("answers", answers);
+
+    // return;
 
     const userType = +Object.keys(FeedbackFormTypes)
       .find(key => FeedbackFormTypes[+key] === "Candidate")!;
 
     try {
+      // const res = await fetch(
+      //   `${process.env.NEXT_PUBLIC_API_URL}/feedback-responses`,
+      //   {
+      //     method: "POST",
+      //     headers: { "Content-Type": "application/json" },
+      //     body: JSON.stringify({
+      //       feedback_form_id: feedbackForm?.id,
+      //       user_type: userType,
+      //       answers,
+      //     }),
+      //   }
+      // );
+
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/feedback-responses`,
+        `${process.env.NEXT_PUBLIC_API_URL}/students/feedback`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            feedback_form_id: feedbackForm.id,
-            user_type: userType,
-            answers,
-          }),
+          headers: {
+            // "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: formDataPayload,
         }
       );
 
       const resData = await res.json();
 
-      if (res.ok){
+      if (res.ok) {
         setSubmitted(true);
       } else {
         setError(resData.message)
@@ -139,7 +223,7 @@ const FeedBackPage = () => {
     );
   }
 
-  if (loading){
+  if (loading) {
     return (
       <div className="p-4 flex justify-center">
         <Card className="w-full max-w-3xl">
@@ -176,7 +260,7 @@ const FeedBackPage = () => {
   return (
     <div className="p-4 flex flex-col justify-center items-center gap-4">
       <div className="flex items-center">
-        <SuccessAnimation size={30}/>
+        <SuccessAnimation size={30} />
         <Typography variant="h6">The exam was submitted successfully. Please fill out the feedback form to complete the exam.</Typography>
       </div>
       <Card className="w-full max-w-3xl">
@@ -190,7 +274,7 @@ const FeedBackPage = () => {
               {/* ========================================
                 QUESTIONS
               ======================================== */}
-              {feedbackForm?.feedback_questions?.map((q, index) => (
+              {feedbackForm?.feedback_questions?.filter(q => q.question_type !== 4).map((q, index) => (
                 <Grid item xs={12} key={q.id}>
                   <Typography className="mb-2">
                     {index + 1}. {q.question}
@@ -275,6 +359,33 @@ const FeedBackPage = () => {
                       )}
                     />
                   )}
+                </Grid>
+              ))}
+
+              {feedbackForm?.feedback_questions?.filter((q) => q.question_type === 4).map((q) => (
+                <Grid item xs={12} key={q.id}>
+                  <Typography className="mb-2">
+                    {q.question}
+                  </Typography>
+
+                  <Controller
+                    name={`question_${q.id}`}
+                    control={control}
+
+                    rules={{
+                      required: "Signature required"
+                    }}
+
+                    render={({ field }) => (
+
+                      <SignaturePad
+                        value={field.value}
+                        onChange={(file) => field.onChange(file)}
+                        error={errors[`question_${q.id}`]?.message as string}
+                      />
+
+                    )}
+                  />
                 </Grid>
               ))}
 
