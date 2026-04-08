@@ -184,6 +184,18 @@ export const getBatchCenterInspectionFilePath = (batchId: number, fileName: stri
   return fileName ? `${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.agency}/${storageFolders.batches}/${batchId}/${storageFolders.centerInspection}/${fileName}` : "";
 }
 
+export const getBatchGroupMediaFilePath = (batchId: number, groupType: string, groupId: number, mediaType: string, fileName: string) => {
+  return fileName ? `${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.agency}/${storageFolders.batches}/${batchId}/${groupType}/groups/${groupId}/${mediaType}s/${fileName}` : "";
+}
+
+export const getBatchIndividualCandidateMediaFilePath = (batchId: number, candidateId: number, mediaType: string, fileName: string) => {
+  return fileName ? `${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.agency}/${storageFolders.batches}/${batchId}/individual/${candidateId}/${mediaType}s/${fileName}` : "";
+}
+
+export const getBatchIndividualCandidateTheoryCapturedFilePath = (batchId: number, candidateId: number, fileName: string) => {
+  return fileName ? `${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.agency}/${storageFolders.batches}/${batchId}/student/${candidateId}/captured/${fileName}` : "";
+}
+
 export const folders = [
   {
     id: "selfie_with_center_photo",
@@ -229,68 +241,68 @@ export const folders = [
   {
     id: "biometric_device_photo",
     name: "Biometric Device Photo",
-    status: 0
+    status: 1
   },
   {
     id: "trainer_aadhaar_photo",
     name: "Trainer Aadhaar Photo",
-    status: 0
+    status: 1
   },
   {
     id: "trainer_tot_certificate",
     name: "Trainer TOT Certificate",
-    status: 0
+    status: 1
   },
   {
     id: "center_photo",
     name: "Center Photo",
-    status: 0
+    status: 1
   },
   {
     id: "building_photo",
     name: "Building Photo",
-    status: 0
+    status: 1
   },
   {
     id: "building_photo_outside",
     name: "Building Photo Outside",
-    status: 0
+    status: 1
   },
   {
     id: "selfie_with_center_board_evening",
     name: "Selfie With Center Board Evening",
-    status: 0
+    status: 1
   },
   {
     id: "theory_exam",
     name: "Theory Exam",
-    status: 0
+    status: 1
   },
   {
     id: "practical_exam",
     name: "Practical Exam",
-    status: 0
+    status: 1
   },
   {
     id: "viva_exam",
     name: "Viva Exam",
-    status: 0
+    status: 1
   },
   {
     id: "group_photo_student",
     name: "Group Photo Student",
-    status: 0
+    status: 1
   },
   {
     id: "group_photo_student_assessor",
     name: "Group Photo Student Assessor",
-    status: 0
+    status: 1
 
   },
   {
     id: "group_photo_student_assessor_trainer",
     name: "Group Photo Student Assessor Trainer",
-    status: 0
+    status: 1
   },
   {
     id: "group_photo_student_assessor_trainer_spoc",
@@ -325,27 +337,27 @@ export const folders = [
   {
     id: "annexure_m1_m2",
     name: "Annexure M1 M2",
-    status: 0
+    status: 1
   },
   {
     id: "annexure_n",
     name: "Annexure N",
-    status: 0
+    status: 1
   },
   {
     id: "attendance_sheet",
     name: "Attendance Sheet",
-    status: 0
+    status: 1
   },
   {
     id: "biometric_attendance",
     name: "Biometric Attendance",
-    status: 0
+    status: 1
   },
   {
     id: "other_documents",
     name: "Other Documents",
-    status: 0
+    status: 1
   }
 ] as const;
 

@@ -1,4 +1,4 @@
-import { getBatchCenterInspectionFilePath } from "@/configs/customDataConfig";
+import { getBatchCenterInspectionFilePath, getBatchGroupMediaFilePath, getBatchIndividualCandidateMediaFilePath, getBatchIndividualCandidateTheoryCapturedFilePath } from "@/configs/customDataConfig";
 
 import prisma from "@/libs/prisma";
 
@@ -28,13 +28,48 @@ export async function generateEvidenceZip(
 
   /* Candidate Photos */
 
-  if (selectedFolders.includes("theory_exam") || selectedFolders.includes("practical_exam") || selectedFolders.includes("viva") || selectedFolders.includes("group")) {
+  // if (selectedFolders.includes("theory_exam") || selectedFolders.includes("practical_exam") || selectedFolders.includes("viva") || selectedFolders.includes("group")) {
 
-    // tasks.push(
+  //   // tasks.push(
 
-    //   collectCandidatePhotos(batchId, files)
+  //   //   collectCandidatePhotos(batchId, files)
 
-    // );
+  //   // );
+
+  // }
+
+  if (selectedFolders.includes("theory_exam")) {
+
+    tasks.push(
+
+      // collectTheoryFiles(batchId, files)
+      collectTheoryFiles(batchId, files)
+
+    );
+
+    tasks.push(
+      collectCandidateCapturedDuringTheoryExam(batchId, files)
+    );
+
+  }
+
+  if (selectedFolders.includes("practical_exam")) {
+
+    tasks.push(
+
+      collectPracticalFiles(batchId, files)
+
+    );
+
+  }
+
+  if (selectedFolders.includes("viva")) {
+
+    tasks.push(
+
+      collectVivaFiles(batchId, files)
+
+    );
 
   }
 
@@ -395,4 +430,256 @@ async function collectInspectionFiles(
 
   }
 
+}
+
+async function collectTheoryFiles(
+  batchId: number,
+  files: EvidenceFile[],
+) {
+  const allMedia = await prisma.media_files.findMany({
+    where: {
+      type: "theory",
+      OR: [
+        { candidate: { batch_id: batchId } },
+        { group: { batch_id: batchId, group_type: "theory" } }
+      ]
+    },
+    select: {
+      id: true,
+      batch_id: true,
+      candidate_id: true,
+      group_id: true,
+      type: true,
+      filename: true,
+      candidate: {
+        select: {
+          candidate_id: true
+        }
+      },
+      group: {
+        select: {
+          group_id: true,
+          group_type: true
+        }
+      },
+    }
+  });
+
+  const mappedFiles = allMedia.map(media => {
+    if (media.candidate_id) {
+      return {
+        fullPath: getBatchIndividualCandidateMediaFilePath(
+          batchId,
+          media.candidate_id,
+          media.type,
+          media.filename
+        ),
+        zipPath: `theory/candidates/${media.candidate?.candidate_id}/${media.type}s/${media.filename}`
+      };
+    } else if (media.group_id && media.group?.group_type === "theory") {
+      return {
+        fullPath: getBatchGroupMediaFilePath(
+          batchId,
+          media.group?.group_type,
+          media.group_id,
+          media.type,
+          media.filename
+        ),
+        zipPath: `theory/groups/${media.group?.group_id}/${media.type}s/${media.filename}`
+      };
+    } else {
+      return null;
+    }
+  }).filter(Boolean) as EvidenceFile[];
+
+  files.push(...mappedFiles);
+}
+
+// batch123/theory/candidates/candidate123/photos/photo1.jpg  // candidate self online
+// batch123/theory/candidates/candidate123/videos/video1.mp4  // candidate self online
+// batch123/theory/groups/group_a/photos/photo1.jpg
+// batch123/theory/groups/group_a/videos/video1.mp4
+
+// batch123/practical/candidates/candidate123/photos/photo1.jpg  // assessor // not confirmed
+// batch123/practical/candidates/candidate123/videos/video1.mp4  // assessor // not confirmed
+// batch123/practical/groups/group_a/photos/photo1.jpg
+// batch123/practical/groups/group_a/videos/video1.mp4
+
+// batch123/viva/candidates/candidate123/photos/photo1.jpg  // assessor
+// batch123/viva/candidates/candidate123/videos/video1.mp4  // assessor
+// batch123/viva/groups/group_a/photos/photo1.jpg
+// batch123/viva/groups/group_a/videos/video1.mp4
+
+
+async function collectCandidateCapturedDuringTheoryExam(
+
+  batchId: number,
+  files: EvidenceFile[],
+
+) {
+
+  const students = await prisma.students.findMany({
+    where: {
+      batch_id: batchId
+    },
+    select: {
+      id: true,
+      candidate_id: true,
+      captured_files: {
+        select: {
+          captured_image: true,
+          file_type: true,
+        }
+      }
+    }
+  })
+
+  for (const student of students) {
+
+    const capturedFiles = student.captured_files;
+
+    for (const img of capturedFiles) {
+
+      files.push({
+
+        fullPath:
+          getBatchIndividualCandidateTheoryCapturedFilePath(
+            batchId,
+            student.id,
+            img.captured_image
+          ),
+
+        zipPath:
+          `theory/candidates/${student.candidate_id}/${img.file_type}s/${img.captured_image}`
+
+      });
+    }
+
+  }
+}
+
+async function collectPracticalFiles(
+  batchId: number,
+  files: EvidenceFile[],
+) {
+  const allMedia = await prisma.media_files.findMany({
+    where: {
+      type: "practical",
+      OR: [
+        { candidate: { batch_id: batchId } },
+        { group: { batch_id: batchId, group_type: "practical" } }
+      ]
+    },
+    select: {
+      id: true,
+      batch_id: true,
+      candidate_id: true,
+      group_id: true,
+      type: true,
+      filename: true,
+      candidate: {
+        select: {
+          candidate_id: true
+        }
+      },
+      group: {
+        select: {
+          group_id: true,
+          group_type: true
+        }
+      },
+    }
+  });
+
+  const mappedFiles = allMedia.map(media => {
+    if (media.candidate_id) {
+      return {
+        fullPath: getBatchIndividualCandidateMediaFilePath(
+          batchId,
+          media.candidate_id,
+          media.type,
+          media.filename
+        ),
+        zipPath: `practical/candidates/${media.candidate?.candidate_id}/${media.type}s/${media.filename}`
+      };
+    } else if (media.group_id && media.group?.group_type === "practical") {
+      return {
+        fullPath: getBatchGroupMediaFilePath(
+          batchId,
+          media.group?.group_type,
+          media.group_id,
+          media.type,
+          media.filename
+        ),
+        zipPath: `practical/groups/${media.group?.group_id}/${media.type}s/${media.filename}`
+      };
+    } else {
+      return null;
+    }
+  }).filter(Boolean) as EvidenceFile[];
+
+  files.push(...mappedFiles);
+}
+
+async function collectVivaFiles(
+  batchId: number,
+  files: EvidenceFile[],
+) {
+  const allMedia = await prisma.media_files.findMany({
+    where: {
+      type: "viva",
+      OR: [
+        { candidate: { batch_id: batchId } },
+        { group: { batch_id: batchId, group_type: "viva" } }
+      ]
+    },
+    select: {
+      id: true,
+      batch_id: true,
+      candidate_id: true,
+      group_id: true,
+      type: true,
+      filename: true,
+      candidate: {
+        select: {
+          candidate_id: true
+        }
+      },
+      group: {
+        select: {
+          group_id: true,
+          group_type: true
+        }
+      },
+    }
+  });
+
+  const mappedFiles = allMedia.map(media => {
+    if (media.candidate_id) {
+      return {
+        fullPath: getBatchIndividualCandidateMediaFilePath(
+          batchId,
+          media.candidate_id,
+          media.type,
+          media.filename
+        ),
+        zipPath: `viva/candidates/${media.candidate?.candidate_id}/${media.type}s/${media.filename}`
+      };
+    } else if (media.group_id && media.group?.group_type === "viva") {
+      return {
+        fullPath: getBatchGroupMediaFilePath(
+          batchId,
+          media.group?.group_type,
+          media.group_id,
+          media.type,
+          media.filename
+        ),
+        zipPath: `viva/groups/${media.group?.group_id}/${media.type}s/${media.filename}`
+      };
+    } else {
+      return null;
+    }
+  }).filter(Boolean) as EvidenceFile[];
+
+  files.push(...mappedFiles);
 }

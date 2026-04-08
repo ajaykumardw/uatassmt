@@ -353,6 +353,8 @@ model student_captured_images {
   captured_time DateTime @default(now())
   created_at DateTime @default(now())
 
+  student students @relation(fields: [student_id], references: [id])
+
   @@index([student_id])
   @@index([student_exam_set_result_id])
   @@index([file_type])
@@ -537,6 +539,7 @@ model students {
   exam_set_results exam_set_results[]
   student_question_attempts student_question_attempts[]
   media_files media_files[]
+  captured_files student_captured_images[]
 }
 
 model student_groups {
