@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
   });
 
   if (assessorExists) {
-    return NextResponse.json({ success: false, message: "Assessor already exists." }, { status: 400 })
+    return NextResponse.json({ success: false, message: "Username or Email already exists." }, { status: 400 })
   }
 
   const avatarBlob = profile as Blob;
