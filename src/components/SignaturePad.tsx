@@ -1,8 +1,8 @@
 "use client"
 
-import SignatureCanvas from "react-signature-canvas";
-
 import { useEffect, useRef, useState } from "react";
+
+import SignatureCanvas from "react-signature-canvas";
 
 import { Button, FormHelperText } from "@mui/material";
 
@@ -62,6 +62,7 @@ export default function SignaturePad({
     if(sigRef.current.isEmpty()){
       onChange(null)
       setSaved(false)
+
       return
     }
 

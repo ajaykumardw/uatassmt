@@ -21,7 +21,7 @@ import { useForm, Controller } from "react-hook-form";
 
 import type { feedback_forms, feedback_questions } from "@prisma/client";
 
-import { FeedbackFormTypes } from "@/configs/customDataConfig";
+// import { FeedbackFormTypes } from "@/configs/customDataConfig";
 
 import SuccessAnimation from "@/components/SuccessAnimation";
 import SignaturePad from "@/components/SignaturePad";
