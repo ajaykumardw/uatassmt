@@ -200,164 +200,164 @@ export const folders = [
   {
     id: "selfie_with_center_photo",
     name: "Selfie With Center Photo",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "center_video",
     name: "Center Video",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "equipment_photo",
     name: "Equipment Photo",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "group_photo_before_batch_start",
     name: "Group Photo Before Batch Start",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "center_facility",
     name: "Center Facility",
-    status: 1
+    status: 1 as 0 | 1
 
   },
   {
     id: "class_room_photo",
     name: "Classroom Photo",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "it_lab_photo",
     name: "IT Lab Photo",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "induction_kit",
     name: "Induction Kit",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "biometric_device_photo",
     name: "Biometric Device Photo",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "trainer_aadhaar_photo",
     name: "Trainer Aadhaar Photo",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "trainer_tot_certificate",
     name: "Trainer TOT Certificate",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "center_photo",
     name: "Center Photo",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "building_photo",
     name: "Building Photo",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "building_photo_outside",
     name: "Building Photo Outside",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "selfie_with_center_board_evening",
     name: "Selfie With Center Board Evening",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "theory_exam",
     name: "Theory Exam",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "practical_exam",
     name: "Practical Exam",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "viva_exam",
     name: "Viva Exam",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "group_photo_student",
     name: "Group Photo Student",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "group_photo_student_assessor",
     name: "Group Photo Student Assessor",
-    status: 1
+    status: 1 as 0 | 1
 
   },
   {
     id: "group_photo_student_assessor_trainer",
     name: "Group Photo Student Assessor Trainer",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "group_photo_student_assessor_trainer_spoc",
     name: "Group Photo Student Assessor Trainer Spoc",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "tp_spoc_signature",
     name: "TP Spoc Signature",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "assessor_signature",
     name: "Assessor Signature",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "manual_attendance_register",
     name: "Manual Attendance Register",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "tc_declaration_form",
     name: "TC Declaration Form",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "joint_undertaking_assessor_spoc",
     name: "Joint Undertaking Assessor Spoc",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "annexure_m1_m2",
     name: "Annexure M1 M2",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "annexure_n",
     name: "Annexure N",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "attendance_sheet",
     name: "Attendance Sheet",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "biometric_attendance",
     name: "Biometric Attendance",
-    status: 1
+    status: 1 as 0 | 1
   },
   {
     id: "other_documents",
     name: "Other Documents",
-    status: 1
+    status: 1 as 0 | 1
   }
 ] as const;
 
