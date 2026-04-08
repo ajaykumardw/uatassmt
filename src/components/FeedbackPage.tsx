@@ -164,8 +164,8 @@ const FeedBackPage = () => {
 
     // return;
 
-    const userType = +Object.keys(FeedbackFormTypes)
-      .find(key => FeedbackFormTypes[+key] === "Candidate")!;
+    // const userType = +Object.keys(FeedbackFormTypes)
+    //   .find(key => FeedbackFormTypes[+key] === "Candidate")!;
 
     try {
       // const res = await fetch(
