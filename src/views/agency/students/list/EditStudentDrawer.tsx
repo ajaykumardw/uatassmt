@@ -101,13 +101,13 @@ const EditStudentDrawer = ({ open, id, handleClose, updateStudentList }: Props) 
       const res = await response.json();
 
       setFormData({
-        userName: res.user_name.toString() || '',
-        candidateName: res.candidate_name.toString() || '',
-        mobileNo: res.mobile_no.toString() || '',
+        userName: res.user_name?.toString() || '',
+        candidateName: res.candidate_name?.toString() || '',
+        mobileNo: res.mobile_no?.toString() || '',
         fatherName: res.father_name || '',
         motherName: res.mother_name || '',
         gender: res.gender || '',
-        dob: new Date(res.date_of_birth) || '',
+        dob: res.date_of_birth ? new Date(res.date_of_birth) : undefined,
         category: res.category || '',
         state: res.state || '',
         city: res.city || '',
@@ -146,16 +146,6 @@ const EditStudentDrawer = ({ open, id, handleClose, updateStudentList }: Props) 
     resolver: valibotResolver(schema),
     values: formData
   });
-
-  useEffect(() => {
-
-    if (formData) {
-
-      reset(formData);
-
-    }
-
-  }, [formData, reset]);
 
   const onSubmit: SubmitHandler<FormDataType> = async (data: FormDataType) => {
 
