@@ -125,7 +125,7 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
       subScheme: '',
       trainingPartner: data?.training_partner_id.toString() || '',
       trainingCenter: data?.training_centre_id.toString() || '',
-      loginRestrictCount: '3',
+      loginRestrictCount: data?.login_restrict?.toString() || '3',
       assessmentStartDate: (data?.assessment_start_datetime ? new Date(data?.assessment_start_datetime) : null)  || undefined,
       assessmentEndDate: (data?.assessment_end_datetime ? new Date(data?.assessment_end_datetime) : null) || undefined,
       captureImage: false,

@@ -147,6 +147,16 @@ const EditStudentDrawer = ({ open, id, handleClose, updateStudentList }: Props) 
     values: formData
   });
 
+  useEffect(() => {
+
+    if (formData) {
+
+      reset(formData);
+
+    }
+
+  }, [formData, reset]);
+
   const onSubmit: SubmitHandler<FormDataType> = async (data: FormDataType) => {
 
     updateStudentList(false);
