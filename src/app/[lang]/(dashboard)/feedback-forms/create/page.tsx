@@ -1,6 +1,9 @@
 import Link from "next/link"
 
-import { Breadcrumbs, Typography } from "@mui/material"
+// import { Breadcrumbs, Typography } from "@mui/material"
+
+import Breadcrumbs from "@mui/material/Breadcrumbs"
+import Typography from "@mui/material/Typography"
 
 import AddEditFeedback from "@/views/feedback-forms/AddEditFeedback"
 

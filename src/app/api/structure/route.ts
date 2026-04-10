@@ -18,12 +18,14 @@ export async function GET(){
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const agency_id = Number(session?.user?.agency_id)
+  // const agency_id = Number(session?.user?.agency_id)
 
   const structure = await prisma.sector_skill_councils.findMany({
-    where: {
-      agency_id: agency_id
-    },
+
+    // where: {
+    //   agency_id: agency_id
+    // },
+
     select:{
       id:true,
       ssc_name:true,

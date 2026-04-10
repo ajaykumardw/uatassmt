@@ -166,6 +166,9 @@ export async function POST(
 
   const authHeader = request.headers.get("authorization");
 
+  const ip = request.headers.get('x-forwarded-for');
+
+
   if (!authHeader) {
     return NextResponse.json({
       status: 'Error',
@@ -222,10 +225,36 @@ export async function POST(
       "other_documents"
     ];
 
+    const allowedMeta = [
+      "latitude",
+      "longitude",
+      "city",
+    ];
+
     // ----- extract only one key -----
     const keys = new Set<string>();
 
-    for (const [key] of formData.entries()) keys.add(key);
+    // for (const [key] of formData.entries()) keys.add(key);
+    for (const [key] of formData.entries()) {
+
+      if (allowedKeys.includes(key)) {
+        keys.add(key);
+      }
+
+      else if (!allowedMeta.includes(key)) {
+
+        return NextResponse.json(
+          {
+            status: "Error",
+            statusCode: 400,
+            message: `Invalid field: ${key}`
+          },
+          { status: 400 }
+        );
+
+      }
+
+    }
 
     if (keys.size !== 1) {
       return NextResponse.json(
@@ -415,6 +444,11 @@ export async function POST(
       //   });
       // }
 
+
+      const latitude = formData.get("latitude") as string | null;
+      const longitude = formData.get("longitude") as string | null;
+      const city = formData.get("city") as string | null;
+
       const category = await prisma.categories.findFirst({
         where: {
           category_name: key,
@@ -443,6 +477,10 @@ export async function POST(
           media_type: mediaType,
           file_name: filename,
           uploaded_by: decoded.id,
+          latitude: latitude,
+          longitude: longitude,
+          city: city,
+          ip_address: ip || undefined
         },
         select: {
           id: true,

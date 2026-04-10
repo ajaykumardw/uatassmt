@@ -210,6 +210,10 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
 
         const formData = await req.formData();
         const id = Number(context.params.id);
+        const latitude = formData.get("latitude") as string | null;
+        const longitude = formData.get("longitude") as string | null;
+        const city = formData.get("city") as string | null;
+        const ip = req.headers.get('x-forwarded-for') || null;
 
         const batch = await prisma.batches.findUnique({
             where: {
@@ -326,6 +330,10 @@ export async function POST(req: NextRequest, context: { params: { id: number } }
                         media_type: "image",
                         file_name: file.name,
                         uploaded_by: Number(decoded.id),
+                        latitude,
+                        longitude,
+                        city,
+                        ip_address: ip
                     },
                 })
             );

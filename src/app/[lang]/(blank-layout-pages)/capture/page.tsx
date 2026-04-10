@@ -422,7 +422,14 @@ import classnames from 'classnames';
 
 import Webcam from "react-webcam";
 
-import { Button, Card, CardContent, CardHeader, CircularProgress, Grid } from "@mui/material";
+// import { Button, Card, CardContent, CardHeader, CircularProgress, Grid } from "@mui/material";
+
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import CircularProgress from "@mui/material/CircularProgress";
+import Grid from "@mui/material/Grid"
 
 import * as faceapi from "face-api.js";
 

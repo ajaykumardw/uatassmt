@@ -255,6 +255,9 @@ export async function POST(
     const groupId = formData.get("group_id") as string | null;
     const candidateId = formData.get("candidate_id") as string | null;
     const examType = formData.get("exam_type") as string;
+    const latitude = formData.get("latitude") as string | null;
+    const longitude = formData.get("longitude") as string | null;
+    const city = formData.get("city") as string | null;
 
     if (!examType) return errorResponse("exam_type is required", 400);
     if (!files || files.length === 0) return errorResponse("No files provided", 400);
@@ -333,6 +336,10 @@ export async function POST(
           candidate_id: candidateId ? Number(candidateId) : null,
           type: mediaType,
           filename,
+          latitude: latitude,
+          longitude: longitude,
+          city: city,
+          ip_address: req.headers.get('x-forwarded-for') || null,
           created_by: Number(decoded.id),
         },
       });

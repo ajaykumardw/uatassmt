@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { Button, Typography, Card, CardHeader, CardContent, Alert, Avatar, List, ListItem, IconButton, LinearProgress, TablePagination, AlertTitle } from '@mui/material';
 
-import * as XLSX from 'xlsx';
+// import * as XLSX from 'xlsx';
 
 import { useDropzone } from 'react-dropzone';
 
@@ -305,6 +305,9 @@ const ImportStudents = ({ batch, onBack }: { batch: number | null, onBack: () =>
       const reader = new FileReader();
 
       reader.onload = async (e) => {
+
+        const XLSX = await import('xlsx');
+
         if (e.target?.result) {
           try {
             const arrayBuffer = e.target.result as ArrayBuffer;

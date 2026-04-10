@@ -16,12 +16,14 @@ export async function GET(req: Request) {
   const url = new URL(await req.url);
   const searchBy = url.searchParams.get('searchBy');
   const searchValue = url.searchParams.get('searchValue');
+  const batchId = url.searchParams.get('batchId') ? Number(url.searchParams.get('batchId')) : null;
 
   const session = await getServerSession(authOptions);
   const agencyId = Number(session?.user?.agency_id);
 
   const whereCondition = {
     agency_id: agencyId,
+    ...(batchId ? { batch_id: batchId } : {}),
     ...(searchBy === 'candidate_id' ? { candidate_id: searchValue?.toString() } : (searchBy === 'phone_number' ? { mobile_no: searchValue?.toString()} : {})),
   };
 
@@ -32,6 +34,7 @@ export async function GET(req: Request) {
   const studentsWithFormattedAadhaar = students.map(student =>  {
     return {
       ...student,
+      attendance: 1,
       aadhaar_no: student.aadhaar_no ? maskAadhaar(decrypt(student.aadhaar_no)) : null
     };
   });

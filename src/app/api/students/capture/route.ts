@@ -84,6 +84,10 @@ export async function POST(req:NextRequest){
     const files =
       formData.getAll("files") as File[];
 
+    const latitude = formData.get("latitude") as string | null;
+    const longitude = formData.get("longitude") as string | null;
+    const city = formData.get("city") as string | null;
+
     if(!files.length){
       return errorResponse(
         "Files required",
@@ -197,7 +201,15 @@ export async function POST(req:NextRequest){
 
           file_size:file.size,
 
-          captured_time:new Date()
+          captured_time:new Date(),
+
+          latitude,
+
+          longitude,
+
+          city,
+
+          ip_address: req.headers.get('x-forwarded-for') || null
 
         });
 

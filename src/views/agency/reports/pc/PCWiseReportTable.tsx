@@ -50,7 +50,7 @@ import type { batches, exam_sets, nos, pc, schemes, students } from '@prisma/cli
 // Type Imports
 // import type { ThemeColor } from '@core/types'
 
-import XLSX from 'xlsx';
+// import XLSX from 'xlsx';
 
 import { format } from 'date-fns';
 
@@ -340,7 +340,10 @@ const PCWiseReportTable = () => {
   //   setExamSetId(id);
   // }
 
-  const handleGenerateReport = () => {
+  const handleGenerateReport = async () => {
+
+    const XLSX = await import('xlsx');
+
     // Get the table element
     const table = document.querySelector('table');
 

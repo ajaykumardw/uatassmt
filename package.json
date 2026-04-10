@@ -50,6 +50,8 @@
     "face-api.js": "^0.22.2",
     "ioredis": "^5.10.1",
     "jsonwebtoken": "^9.0.2",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
     "kbar": "0.1.0-beta.45",
     "keen-slider": "6.8.6",
     "luxon": "^3.5.0",

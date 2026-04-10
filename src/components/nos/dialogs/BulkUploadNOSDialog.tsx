@@ -12,7 +12,7 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import { Alert, AlertTitle, Avatar, CircularProgress, IconButton, LinearProgress, List, ListItem, TablePagination, Typography } from '@mui/material'
 
-import * as XLSX from 'xlsx';
+// import * as XLSX from 'xlsx';
 
 import { createColumnHelper, flexRender, getCoreRowModel, getFacetedMinMaxValues, getFacetedRowModel, getFacetedUniqueValues, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
 
@@ -341,6 +341,9 @@ const BulkUploadNOSDialog = ({ open, sscID, handleClose, updateNOSList }: BulkUp
       const reader = new FileReader();
 
       reader.onload = async (e) => {
+
+        const XLSX = await import('xlsx');
+        
         if (e.target?.result) {
           try {
 

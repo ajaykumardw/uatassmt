@@ -50,7 +50,7 @@ import type { batches, exam_sets, nos, pc, schemes, student_question_attempts, s
 // Type Imports
 // import type { ThemeColor } from '@core/types'
 
-import XLSX from 'xlsx';
+// import XLSX from 'xlsx';
 
 import { format } from 'date-fns';
 
@@ -515,7 +515,10 @@ const NOSWiseReportTable = () => {
   //   setExamSetId(id);
   // }
 
-  const handleGenerateReport = () => {
+  const handleGenerateReport = async () => {
+
+    const XLSX = await import('xlsx');
+
     // Get the table element
     const table = document.querySelector('table');
 

@@ -1,6 +1,6 @@
 import { Button, Dialog, DialogContent, DialogTitle } from "@mui/material";
 
-import XLSX from 'xlsx';
+// import XLSX from 'xlsx';
 
 import { format } from "date-fns";
 
@@ -29,7 +29,10 @@ type PCReportDialogProps = {
 
 const PCReportDialog = ({ open, handleClose, theoryMarks, practicalMarks, vivaMarks, batchReportData, selectedCandidate } : PCReportDialogProps) => {
 
-  const handleGenerateReport = () => {
+  const handleGenerateReport = async () => {
+    
+    const XLSX = await import('xlsx');
+
     // Get the table element
     const table = document.querySelector('.table-pc-wise');
 

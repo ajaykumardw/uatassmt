@@ -123,7 +123,7 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   const student = Number(session?.user.id);
 
-  const batchId = prisma.students.findUnique({
+  const batch = await prisma.students.findUnique({
     where: {
       id: student
     },
@@ -131,6 +131,13 @@ export async function POST(req: Request) {
       batch_id: true
     }
   });
+
+  const batchId = batch?.batch_id;
+
+  if (!batchId) {
+    return NextResponse.json({ message: 'Batch not found' }, { status: 404 });
+  }
+
 
   const timestamp = getTime(new Date());
   const imageName = `${timestamp}.jpg`;
@@ -174,7 +181,11 @@ export async function POST(req: Request) {
       file_type: "image",
       mime_type: "image/jpeg",
       file_size: imageBuffer.length,
-      captured_time: new Date()
+      captured_time: new Date(),
+      latitude: null,
+      longitude: null,
+      city: null,
+      ip_address: req.headers.get('x-forwarded-for') || null
     }
   })
 
