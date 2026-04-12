@@ -271,6 +271,10 @@ export async function GET(req: NextRequest) {
                 other_documents: {
                     min: 1,
                     max: 5,
+                },
+                enrollment_form: {
+                    min: 8,
+                    max: 35,
                 }
             }
         }));

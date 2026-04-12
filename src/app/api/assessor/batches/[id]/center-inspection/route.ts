@@ -222,7 +222,8 @@ export async function POST(
       "annexure_n",
       "attendance_sheet",
       "biometric_attendance",
-      "other_documents"
+      "other_documents",
+      "enrollment_form"
     ];
 
     const allowedMeta = [

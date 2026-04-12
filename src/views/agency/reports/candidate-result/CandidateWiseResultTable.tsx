@@ -46,7 +46,7 @@ import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 
 // import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
-import type { nos, pc, students } from '@prisma/client';
+import type { students } from '@prisma/client';
 
 // Type Imports
 // import type { ThemeColor } from '@core/types'
@@ -182,24 +182,24 @@ const columnHelper = createColumnHelper<StudentsTypeWithAction>()
 //   pc_id: string;
 // };
 
-type Question = {
-  question_type: string;
-  marks: number;
+// type Question = {
+//   question_type: string;
+//   marks: number;
 
-  pc_questions: {
-    pc: pc & {
-      nos: nos;
-    };
-  }[];
+//   pc_questions: {
+//     pc: pc & {
+//       nos: nos;
+//     };
+//   }[];
 
-  // pc: (pc & { nos: nos })[];
-};
+//   // pc: (pc & { nos: nos })[];
+// };
 
-type ExamSetResult = {
-  student_answer: number;
-  correct_answer: number;
-  question: Question;
-};
+// type ExamSetResult = {
+//   student_answer: number;
+//   correct_answer: number;
+//   question: Question;
+// };
 
 // type Student = {
 //   id: number;

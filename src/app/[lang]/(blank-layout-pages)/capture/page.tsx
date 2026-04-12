@@ -410,100 +410,456 @@
 
 // export default CapturePage;
 
-"use client"
+// "use client"
+
+// import { useState, useRef, useEffect } from "react";
+
+// import { useParams, useRouter } from "next/navigation";
+
+// import { signOut, useSession } from "next-auth/react";
+
+// import classnames from 'classnames';
+
+// import Webcam from "react-webcam";
+
+// // import { Button, Card, CardContent, CardHeader, CircularProgress, Grid } from "@mui/material";
+
+// import Button from "@mui/material/Button";
+// import Card from "@mui/material/Card";
+// import CardContent from "@mui/material/CardContent";
+// import CardHeader from "@mui/material/CardHeader";
+// import CircularProgress from "@mui/material/CircularProgress";
+// import Grid from "@mui/material/Grid"
+
+// // import * as faceapi from "face-api.js";
+
+// import frontCommonStyles from './styles.module.css';
+
+// import type { Locale } from '@configs/i18n';
+
+// import { getLocalizedUrl } from "@/utils/i18n";
+
+
+// const CapturePage = () => {
+//   const router = useRouter();
+//   const webcamRef = useRef<Webcam>(null);
+//   const { lang: locale } = useParams();
+//   const defaultImage = '/images/illustrations/characters/4.png';
+
+//   const [liveSelfie, setLiveSelfie] = useState<string | null>(null);
+//   const [aadhaarFront, setAadhaarFront] = useState<string | null>(null);
+//   const [aadhaarBack, setAadhaarBack] = useState<string | null>(null);
+
+//   const [cameraError, setCameraError] = useState<string | null>(null);
+//   const [faceDetected, setFaceDetected] = useState(false); // real-time
+//   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
+//   const [loading, setLoading] = useState(false);
+
+//   const { data: session, status } = useSession();
+
+//   const token = session?.user?.accessToken;
+
+//   console.log("Session token in CapturePage:", token, status);
+
+//   // Load face-api models once
+//   useEffect(() => {
+//     const loadModels = async () => {
+//       const faceapi = await import("face-api.js");
+//       const MODEL_URL = "/images/models";
+
+//       await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+//       startFaceDetection(faceapi);
+//     };
+
+//     loadModels();
+//   }, []);
+
+//   // Real-time face detection loop
+//   const startFaceDetection = (faceapi: typeof import("face-api.js")) => {
+//     const detect = async () => {
+//       if (webcamRef.current && webcamRef.current.video?.readyState === 4) {
+//         const video = webcamRef.current.video;
+//         const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
+
+//         console.log("Face detections:", detections);
+//         setFaceDetected(detections.length > 0);
+//       }
+
+//       // requestAnimationFrame(detect);
+
+//       setTimeout(detect, 5000); // Check every 500ms to reduce CPU load
+//     };
+
+//     detect();
+//   };
+
+//   const switchCamera = () => {
+
+//     setFacingMode(prev => prev === "user" ? "environment" : "user");
+
+//   };
+
+//   const captureImage = (type: 'selfie' | 'front' | 'back') => {
+
+//     if (!webcamRef.current) return;
+
+//     if (type === "selfie" && !faceDetected) {
+
+//       alert("No face detected! Please align yourself in front of the camera.");
+
+//       return;
+//     }
+
+//     const imageSrc = webcamRef.current.getScreenshot();
+
+//     if (!imageSrc) return;
+
+//     if (type === 'selfie') setLiveSelfie(imageSrc);
+//     else if (type === 'front') setAadhaarFront(imageSrc);
+//     else setAadhaarBack(imageSrc);
+//   };
+
+//   const base64ToFile = (base64:string, filename:string)=>{
+
+//     const arr = base64.split(',')
+
+//     const mime =
+//       arr[0].match(/:(.*?);/)?.[1] || "image/jpeg"
+
+//     const bstr =
+//       atob(arr[1])
+
+//     let n = bstr.length
+
+//     const u8arr = new Uint8Array(n)
+
+//     while(n--){
+//       u8arr[n] = bstr.charCodeAt(n)
+//     }
+
+//     return new File(
+//       [u8arr],
+//       filename,
+//       {type:mime}
+//     )
+
+//   }
+
+//   const handleCaptureComplete = async () => {
+//     setLoading(true);
+
+//     if (!liveSelfie || !aadhaarFront || !aadhaarBack) {
+
+//       alert("Please capture all three images before proceeding.");
+
+//       setLoading(false);
+
+//       return;
+//     }
+
+//     try {
+
+//       const formdata = new FormData();
+
+//       const selfieFile = base64ToFile(liveSelfie, "selfie.jpg");
+//       const frontFile = base64ToFile(aadhaarFront, "aadhaar_front.jpg");
+//       const backFile = base64ToFile(aadhaarBack, "aadhaar_back.jpg");
+
+//       formdata.append("image", selfieFile);
+//       formdata.append("id_front_image", frontFile);
+//       formdata.append("id_back_image", backFile);
+
+//       // const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/auth-image`, {
+//       //   method: "POST",
+
+//       //   // headers: { "Content-Type": "application/json" },
+
+//       //   body: formdata,
+//       // });
+
+//       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/attendance`, {
+//         method: "POST",
+
+//         headers: {
+//           "authorization": `Bearer ${token || ""}`
+//         },
+
+//         body: formdata,
+//       });
+
+//       localStorage.setItem("liveSelfie", liveSelfie);
+//       localStorage.setItem("aadhaarFront", aadhaarFront);
+//       localStorage.setItem("aadhaarBack", aadhaarBack);
+
+//       if (res.ok) router.push("/student-dashboard");
+//       else console.error("Failed to update capture status");
+
+//     } catch (error) {
+
+//       console.error("Error during capture complete:", error);
+
+//       alert("An error occurred while submitting your images. Please try again.");
+
+//     } finally {
+
+//       setLoading(false);
+//     }
+
+//   };
+
+//   const handleUserMediaError = (error: any) => {
+//     console.error('Error accessing webcam:', error);
+
+//     if (error.name === 'NotAllowedError' || error.name === 'NotFoundError') {
+//       setCameraError('Camera access was denied. Please allow camera permissions to continue.');
+//     } else {
+//       setCameraError('An error occurred while accessing the camera.');
+//     }
+//   };
+
+//   const handleUserLogout = async () => {
+//     try {
+//       await signOut({ redirect: false });
+//       router.push(getLocalizedUrl('/student-login', locale as Locale));
+//     } catch (error) {
+//       console.error(error);
+//     }
+//   };
+
+//   return (
+//     <section className={classnames('md:plb-[100px] plb-6', frontCommonStyles.layoutSpacing)}>
+//       <Grid container spacing={6}>
+//         <Grid item xs={12} display={'flex'} justifyContent={'flex-end'}>
+//           <Button
+//             fullWidth
+//             variant='contained'
+//             color='error'
+//             size='small'
+//             endIcon={<i className='tabler-logout' />}
+//             onClick={handleUserLogout}
+//             sx={{ '& .MuiButton-endIcon': { marginInlineStart: 1.5 } }}
+//             className="w-fit"
+//           >
+//             Logout
+//           </Button>
+//         </Grid>
+
+//         {/* Webcam Section */}
+//         <Grid item xs={12} sm={6}>
+//           <Card>
+//             <CardHeader title='Capture Images' />
+//             <CardContent>
+//               {cameraError && (
+//                 <div style={{ color: 'red', marginBottom: '1rem' }}>
+//                   <p>{cameraError}</p>
+//                   <p>Please ensure you have granted camera permissions.</p>
+//                 </div>
+//               )}
+//               <Webcam
+//                 audio={false}
+//                 ref={webcamRef}
+//                 screenshotFormat="image/jpeg"
+//                 width="100%"
+//                 mirrored={false}
+//                 videoConstraints={{
+//                   facingMode: facingMode
+//                 }}
+//                 key={facingMode}
+//                 onUserMediaError={handleUserMediaError}
+//                 className="rounded"
+//               />
+//               <p style={{ color: faceDetected ? 'green' : 'red', fontWeight: 'bold', marginTop: '0.5rem' }}>
+//                 {faceDetected ? 'Face Detected ✅' : 'No Face Detected ❌'}
+//               </p>
+//               <div className="mt-4 flex gap-2 flex-wrap">
+//                 <Button
+//                   variant="outlined"
+//                   onClick={switchCamera}
+//                 >
+//                   Switch Camera
+//                 </Button>
+//                 <Button variant="contained" onClick={() => captureImage('selfie')} disabled={!faceDetected && facingMode === "user"}>
+//                   Capture Selfie {liveSelfie && "✅"}
+//                 </Button>
+//                 <Button variant="contained" onClick={() => captureImage('front')} disabled={!liveSelfie}>
+//                   Capture Aadhaar Front {aadhaarFront && "✅"}
+//                 </Button>
+//                 <Button variant="contained" onClick={() => captureImage('back')} disabled={!aadhaarFront}>
+//                   Capture Aadhaar Back {aadhaarBack && "✅"}
+//                 </Button>
+//                 {liveSelfie && aadhaarFront && aadhaarBack && (
+//                   <Button variant="contained" color="success" onClick={handleCaptureComplete} disabled={loading} startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}>
+//                     Complete and Go to Dashboard
+//                   </Button>
+//                 )}
+//               </div>
+//             </CardContent>
+//           </Card>
+//         </Grid>
+
+//         {/* Display Captured Images */}
+//         <Grid item xs={12} sm={6}>
+//           <Card>
+//             <CardHeader title='Live Selfie' />
+//             <CardContent>
+//               <Grid container spacing={2}>
+//                 <Grid item xs={12} className={classnames(frontCommonStyles.defaultImageDiv)}>
+//                   <img src={liveSelfie || defaultImage} alt="Live Selfie" className="rounded w-full" style={{ background: "aliceblue" }} />
+//                 </Grid>
+//               </Grid>
+//             </CardContent>
+//           </Card>
+//         </Grid>
+//         {aadhaarFront && (
+//           <Grid item xs={12} sm={6}>
+//             <Card>
+//               <CardHeader title='Aadhaar Front' />
+//               <CardContent>
+//                 <img src={aadhaarFront || defaultImage} alt="Aadhaar Front" className="rounded w-full" style={{ background: "aliceblue" }} />
+//               </CardContent>
+//             </Card>
+//           </Grid>
+//         )}
+//         {aadhaarBack && (
+//           <Grid item xs={12} sm={6}>
+//             <Card>
+//               <CardHeader title='Aadhaar Back' />
+//               <CardContent>
+//                 <img src={aadhaarBack || defaultImage} alt="Aadhaar Back" className="rounded w-full" style={{ background: "aliceblue" }} />
+//               </CardContent>
+//             </Card>
+//           </Grid>
+//         )}
+//       </Grid>
+//     </section>
+//   );
+// };
+
+// export default CapturePage;
+
+"use client";
 
 import { useState, useRef, useEffect } from "react";
-
 import { useParams, useRouter } from "next/navigation";
-
 import { signOut, useSession } from "next-auth/react";
-
-import classnames from 'classnames';
-
+import classnames from "classnames";
 import Webcam from "react-webcam";
-
-// import { Button, Card, CardContent, CardHeader, CircularProgress, Grid } from "@mui/material";
 
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import CardHeader from "@mui/material/CardHeader";
 import CircularProgress from "@mui/material/CircularProgress";
-import Grid from "@mui/material/Grid"
+import Grid from "@mui/material/Grid";
 
-import * as faceapi from "face-api.js";
+import frontCommonStyles from "./styles.module.css";
 
-import frontCommonStyles from './styles.module.css';
-
-import type { Locale } from '@configs/i18n';
+import type { Locale } from "@configs/i18n";
 
 import { getLocalizedUrl } from "@/utils/i18n";
-
 
 const CapturePage = () => {
   const router = useRouter();
   const webcamRef = useRef<Webcam>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
   const { lang: locale } = useParams();
-  const defaultImage = '/images/illustrations/characters/4.png';
+  const defaultImage = "/images/illustrations/characters/4.png";
 
   const [liveSelfie, setLiveSelfie] = useState<string | null>(null);
   const [aadhaarFront, setAadhaarFront] = useState<string | null>(null);
   const [aadhaarBack, setAadhaarBack] = useState<string | null>(null);
 
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [faceDetected, setFaceDetected] = useState(false); // real-time
+  const [faceDetected, setFaceDetected] = useState(false);
+  const [multipleFaces, setMultipleFaces] = useState(false);
+
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [loading, setLoading] = useState(false);
 
-  const { data: session, status } = useSession();
-
+  const { data: session } = useSession();
   const token = session?.user?.accessToken;
 
-  console.log("Session token in CapturePage:", token, status);
-
-  // Load face-api models once
+  // ✅ Face Detection with overlay
   useEffect(() => {
-    const loadModels = async () => {
+    let isMounted = true;
+    let lastDetectionTime = 0;
+
+    const loadModelsAndStart = async () => {
+      const faceapi = await import("face-api.js");
       const MODEL_URL = "/images/models";
 
       await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-      startFaceDetection();
+
+      const detect = async () => {
+        if (!isMounted) return;
+
+        const now = Date.now();
+
+        // throttle (300ms)
+        if (now - lastDetectionTime < 300) {
+          requestAnimationFrame(detect);
+          return;
+        }
+
+        lastDetectionTime = now;
+
+        if (
+          webcamRef.current &&
+          webcamRef.current.video?.readyState === 4 &&
+          canvasRef.current
+        ) {
+          const video = webcamRef.current.video;
+          const canvas = canvasRef.current;
+
+          const displaySize = {
+            width: video.videoWidth,
+            height: video.videoHeight,
+          };
+
+          faceapi.matchDimensions(canvas, displaySize);
+
+          const detections = await faceapi.detectAllFaces(
+            video,
+            new faceapi.TinyFaceDetectorOptions()
+          );
+
+          const resized = faceapi.resizeResults(detections, displaySize);
+
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            faceapi.draw.drawDetections(canvas, resized);
+          }
+
+          setFaceDetected(detections.length === 1);
+          setMultipleFaces(detections.length > 1);
+        }
+
+        requestAnimationFrame(detect);
+      };
+
+      detect();
     };
 
-    loadModels();
+    loadModelsAndStart();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Real-time face detection loop
-  const startFaceDetection = () => {
-    const detect = async () => {
-      if (webcamRef.current && webcamRef.current.video?.readyState === 4) {
-        const video = webcamRef.current.video;
-        const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
-
-        console.log("Face detections:", detections);
-        setFaceDetected(detections.length > 0);
-      }
-
-      requestAnimationFrame(detect);
-    };
-
-    detect();
-  };
-
   const switchCamera = () => {
-
-    setFacingMode(prev => prev === "user" ? "environment" : "user");
-
+    setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
   };
 
-  const captureImage = (type: 'selfie' | 'front' | 'back') => {
-
+  const captureImage = (type: "selfie" | "front" | "back") => {
     if (!webcamRef.current) return;
 
     if (type === "selfie" && !faceDetected) {
 
-      alert("No face detected! Please align yourself in front of the camera.");
-
+      alert("Ensure exactly one face is visible.");
+      
       return;
     }
 
@@ -511,163 +867,124 @@ const CapturePage = () => {
 
     if (!imageSrc) return;
 
-    if (type === 'selfie') setLiveSelfie(imageSrc);
-    else if (type === 'front') setAadhaarFront(imageSrc);
+    if (type === "selfie") setLiveSelfie(imageSrc);
+    else if (type === "front") setAadhaarFront(imageSrc);
     else setAadhaarBack(imageSrc);
   };
 
-  const base64ToFile = (base64:string, filename:string)=>{
+  const base64ToFile = (base64: string, filename: string) => {
+    const arr = base64.split(",");
+    const mime = arr[0].match(/:(.*?);/)?.[1] || "image/jpeg";
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
 
-    const arr = base64.split(',')
+    while (n--) u8arr[n] = bstr.charCodeAt(n);
 
-    const mime =
-      arr[0].match(/:(.*?);/)?.[1] || "image/jpeg"
-
-    const bstr =
-      atob(arr[1])
-
-    let n = bstr.length
-
-    const u8arr = new Uint8Array(n)
-
-    while(n--){
-      u8arr[n] = bstr.charCodeAt(n)
-    }
-
-    return new File(
-      [u8arr],
-      filename,
-      {type:mime}
-    )
-
-  }
+    return new File([u8arr], filename, { type: mime });
+  };
 
   const handleCaptureComplete = async () => {
     setLoading(true);
 
     if (!liveSelfie || !aadhaarFront || !aadhaarBack) {
-
-      alert("Please capture all three images before proceeding.");
-
+      alert("Capture all images first.");
       setLoading(false);
-
       return;
     }
 
     try {
-
       const formdata = new FormData();
 
-      const selfieFile = base64ToFile(liveSelfie, "selfie.jpg");
-      const frontFile = base64ToFile(aadhaarFront, "aadhaar_front.jpg");
-      const backFile = base64ToFile(aadhaarBack, "aadhaar_back.jpg");
+      formdata.append("image", base64ToFile(liveSelfie, "selfie.jpg"));
+      formdata.append("id_front_image", base64ToFile(aadhaarFront, "front.jpg"));
+      formdata.append("id_back_image", base64ToFile(aadhaarBack, "back.jpg"));
 
-      formdata.append("image", selfieFile);
-      formdata.append("id_front_image", frontFile);
-      formdata.append("id_back_image", backFile);
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/students/attendance`,
+        {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${token || ""}`,
+          },
+          body: formdata,
+        }
+      );
 
-      // const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/auth-image`, {
-      //   method: "POST",
-
-      //   // headers: { "Content-Type": "application/json" },
-
-      //   body: formdata,
-      // });
-
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/attendance`, {
-        method: "POST",
-
-        headers: {
-          "authorization": `Bearer ${token || ""}`
-        },
-
-        body: formdata,
-      });
-
-      localStorage.setItem("liveSelfie", liveSelfie);
-      localStorage.setItem("aadhaarFront", aadhaarFront);
-      localStorage.setItem("aadhaarBack", aadhaarBack);
-
-      if (res.ok) router.push("/student-dashboard");
-      else console.error("Failed to update capture status");
-
-    } catch (error) {
-
-      console.error("Error during capture complete:", error);
-
-      alert("An error occurred while submitting your images. Please try again.");
-
+      if (res.ok) {
+        router.push("/student-dashboard");
+      } else {
+        alert("Upload failed");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Upload error");
     } finally {
-
       setLoading(false);
     }
-
   };
 
   const handleUserMediaError = (error: any) => {
-    console.error('Error accessing webcam:', error);
-
-    if (error.name === 'NotAllowedError' || error.name === 'NotFoundError') {
-      setCameraError('Camera access was denied. Please allow camera permissions to continue.');
+    if (error.name === "NotAllowedError") {
+      setCameraError("Camera permission denied.");
     } else {
-      setCameraError('An error occurred while accessing the camera.');
+      setCameraError("Camera error occurred.");
     }
   };
 
   const handleUserLogout = async () => {
-    try {
-      await signOut({ redirect: false });
-      router.push(getLocalizedUrl('/student-login', locale as Locale));
-    } catch (error) {
-      console.error(error);
-    }
+    await signOut({ redirect: false });
+    router.push(getLocalizedUrl("/student-login", locale as Locale));
   };
 
   return (
-    <section className={classnames('md:plb-[100px] plb-6', frontCommonStyles.layoutSpacing)}>
+    <section className={classnames("md:plb-[100px] plb-6", frontCommonStyles.layoutSpacing)}>
       <Grid container spacing={6}>
-        <Grid item xs={12} display={'flex'} justifyContent={'flex-end'}>
-          <Button
-            fullWidth
-            variant='contained'
-            color='error'
-            size='small'
-            endIcon={<i className='tabler-logout' />}
-            onClick={handleUserLogout}
-            sx={{ '& .MuiButton-endIcon': { marginInlineStart: 1.5 } }}
-            className="w-fit"
-          >
+        <Grid item xs={12} display="flex" justifyContent="flex-end">
+          <Button color="error" size="small" onClick={handleUserLogout}>
             Logout
           </Button>
         </Grid>
 
-        {/* Webcam Section */}
+        {/* Webcam */}
         <Grid item xs={12} sm={6}>
           <Card>
-            <CardHeader title='Capture Images' />
+            <CardHeader title="Capture Images" />
             <CardContent>
-              {cameraError && (
-                <div style={{ color: 'red', marginBottom: '1rem' }}>
-                  <p>{cameraError}</p>
-                  <p>Please ensure you have granted camera permissions.</p>
-                </div>
-              )}
-              <Webcam
-                audio={false}
-                ref={webcamRef}
-                screenshotFormat="image/jpeg"
-                width="100%"
-                mirrored={false}
-                videoConstraints={{
-                  facingMode: facingMode
-                }}
-                key={facingMode}
-                onUserMediaError={handleUserMediaError}
-                className="rounded"
-              />
-              <p style={{ color: faceDetected ? 'green' : 'red', fontWeight: 'bold', marginTop: '0.5rem' }}>
-                {faceDetected ? 'Face Detected ✅' : 'No Face Detected ❌'}
+              {cameraError && <p style={{ color: "red" }}>{cameraError}</p>}
+
+              <div style={{ position: "relative", width: "100%" }}>
+                <Webcam
+                  ref={webcamRef}
+                  audio={false}
+                  screenshotFormat="image/jpeg"
+                  width="100%"
+                  mirrored={false}
+                  videoConstraints={{ facingMode }}
+                  key={facingMode}
+                  onUserMediaError={handleUserMediaError}
+                />
+
+                <canvas
+                  ref={canvasRef}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                  }}
+                />
+              </div>
+
+              <p style={{ color: faceDetected ? "green" : "red", fontWeight: "bold" }}>
+                {faceDetected ? "Single Face Detected ✅" : "No / Multiple Faces ❌"}
               </p>
+
+              {multipleFaces && (
+                <p style={{ color: "orange" }}>Multiple faces detected ⚠️</p>
+              )}
+
               <div className="mt-4 flex gap-2 flex-wrap">
                 <Button
                   variant="outlined"
