@@ -740,8 +740,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+
 import { useParams, useRouter } from "next/navigation";
+
 import { signOut, useSession } from "next-auth/react";
+
 import classnames from "classnames";
 import Webcam from "react-webcam";
 
@@ -799,6 +802,7 @@ const CapturePage = () => {
         // throttle (300ms)
         if (now - lastDetectionTime < 300) {
           requestAnimationFrame(detect);
+
           return;
         }
 
@@ -827,6 +831,7 @@ const CapturePage = () => {
           const resized = faceapi.resizeResults(detections, displaySize);
 
           const ctx = canvas.getContext("2d");
+
           if (ctx) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             faceapi.draw.drawDetections(canvas, resized);
@@ -890,6 +895,7 @@ const CapturePage = () => {
     if (!liveSelfie || !aadhaarFront || !aadhaarBack) {
       alert("Capture all images first.");
       setLoading(false);
+
       return;
     }
 
