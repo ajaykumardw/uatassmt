@@ -34,7 +34,6 @@ export async function GET(req: Request) {
   const studentsWithFormattedAadhaar = students.map(student =>  {
     return {
       ...student,
-      attendance: 1,
       aadhaar_no: student.aadhaar_no ? maskAadhaar(decrypt(student.aadhaar_no)) : null
     };
   });

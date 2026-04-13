@@ -97,7 +97,7 @@ import prisma from "@/libs/prisma";
 
 import { decrypt } from "@/utils/encryption";
 
-import { sscImagePath } from "@/configs/customDataConfig";
+import { agencyImagePath, sscImagePath } from "@/configs/customDataConfig";
 
 export async function GET(
   req: Request,
@@ -154,6 +154,12 @@ export async function GET(
                   }
                 }
 
+              }
+            },
+            agency: {
+              select: {
+                id: true,
+                avatar: true,
               }
             },
             training_partner: true
@@ -218,6 +224,60 @@ export async function GET(
       ])
     );
 
+//   const report = questions.map((item, index) => {
+
+//     const question =
+//       item.questions;
+
+//     const result =
+//       resultMap.get(question.id);
+
+//     const pcData =
+//       question.pc_questions?.[0];
+
+//     const options: any = {
+
+//       1: question.option1,
+//       2: question.option2,
+//       3: question.option3,
+//       4: question.option4,
+//       5: question.option5
+
+//     };
+
+//     const correct =
+//       options[question.answer || 0] || "--";
+
+//     const studentAnswer =
+//       result?.student_answer
+//         ? options[result.student_answer]
+//         : "--";
+
+//     return {
+
+//       sr_no: index + 1,
+
+//       nos_name:
+//         pcData?.pc?.nos?.nos_name || "",
+
+//       pc_name:
+//         pcData?.pc?.pc_name || "",
+
+//       question:
+//         question.question,
+
+//       correct_answer:
+//         correct,
+
+//       candidate_response:
+//         studentAnswer,
+
+//       status: !result ? -1 : result.student_answer === question.answer ? 1 : result.student_answer == 0 ? -1 : 0
+
+//     };
+
+//   });
+
   const report = questions.map((item, index) => {
 
     const question =
@@ -228,6 +288,53 @@ export async function GET(
 
     const pcData =
       question.pc_questions?.[0];
+
+    let openTime = "--";
+    let submitTime = "--";
+    let duration = "--";
+
+    if (result?.attempt_time_data) {
+        try {
+        const attempts: any[] = JSON.parse(result.attempt_time_data);
+
+        if (attempts.length > 0) {
+
+            // ✅ First open time
+            const firstOpen = attempts[0][1];
+            if (firstOpen) {
+            openTime = format(new Date(firstOpen), "HH:mm:ss");
+            }
+
+            // ✅ Last submit time
+            const lastClose = attempts[attempts.length - 1][2];
+            if (lastClose) {
+            submitTime = format(new Date(lastClose), "HH:mm:ss");
+            }
+
+            // ✅ Total duration (sum of all attempts)
+            let totalSeconds = 0;
+
+            for (const attempt of attempts) {
+                const start = attempt[1] ? new Date(attempt[1]) : null;
+                const end = attempt[2] ? new Date(attempt[2]) : null;
+
+                if (start && end) {
+                    totalSeconds += Math.floor((end.getTime() - start.getTime()) / 1000);
+                }
+            }
+
+            const h = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+            const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+            const s = String(totalSeconds % 60).padStart(2, "0");
+
+            duration = `${h}:${m}:${s}`;
+        }
+
+        } catch (e) {
+            console.log("Invalid attempt_time_data:", result.attempt_time_data);
+        }
+    }
+
 
     const options: any = {
 
@@ -266,7 +373,11 @@ export async function GET(
       candidate_response:
         studentAnswer,
 
-      status: !result ? -1 : result.student_answer === question.answer ? 1 : result.student_answer == 0 ? -1 : 0
+      status: !result ? -1 : result.student_answer === question.answer ? 1 : result.student_answer == 0 ? -1 : 0,
+
+      open_time: openTime,
+      submit_time: submitTime,
+      duration: duration,
 
     };
 
@@ -302,6 +413,8 @@ export async function GET(
     candidate: {
 
       ssc_image: student.batch.qualification_pack.ssc?.ssc_image ? sscImagePath(student.batch.qualification_pack.ssc.id, student.batch.qualification_pack.ssc.ssc_image) || null : null,
+
+      agency_image: student.batch.agency?.avatar ? agencyImagePath(student.batch.agency.id, student.batch.agency.avatar) || null : null,
 
       name: student.candidate_name.toUpperCase(),
       candidate_id: student.candidate_id,

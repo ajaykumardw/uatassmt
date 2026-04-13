@@ -823,8 +823,6 @@ const CandidateWiseResultTable = () => {
 
       const data = await res.json();
 
-      console.log("candidates: ", data);
-
       setData(data);
 
     } else {
@@ -892,7 +890,7 @@ const CandidateWiseResultTable = () => {
         header: 'Status',
         cell: ({ row }) =>
           <>
-        {row.original.attendance}
+        {/* {row.original.attendance} */}
         { row.original.attendance == 0 ? (
           <Chip
             variant='outlined'
