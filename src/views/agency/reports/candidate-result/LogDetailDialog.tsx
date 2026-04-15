@@ -1,13 +1,10 @@
-import { useEffect, useState } from "react";
+import { type SyntheticEvent, useEffect, useState } from "react";
 
 import Button from "@mui/material/Button"
 import Dialog from "@mui/material/Dialog"
 import DialogContent from "@mui/material/DialogContent"
 import DialogTitle from "@mui/material/DialogTitle"
-import Typography from "@mui/material/Typography";
-import Grid from "@mui/material/Grid";
 import CircularProgress from "@mui/material/CircularProgress";
-import IconButton from '@mui/material/IconButton'
 
 // import XLSX from 'xlsx';
 
@@ -16,8 +13,18 @@ import IconButton from '@mui/material/IconButton'
 // import type { batches, nos, pc, students } from "@prisma/client";
 
 // import tableStyles from '@core/styles/table.module.css'
+import TabContext from "@mui/lab/TabContext";
+import Tab from '@mui/material/Tab';
+import TabPanel from "@mui/lab/TabPanel";
 
+import Divider from "@mui/material/Divider";
+
+import CustomTabList from "@/@core/components/mui/TabList";
 import DialogCloseButton from "@/components/dialogs/DialogCloseButton";
+import QuestionWiseTimeTakenTable from "./QuestionWiseTimeTakenTable";
+import QuestionWiseLogDetailTable from "./QuestionWiseLogDetailTable";
+import CandidateDetail from "./CandidateDetail";
+
 
 // import { agencyImagePath } from "@/configs/customDataConfig";
 
@@ -30,17 +37,12 @@ type QuestionWiseLogDetailDialogProps = {
   candidateId: number | null
 }
 
-const QuestionWiseLogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } : QuestionWiseLogDetailDialogProps) => {
+const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } : QuestionWiseLogDetailDialogProps) => {
 
   const [logDetail, setLogDetail] = useState<any>(null);
   const [candidateDetails, setCandidateDetails] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-
-  const [visibleImages, setVisibleImages] = useState({
-    ssc: true,
-    tp: true,
-    agency: true
-  });
+  const [tabValue, setTabValue] = useState('1');
 
 //   const handleGenerateReport = async () => {
 
@@ -117,20 +119,22 @@ const QuestionWiseLogDetailDialog = ({ open, handleClose, selectedCandidate, can
     const failIcon = "data:image/svg+xml;base64," + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#dc2626" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg>`);
 
 
+
     const pdf = new jsPDF({
       orientation:"portrait",
       unit:"mm",
       format:"a4"
     });
 
+
     const tableColumn = [
       "SR. No.",
       "NOS Name",
       "PC Name",
       "Question",
-      "Correct Answer",
-      "Candidate's Response",
-      "Status"
+      tabValue === '1' ? "Correct Answer" : "Question open time (in hh:mm:ss)",
+      tabValue === '1' ? "Candidate's Response" : "Question close time (in hh:mm:ss)",
+      tabValue === '1' ? "Status" : "Duration"
     ];
 
     const tableRows:any[] = [];
@@ -142,9 +146,18 @@ const QuestionWiseLogDetailDialog = ({ open, handleClose, selectedCandidate, can
         nos_name: item.nos_name ,
         pc_name: item.pc_name ,
         question: item.question ,
-        correct_answer: item.correct_answer ,
-        candidate_response: item.candidate_response ,
-        status: item.status
+
+        col1: tabValue === '1'
+          ? item.correct_answer
+          : item.open_time,
+
+        col2: tabValue === '1'
+          ? item.candidate_response
+          : item.submit_time,
+
+        col3: tabValue === '1'
+          ? item.status
+          : item.duration
       });
 
     });
@@ -154,7 +167,16 @@ const QuestionWiseLogDetailDialog = ({ open, handleClose, selectedCandidate, can
     const failIconPng = await svgToPngBase64(failIcon);
 
     pdf.setFontSize(14);
-    pdf.text("Question Wise Log Detail", 105, 10, { align: "center" })
+
+    if (tabValue === '1') {
+
+      pdf.text("Question Wise Log Detail", 105, 10, { align: "center" })
+
+    } else if (tabValue === '2') {
+
+      pdf.text("Question Wise Time Taken Detail", 105, 10, { align: "center" })
+
+    }
 
     const rawLogos = [
       candidateDetails?.ssc_image,
@@ -294,9 +316,9 @@ const QuestionWiseLogDetailDialog = ({ open, handleClose, selectedCandidate, can
         row.nos_name,
         row.pc_name,
         row.question,
-        row.correct_answer,
-        row.candidate_response,
-        "",
+        row.col1,
+        row.col2,
+        tabValue === '1' ? "" : row.col3,
       ]),
 
       // startY:20,
@@ -320,16 +342,16 @@ const QuestionWiseLogDetailDialog = ({ open, handleClose, selectedCandidate, can
         1:{cellWidth:28},  // NOS
         2:{cellWidth:28},  // PC
         3:{cellWidth:52},  // Question
-        4:{cellWidth:32},  // Correct
-        5:{cellWidth:32},  // Response
-        6:{cellWidth:13},   // Status
+        4:{cellWidth: tabValue === "1" ? 32 : 30},  // Correct
+        5:{cellWidth: tabValue === "1" ? 32 : 30},  // Response
+        6:{cellWidth: tabValue === "1" ? 13 : 17},   // Status
       },
 
       margin:{left:5,right:5},
 
       // ✅ DRAW ICON HERE
       didDrawCell: function (data) {
-        if (data.section === 'body' && data.column.index === 6) {
+        if (data.section === 'body' && data.column.index === 6 && tabValue === '1') {
 
           const item = tableRows?.[data.row.index];
 
@@ -339,7 +361,7 @@ const QuestionWiseLogDetailDialog = ({ open, handleClose, selectedCandidate, can
             return;
           }
 
-          const status = item.status;
+          const status = item.col3;
 
           let icon: string | null = null;
 
@@ -383,7 +405,15 @@ const QuestionWiseLogDetailDialog = ({ open, handleClose, selectedCandidate, can
 
     });
 
-    pdf.save(`${selectedCandidate}_Question_Wise_Log_Detail.pdf`);
+    let fileName = "";
+
+    if (tabValue === '1') {
+      fileName = `${selectedCandidate}_Question_Wise_Log_Detail.pdf`;
+    } else if (tabValue === '2') {
+      fileName = `${selectedCandidate}_Question_Wise_Time_Taken_Detail.pdf`;
+    }
+
+    pdf.save(fileName);
 
     setLoading(false);
 
@@ -406,6 +436,10 @@ const QuestionWiseLogDetailDialog = ({ open, handleClose, selectedCandidate, can
     }
   }, [candidateId]);
 
+  const handleTabChange = (event: SyntheticEvent, newValue: string) => {
+    setTabValue(newValue)
+  }
+
   return (
     <Dialog
       fullWidth
@@ -420,7 +454,7 @@ const QuestionWiseLogDetailDialog = ({ open, handleClose, selectedCandidate, can
         <i className='tabler-x' />
       </DialogCloseButton>
       <DialogTitle variant='h4' className='flex gap-2 flex-wrap justify-between text-center sm:pbs-16 sm:pbe-6 sm:pli-16'>
-        Question Wise Log Details
+        Individual Candidate Report - {selectedCandidate}
 
         {/* <Button
           color='secondary'
@@ -442,130 +476,33 @@ const QuestionWiseLogDetailDialog = ({ open, handleClose, selectedCandidate, can
           PDF
         </Button>
       </DialogTitle>
-      {/* <form onSubmit={() => null}> */}
+      <Divider className="mb-4" />
       <DialogContent className='overflow-visible pbs-0 sm:pli-16'>
-        <div className='overflow-x-auto'>
-          <Grid container className='mb-4' spacing={2}>
-            <Grid item xs={12} className="flex gap-4">
-                {candidateDetails?.ssc_image && visibleImages.ssc && (
-                    <img src={candidateDetails?.ssc_image} alt="SSC Logo" className="object-contain" width={200} height={200} onError={() => setVisibleImages(prev => ({ ...prev, ssc: false}))} />
-                )}
-                {candidateDetails?.agency_image && visibleImages.agency && (
-                    <img src={candidateDetails?.agency_image} alt="Assessment Agency Logo" className="object-contain" width={200} height={200} onError={() => setVisibleImages(prev => ({...prev, agency: false}))} />
-                )}
-                {candidateDetails?.tp_image && visibleImages.tp && (
-                    <img src={candidateDetails?.tp_image} alt="TP Logo" className="object-contain" width={200} height={200} onError={() => setVisibleImages(prev => ({...prev, tp: false}))} />
-                )}
-            </Grid>
-            <Grid item xs={6} sm={6}>
-              <Typography variant='h6' className='mb-2'>
-                Batch : {candidateDetails?.batch}
-              </Typography>
-            </Grid>
-            <Grid item xs={6} sm={6}>
-              <Typography variant='h6' className='mb-2'>
-                Scheme : {candidateDetails?.scheme}
-              </Typography>
-            </Grid>
-            <Grid item xs={6} sm={6}>
-              <Typography variant='h6' className='mb-2'>
-                Sub-Scheme : {candidateDetails?.sub_scheme}
-              </Typography>
-            </Grid>
-            <Grid item xs={6} sm={6}>
-              <Typography variant='h6' className='mb-2'>
-                Assessment Date : {candidateDetails?.assessment_date}
-              </Typography>
-            </Grid>
-            <Grid item xs={6} sm={6}>
-              <Typography variant='h6' className='mb-2'>
-                Job Role : {candidateDetails?.qp}
-              </Typography>
-            </Grid>
-            <Grid item xs={6} sm={6}>
-              <Typography variant='h6' className='mb-2'>
-                TP/PIA{"'"}s Name : {candidateDetails?.partner}
-              </Typography>
-            </Grid>
-            <Grid item xs={6} sm={6}>
-              <Typography variant='h6' className='mb-2'>
-                Candidate{"'"}s Name : {candidateDetails?.name}
-              </Typography>
-            </Grid>
-            <Grid item xs={6} sm={6}>
-              <Typography variant='h6' className='mb-2'>
-                Candidate{"'"}s ID : {candidateDetails?.candidate_id}
-              </Typography>
-            </Grid>
-            <Grid item xs={6} sm={6}>
-              <Typography variant='h6' className='mb-2'>
-                Aadhaar No. : {candidateDetails?.aadhaar}
-              </Typography>
-            </Grid>
-            <Grid item xs={6} sm={6}>
-              <Typography variant='h6' className='mb-2'>
-                Total Marks : {candidateDetails?.total_marks}
-              </Typography>
-            </Grid>
-            <Grid item xs={6} sm={6}>
-              <Typography variant='h6' className='mb-2'>
-                Obtained Marks : {candidateDetails?.obtained_marks}
-              </Typography>
-            </Grid>
-            <Grid item xs={6} sm={6}>
-              <Typography variant='h6' className='mb-2'>
-                Result Status: {candidateDetails?.result_status}
-              </Typography>
-            </Grid>
-            <Grid item xs={6} sm={6}>
-              <Typography variant='h6' className='mb-2'>
-                Percentage (%): {candidateDetails?.percentage}
-              </Typography>
-            </Grid>
-          </Grid>
-
-          <table className={` text-start text-xs m-0 table-pc-wise`}>
-            <thead>
-              <tr>
-                <th>SR. No.</th>
-                <th>NOS Name</th>
-                <th>PC Name</th>
-                <th>Question</th>
-                <th>Correct Answer</th>
-                <th>Candidate Response</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logDetail?.map((item: any, index: number) => (
-                <tr key={index}>
-                    <td>{item.sr_no}</td>
-                    <td>{item.nos_name}</td>
-                    <td>{item.pc_name}</td>
-                    <td>{item.question}</td>
-                    <td>{item.correct_answer}</td>
-                    <td>{item.candidate_response}</td>
-                    <td>
-                        {item.status === 1 ?
-                            <IconButton aria-label='correct' color='success' readOnly>
-                                <i className="tabler-check" />
-                            </IconButton>
-                        :
-                        item.status === 0 ?
-                            <IconButton aria-label='wrong' color='error'>
-                                <i className="tabler-x" />
-                            </IconButton>
-                        : '--'}
-                    </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <TabContext value={tabValue}>
+          <CustomTabList pill='true' onChange={handleTabChange} variant="scrollable" aria-label="Candidate Report">
+            <Tab value='1' label="Question Wise Log" />
+            <Tab value='2' label="Question Wise Time Taken" />
+          </CustomTabList>
+          <TabPanel value='1'>
+            <div className='overflow-x-auto'>
+              <CandidateDetail candidateDetails={candidateDetails} />
+              <QuestionWiseLogDetailTable logDetail={logDetail} />
+            </div>
+          </TabPanel>
+          <TabPanel value='2'>
+            <div className='overflow-x-auto'>
+              {candidateDetails && (
+                <CandidateDetail candidateDetails={candidateDetails} />
+              )}
+              {logDetail && (
+                <QuestionWiseTimeTakenTable logDetail={logDetail} />
+              )}
+            </div>
+          </TabPanel>
+        </TabContext>
       </DialogContent>
-      {/* </form> */}
     </Dialog>
   )
 }
 
-export default QuestionWiseLogDetailDialog;
+export default LogDetailDialog;

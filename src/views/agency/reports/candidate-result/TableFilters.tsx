@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import CardContent from '@mui/material/CardContent';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
 
 import type { batches, exam_sets } from '@prisma/client';
 
@@ -14,7 +15,8 @@ import type { SSCType } from '@/types/sectorskills/sscType';
 import type { QPType } from '@/types/qualification-pack/qpType';
 
 // Component Imports
-import CustomTextField from '@core/components/mui/TextField';
+// import CustomTextField from '@core/components/mui/TextField';
+
 import { MenuProps } from '@/configs/customDataConfig';
 
 
@@ -144,13 +146,15 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
     <CardContent>
       <Grid container spacing={6}>
         <Grid item xs={12} sm={4}>
-          <CustomTextField
+          <TextField
             select
             fullWidth
             id='select-ssc'
             value={ssc}
             onChange={(e) => handleSSCChange(e.target.value)}
             SelectProps={{ MenuProps, displayEmpty: true }}
+            label="SSC"
+            size="small"
           >
             <MenuItem value='-1'>Select SSC</MenuItem>
             {sscData.map((ssc, index) => (
@@ -158,16 +162,18 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
                 {ssc.ssc_name}
               </MenuItem>
             ))}
-          </CustomTextField>
+          </TextField>
         </Grid>
         <Grid item xs={12} sm={4}>
-          <CustomTextField
+          <TextField
             select
             fullWidth
             id='select-qp'
             value={qp}
             onChange={(e) => handleQPChange(e.target.value)}
+            size="small"
             SelectProps={{ MenuProps, displayEmpty: true }}
+            label="Qualification Pack"
           >
             <MenuItem value='-1'>Select Qualification Pack</MenuItem>
             {qpData.length > 0 ? (
@@ -179,16 +185,18 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
             ) : (
               <MenuItem disabled>No qualification pack found</MenuItem>
             )}
-          </CustomTextField>
+          </TextField>
         </Grid>
         <Grid item xs={12} sm={4}>
-          <CustomTextField
+          <TextField
             select
             fullWidth
             id='select-batch'
             value={batchId}
             onChange={e => handleBatchChange(e.target.value)}
+            size="small"
             SelectProps={{ MenuProps, displayEmpty: true }}
+            label="Batch"
           >
             <MenuItem value='-1'>Select Batch</MenuItem>
             {batchData.length > 0 ? (
@@ -200,7 +208,7 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
             ) : (
               <MenuItem disabled>No batch found</MenuItem>
             )}
-          </CustomTextField>
+          </TextField>
         </Grid>
       </Grid>
     </CardContent>

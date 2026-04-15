@@ -301,12 +301,14 @@ export async function GET(
 
             // ✅ First open time
             const firstOpen = attempts[0][1];
+
             if (firstOpen) {
             openTime = format(new Date(firstOpen), "HH:mm:ss");
             }
 
             // ✅ Last submit time
             const lastClose = attempts[attempts.length - 1][2];
+
             if (lastClose) {
             submitTime = format(new Date(lastClose), "HH:mm:ss");
             }

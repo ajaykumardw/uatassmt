@@ -74,7 +74,7 @@ import tableStyles from '@core/styles/table.module.css'
 // import CustomAvatar from '@/@core/components/mui/Avatar';
 
 import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
-import PCReportDialog from './QuestionWiseLogDetailDialog';
+import LogDetailDialog from './LogDetailDialog';
 
 // declare module '@tanstack/table-core' {
 //   interface FilterFns {
@@ -724,7 +724,7 @@ const CandidateWiseResultTable = () => {
   // const [examSetId, setExamSetId] = useState(0);
 
   const [selectedBatch, setBatch] = useState<number | null>(null);
-  const [pcReportOpen, setPCReportOpen] = useState(false);
+  const [logDetailOpen, setLogDetailOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<string | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<number | null>(null);
 
@@ -846,10 +846,10 @@ const CandidateWiseResultTable = () => {
     }
   }, [selectedBatch])
 
-  const handlePCReportOpen = (candidate: string, id: number) => {
+  const handleLogReportOpen = (candidate: string, id: number) => {
     setSelectedCandidate(candidate);
     setSelectedCandidateId(id);
-    setPCReportOpen(!pcReportOpen);
+    setLogDetailOpen(!logDetailOpen);
   }
 
 
@@ -920,7 +920,7 @@ const CandidateWiseResultTable = () => {
                 <Button
                   variant="outlined"
                   size="small"
-                  onClick={() => handlePCReportOpen(row.original.candidate_id, row.original.id)}
+                  onClick={() => handleLogReportOpen(row.original.candidate_id, row.original.id)}
                 >
                   View Report
                 </Button>
@@ -1136,7 +1136,7 @@ const CandidateWiseResultTable = () => {
           }}
         />
       </Card>
-      <PCReportDialog open={pcReportOpen} handleClose={() => {setPCReportOpen(false); setSelectedCandidate(null); setSelectedCandidateId(null); }} selectedCandidate={selectedCandidate} candidateId={selectedCandidateId} />
+      <LogDetailDialog open={logDetailOpen} handleClose={() => {setLogDetailOpen(false); setSelectedCandidate(null); setSelectedCandidateId(null); }} selectedCandidate={selectedCandidate} candidateId={selectedCandidateId} />
     </>
   )
 }
