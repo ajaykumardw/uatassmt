@@ -98,6 +98,7 @@ import prisma from "@/libs/prisma";
 import { decrypt } from "@/utils/encryption";
 
 import { agencyImagePath, sscImagePath } from "@/configs/customDataConfig";
+import getValidImage from "@/utils/getValidImage";
 
 export async function GET(
   req: Request,
@@ -147,6 +148,13 @@ export async function GET(
                 version: true,
                 total_theory_marks: true,
                 theory_cutoff_marks: true,
+                total_practical_marks: true,
+                practical_cutoff_marks: true,
+                total_viva_marks: true,
+                viva_cutoff_marks: true,
+                total_project_marks: true,
+                total_marks: true,
+                overall_cutoff_marks: true,
                 ssc: {
                   select: {
                     id: true,
@@ -351,6 +359,16 @@ export async function GET(
     const correct =
       options[question.answer || 0] || "--";
 
+    const marks = item.marks || question.marks || 0;
+
+    const isCorrect = result?.student_answer === question.answer;
+
+    let obtainedMarks = 0;
+
+    if (isCorrect) {
+      obtainedMarks = marks;
+    }
+
     const studentAnswer =
       result?.student_answer
         ? options[result.student_answer]
@@ -380,16 +398,141 @@ export async function GET(
       open_time: openTime,
       submit_time: submitTime,
       duration: duration,
+      max_marks: marks,
+      obtained_marks: obtainedMarks,
+      question_type: question.question_type
 
     };
 
   });
 
-  const totalMarks = Number(
+  // =========================
+  // PRACTICAL SECTION
+  // =========================
+
+  const practicalAttempts = await prisma.student_question_attempts.findMany({
+    where: {
+      student_id: studentId,
+      question: {
+        question_type: "practical"
+      }
+    },
+    include: {
+      question: {
+        include: {
+          pc_questions: {
+            include: {
+              pc: {
+                include: {
+                  nos: true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    orderBy: {
+      id: "asc"
+    }
+  });
+
+  const practical_report = practicalAttempts.map((item, index) => {
+    const pcData = item.question.pc_questions?.[0];
+
+    return {
+      sr_no: index + 1,
+
+      nos_name: pcData?.pc?.nos?.nos_name || "",
+
+      pc_name: pcData?.pc?.pc_name || "",
+
+      question: item.question.question,
+
+      max_marks: Number(item.max_marks || 0),
+
+      obtained_marks: Number(item.obtained_marks || 0),
+
+      question_type: item.question.question_type,
+    };
+  });
+
+  // =========================
+  // VIVA SECTION
+  // =========================
+
+  const vivaAttempts = await prisma.student_question_attempts.findMany({
+    where: {
+      student_id: studentId,
+      question: {
+        question_type: "viva"
+      }
+    },
+    include: {
+      question: {
+        include: {
+          pc_questions: {
+            include: {
+              pc: {
+                include: {
+                  nos: true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    orderBy: {
+      id: "asc"
+    }
+  });
+
+  const viva_report = vivaAttempts.map((item, index) => {
+    const pcData = item.question.pc_questions?.[0];
+
+    return {
+      sr_no: index + 1,
+
+      nos_name: pcData?.pc?.nos?.nos_name || "",
+
+      pc_name: pcData?.pc?.pc_name || "",
+
+      question: item.question.question,
+
+      max_marks: Number(item.max_marks || 0),
+
+      obtained_marks: Number(item.obtained_marks || 0),
+
+      question_type: item.question.question_type,
+    };
+  });
+
+  const totalTheoryMarks = Number(
     student.batch.qualification_pack.total_theory_marks
   );
 
-  let obtainedMarks = 0;
+  const totalPracticalMarks = Number(
+    student.batch.qualification_pack.total_practical_marks
+  )
+
+  const totalVivaMarks = Number(
+    student.batch.qualification_pack.total_viva_marks
+  )
+
+  const totalProjectMarks = Number(
+    student.batch.qualification_pack.total_project_marks
+  )
+
+  const totalMarks = Number(
+    student.batch.qualification_pack.total_marks
+  );
+
+  let obtainedTheoryMarks = 0;
+  let obtainedPracticalMarks = 0;
+  let obtainedVivaMarks = 0;
+  
+  const obtainedProjectMarks = 0;
 
   questions.forEach((item) => {
     const question = item.questions;
@@ -398,25 +541,72 @@ export async function GET(
     const marks = item.marks || question.marks || 0;
 
     if (result && result.student_answer === question.answer) {
-      obtainedMarks += marks;
+      obtainedTheoryMarks += marks;
     }
   });
 
-  const percentage = totalMarks > 0 ? (obtainedMarks / totalMarks) * 100 : 0;
+  practicalAttempts.forEach((item) => {
+    obtainedPracticalMarks += Number(item.obtained_marks || 0);
+  });
 
-  const cutoff =
+  vivaAttempts.forEach((item) => {
+    obtainedVivaMarks += Number(item.obtained_marks || 0);
+  });
+
+  const theoryPercentage = totalTheoryMarks > 0 ? (obtainedTheoryMarks / totalTheoryMarks) * 100 : 0;
+  const practicalPercentage = totalPracticalMarks > 0 ? (obtainedPracticalMarks / totalPracticalMarks) * 100 : 0;
+  const vivaPercentage = totalVivaMarks > 0 ? (obtainedVivaMarks / totalVivaMarks) * 100 : 0;
+  const projectPercentage = totalProjectMarks > 0 ? (obtainedProjectMarks / totalProjectMarks) * 100 : 0;
+
+  const theoryCutoff =
     Number(student.batch.qualification_pack.theory_cutoff_marks) || 0;
 
-  const resultStatus =
-    percentage >= cutoff ? "PASS" : "FAIL";
+  const practicalCutoff =
+    Number(student.batch.qualification_pack.practical_cutoff_marks) || 0;
+
+  const vivaCutoff =
+    Number(student.batch.qualification_pack.viva_cutoff_marks) || 0;
+
+  const projectCutoff =
+    Number(student.batch.qualification_pack.overall_cutoff_marks) || 0;
+
+  const theoryResultStatus =
+    theoryPercentage >= theoryCutoff ? "PASS" : "FAIL";
+
+  const practicalResultStatus =
+    practicalPercentage >= practicalCutoff ? "PASS" : "FAIL";
+
+  const vivaResultStatus =
+    vivaPercentage >= vivaCutoff ? "PASS" : "FAIL";
+
+  const projectResultStatus =
+    projectPercentage >= projectCutoff ? "PASS" : "FAIL";
+
+  const obtainedMarks = obtainedTheoryMarks + obtainedPracticalMarks + obtainedVivaMarks + obtainedProjectMarks;
+
+  const overallCutoff =
+    Number(student.batch.qualification_pack.overall_cutoff_marks) || 0;
+
+  const overallPercentage = totalMarks > 0 ? (obtainedMarks / totalMarks) * 100 : 0;
+
+  const overallResultStatus =
+    overallPercentage >= overallCutoff ? "PASS" : "FAIL";
+
+  const sscImage = student.batch.qualification_pack.ssc?.ssc_image
+    ? getValidImage(student.batch.qualification_pack.ssc.ssc_image, `ssc/${student.batch.qualification_pack.ssc.id}`)
+    : null;
+
+  const agencyImage = student.batch.agency?.avatar
+    ? getValidImage(student.batch.agency.avatar, `agency/${student.batch.agency.id}`)
+    : null;
 
   return NextResponse.json({
 
     candidate: {
 
-      ssc_image: student.batch.qualification_pack.ssc?.ssc_image ? sscImagePath(student.batch.qualification_pack.ssc.id, student.batch.qualification_pack.ssc.ssc_image) || null : null,
+      ssc_image: sscImage ? sscImagePath(student.batch.qualification_pack.ssc.id, sscImage) || null : null,
 
-      agency_image: student.batch.agency?.avatar ? agencyImagePath(student.batch.agency.id, student.batch.agency.avatar) || null : null,
+      agency_image: agencyImage ? agencyImagePath(student.batch.agency.id, agencyImage) || null : null,
 
       name: student.candidate_name.toUpperCase(),
       candidate_id: student.candidate_id,
@@ -442,12 +632,30 @@ export async function GET(
 
       total_marks: totalMarks,
       obtained_marks: obtainedMarks,
-      percentage: percentage.toFixed(2),
-      result_status: resultStatus
+      percentage: overallPercentage.toFixed(2),
+      result_status: overallResultStatus,
+      total_theory_marks: totalTheoryMarks,
+      obtained_theory_marks: obtainedTheoryMarks,
+      theory_percentage: theoryPercentage.toFixed(2),
+      theory_result_status: theoryResultStatus,
+      total_practical_marks: totalPracticalMarks,
+      obtained_practical_marks: obtainedPracticalMarks,
+      practical_percentage: practicalPercentage.toFixed(2),
+      practical_result_status: practicalResultStatus,
+      total_viva_marks: totalVivaMarks,
+      obtained_viva_marks: obtainedVivaMarks,
+      viva_percentage: vivaPercentage.toFixed(2),
+      viva_result_status: vivaResultStatus,
+      total_project_marks: totalProjectMarks,
+      obtained_project_marks: obtainedProjectMarks,
+      project_percentage: projectPercentage.toFixed(2),
+      project_result_status: projectResultStatus
 
     },
 
     report,
+    practical_report,
+    viva_report
 
 
   });

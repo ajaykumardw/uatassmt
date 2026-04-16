@@ -24,6 +24,7 @@ import DialogCloseButton from "@/components/dialogs/DialogCloseButton";
 import QuestionWiseTimeTakenTable from "./QuestionWiseTimeTakenTable";
 import QuestionWiseLogDetailTable from "./QuestionWiseLogDetailTable";
 import CandidateDetail from "./CandidateDetail";
+import QuestionReportTable from "./QuestionReportTable";
 
 
 // import { agencyImagePath } from "@/configs/customDataConfig";
@@ -40,9 +41,12 @@ type QuestionWiseLogDetailDialogProps = {
 const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } : QuestionWiseLogDetailDialogProps) => {
 
   const [logDetail, setLogDetail] = useState<any>(null);
+  const [practicalReport, setPracticalReport] = useState<any>(null);
+  const [vivaReport, setVivaReport] = useState<any>(null);
+  const [projectReport, setProjectReport] = useState<any>(null);
   const [candidateDetails, setCandidateDetails] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [tabValue, setTabValue] = useState('1');
+  const [tabValue, setTabValue] = useState('result_sheet');
 
 //   const handleGenerateReport = async () => {
 
@@ -132,9 +136,9 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
       "NOS Name",
       "PC Name",
       "Question",
-      tabValue === '1' ? "Correct Answer" : "Question open time (in hh:mm:ss)",
-      tabValue === '1' ? "Candidate's Response" : "Question close time (in hh:mm:ss)",
-      tabValue === '1' ? "Status" : "Duration"
+      tabValue === 'question_wise_log' ? "Correct Answer" : "Question open time (in hh:mm:ss)",
+      tabValue === 'question_wise_log' ? "Candidate's Response" : "Question close time (in hh:mm:ss)",
+      tabValue === 'question_wise_log' ? "Status" : "Duration"
     ];
 
     const tableRows:any[] = [];
@@ -147,15 +151,15 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
         pc_name: item.pc_name ,
         question: item.question ,
 
-        col1: tabValue === '1'
+        col1: tabValue === 'question_wise_log'
           ? item.correct_answer
           : item.open_time,
 
-        col2: tabValue === '1'
+        col2: tabValue === 'question_wise_log'
           ? item.candidate_response
           : item.submit_time,
 
-        col3: tabValue === '1'
+        col3: tabValue === 'question_wise_log'
           ? item.status
           : item.duration
       });
@@ -168,11 +172,99 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
 
     pdf.setFontSize(14);
 
-    if (tabValue === '1') {
+    const theoryTableColumns = [
+      "SR. No.",
+      "NOS Name",
+      "PC Name",
+      "Question",
+      "Correct Answer",
+      "Candidate's Response",
+      "Maximum Marks",
+      "Obtained Marks",
+    ]
+
+    const practicalAndVivaTableColumns = [
+      "SR. No.",
+      "NOS Name",
+      "PC Name",
+      "Question",
+      "Maximum Marks",
+      "Obtained Marks",
+    ]
+
+    const projectTableColumns = [
+      "SR. No.",
+      "NOS Name",
+      "PC Name",
+      "Maximum Marks",
+      "Obtained Marks",
+    ]
+
+    const theoryTableRows:any[] = [];
+    const practicalTableRows:any[] = [];
+    const vivaTableRows:any[] = [];
+    const projectTableRows:any[] = [];
+
+    logDetail?.forEach((item:any)=>{
+
+      theoryTableRows.push({
+        sr_no: item.sr_no ,
+        nos_name: item.nos_name ,
+        pc_name: item.pc_name ,
+        question: item.question ,
+        correct_answer: item.correct_answer,
+        candidate_response: item.candidate_response,
+        max_marks: item.max_marks,
+        obtained_marks: item.obtained_marks
+      });
+
+    });
+
+    practicalReport?.forEach((item:any)=>{
+
+      practicalTableRows.push({
+        sr_no: item.sr_no ,
+        nos_name: item.nos_name ,
+        pc_name: item.pc_name ,
+        question: item.question ,
+        max_marks: item.max_marks,
+        obtained_marks: item.obtained_marks
+      });
+    });
+
+    vivaReport?.forEach((item:any)=>{
+      vivaTableRows.push({
+        sr_no: item.sr_no ,
+        nos_name: item.nos_name ,
+        pc_name: item.pc_name ,
+        question: item.question ,
+        max_marks: item.max_marks,
+        obtained_marks: item.obtained_marks
+      });
+    });
+
+    projectReport?.forEach((item:any)=>{
+      projectTableRows.push({
+        sr_no: item.sr_no ,
+        nos_name: item.nos_name ,
+        pc_name: item.pc_name ,
+        max_marks: item.max_marks,
+        obtained_marks: item.obtained_marks
+      });
+    });
+
+
+    if (tabValue === 'result_sheet') {
+
+      pdf.text("Result Sheet", 105, 10, { align: "center" })
+
+    }
+
+    if (tabValue === 'question_wise_log') {
 
       pdf.text("Question Wise Log Detail", 105, 10, { align: "center" })
 
-    } else if (tabValue === '2') {
+    } else if (tabValue === 'question_wise_time_taken') {
 
       pdf.text("Question Wise Time Taken Detail", 105, 10, { align: "center" })
 
@@ -296,120 +388,303 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
         ],
         [
           "Aadhaar No.:", candidateDetails?.aadhaar ?? "-",
-          "Total Marks:", candidateDetails?.total_marks ?? "-",
+          "Total Marks:", tabValue === 'result_sheet' ? candidateDetails?.total_marks ?? "-" : candidateDetails?.total_theory_marks ?? "-",
         ],
         [
-          "Obtained Marks:", candidateDetails?.obtained_marks ?? "-",
-          "Result:", candidateDetails?.result_status ?? "-",
+          "Obtained Marks:", tabValue === 'result_sheet' ? candidateDetails?.obtained_marks ?? "-" : candidateDetails?.obtained_theory_marks ?? "-",
+          "Result:", tabValue === 'result_sheet' ? candidateDetails?.result_status ?? "-" : candidateDetails?.theory_result_status ?? "-",
         ],
         [
-          "Percentage (%):", candidateDetails?.percentage ?? "-"
+          "Percentage (%):", tabValue === 'result_sheet' ? candidateDetails?.percentage ?? "-" : candidateDetails?.theory_percentage ?? "-"
         ],
       ],
     });
 
-    autoTable(pdf,{
-      head:[tableColumn],
+    if (tabValue === 'result_sheet') {
 
-      body:tableRows.map(row => [
-        row.sr_no,
-        row.nos_name,
-        row.pc_name,
-        row.question,
-        row.col1,
-        row.col2,
-        tabValue === '1' ? "" : row.col3,
-      ]),
+      if(theoryTableRows.length > 0) {
 
-      // startY:20,
-      startY: (pdf as any).lastAutoTable.finalY + 5,
+        autoTable(pdf,{
+          head:[
+            [
+              { content: "Theory", colSpan: 8, styles:{ halign:'center', fillColor: "#0047AB", textColor: "#FFFFFF", fontStyle: 'bold' } }
+            ],
+            theoryTableColumns
+          ],
+          body:theoryTableRows.map(row => [
+            row.sr_no,
+            row.nos_name,
+            row.pc_name,
+            row.question,
+            row.correct_answer,
+            row.candidate_response,
+            row.max_marks,
+            row.obtained_marks
+          ]),
+          startY: (pdf as any).lastAutoTable.finalY + 5,
+          theme:'grid',
+          headStyles:{
+            fillColor: false,
+            textColor: "#000000",
+            fontStyle: 'bold',
+            lineWidth: 0.1,
+          },
+          styles:{
+            fontSize:7,
+            cellPadding:2,
+            lineWidth: 0.1,
+            overflow:'linebreak'
+          },
+          columnStyles:{
+            0:{cellWidth:14},   // Sr
+            1:{cellWidth:30},  // NOS
+            2:{cellWidth:30},  // PC
+            3:{cellWidth:30},  // Question
+            4:{cellWidth:26},  // Correct
+            5:{cellWidth:26},  // Response
+            6:{cellWidth:20},   // Max Marks
+            7:{cellWidth:20},   // Obtained Marks
+          },
+          margin:{left:5,right:5},
+        });
+      }
 
-      theme:'grid',
-      headStyles:{
-        fillColor: "#0047AB",
-        textColor: "#FFFFFF",
-        fontStyle: 'bold'
-      },
+      if(practicalTableRows.length > 0) {
 
-      styles:{
-        fontSize:7,
-        cellPadding:2,
-        overflow:'linebreak'
-      },
+        autoTable(pdf,{
+          head:[
+            [
+              { content: "Practical", colSpan: 6, styles:{ halign:'center', fillColor: "#0047AB", textColor: "#FFFFFF", fontStyle: 'bold' } }
+            ],
+            practicalAndVivaTableColumns
+          ],
+          body:practicalTableRows.map(row => [
+            row.sr_no,
+            row.nos_name,
+            row.pc_name,
+            row.question,
+            row.max_marks,
+            row.obtained_marks
+          ]),
+          startY: (pdf as any).lastAutoTable.finalY + 5,
+          theme:'grid',
+          headStyles:{
+            fillColor: false,
+            textColor: "#000000",
+            fontStyle: 'bold',
+            lineWidth: 0.1,
+          },
+          styles:{
+            fontSize:7,
+            cellPadding:2,
+            lineWidth: 0.1,
+            overflow:'linebreak'
+          },
+          columnStyles:{
+            0:{cellWidth:14},   // Sr
+            1:{cellWidth:37},  // NOS
+            2:{cellWidth:54},  // PC
+            3:{cellWidth:54},  // Question
+            4:{cellWidth:20},   // Max Marks
+            5:{cellWidth:20},   // Obtained Marks
+          },
+          margin:{left:5,right:5},
+        });
+      }
 
-      columnStyles:{
-        0:{cellWidth:14},   // Sr
-        1:{cellWidth:28},  // NOS
-        2:{cellWidth:28},  // PC
-        3:{cellWidth:52},  // Question
-        4:{cellWidth: tabValue === "1" ? 32 : 30},  // Correct
-        5:{cellWidth: tabValue === "1" ? 32 : 30},  // Response
-        6:{cellWidth: tabValue === "1" ? 13 : 17},   // Status
-      },
+      if(vivaTableRows.length > 0) {
 
-      margin:{left:5,right:5},
+        autoTable(pdf,{
+          head:[
+            [
+              { content: "Viva", colSpan: 6, styles:{ halign:'center', fillColor: "#0047AB", textColor: "#FFFFFF", fontStyle: 'bold' } }
+            ],
+            practicalAndVivaTableColumns
+          ],
+          body:vivaTableRows.map(row => [
+            row.sr_no,
+            row.nos_name,
+            row.pc_name,
+            row.question,
+            row.max_marks,
+            row.obtained_marks
+          ]),
+          startY: (pdf as any).lastAutoTable.finalY + 5,
+          theme:'grid',
+          headStyles:{
+            fillColor: false,
+            textColor: "#000000",
+            fontStyle: 'bold',
+            lineWidth: 0.1,
+          },
+          styles:{
+            fontSize:7,
+            cellPadding:2,
+            lineWidth: 0.1,
+            overflow:'linebreak'
+          },
+          columnStyles:{
+            0:{cellWidth:14},   // Sr
+            1:{cellWidth:37},  // NOS
+            2:{cellWidth:54},  // PC
+            3:{cellWidth:54},  // Question
+            4:{cellWidth:20},   // Max Marks
+            5:{cellWidth:20},   // Obtained Marks
+          },
+          margin:{left:5,right:5},
+        });
+      }
 
-      // ✅ DRAW ICON HERE
-      didDrawCell: function (data) {
-        if (data.section === 'body' && data.column.index === 6 && tabValue === '1') {
+      if(projectTableRows.length > 0) {
 
-          const item = tableRows?.[data.row.index];
+        autoTable(pdf,{
+          head:[
+            [
+              { content: "Project", colSpan: 5, styles:{ halign:'center', fillColor: "#0047AB", textColor: "#FFFFFF", fontStyle: 'bold' } }
+            ],
+            projectTableColumns
+          ],
+          body:projectTableRows.map(row => [
+            row.sr_no,
+            row.nos_name,
+            row.pc_name,
+            row.max_marks,
+            row.obtained_marks
+          ]),
+          startY: (pdf as any).lastAutoTable.finalY + 5,
+          theme:'grid',
+          headStyles:{
+            fillColor: false,
+            textColor: "#000000",
+            fontStyle: 'bold',
+            lineWidth: 0.1
+          },
+          styles:{
+            fontSize:7,
+            cellPadding:2,
+            lineWidth: 0.1,
+            overflow:'linebreak'
+          },
+          columnStyles:{
+            0:{cellWidth:14},    // Sr
+            1:{cellWidth:72},   // NOS
+            2:{cellWidth:73},   // PC
+            3:{cellWidth:20},   // Max Marks
+            4:{cellWidth:20},   // Obtained Marks
+          },
+          margin:{left:5,right:5},
+        });
+      }
 
-          if (!item) {
-            pdf.text('--', data.cell.x + 2, data.cell.y + 5);
+    } else {
 
-            return;
-          }
+      autoTable(pdf,{
+        head:[tableColumn],
 
-          const status = item.col3;
+        body:tableRows.map(row => [
+          row.sr_no,
+          row.nos_name,
+          row.pc_name,
+          row.question,
+          row.col1,
+          row.col2,
+          tabValue === 'question_wise_log' ? "" : row.col3,
+        ]),
 
-          let icon: string | null = null;
+        // startY:20,
+        startY: (pdf as any).lastAutoTable.finalY + 5,
 
-          if (status === 1) icon = passIconPng as string;
-          else if (status === 0) icon = failIconPng as string;
+        theme:'grid',
+        headStyles:{
+          fillColor: "#0047AB",
+          textColor: "#FFFFFF",
+          fontStyle: 'bold'
+        },
 
-          if (icon) {
-            const size = 5;
+        styles:{
+          fontSize:7,
+          cellPadding:2,
+          overflow:'linebreak'
+        },
 
-            const x = data.cell.x + (data.cell.width - size) / 2;
-            const y = data.cell.y + (data.cell.height - size) / 2;
+        columnStyles:{
+          0:{cellWidth:14},   // Sr
+          1:{cellWidth:28},  // NOS
+          2:{cellWidth:28},  // PC
+          3:{cellWidth:52},  // Question
+          4:{cellWidth: tabValue === "question_wise_log" ? 32 : 30},  // Correct
+          5:{cellWidth: tabValue === "question_wise_log" ? 32 : 30},  // Response
+          6:{cellWidth: tabValue === "question_wise_log" ? 13 : 17},   // Status
+        },
 
+        margin:{left:5,right:5},
 
-            try {
-              pdf.addImage(icon, 'PNG', x, y, size, size);
-            } catch (e) {
-              // fallback if SVG fails
-              pdf.text(
-                status === 1 ? "✔" : "✖",
-                data.cell.x + 2,
-                data.cell.y + 5
-              );
+        // ✅ DRAW ICON HERE
+        didDrawCell: function (data) {
+          if (data.section === 'body' && data.column.index === 6 && tabValue === 'question_wise_log') {
+
+            const item = tableRows?.[data.row.index];
+
+            if (!item) {
+              pdf.text('--', data.cell.x + 2, data.cell.y + 5);
+
+              return;
             }
-          } else {
-            pdf.text('--', data.cell.x + 2, data.cell.y + 5);
+
+            const status = item.col3;
+
+            let icon: string | null = null;
+
+            if (status === 1) icon = passIconPng as string;
+            else if (status === 0) icon = failIconPng as string;
+
+            if (icon) {
+              const size = 5;
+
+              const x = data.cell.x + (data.cell.width - size) / 2;
+              const y = data.cell.y + (data.cell.height - size) / 2;
+
+
+              try {
+                pdf.addImage(icon, 'PNG', x, y, size, size);
+              } catch (e) {
+                // fallback if SVG fails
+                pdf.text(
+                  status === 1 ? "✔" : "✖",
+                  data.cell.x + 2,
+                  data.cell.y + 5
+                );
+              }
+            } else {
+              pdf.text('--', data.cell.x + 2, data.cell.y + 5);
+            }
           }
-        }
-      },
+        },
 
-      // didDrawPage:(data)=>{
+        // didDrawPage:(data)=>{
 
-      //   pdf.setFontSize(12);
+        //   pdf.setFontSize(12);
 
-      //   pdf.text(
-      //     "Question Wise Log Report",
-      //     data.settings.margin.left,
-      //     10
-      //   );
+        //   pdf.text(
+        //     "Question Wise Log Report",
+        //     data.settings.margin.left,
+        //     10
+        //   );
 
-      // }
+        // }
 
-    });
+      });
+    }
 
     let fileName = "";
 
-    if (tabValue === '1') {
+    if (tabValue === 'result_sheet') {
+      fileName = `${selectedCandidate}_Result_Sheet.pdf`;
+    }
+
+    if (tabValue === 'question_wise_log') {
       fileName = `${selectedCandidate}_Question_Wise_Log_Detail.pdf`;
-    } else if (tabValue === '2') {
+    } else if (tabValue === 'question_wise_time_taken') {
       fileName = `${selectedCandidate}_Question_Wise_Time_Taken_Detail.pdf`;
     }
 
@@ -426,6 +701,9 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
 
     setLogDetail(res.report);
     setCandidateDetails(res.candidate)
+    setPracticalReport(res?.practical_report);
+    setVivaReport(res?.viva_report);
+    setProjectReport(res?.project_report);
 
   }
 
@@ -480,19 +758,29 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
       <DialogContent className='overflow-visible pbs-0 sm:pli-16'>
         <TabContext value={tabValue}>
           <CustomTabList pill='true' onChange={handleTabChange} variant="scrollable" aria-label="Candidate Report">
-            <Tab value='1' label="Question Wise Log" />
-            <Tab value='2' label="Question Wise Time Taken" />
+            <Tab value='result_sheet' label="Result Sheet" />
+            <Tab value='question_wise_log' label="Question Wise Log" />
+            <Tab value='question_wise_time_taken' label="Question Wise Time Taken" />
           </CustomTabList>
-          <TabPanel value='1'>
+          <TabPanel value='result_sheet'>
             <div className='overflow-x-auto'>
               <CandidateDetail candidateDetails={candidateDetails} />
+              {/* <QuestionWiseLogDetailTable logDetail={logDetail} /> */}
+              <QuestionReportTable logDetail={logDetail} type="Theory" />
+              <QuestionReportTable logDetail={practicalReport} type="Practical" />
+              <QuestionReportTable logDetail={vivaReport} type="Viva" />
+            </div>
+          </TabPanel>
+          <TabPanel value='question_wise_log'>
+            <div className='overflow-x-auto'>
+              <CandidateDetail candidateDetails={{...candidateDetails, total_marks: candidateDetails?.total_theory_marks, obtained_marks: candidateDetails?.obtained_theory_marks, percentage: candidateDetails?.theory_percentage, result_status: candidateDetails?.theory_result_status}} />
               <QuestionWiseLogDetailTable logDetail={logDetail} />
             </div>
           </TabPanel>
-          <TabPanel value='2'>
+          <TabPanel value='question_wise_time_taken'>
             <div className='overflow-x-auto'>
               {candidateDetails && (
-                <CandidateDetail candidateDetails={candidateDetails} />
+                <CandidateDetail candidateDetails={{...candidateDetails, total_marks: candidateDetails?.total_theory_marks, obtained_marks: candidateDetails?.obtained_theory_marks, percentage: candidateDetails?.theory_percentage, result_status: candidateDetails?.theory_result_status}} />
               )}
               {logDetail && (
                 <QuestionWiseTimeTakenTable logDetail={logDetail} />
