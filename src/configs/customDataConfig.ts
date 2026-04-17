@@ -176,8 +176,8 @@ export const agencyUsersFilePath = (userId: number, fileName: string) => {
   return fileName ? `${agencyPath}/${storageFolders.users}/${userId}/${fileName}` : "";
 }
 
-export const trainingResourceFilePath = (sscId: number, fileName: string) => {
-  return fileName ? `${trainingResourcesPath}/${sscId}/${fileName}` : "";
+export const trainingResourceFilePath = (resourceId: number, fileName: string) => {
+  return fileName ? `${trainingResourcesPath}/${resourceId}/${fileName}` : "";
 }
 
 export const getBatchCenterInspectionFilePath = (batchId: number, fileName: string) => {

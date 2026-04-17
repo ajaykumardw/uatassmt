@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type { ChangeEvent } from 'react'
 
@@ -13,9 +13,31 @@ import Typography from '@mui/material/Typography'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
-import MenuItem from '@mui/material/MenuItem'
 import Checkbox from '@mui/material/Checkbox'
-import { CircularProgress, FormControlLabel, FormGroup, IconButton, InputAdornment } from '@mui/material'
+
+// Third-party Imports
+import classnames from 'classnames'
+
+import {
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  getFilteredRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getFacetedMinMaxValues,
+  getPaginationRowModel,
+  getSortedRowModel,
+  type ColumnDef
+} from '@tanstack/react-table'
+
+import { type FilterFn } from '@tanstack/react-table'
+
+
+import { CircularProgress, IconButton, InputAdornment } from '@mui/material'
+
+import { styled } from '@mui/material/styles'
 
 // Component Imports
 import { toast } from 'react-toastify'
@@ -31,20 +53,27 @@ import { object, string, trim, minLength, maxLength, pipe, maxSize, instance, op
 
 import type { InferInput } from 'valibot'
 
-import type { user_training_resources, users } from '@prisma/client'
+import type { role, user_training_resources, users } from '@prisma/client'
 
-import type { SSCType } from '@/types/sectorskills/sscType'
+import { rankItem } from '@tanstack/match-sorter-utils'
 
-import { MenuProps } from '@/configs/customDataConfig'
+// Util Imports
+import { getInitials } from '@/utils/getInitials'
 
-import DialogCloseButton from '@components/dialogs/DialogCloseButton'
+import { agencyUsersFilePath, TableRowLimit, userRoleObj } from '@/configs/customDataConfig'
 
 import CustomTextField from '@core/components/mui/TextField'
+import CustomAvatar from '@core/components/mui/Avatar'
 
 import tableStyles from '@core/styles/table.module.css'
 
+
+import DialogCloseButton from '@components/dialogs/DialogCloseButton'
+
+import TableFilters from './TableFilters'
+
 type AddQPDialogData = InferInput<typeof schema> & {
-  assessor: number[]
+  users: number[]
 }
 
 type AddQPDialogProps = {
@@ -58,20 +87,38 @@ type AddQPDialogProps = {
   updateTrainingResourceList: () => void
 }
 
+type UsersTypeWithAction = users & {
+  action?: string
+  role: role
+}
+
+// Styled Components
+const Icon = styled('i')({})
+
+const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
+  // Rank the item
+  const itemRank = rankItem(row.getValue(columnId), value)
+
+  // Store the itemRank info
+  addMeta({
+    itemRank
+  })
+
+  // Return if the item should be filtered in/out
+  return itemRank.passed
+}
 
 const initialData: AddQPDialogData = {
-  sscId: '',
   resourceName: '',
 
   // file: '',
   file: undefined,
   description: '',
-  assessor: []
+  users: []
 }
 
 const schema = object(
   {
-    sscId: pipe(string(), trim() , minLength(1, 'This field is required')),
     resourceName: pipe(string(), trim(), minLength(1, 'This field is required'), maxLength(100, 'The maximum length for this field is 100 characters.')),
     file: optional(pipe(
       instance(File),
@@ -81,32 +128,24 @@ const schema = object(
   }
 )
 
+const columnHelper = createColumnHelper<UsersTypeWithAction>()
+
 const AddEditTrainingResourcesDialog = ({ open, trainingResourceId, handleClose, updateTrainingResourceList, data }: AddQPDialogProps) => {
 
   // States
   const [userData, setUserData] = useState<AddQPDialogProps['data']>(data || initialData)
   const [loading, setLoading] = useState(false);
-  const [ssData, setSscUsers] = useState<SSCType[]>([])
   const [fileName, setFileName] = useState<string>('')
-  const [assessorData, setAssessorData] = useState<users[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [selectedCheckbox, setSelectedCheckbox] = useState<number[]>([])
-  const [isIndeterminateCheckbox, setIsIndeterminateCheckbox] = useState<boolean>(false)
 
+  const [rowSelection, setRowSelection] = useState({})
+  const [globalFilter, setGlobalFilter] = useState('')
 
-  const getSSCData = async () => {
-    // Vars
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sectorskills`)
+  const [allUsers, setAllUsers] = useState<users[]>([])
 
-    if (!res.ok) {
-      throw new Error('Failed to fetch sector skills council')
-    }
-
-    const userData = await res.json();
-
-    setSscUsers(userData);
-
-  }
+  const [filters, setFilters] = useState<{ role: number[] }>({
+    role: []
+  })
 
   const getTrainingResource = async (resourceId: number) => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/training-resources/${resourceId}`)
@@ -119,15 +158,24 @@ const AddEditTrainingResourcesDialog = ({ open, trainingResourceId, handleClose,
 
     console.table(resourceData);
 
-    handleSSCChange(resourceData.ssc_id.toString());
+    // handleSSCChange(resourceData.ssc_id.toString());
 
     setFileName(resourceData.file || "");
 
+    // ✅ 2. HANDLE USER SELECTION (FIXED)
     const userIds = resourceData.user_training_resources.map((resource: user_training_resources) => resource.user_id);
 
     console.log(userIds);  // Output: [6, 5, 4]
 
-    setSelectedCheckbox(userIds);
+    // setSelectedCheckbox(userIds);
+
+    const selection: Record<string, boolean> = {}
+
+    userIds.forEach((id:number) => {
+      selection[id.toString()] = true
+    })
+
+    setRowSelection(selection)
 
     if(resourceData.file){
 
@@ -147,19 +195,17 @@ const AddEditTrainingResourcesDialog = ({ open, trainingResourceId, handleClose,
 
       console.log("file", file);
       setUserData({
-        sscId: resourceData.ssc_id.toString(),
         resourceName: resourceData.name,
         description: resourceData.description,
         file: file,
-        assessor: []
+        users: []
       })
     }else{
       setUserData({
-        sscId: resourceData.ssc_id.toString(),
         resourceName: resourceData.name,
         description: resourceData.description,
         file: undefined,
-        assessor: []
+        users: []
       })
     }
 
@@ -173,47 +219,13 @@ const AddEditTrainingResourcesDialog = ({ open, trainingResourceId, handleClose,
 
   }
 
-  const togglePermission = (id: number) => {
-    const arr = selectedCheckbox
-
-    if (selectedCheckbox.includes(id)) {
-      arr.splice(arr.indexOf(id), 1)
-      setSelectedCheckbox([...arr])
-    } else {
-      arr.push(id)
-      setSelectedCheckbox([...arr])
-    }
-  }
-
-  const handleSelectAllCheckbox = () => {
-    if (isIndeterminateCheckbox) {
-      setSelectedCheckbox([])
-    } else {
-      assessorData?.forEach(assessor => {
-        const id = assessor.id
-
-        togglePermission(id)
-      })
-    }
-  }
-
   useEffect(() => {
-
-    if (selectedCheckbox.length > 0 && selectedCheckbox.length < assessorData?.length) {
-
-      setIsIndeterminateCheckbox(true)
-
-    } else {
-
-      setIsIndeterminateCheckbox(false)
-
-    }
-  }, [selectedCheckbox, assessorData])
+    setRowSelection({})
+  }, [filters.role])
 
   useEffect(() => {
 
     setUserData(data);
-    getSSCData()
 
     // if(trainingResourceId){
     //   getTrainingResource(trainingResourceId)
@@ -242,6 +254,10 @@ const AddEditTrainingResourcesDialog = ({ open, trainingResourceId, handleClose,
     values: userData
   })
 
+  useEffect(() => {
+    console.log("form errors:", errors)
+  },[errors])
+
   // Handle File Upload
   const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const { files } = event.target
@@ -260,30 +276,159 @@ const AddEditTrainingResourcesDialog = ({ open, trainingResourceId, handleClose,
     // setError('file', {type: "custom", message: "This field is required" })
   }
 
-  const handleSSCChange = async (ssc: string) => {
+  const getAllUsers = async () => {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`);
 
-    setAssessorData([]);
-    setSelectedCheckbox([])
-
-    const sscId = Number(ssc);
-
-    if(ssc) {
-
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/assessor?sscId=${sscId}`).then(function (response) { return response.json() })
-
-      console.log("Assessor data", res);
-
-      setAssessorData(res);
-    }else{
-
-      setAssessorData([]);
+    if (!res.ok) {
+      throw new Error('Failed to fetch users')
     }
-  };
+
+    const data = await res.json();
+
+    setAllUsers(data);
+
+  }
+
+  useEffect(() => {
+
+    if(open){
+
+      getAllUsers()
+
+    }
+  }, [open])
+
+  const columns = useMemo<ColumnDef<UsersTypeWithAction, any>[]>(() => [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          {...{
+            checked: table.getIsAllRowsSelected(),
+            indeterminate: table.getIsSomeRowsSelected(),
+            onChange: table.getToggleAllRowsSelectedHandler()
+          }}
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          {...{
+            checked: row.getIsSelected(),
+            disabled: !row.getCanSelect(),
+            indeterminate: row.getIsSomeSelected(),
+            onChange: row.getToggleSelectedHandler()
+          }}
+        />
+      )
+    },
+    columnHelper.accessor('first_name', {
+        header: 'User',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-4'>
+
+            {getAvatar({ avatar: row.original.avatar ? agencyUsersFilePath(row.original.id, row.original.avatar) : '', first_name: (row.original.first_name || '') + ' ' + (row.original.last_name || '') })}
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {row.original.first_name + " " + row.original.last_name}
+              </Typography>
+              <Typography variant='body2'>{row.original.user_name}</Typography>
+            </div>
+          </div>
+        )
+      }),
+      columnHelper.accessor('role_id', {
+        header: 'Role',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-2'>
+            <Icon
+              className={userRoleObj[row.original.role.id].icon}
+              sx={{ color: `var(--mui-palette-${userRoleObj[row.original.role.id].color}-main)` }}
+            />
+            <Typography className='capitalize' color='text.primary'>
+              {row.original.role.name}
+            </Typography>
+          </div>
+        )
+      }),
+      columnHelper.accessor('mobile_no', {
+        header: 'Phone',
+        cell: ({ row }) => (
+          <Typography color='text.primary' className='font-medium'>
+            {row.original.mobile_no}
+          </Typography>
+        )
+      }),
+      columnHelper.accessor('email', {
+        header: 'Email',
+        cell: ({ row }) => (
+          <Typography color='text.primary' className='font-medium'>
+            {row.original.email}
+          </Typography>
+        )
+      }),
+  ], [])
+
+  const filteredUsers = useMemo(() => {
+    return allUsers.filter(user => {
+      if (
+        filters.role.length > 0 &&
+        (user.role_id === null || !filters.role.includes(user.role_id))
+      ) {
+        return false
+      }
+
+      return true
+    })
+  }, [allUsers, filters])
+
+  const table = useReactTable({
+    data: filteredUsers,
+    columns,
+    filterFns: {
+      fuzzy: fuzzyFilter
+    },
+    state: {
+      rowSelection,
+      globalFilter
+    },
+    initialState: {
+      pagination: {
+        pageSize: TableRowLimit.pageSize
+      }
+    },
+    enableRowSelection: true, //enable row selection for all rows
+
+    // enableRowSelection: row => row.original.age > 18, // or enable row selection conditionally per row
+
+    globalFilterFn: fuzzyFilter,
+    getRowId: row => row.id.toString(), // ✅ REQUIRED
+    onRowSelectionChange: setRowSelection,
+    getCoreRowModel: getCoreRowModel(),
+    onGlobalFilterChange: setGlobalFilter,
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
+    getFacetedMinMaxValues: getFacetedMinMaxValues()
+  })
 
   const onSubmit: SubmitHandler<AddQPDialogData> = async (data: AddQPDialogData) => {
     // e.preventDefault();
 
-    data.assessor = selectedCheckbox
+    // data.assessor = selectedCheckbox
+
+    const selectedUserIds = table.getSelectedRowModel().rows.map(row => row.original.id)
+
+    if (selectedUserIds.length === 0) {
+      toast.error('Please select at least one user for this Training Resource.', {
+        hideProgressBar: false
+      })
+
+      return
+    }
+
+    data.users = selectedUserIds
 
     if(!data.file && !data.description){
       setError('file', {type: "custom", message: "Either a file or a description must be provided." })
@@ -300,10 +445,11 @@ const AddEditTrainingResourcesDialog = ({ open, trainingResourceId, handleClose,
 
     const formData = new FormData();
 
-    formData.append("sscId", data.sscId);
+    // formData.append("sscId", data.sscId);
+
     formData.append("resourceName", data.resourceName || "");
     formData.append("description", data.description || "");
-    formData.append("assessor", JSON.stringify(data.assessor || ""));
+    formData.append("users", JSON.stringify(data.users || ""));
     formData.append("file", data.file || "")
 
     if (trainingResourceId) {
@@ -368,9 +514,18 @@ const AddEditTrainingResourcesDialog = ({ open, trainingResourceId, handleClose,
     reset();
     setFileName('');
     setUserData(initialData);
-    setAssessorData([])
 
     handleClose();
+  }
+
+  const getAvatar = (params: Pick<users, 'avatar' | 'first_name'>) => {
+    const { avatar, first_name } = params
+
+    if (avatar) {
+      return <CustomAvatar src={avatar} size={34} />
+    } else {
+      return <CustomAvatar size={34}>{getInitials(first_name as string)}</CustomAvatar>
+    }
   }
 
   return (
@@ -391,33 +546,7 @@ const AddEditTrainingResourcesDialog = ({ open, trainingResourceId, handleClose,
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent className='overflow-visible pbs-0 sm:pli-16'>
           <Grid container spacing={5}>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                control={control}
-                name='sscId'
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <CustomTextField
-                    fullWidth
-                    select
-                    label='Sector Skill Council'
-                    {...field}
-                    {...(errors.sscId && { error: true, helperText: errors.sscId.message })}
-                    SelectProps={{ MenuProps }}
-                    required={true}
-
-                    // value={userData?.sscId}
-                    onChange={e => {handleSSCChange(e.target.value); field.onChange(e)}}
-                  >
-                    {ssData.map((ssc, index) => (
-                      <MenuItem key={index} value={ssc.id.toString()}>
-                        {ssc.ssc_name}
-                      </MenuItem>
-                    ))}
-                  </CustomTextField>
-                )}
-              />
-            </Grid>
+            <TableFilters setFilters={setFilters} />
             <Grid item xs={12} sm={6}>
               <Controller
                 control={control}
@@ -482,7 +611,7 @@ const AddEditTrainingResourcesDialog = ({ open, trainingResourceId, handleClose,
                 />
                 <Button component='label' variant='tonal' htmlFor='contained-button-file'>
                   Choose
-                  <input hidden id='contained-button-file' type='file' onChange={handleFileUpload} ref={fileInputRef} />
+                  <input hidden id='contained-button-file' type='file' accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx" onChange={handleFileUpload} ref={fileInputRef} />
                 </Button>
               </div>
             </Grid>
@@ -510,91 +639,54 @@ const AddEditTrainingResourcesDialog = ({ open, trainingResourceId, handleClose,
               <div className='overflow-x-auto'>
                 <table className={tableStyles.table}>
                   <thead>
-                    <tr className='border-bs-0'>
-                      <th className='pis-0'>
-                        <FormControlLabel
-                          className='mie-0 capitalize'
-                          control={
-                            <Checkbox
-                              onChange={handleSelectAllCheckbox}
-                              indeterminate={isIndeterminateCheckbox}
-                              checked={assessorData.length > 0 && selectedCheckbox.length === assessorData?.length}
-                            />
-                          }
-                          label='Select All'
-                        />
-                      </th>
-                      {/* <th >
-                        <Typography color='text.primary' className='font-medium whitespace-nowrap flex-grow'>
-                          NOS ID
-                        </Typography>
-                      </th> */}
-                      <th className='pie-0'>
-                        <Typography color='text.primary' className='font-medium whitespace-nowrap flex-grow min-is-[225px]'>
-                          Assessor Name
-                        </Typography>
-                      </th>
-
-                    </tr>
+                    {table.getHeaderGroups().map(headerGroup => (
+                      <tr key={headerGroup.id}>
+                        {headerGroup.headers.map(header => (
+                          <th key={header.id}>
+                            {header.isPlaceholder ? null : (
+                              <>
+                                <div
+                                  className={classnames({
+                                    'flex items-center': header.column.getIsSorted(),
+                                    'cursor-pointer select-none': header.column.getCanSort()
+                                  })}
+                                  onClick={header.column.getToggleSortingHandler()}
+                                >
+                                  {flexRender(header.column.columnDef.header, header.getContext())}
+                                  {{
+                                    asc: <i className='tabler-chevron-up text-xl' />,
+                                    desc: <i className='tabler-chevron-down text-xl' />
+                                  }[header.column.getIsSorted() as 'asc' | 'desc'] ?? null}
+                                </div>
+                              </>
+                            )}
+                          </th>
+                        ))}
+                      </tr>
+                    ))}
                   </thead>
-                  {assessorData.length === 0 ? (
+                  {table.getFilteredRowModel().rows.length === 0 ? (
                     <tbody>
                       <tr>
-                        <td colSpan={2} className='text-center'>
+                        <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
                           No data available
                         </td>
                       </tr>
                     </tbody>
                   ) : (
                     <tbody>
-                      {assessorData?.map((assessor, index) => {
-                        // const id = (typeof item === 'string' ? item : item.title).toLowerCase().split(' ').join('-')
-
-                        return (
-                          <tr key={index} className='border-be'>
-                            <td className='!text-end pis-0'>
-                              <FormGroup className='flex-row justify-start flex-nowrap gap-6'>
-                                <Controller
-                                  control={control}
-                                  name={`assessor.${assessor.id}`}
-                                  defaultValue={21}
-                                  render={({ field }) => (
-
-                                    <FormControlLabel
-                                      {...field}
-                                      className='mie-0'
-                                      control={
-                                        <Checkbox id={assessor.id.toString()}
-                                          name={`assessor[${index}]`}
-                                          onChange={() => togglePermission(assessor.id)}
-                                          checked={selectedCheckbox.includes(assessor.id)} />
-                                      }
-                                      label=''
-                                    />
-                                  )}
-                                />
-                              </FormGroup>
-                            </td>
-                            {/* <td>
-                              <Typography
-                                className='font-medium whitespace-nowrap flex-grow'
-                                color='text.primary'
-                              >
-                                {assessor.nos_id}
-                              </Typography>
-                            </td> */}
-                            <td className='pie-0'>
-                              <Typography
-                                className='font-medium whitespace-nowrap flex-grow min-is-[225px]'
-                                color='text.primary'
-                              >
-                                {assessor.first_name} {assessor.last_name}
-                              </Typography>
-                            </td>
-
-                          </tr>
-                        )
-                      })}
+                      {table
+                        .getRowModel()
+                        .rows.slice(0, table.getState().pagination.pageSize)
+                        .map(row => {
+                          return (
+                            <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
+                              {row.getVisibleCells().map(cell => (
+                                <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                              ))}
+                            </tr>
+                          )
+                        })}
                     </tbody>
                   )}
                 </table>
@@ -603,7 +695,7 @@ const AddEditTrainingResourcesDialog = ({ open, trainingResourceId, handleClose,
           </Grid>
         </DialogContent>
         <DialogActions className='justify-center pbs-0 sm:pbe-16 sm:pli-16'>
-          <Button variant='contained' type='submit' disabled={loading}>
+          <Button variant='contained' type='submit' disabled={loading || table.getSelectedRowModel().rows.length === 0}>
             {loading && <CircularProgress size={20} color='inherit' />}
             Submit
           </Button>

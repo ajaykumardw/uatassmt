@@ -15,6 +15,7 @@ import IconButton from '@mui/material/IconButton';
 import TablePagination from '@mui/material/TablePagination';
 import type { TextFieldProps } from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem'
+import Tooltip from '@mui/material/Tooltip'
 
 // Third-party Imports
 import classnames from 'classnames'
@@ -37,6 +38,8 @@ import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 
 import type { training_resources, user_training_resources, users } from '@prisma/client';
 
+import { format } from 'date-fns';
+
 // Type Imports
 import type { ThemeColor } from '@core/types'
 
@@ -56,7 +59,7 @@ import CustomIconButton from '@/@core/components/mui/IconButton';
 import tableStyles from '@core/styles/table.module.css'
 
 // import EditUserDrawer from './EditUserDrawer'
-import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
+import { MenuProps, TableRowLimit, userRoleObj } from '@/configs/customDataConfig';
 
 import AddEditTrainingResourcesDialog from '@/components/training-resources/dialogs/AddEditTrainingResourcesDialog';
 
@@ -70,7 +73,7 @@ import AddEditTrainingResourcesDialog from '@/components/training-resources/dial
 // }
 
 type TrainingResourcesTypeWithAction = training_resources & {
-  user_training_resources?: user_training_resources & {user: users}[]
+  user_training_resources?: user_training_resources & {user: users & { role?: { name: string } }}[]
   action?: string
   serialNumber?: number
 
@@ -225,26 +228,119 @@ const TrainingResourcesListTable = ({ tableData, updateTrainingResourceList }: {
       }),
       columnHelper.accessor('user_training_resources', {
         header: 'Shared With',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-2'>
-            {/* <Typography className='capitalize' color='text.primary'> */}
-              {/* {row.original.user_training_resources} */}
-              <div className='flex items-start gap-1'>
-                {row.original.user_training_resources?.map((resources, index) => (
+        cell: ({ row }) => {
+          const users = row.original.user_training_resources || []
+
+          const grouped = users.reduce((acc: any, item) => {
+            const roleName = item.user?.role?.name || 'Unknown'
+            const roleId = item.user?.role_id ?? 0
+
+            console.log("roleId:", roleId)
+
+            if (!acc[roleName]) {
+              acc[roleName] = {
+                roleId,
+                users: []
+              }
+            }
+
+            acc[roleName].users.push(item.user)
+
+            return acc
+          }, {})
+
+          return (
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(grouped).map(([roleName, data]: any) => (
+                <Tooltip
+                  key={roleName}
+                  arrow
+                  title={
+                    <div>
+                      {data.users.map((user: any) => (
+                        <div key={user.id}>
+                          {user.first_name} {user.last_name}
+                        </div>
+                      ))}
+                    </div>
+                  }
+                >
                   <Chip
-                  key={index}
-                    variant='tonal'
-                    className='capitalize'
-                    label={`${resources.user.first_name} ${resources.user.last_name}`}
-                    color='info'
-                    size='small'
+                    label={`${roleName} (${data.users.length})`}
+                    size="small"
+                    clickable
+                    variant="outlined"
+                    color={
+                      (userRoleObj[data.roleId]?.color as
+                        | 'default'
+                        | 'primary'
+                        | 'secondary'
+                        | 'error'
+                        | 'info'
+                        | 'success'
+                        | 'warning') || 'default'
+                    }
                   />
-                ))}
-              </div>
-            {/* </Typography> */}
-          </div>
-        )
+                </Tooltip>
+              ))}
+            </div>
+          )
+        }
+
+        // cell: ({ row }) => {
+        //   const users = row.original.user_training_resources || []
+
+        //   return (
+        //     <div className='flex items-center gap-2'>
+        //       <AvatarGroup total={users.length} className='pull-up'>
+        //         {users.slice(0, 3).map((item, index) => {
+        //           const name =
+        //             `${item.user?.first_name ?? ''} ${item.user?.last_name ?? ''}`.trim()
+
+        //           return (
+        //             <Tooltip key={index} title={name}>
+        //               <Avatar
+        //                 key={index}
+        //                 alt={name}
+        //                 src={item.user?.avatar ? agencyUsersFilePath(item.user.id, item.user.avatar) : '/images/avatars/default.png'}
+        //               />
+        //             </Tooltip>
+        //           )
+        //         })}
+        //       </AvatarGroup>
+        //     </div>
+        //   )
+        // }
       }),
+
+      // columnHelper.accessor('user_training_resources', {
+      //   header: 'Shared With',
+      //   cell: ({ row }) => (
+      //     <div className='flex items-center gap-2'>
+      //       {/* <Typography className='capitalize' color='text.primary'> */}
+      //         {/* {row.original.user_training_resources} */}
+      //         <div className='flex items-start gap-1'>
+      //           <AvatarGroup total={6}>
+      //             <Avatar alt='Remy Sharp' src='/images/avatars/1.png' />
+      //             <Avatar alt='Travis Howard' src='/images/avatars/2.png' />
+      //             <Avatar alt='Cindy Baker' src='/images/avatars/3.png' />
+      //           </AvatarGroup>
+      //           {row.original.user_training_resources?.map((resources, index) => (
+      //             <Chip
+      //             key={index}
+      //               variant='tonal'
+      //               className='capitalize'
+      //               label={`${resources.user.first_name} ${resources.user.last_name}`}
+      //               color='info'
+      //               size='small'
+      //             />
+      //           ))}
+      //         </div>
+      //       {/* </Typography> */}
+      //     </div>
+      //   )
+      // }),
+
       columnHelper.accessor('file', {
         header: 'Download',
         cell: ({ row }) => (
@@ -276,6 +372,14 @@ const TrainingResourcesListTable = ({ tableData, updateTrainingResourceList }: {
               size='small'
             />
           </div>
+        )
+      }),
+      columnHelper.accessor('created_at', {
+        header: 'Created On',
+        cell: ({ row }) => (
+          <Typography color='text.primary' className='font-medium'>
+            {row.original.created_at && format(new Date(row.original.created_at), 'dd MMM yyyy')}
+          </Typography>
         )
       }),
       columnHelper.accessor('action', {

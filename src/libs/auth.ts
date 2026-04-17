@@ -112,6 +112,7 @@ export const authOptions: NextAuthOptions = {
 
               return {
                 ...userData,
+                ...(userData.role_id === 1 && { company_name: userData.first_name + ' ' + userData.last_name }),
                 is_ssc: !!userData.ssc_username,
                 sessionId: sessionId
               }
@@ -181,18 +182,21 @@ export const authOptions: NextAuthOptions = {
         token.is_student = user.is_student
         token.is_ssc = user.is_ssc
         token.actual_user_id = user.id
-        token.is_shadow = false,
+        token.actual_agency_id = user.agency_id
+        token.is_shadow = false
         token.accessToken = user.accessToken
       }
 
-      if(trigger === 'update' && session?.shadowUserId) {
+      if(trigger === 'update' && session?.shadowUserId && session?.shadowUserAgencyId && token.user_type === "SA") {
         token.id = session.shadowUserId
+        token.agency_id = session.shadowUserAgencyId
         token.is_shadow = true
-        token.user_type = "A"
+        token.user_type = "AG"
       }
 
       if(trigger === 'update' && session?.stopShadow) {
         token.id = token.actual_user_id
+        token.agency_id = token.actual_agency_id as string
         token.is_shadow = false
         token.user_type = "SA"
       }

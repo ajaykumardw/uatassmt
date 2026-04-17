@@ -26,6 +26,9 @@ export async function GET() {
     },
     orderBy: {
       first_name: 'asc'
+    },
+    omit: {
+      password: true
     }
   })
 

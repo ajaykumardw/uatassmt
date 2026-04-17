@@ -1,6 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 
+import { randomUUID } from "crypto";
+
+import { pipeline } from "stream/promises";
+
 // Next Imports
 import { NextResponse } from 'next/server'
 
@@ -8,8 +12,6 @@ import { NextResponse } from 'next/server'
 
 // Data Imports
 import { getServerSession } from 'next-auth';
-
-import { getTime } from 'date-fns';
 
 import prisma from '@/libs/prisma';
 
@@ -53,10 +55,26 @@ export async function GET() {
     where: {
       created_by: createdBy
     },
+    orderBy: {
+      created_at: "desc"
+    },
     include: {
       user_training_resources: {
         include: {
-          user: true
+          user: {
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+              email: true,
+              role_id: true,
+              role: {
+                select: {
+                  name: true
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -68,67 +86,109 @@ export async function GET() {
 
 export async function POST(req: Request) {
 
-  // return NextResponse.json({success: false, message: "User not created"}, {status: 500})
+  try {
 
-  // const { username, email, password, firstName, lastName, phoneNumber, state, city, pinCode, address, panCardNumber, gstNumber } = await req.json()
-  const formData = await req.formData();
-  const body = Object.fromEntries(formData);
-  const { sscId, resourceName, file, description, assessor } = body;
+    const formData = await req.formData()
 
-  const session = await getServerSession(authOptions);
-  const createdBy = Number(session?.user.id)
+    const resourceName = formData.get('resourceName') as string
+    const description = formData.get('description') as string
+    const users = formData.get('users') as string
+    const file = formData.get('file') as File | null
 
-  const fileBlob = file as Blob;
-  const fileName = file ? getTime(new Date()) + "." + (file as File).name.split('.').pop() : "";
+    const session = await getServerSession(authOptions)
 
-  const assessorArray = JSON.parse(assessor as string);
+    const createdBy = Number(session?.user?.id)
 
-  // console.log("training resources data from api:", body)
-  // console.log("training resources assessor from api:", JSON.parse(assessor as string))
+    const usersArray = users ? JSON.parse(users) : []
 
-  const result = await prisma.training_resources.create({
-    data: {
-      ssc_id: Number(sscId),
-      name: resourceName.toString(),
-      description: description.toString(),
-      file: fileName,
-      created_by: createdBy,
-      user_training_resources: assessorArray.length > 0 ? {
-        create: assessorArray.map((assessorId: string) => ({
-          user: {
-            connect: {
-              id: assessorId,
-            },
-          },
-        })),
-      } : undefined,
+    let fileName: string | null = null
+
+    if (file) {
+
+      const fileExt = file?.name.split('.').pop() || ''
+
+      const allowedExt = [
+        "jpg",
+        "jpeg",
+        "png",
+        "pdf",
+        "doc",
+        "docx",
+        "xls",
+        "xlsx"
+      ]
+
+      if (!fileExt || !allowedExt.includes(fileExt)) {
+
+        return NextResponse.json({
+          message: "Invalid file type."
+        }, {status: 400});
+
+      }
+
+      fileName = file
+        ? `${randomUUID()}.${fileExt}`
+        : null
     }
-  });
 
-  if (result) {
 
+    const result = await prisma.training_resources.create({
+      data: {
+        name: resourceName,
+        description,
+        file: fileName,
+        created_by: createdBy,
+
+        user_training_resources:
+          usersArray.length > 0
+            ? {
+                create: usersArray.map((userId: string) => ({
+                  user: {
+                    connect: {
+                      id: Number(userId)
+                    }
+                  }
+                }))
+              }
+            : undefined
+      }
+    })
+
+    if (!result) {
+      return NextResponse.json({
+        success: false,
+        message: 'Training Resource not created.'
+      })
+    }
+
+    // Folder path
     const uploadDir = path.join(process.cwd(), storageFolders.storage, storageFolders.uploads, storageFolders.agency, storageFolders.trainingResources, result.id.toString());
 
-    if (!fs.existsSync(uploadDir)) {
-      try {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      } catch (err) {
-        console.error('Error creating upload directory:', err);
-        throw new Error('Failed to create upload directory');
-      }
+    await fs.promises.mkdir(uploadDir, { recursive: true })
+
+    // Upload file using pipeline
+    if (file && fileName) {
+      const filePath = path.join(uploadDir, fileName)
+
+      await pipeline(
+        file.stream() as any,
+        fs.createWriteStream(filePath)
+      );
     }
 
-    if (fileBlob) {
-      const buffer = Buffer.from(await fileBlob.arrayBuffer());
+    return NextResponse.json({
+      success: true,
+      message: 'Training Resource created successfully.'
+    })
+  } catch (error) {
+    console.error(error)
 
-      fs.writeFileSync(
-        path.resolve(uploadDir, fileName),
-        buffer
-      )
-    }
-
-    return NextResponse.json({ success: true, message: "Training Resource created successfully." })
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'Something went wrong.'
+      },
+      { status: 500 }
+    )
   }
-
-  return NextResponse.json({ success: false, message: "Training Resource not created." })
 }

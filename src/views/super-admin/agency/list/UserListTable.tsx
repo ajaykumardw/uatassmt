@@ -322,7 +322,7 @@ const UserListTable = ({ tableData }: { tableData?: UsersType[] }) => {
         header: 'Shadow Login',
         cell: ({ row }) => (
           <div className='flex justify-center items-center'>
-            <IconButton onClick={() => startShadow(row.original.id)}>
+            <IconButton onClick={() => startShadow(row.original.id, row.original.id)}>
               <i className='tabler-login text-[22px] text-textSecondary' />
             </IconButton>
           </div>

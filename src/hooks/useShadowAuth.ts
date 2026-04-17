@@ -8,12 +8,13 @@ export const useShadowAuth = () => {
   const router = useRouter()
   const { update, data: session } = useSession()
 
-  const startShadow = async (userId: number) => {
+  const startShadow = async (userId: number, agencyId: number) => {
     try {
       console.time('shadow start')
 
       await update({
-        shadowUserId: userId
+        shadowUserId: userId,
+        shadowUserAgencyId: agencyId
       })
 
       console.timeEnd('shadow start')

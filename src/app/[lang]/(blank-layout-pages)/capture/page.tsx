@@ -780,6 +780,11 @@ const CapturePage = () => {
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [loading, setLoading] = useState(false);
 
+  const [lat, setLat] = useState<string>("Fetching...");
+  const [long, setLong] = useState<string>("Fetching...");
+  const [time, setTime] = useState<string>("");
+  const [address, setAddress] = useState<string>("Fetching address...");
+
   const { data: session } = useSession();
   const token = session?.user?.accessToken;
 
@@ -854,27 +859,274 @@ const CapturePage = () => {
     };
   }, []);
 
+  useEffect(() => {
+    // ⏱️ Live Time
+    const interval = setInterval(() => {
+      setTime(new Date().toLocaleString());
+    }, 1000);
+
+    // 📍 Get Location
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        setLat(pos.coords.latitude.toFixed(5));
+        setLong(pos.coords.longitude.toFixed(5));
+
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude.toFixed(5)}&lon=${pos.coords.longitude.toFixed(5)}&format=json`
+          );
+
+          const data = await res.json();
+
+          const addr = data.address;
+
+          const fullAddress = `
+            ${addr?.neighbourhood+", " || ""}
+            ${addr?.city+", " || addr?.town+", " || addr?.village+", " || ""}
+            ${addr?.state+", " || ""}
+            ${addr?.country || ""} ${addr?.postcode ? " - "+addr.postcode : ""}
+          `.replace(/\n/g, " ").trim();
+
+          setAddress(fullAddress);
+        } catch (err) {
+          console.error(err);
+          setAddress("Address not available");
+        }
+      },
+      () => {
+        setLat("Denied");
+        setLong("Denied");
+        setAddress("Denied");
+      }
+    );
+
+    return () => clearInterval(interval);
+  }, []);
+
   const switchCamera = () => {
     setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
   };
+
+  // const captureImage = (type: "selfie" | "front" | "back") => {
+  //   if (!webcamRef.current) return;
+
+  //   if (type === "selfie" && !faceDetected) {
+
+  //     alert("Ensure exactly one face is visible.");
+
+  //     return;
+  //   }
+
+  //   const imageSrc = webcamRef.current.getScreenshot();
+
+  //   if (!imageSrc) return;
+
+  //   if (type === "selfie") setLiveSelfie(imageSrc);
+  //   else if (type === "front") setAadhaarFront(imageSrc);
+  //   else setAadhaarBack(imageSrc);
+  // };
+
+  // const captureImage = (type: "selfie" | "front" | "back") => {
+  //   if (!webcamRef.current) return;
+
+  //   if (type === "selfie" && !faceDetected) {
+  //     alert("Ensure exactly one face is visible.");
+  //     return;
+  //   }
+
+  //   const video = webcamRef.current.video;
+  //   const canvas = document.createElement("canvas");
+  //   const ctx = canvas.getContext("2d");
+
+  //   if (!video || !ctx) return;
+
+  //   canvas.width = video.videoWidth;
+  //   canvas.height = video.videoHeight;
+
+  //   // 🖼️ Draw video frame
+  //   ctx.drawImage(video, 0, 0);
+
+  //   // 📍 Overlay background
+  //   ctx.fillStyle = "rgba(0,0,0,0.6)";
+  //   ctx.fillRect(0, canvas.height - 100, canvas.width, 100);
+
+  //   // ✍️ Text
+  //   ctx.fillStyle = "#00FFCC";
+  //   ctx.font = "16px monospace";
+
+  //   ctx.fillText(`Lat: ${lat}, Long: ${long}`, 10, canvas.height - 70);
+  //   ctx.fillText(`Time: ${time}`, 10, canvas.height - 45);
+  //   ctx.fillText(`👤 ID: ${session?.user?.id}`, 10, canvas.height - 20);
+
+  //   const finalImage = canvas.toDataURL("image/jpeg", 0.85);
+
+  //   if (type === "selfie") setLiveSelfie(finalImage);
+  //   else if (type === "front") setAadhaarFront(finalImage);
+  //   else setAadhaarBack(finalImage);
+  // };
+
+  // const captureImage = (type: "selfie" | "front" | "back") => {
+  //   if (!webcamRef.current) return;
+
+  //   if (type === "selfie" && !faceDetected) {
+
+  //     alert("Ensure exactly one face is visible.");
+
+  //     return;
+  //   }
+
+  //   const video = webcamRef.current.video;
+  //   const canvas = document.createElement("canvas");
+  //   const ctx = canvas.getContext("2d");
+
+  //   if (!video || !ctx) return;
+
+  //   canvas.width = video.videoWidth;
+  //   canvas.height = video.videoHeight;
+
+  //   // 🖼️ Draw video frame
+  //   ctx.drawImage(video, 0, 0);
+
+  //   // ===== ✅ UI STYLE OVERLAY START =====
+
+  //   const paddingX = 12;
+  //   const paddingY = 8;
+  //   const fontSize = 20;
+  //   const lineHeight = 24; // tuned for canvas
+
+  //   ctx.font = `${fontSize}px monospace`;
+
+  //   const lines = [
+  //     `🏠 ${address}`,
+  //     `📍 ${lat}, ${long}`,
+  //     `🕒 ${time}`,
+  //     `👤 ID: ${session?.user?.id}`
+  //   ];
+
+  //   // 📏 calculate width based on text
+  //   let maxWidth = 0;
+  //   lines.forEach((line) => {
+  //     const w = ctx.measureText(line).width;
+  //     if (w > maxWidth) maxWidth = w;
+  //   });
+
+  //   const boxWidth = maxWidth + paddingX * 2;
+  //   const boxHeight = lines.length * lineHeight + paddingY * 2;
+
+  //   // 📍 position (same as your div: bottom-left)
+  //   const x = 10;
+  //   const y = canvas.height - boxHeight - 10;
+
+  //   // 🎨 background with rounded corners
+  //   ctx.fillStyle = "rgba(0,0,0,0.6)";
+  //   ctx.beginPath();
+  //   ctx.roundRect(x, y, boxWidth, boxHeight, 6);
+  //   ctx.fill();
+
+  //   // ✍️ text
+  //   ctx.fillStyle = "#00FFCC";
+
+  //   lines.forEach((line, i) => {
+  //     ctx.fillText(
+  //       line,
+  //       x + paddingX,
+  //       y + paddingY + (i + 1) * lineHeight - 4
+  //     );
+  //   });
+
+  //   // ===== ✅ UI STYLE OVERLAY END =====
+
+  //   const finalImage = canvas.toDataURL("image/jpeg", 0.85);
+
+  //   if (type === "selfie") setLiveSelfie(finalImage);
+  //   else if (type === "front") setAadhaarFront(finalImage);
+  //   else setAadhaarBack(finalImage);
+  // };
 
   const captureImage = (type: "selfie" | "front" | "back") => {
     if (!webcamRef.current) return;
 
     if (type === "selfie" && !faceDetected) {
-
       alert("Ensure exactly one face is visible.");
-      
+
       return;
     }
 
-    const imageSrc = webcamRef.current.getScreenshot();
+    const video = webcamRef.current.video;
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
 
-    if (!imageSrc) return;
+    if (!video || !ctx) return;
 
-    if (type === "selfie") setLiveSelfie(imageSrc);
-    else if (type === "front") setAadhaarFront(imageSrc);
-    else setAadhaarBack(imageSrc);
+    // ✅ Fix blur using devicePixelRatio
+    const dpr = window.devicePixelRatio || 1;
+
+    canvas.width = video.videoWidth * dpr;
+    canvas.height = video.videoHeight * dpr;
+
+    canvas.style.width = `${video.videoWidth}px`;
+    canvas.style.height = `${video.videoHeight}px`;
+
+    ctx.scale(dpr, dpr);
+
+    // 🖼️ Draw video
+    ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+
+    // ===== UI STYLE OVERLAY =====
+
+    const paddingX = 12;
+    const paddingY = 8;
+    const fontSize = 20;
+    const lineHeight = 26;
+
+    // ✅ Better font rendering
+    ctx.font = `${fontSize}px Arial`; // monospace looks jagged sometimes
+    ctx.textBaseline = "top";
+
+    const lines = [
+      `${address}`,
+      `Lat ${lat} Long ${long}`,
+      `${time}`,
+    ];
+
+    let maxWidth = 0;
+
+    lines.forEach((line) => {
+      const w = ctx.measureText(line).width;
+
+      if (w > maxWidth) maxWidth = w;
+    });
+
+    const boxWidth = maxWidth + paddingX * 2;
+    const boxHeight = lines.length * lineHeight + paddingY * 2;
+
+    const x = 10;
+    const y = video.videoHeight - boxHeight - 10;
+
+    // Background
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.beginPath();
+    ctx.roundRect(x, y, boxWidth, boxHeight, 6);
+    ctx.fill();
+
+    // Text
+    ctx.fillStyle = "#ffffff";
+
+    lines.forEach((line, i) => {
+      ctx.fillText(
+        line,
+        x + paddingX,
+        y + paddingY + i * lineHeight
+      );
+    });
+
+    // ===== END =====
+
+    const finalImage = canvas.toDataURL("image/jpeg", 0.9);
+
+    if (type === "selfie") setLiveSelfie(finalImage);
+    else if (type === "front") setAadhaarFront(finalImage);
+    else setAadhaarBack(finalImage);
   };
 
   const base64ToFile = (base64: string, filename: string) => {
@@ -981,6 +1233,24 @@ const CapturePage = () => {
                     height: "100%",
                   }}
                 />
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 10,
+                    left: 10,
+                    background: "rgba(0,0,0,0.6)",
+                    color: "#ffffff",
+                    padding: "8px 12px",
+                    fontSize: "13px",
+                    fontFamily: "monospace",
+                    borderRadius: "6px",
+                    lineHeight: "1.4"
+                  }}
+                >
+                  <div>{address}</div>
+                  <div>Lat {lat} Long {long}</div>
+                  <div>{time}</div>
+                </div>
               </div>
 
               <p style={{ color: faceDetected ? "green" : "red", fontWeight: "bold" }}>

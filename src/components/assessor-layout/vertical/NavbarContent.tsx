@@ -11,12 +11,12 @@ import NavToggle from './NavToggle'
 // import NavSearch from '@components/admin-layout/shared/search'
 // import LanguageDropdown from '@components/admin-layout/shared/LanguageDropdown'
 
-import ModeDropdown from '@components/admin-layout/shared/ModeDropdown'
+import ModeDropdown from '@components/assessor-layout/shared/ModeDropdown'
 
 // import ShortcutsDropdown from '@components/admin-layout/shared/ShortcutsDropdown'
 // import NotificationsDropdown from '@components/admin-layout/shared/NotificationsDropdown'
 
-import UserDropdown from '@components/admin-layout/shared/UserDropdown'
+import UserDropdown from '@components/assessor-layout/shared/UserDropdown'
 
 // Util Imports
 import { verticalLayoutClasses } from '@layouts/utils/layoutClasses'
