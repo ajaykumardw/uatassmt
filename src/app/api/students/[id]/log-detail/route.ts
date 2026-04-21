@@ -100,6 +100,84 @@ import { decrypt } from "@/utils/encryption";
 import { agencyImagePath, sscImagePath } from "@/configs/customDataConfig";
 import getValidImage from "@/utils/getValidImage";
 
+// =======================================
+// COMMON SORT HELPER
+// Sort By NOS -> PC -> ID
+// =======================================
+
+// const sortByNosAndPc = (data: any[]) => {
+//   return [...data].sort((a, b) => {
+//     const aQuestion = a.questions || a.question;
+//     const bQuestion = b.questions || b.question;
+
+//     const aPc = aQuestion?.pc_questions?.[0];
+//     const bPc = bQuestion?.pc_questions?.[0];
+
+//     // =========================
+//     // SORT BY NOS ID
+//     // =========================
+//     const aNosId = aPc?.pc?.nos?.nos_id || "";
+//     const bNosId = bPc?.pc?.nos?.nos_id || "";
+
+//     const nosNumA =
+//       parseInt(aNosId.replace(/^\D+/g, ""), 10) || 0;
+
+//     const nosNumB =
+//       parseInt(bNosId.replace(/^\D+/g, ""), 10) || 0;
+
+//     if (nosNumA !== nosNumB) {
+//       return nosNumA - nosNumB;
+//     }
+
+//     // =========================
+//     // SORT BY PC ID
+//     // =========================
+//     const aPcId = aPc?.pc?.pc_id || "";
+//     const bPcId = bPc?.pc?.pc_id || "";
+
+//     const pcNumA =
+//       parseInt(aPcId.replace(/^\D+/g, ""), 10) || 0;
+
+//     const pcNumB =
+//       parseInt(bPcId.replace(/^\D+/g, ""), 10) || 0;
+
+//     if (pcNumA !== pcNumB) {
+//       return pcNumA - pcNumB;
+//     }
+
+//     // fallback
+//     return (a.id || 0) - (b.id || 0);
+//   });
+// };
+
+const sortByNosAndPc = (data: any[]) => {
+  return [...data].sort((a, b) => {
+    const aQuestion = a.questions || a.question;
+    const bQuestion = b.questions || b.question;
+
+    const aPc = aQuestion?.pc_questions?.[0];
+    const bPc = bQuestion?.pc_questions?.[0];
+
+    const aNos = aPc?.pc?.nos?.nos_name || "";
+    const bNos = bPc?.pc?.nos?.nos_name || "";
+
+    const nosCompare = aNos.localeCompare(bNos, undefined, {
+      numeric: true,
+      sensitivity: "base"
+    });
+
+    if (nosCompare !== 0) return nosCompare;
+
+    const aPcName = aPc?.pc?.pc_name || "";
+    const bPcName = bPc?.pc?.pc_name || "";
+
+    return aPcName.localeCompare(bPcName, undefined, {
+      numeric: true,
+      sensitivity: "base"
+    });
+  });
+};
+
 export async function GET(
   req: Request,
   context: { params: { id: number } }
@@ -183,7 +261,7 @@ export async function GET(
   const examSetId =
     student.batch.theory_exam_set_id;
 
-  const questions =
+  const questionsRaw =
     await prisma.exam_sets_questions.findMany({
 
       where: {
@@ -213,6 +291,8 @@ export async function GET(
       }
 
     });
+
+  const questions = sortByNosAndPc(questionsRaw);
 
   const results =
     await prisma.exam_set_results.findMany({
@@ -410,7 +490,7 @@ export async function GET(
   // PRACTICAL SECTION
   // =========================
 
-  const practicalAttempts = await prisma.student_question_attempts.findMany({
+  const practicalAttemptsRaw = await prisma.student_question_attempts.findMany({
     where: {
       student_id: studentId,
       question: {
@@ -437,6 +517,8 @@ export async function GET(
     }
   });
 
+  const practicalAttempts = sortByNosAndPc(practicalAttemptsRaw);
+
   const practical_report = practicalAttempts.map((item, index) => {
     const pcData = item.question.pc_questions?.[0];
 
@@ -461,7 +543,7 @@ export async function GET(
   // VIVA SECTION
   // =========================
 
-  const vivaAttempts = await prisma.student_question_attempts.findMany({
+  const vivaAttemptsRaw = await prisma.student_question_attempts.findMany({
     where: {
       student_id: studentId,
       question: {
@@ -487,6 +569,8 @@ export async function GET(
       id: "asc"
     }
   });
+
+  const vivaAttempts = sortByNosAndPc(vivaAttemptsRaw);
 
   const viva_report = vivaAttempts.map((item, index) => {
     const pcData = item.question.pc_questions?.[0];
@@ -531,7 +615,7 @@ export async function GET(
   let obtainedTheoryMarks = 0;
   let obtainedPracticalMarks = 0;
   let obtainedVivaMarks = 0;
-  
+
   const obtainedProjectMarks = 0;
 
   questions.forEach((item) => {

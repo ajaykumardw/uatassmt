@@ -1,5 +1,6 @@
-import prisma from "@/libs/prisma";
 import { NextResponse } from "next/server";
+
+import prisma from "@/libs/prisma";
 
 export async function GET() {
   try {
@@ -40,6 +41,9 @@ export async function GET() {
     });
 
   } catch (error) {
+
+    console.log("error in report type api:", error)
+
     return NextResponse.json({
       success: false,
       message: "Failed to fetch reports"
