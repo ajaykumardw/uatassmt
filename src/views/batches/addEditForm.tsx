@@ -101,6 +101,7 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
   // const [addSchemeOpen, setAddSchemeOpen] = useState(false);
   const [addSubSchemeOpen, setAddSubSchemeOpen] = useState(false);
   const [stateData, setStateData] = useState<state[]>([]);
+  const [parentSchemeId, setParentSchemeId] = useState<number | null>(null);
 
 
   // Hooks
@@ -645,7 +646,7 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
                     }
                   </CustomIconButton>
                 </Tooltip>
-                <Button variant='tonal' onClick={() => setAddSubSchemeOpen(true)} color='primary'>Add Scheme</Button>
+                <Button variant='tonal' onClick={() => { setParentSchemeId(null); setAddSubSchemeOpen(true); }} color='primary'>Add Scheme</Button>
               </Grid>
               <Grid item xs={12} md={6} className='flex items-end gap-4'>
                 <Controller
@@ -692,7 +693,7 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
                 {/* <CustomIconButton target='_blank' href={`/${locale}/users/create/2`} aria-label='Add TP' color='primary' variant='tonal' onClick={handleReloadTP} disabled={tpLoading}>
                   <i className='tabler-plus' />
                 </CustomIconButton> */}
-                <Button variant='tonal' disabled={selectedScheme === ''} onClick={() => setAddSubSchemeOpen(true)} color={selectedScheme === '' ? 'secondary' : 'primary'}>Add Sub Scheme</Button>
+                <Button variant='tonal' disabled={selectedScheme === ''} onClick={() => { setParentSchemeId(Number(selectedScheme)); setAddSubSchemeOpen(true); }} color={selectedScheme === '' ? 'secondary' : 'primary'}>Add Sub Scheme</Button>
               </Grid>
               <Grid item xs={12} sm={6} className='flex items-end gap-4'>
                 <Controller
@@ -1004,7 +1005,7 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
         </form>
       </Card>
       <AddEditTCForm tpId={selectedTP ? Number(selectedTP) : undefined} open={addTCOpen} stateData={stateData} updateTCList={() => handleReloadTC(selectedTP)} handleClose={() => setAddTCOpen(!addTCOpen)} />
-      <AddEditSchemeDialog open={addSubSchemeOpen} parentId={selectedScheme ? Number(selectedScheme) : undefined} updateSchemeList={() => handleSchemeChange(selectedScheme)} handleClose={() => setAddSubSchemeOpen(!addSubSchemeOpen)} />
+      <AddEditSchemeDialog open={addSubSchemeOpen} parentId={parentSchemeId ? Number(parentSchemeId) : undefined} updateSchemeList={() => handleSchemeChange(selectedScheme)} handleClose={() => setAddSubSchemeOpen(!addSubSchemeOpen)} />
     </>
   )
 
