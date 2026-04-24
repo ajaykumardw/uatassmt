@@ -172,7 +172,7 @@ export async function GET(
   }
 }
 
-export const fileToUint8Array = async (filePath: string) => {
+const fileToUint8Array = async (filePath: string) => {
   try {
     const input = await fs.readFile(filePath);
 
@@ -196,7 +196,7 @@ export const fileToUint8Array = async (filePath: string) => {
   }
 };
 
-export const generateAttendancePdf = async (batch: any) => {
+const generateAttendancePdf = async (batch: any) => {
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",
