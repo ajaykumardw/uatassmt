@@ -407,7 +407,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
         autoTable(pdf,{
           head:[
             [
-              { content: "Theory", colSpan: 8, styles:{ halign:'center', fillColor: "#0047AB", textColor: "#FFFFFF", fontStyle: 'bold' } }
+              { content: "Theory", colSpan: 8, styles:{ halign:'center', fillColor: process.env.NEXT_PUBLIC_PRIMARY_COLOR || "#0047AB", textColor: "#FFFFFF", fontStyle: 'bold' } }
             ],
             theoryTableColumns
           ],
@@ -454,7 +454,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
         autoTable(pdf,{
           head:[
             [
-              { content: "Practical", colSpan: 6, styles:{ halign:'center', fillColor: "#0047AB", textColor: "#FFFFFF", fontStyle: 'bold' } }
+              { content: "Practical", colSpan: 6, styles:{ halign:'center', fillColor: process.env.NEXT_PUBLIC_PRIMARY_COLOR || "#0047AB", textColor: "#FFFFFF", fontStyle: 'bold' } }
             ],
             practicalAndVivaTableColumns
           ],
@@ -497,7 +497,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
         autoTable(pdf,{
           head:[
             [
-              { content: "Viva", colSpan: 6, styles:{ halign:'center', fillColor: "#0047AB", textColor: "#FFFFFF", fontStyle: 'bold' } }
+              { content: "Viva", colSpan: 6, styles:{ halign:'center', fillColor: process.env.NEXT_PUBLIC_PRIMARY_COLOR || "#0047AB", textColor: "#FFFFFF", fontStyle: 'bold' } }
             ],
             practicalAndVivaTableColumns
           ],
@@ -540,7 +540,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
         autoTable(pdf,{
           head:[
             [
-              { content: "Project", colSpan: 5, styles:{ halign:'center', fillColor: "#0047AB", textColor: "#FFFFFF", fontStyle: 'bold' } }
+              { content: "Project", colSpan: 5, styles:{ halign:'center', fillColor: process.env.NEXT_PUBLIC_PRIMARY_COLOR || "#0047AB", textColor: "#FFFFFF", fontStyle: 'bold' } }
             ],
             projectTableColumns
           ],
@@ -596,7 +596,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
 
         theme:'grid',
         headStyles:{
-          fillColor: "#0047AB",
+          fillColor: process.env.NEXT_PUBLIC_PRIMARY_COLOR || "#0047AB",
           textColor: "#FFFFFF",
           fontStyle: 'bold'
         },

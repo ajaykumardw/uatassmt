@@ -1008,14 +1008,20 @@ const MiscellaneousReport = () => {
                     <Box
                       sx={{
                         border: checked
-                          ? "1px solid #696cff"
-                          : "1px solid #e5e7eb",
+                          ? "1px solid"
+                          : "1px solid",
+                        borderColor: checked ? 'primary.main' : 'var(--border-color)',
                         borderRadius: 2,
                         px: 1.5,
                         py: 1,
+
+                        // backgroundColor: checked
+                        //   ? "rgba(105,108,255,0.04)"
+                        //   : "#fff",
+
                         backgroundColor: checked
-                          ? "rgba(105,108,255,0.04)"
-                          : "#fff",
+                          ? 'primary.lighterOpacity'
+                          : "",
                         transition:
                           "all 0.2s ease",
                         "&:hover": {

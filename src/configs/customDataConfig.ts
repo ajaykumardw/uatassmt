@@ -168,12 +168,24 @@ export const sscImagePath = (userId: number, sscImage: string) => {
   return sscImage ? `${sscPath}/${userId}/${sscImage}` : "";
 }
 
+export const getSSCImagePath = (userId: number, sscImage: string) => {
+  return sscImage ? `${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.ssc}/${userId}/${sscImage}` : "";
+}
+
 export const agencyImagePath = (userId: number, agencyImage: string) => {
   return agencyImage ? `${agencyPath}/${userId}/${agencyImage}` : "";
 }
 
+export const getAgencyImagePath = (userId: number, agencyImage: string) => {
+  return agencyImage ? `${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.agency}/${userId}/${agencyImage}` : "";
+}
+
 export const agencyUsersFilePath = (userId: number, fileName: string) => {
   return fileName ? `${agencyPath}/${storageFolders.users}/${userId}/${fileName}` : "";
+}
+
+export const getAgencyUsersFilePath = (userId: number, fileName: string) => {
+  return fileName ? `${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.agency}/${storageFolders.users}/${userId}/${fileName}` : "";
 }
 
 export const trainingResourceFilePath = (resourceId: number, fileName: string) => {

@@ -22,6 +22,7 @@ declare module 'next-auth' {
     actual_user_id?: string | null;
     is_shadow?: boolean;
     accessToken?: string | null;
+    refreshToken?: string | null;
   }
   interface Session{
     studentImage?: string | null,
@@ -42,6 +43,7 @@ declare module 'next-auth' {
       actual_user_id?: string | null;
       is_shadow?: boolean;
       accessToken?: string | null;
+      refreshToken?: string | null;
     } & DefaultSession['user']
   }
 }
@@ -64,5 +66,6 @@ declare module 'next-auth/jwt' {
     actual_user_id?: string | null;
     is_shadow?: boolean;
     accessToken?: string | null;
+    refreshToken?: string | null;
   }
 }

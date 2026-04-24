@@ -48,6 +48,7 @@ model batches {
   center_spoc_person_name   String? @db.VarChar(100)
   center_spoc_person_email  String? @db.VarChar(100)
   center_spoc_person_phone  String? @db.VarChar(15)
+  auto_update               Int?      @default(0) @db.TinyInt
 
   students                  students[]
   center_inspections         inspection_media[]

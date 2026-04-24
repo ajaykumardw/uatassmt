@@ -11,9 +11,32 @@ import type { NextAuthOptions } from 'next-auth'
 
 import type { Adapter } from 'next-auth/adapters'
 
+import jwt from 'jsonwebtoken';
+
 import { generateSessionId } from '@/utils/generateSessionId'
 
 const prisma = new PrismaClient()
+
+async function refreshAccessToken(token: any) {
+  const res = await fetch(`${process.env.API_URL}/refresh`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      refreshToken: token.refreshToken,
+    }),
+  })
+
+  const data = await res.json()
+
+  const decoded: any = jwt.decode(data.data.accessToken)
+
+  return {
+    ...token,
+    accessToken: data.data.accessToken,
+    refreshToken: data.data.refreshToken ?? token.refreshToken,
+    accessTokenExpires: decoded.exp * 1000,
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as Adapter,
@@ -185,6 +208,14 @@ export const authOptions: NextAuthOptions = {
         token.actual_agency_id = user.agency_id
         token.is_shadow = false
         token.accessToken = user.accessToken
+        token.refreshToken = user.refreshToken
+
+        // ✅ ADD THIS
+        const decoded: any = typeof user.accessToken === 'string' ? jwt.decode(user.accessToken) : {}
+
+        token.accessTokenExpires = decoded?.exp
+          ? decoded.exp * 1000
+          : Date.now() + 60 * 60 * 1000
       }
 
       if(trigger === 'update' && session?.shadowUserId && session?.shadowUserAgencyId && token.user_type === "SA") {
@@ -199,6 +230,17 @@ export const authOptions: NextAuthOptions = {
         token.agency_id = token.actual_agency_id as string
         token.is_shadow = false
         token.user_type = "SA"
+      }
+
+      if (
+        token.accessToken &&
+        token.accessTokenExpires &&
+        Date.now() >= (token.accessTokenExpires as number)
+      ) {
+
+        console.log('Access token expired, refreshing...')
+
+        return await refreshAccessToken(token)
       }
 
       return token

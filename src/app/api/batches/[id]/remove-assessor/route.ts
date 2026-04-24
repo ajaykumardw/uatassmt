@@ -53,7 +53,8 @@ export async function POST(
 
   // const createdBy = Number(session?.user.id);
 
-  const agencyId = Number(session?.user?.agency_id);
+  // const agencyId = Number(session?.user?.agency_id);
+  const agencyId = Number(session?.user?.id);
 
   const batchExist = await prisma.batches.findUnique({
     where: {
