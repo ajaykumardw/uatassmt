@@ -1,5 +1,7 @@
 // app/api/batch-date-correction/route.ts
 
+export const dynamic = "force-dynamic";
+
 import path from "path";
 import fs from "fs/promises";
 
@@ -413,7 +415,7 @@ async function processBatch(
   }
 }
 
-export async function GET() {
+export async function POST() {
   try {
     try {
       await fs.access(FILE_PATH);
