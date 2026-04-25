@@ -253,83 +253,156 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
       });
     });
 
-    const rawLogos = [
-      candidateDetails?.ssc_image,
-      candidateDetails?.agency_image,
-      candidateDetails?.tp_image,
-    ].filter(Boolean);
+    // const rawLogos = [
+    //   candidateDetails?.ssc_image,
+    //   candidateDetails?.agency_image,
+    //   candidateDetails?.tp_image,
+    // ].filter(Boolean);
 
-    // 🔥 convert all to base64
-    const logos: string[] = [];
+    // // 🔥 convert all to base64
+    // const logos: string[] = [];
 
-    for (const logo of rawLogos) {
-      if (logo.startsWith("data:image")) {
-        logos.push(logo); // already base64
-      } else {
-        const base64 = await urlToBase64(logo);
+    // for (const logo of rawLogos) {
+    //   if (logo.startsWith("data:image")) {
+    //     logos.push(logo); // already base64
+    //   } else {
+    //     const base64 = await urlToBase64(logo);
 
-        if (base64) logos.push(base64);
-      }
-    }
+    //     if (base64) logos.push(base64);
+    //   }
+    // }
 
-    const pageWidth = pdf.internal.pageSize.getWidth();
+    // const pageWidth = pdf.internal.pageSize.getWidth();
+
+    // const boxWidth = 30;
+    // const boxHeight = 30;
+    // const gap = 5;
+
+    // let x = 10;
+    // let y = 10;
+
+    // // ======================
+    // // DRAW LOGOS FIRST
+    // // ======================
+    // for (const logo of logos) {
+    //   try {
+    //     const img = new Image();
+
+    //     img.src = logo;
+
+    //     await new Promise((resolve) => {
+    //       img.onload = resolve;
+    //     });
+
+    //     const imgW = img.width;
+    //     const imgH = img.height;
+
+    //     // ✅ scale like object-fit: contain
+    //     const scale = Math.min(boxWidth / imgW, boxHeight / imgH);
+
+    //     const drawWidth = imgW * scale;
+    //     const drawHeight = imgH * scale;
+
+    //     // ✅ center inside box
+    //     const offsetX = (boxWidth - drawWidth) / 2;
+    //     const offsetY = (boxHeight - drawHeight) / 2;
+
+    //     // 👉 wrap if needed
+    //     if (x + boxWidth > pageWidth - 10) {
+    //       x = 10;
+    //       y += boxHeight + gap;
+    //     }
+
+    //     // (optional) draw box border for debugging
+    //     // pdf.rect(x, y, boxWidth, boxHeight);
+
+    //     pdf.addImage(
+    //       logo,
+    //       "PNG",
+    //       x + offsetX,
+    //       y + offsetY,
+    //       drawWidth,
+    //       drawHeight
+    //     );
+
+    //     x += boxWidth + gap;
+
+    //   } catch {
+
+    //     // ignore broken images
+
+    //   }
+    // }
+
+   const pageWidth = pdf.internal.pageSize.getWidth();
 
     const boxWidth = 30;
     const boxHeight = 30;
-    const gap = 5;
+    const y = 0;
 
-    let x = 10;
-    let y = 10;
+    // fixed slots
+    const leftX = 10;
+    const centerX = (pageWidth / 2) - (boxWidth / 2);
+    const rightX = pageWidth - boxWidth - 10;
 
-    // ======================
-    // DRAW LOGOS FIRST
-    // ======================
-    for (const logo of logos) {
+    const headerLogos = [
+      { src: candidateDetails?.agency_image, x: leftX },
+      { src: candidateDetails?.ssc_image, x: centerX },
+      { src: candidateDetails?.tp_image, x: rightX }
+    ];
+
+    for (const item of headerLogos) {
       try {
+        // always reserve space
+        const slotX = item.x;
+        const slotY = y;
+
+        // optional debug / placeholder border
+        // pdf.rect(slotX, slotY, boxWidth, boxHeight);
+
+        if (!item.src) continue;
+
+        const logo = item.src.startsWith("data:image")
+          ? item.src
+          : await urlToBase64(item.src);
+
+        if (!logo) continue;
+
         const img = new Image();
 
         img.src = logo;
 
-        await new Promise((resolve) => {
+        await new Promise((resolve, reject) => {
           img.onload = resolve;
+          img.onerror = reject;
         });
 
         const imgW = img.width;
         const imgH = img.height;
 
-        // ✅ scale like object-fit: contain
-        const scale = Math.min(boxWidth / imgW, boxHeight / imgH);
+        const scale = Math.min(
+          boxWidth / imgW,
+          boxHeight / imgH
+        );
 
         const drawWidth = imgW * scale;
         const drawHeight = imgH * scale;
 
-        // ✅ center inside box
         const offsetX = (boxWidth - drawWidth) / 2;
         const offsetY = (boxHeight - drawHeight) / 2;
-
-        // 👉 wrap if needed
-        if (x + boxWidth > pageWidth - 10) {
-          x = 10;
-          y += boxHeight + gap;
-        }
-
-        // (optional) draw box border for debugging
-        // pdf.rect(x, y, boxWidth, boxHeight);
 
         pdf.addImage(
           logo,
           "PNG",
-          x + offsetX,
-          y + offsetY,
+          slotX + offsetX,
+          slotY + offsetY,
           drawWidth,
           drawHeight
         );
 
-        x += boxWidth + gap;
-
       } catch {
 
-        // ignore broken images
+        // broken image => keep empty slot
 
       }
     }
@@ -337,10 +410,12 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
     // ======================
     // TITLE BELOW LOGOS
     // ======================
-    const titleY =
-      logos.length > 0
-        ? y + boxHeight + 2
-        : 15;
+    // const titleY =
+    //   logos.length > 0
+    //     ? y + boxHeight + 2
+    //     : 15;
+
+    const titleY = y + boxHeight + 2;
 
     if (tabValue === 'result_sheet') {
 
@@ -677,6 +752,125 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
         });
       }
 
+      const footerStartY = (pdf as any).lastAutoTable.finalY + 15;
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const margin = 10;
+
+      // left + right section start
+      const leftX = margin;
+      const blockWidth = 70;
+      const rightX = pageWidth - margin - blockWidth;
+
+      pdf.setFontSize(9);
+
+      // ==========================
+      // HEADER TEXT
+      // ==========================
+      pdf.text(
+        `Assessment Agency Name - ${candidateDetails?.agency_name ?? ""}`,
+        leftX,
+        footerStartY
+      );
+
+      pdf.text(
+        `TP Name - ${candidateDetails?.partner ?? ""}`,
+        rightX,
+        footerStartY
+      );
+
+      pdf.text(
+        `Assessment Agency's Head Name - ${candidateDetails?.agency_head_name ?? ""}`,
+        leftX,
+        footerStartY + 5
+      );
+
+      pdf.text(
+        `Center Manager's Name - ${candidateDetails?.center_manager_name ?? ""}`,
+        rightX,
+        footerStartY + 5
+      );
+
+      
+      // ==========================
+      // LABELS
+      // ==========================
+      pdf.text("Seal & Sign", leftX, footerStartY + 5 + 5);
+      pdf.text("Seal & Sign", rightX, footerStartY + 5 + 5);
+
+      // ==========================
+      // SIGN / STAMP BOX SETTINGS
+      // ==========================
+      const boxSize = 25;
+      const boxTopY = footerStartY + 12;
+
+      // left square box
+      const leftBoxX = leftX + 10;
+
+      // right square box
+      // const rightBoxX = rightX + 10;
+
+      // // draw square areas
+      // pdf.rect(leftBoxX, boxTopY, boxSize, boxSize);
+      // pdf.rect(rightBoxX, boxTopY, boxSize, boxSize);
+
+      // ==========================
+      // ONLY LEFT SIDE IMAGE
+      // ==========================
+      // if (candidateDetails?.agency_sign) {
+      //   try {
+      //     const img = candidateDetails.agency_sign.startsWith("data:image")
+      //       ? candidateDetails.agency_sign
+      //       : await urlToBase64(candidateDetails.agency_sign);
+
+      //     if (img) {
+      //       pdf.addImage(
+      //         img,
+      //         "PNG",
+      //         leftBoxX + 2,
+      //         boxTopY + 2,
+      //         boxSize - 4,
+      //         boxSize - 4
+      //       );
+      //     }
+      //   } catch {}
+      // }
+
+      // temporary stamp
+      try {
+        const img = await urlToBase64(`${process.env.NEXT_PUBLIC_APP_URL}/images/stamp/vistaskills_seal_sign.png`);
+
+        if (img) {
+          pdf.addImage(
+            img,
+            "PNG",
+            leftBoxX + 2,
+            boxTopY + 2,
+            boxSize,
+            boxSize
+          );
+        }
+      } catch {}
+
+
+      // // Signature Labels
+      // pdf.text(
+      //   "Seal & Sign",
+      //   leftX + 25,
+      //   // footerStartY + 28
+      //   boxTopY + boxSize + 6
+      // );
+
+      // pdf.text(
+      //   "Seal & Sign",
+      //   rightX + 25,
+      //   // footerStartY + 28
+      //   boxTopY + boxSize + 6
+      // );
+
+      // // signature lines
+      // pdf.line(leftX, boxTopY + boxSize + 10, leftX + 60, boxTopY + boxSize + 10);
+      // pdf.line(rightX, boxTopY + boxSize + 10, rightX + 60, boxTopY + boxSize + 10);
 
     } else {
 

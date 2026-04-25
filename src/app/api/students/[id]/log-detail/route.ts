@@ -194,6 +194,7 @@ export async function GET(
   }
 
   const isAgency = session?.user?.is_master;
+  const agencyName = session?.user?.name;
 
   if (!isAgency) {
     return NextResponse.json({
@@ -724,6 +725,8 @@ export async function GET(
       ssc_image: sscImage ? sscImagePath(student.batch.qualification_pack.ssc.id, sscImage) || null : null,
 
       agency_image: agencyImage ? agencyImagePath(student.batch.agency.id, agencyImage) || null : null,
+
+      agency_name: agencyName || "",
 
       name: student.candidate_name.toUpperCase(),
       candidate_id: student.candidate_id,
