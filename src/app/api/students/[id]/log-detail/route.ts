@@ -637,6 +637,39 @@ export async function GET(
     obtainedVivaMarks += Number(item.obtained_marks || 0);
   });
 
+  const nosMap = new Map();
+
+  const allRows = [
+    ...report,
+    ...practical_report,
+    ...viva_report
+  ];
+
+  for (const row of allRows) {
+
+    const nosName = row.nos_name || "N/A";
+
+    if (!nosMap.has(nosName)) {
+      nosMap.set(nosName, {
+        nos_name: nosName,
+        total_marks: 0,
+        obtained_marks: 0
+      });
+    }
+
+    const item = nosMap.get(nosName);
+
+    item.total_marks += Number(row.max_marks || 0);
+    item.obtained_marks += Number(row.obtained_marks || 0);
+  }
+
+  const summary_report = Array.from(nosMap.values()).map((item, index) => ({
+    sr_no: index + 1,
+    nos_name: item.nos_name,
+    total_marks: item.total_marks,
+    obtained_marks: item.obtained_marks
+  }));
+
   const theoryPercentage = totalTheoryMarks > 0 ? (obtainedTheoryMarks / totalTheoryMarks) * 100 : 0;
   const practicalPercentage = totalPracticalMarks > 0 ? (obtainedPracticalMarks / totalPracticalMarks) * 100 : 0;
   const vivaPercentage = totalVivaMarks > 0 ? (obtainedVivaMarks / totalVivaMarks) * 100 : 0;
@@ -733,7 +766,8 @@ export async function GET(
       total_project_marks: totalProjectMarks,
       obtained_project_marks: obtainedProjectMarks,
       project_percentage: projectPercentage.toFixed(2),
-      project_result_status: projectResultStatus
+      project_result_status: projectResultStatus,
+      summary_report: summary_report
 
     },
 

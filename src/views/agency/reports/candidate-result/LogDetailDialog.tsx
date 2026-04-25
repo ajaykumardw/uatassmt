@@ -253,23 +253,6 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
       });
     });
 
-
-    if (tabValue === 'result_sheet') {
-
-      pdf.text("Result Sheet", 105, 10, { align: "center" })
-
-    }
-
-    if (tabValue === 'question_wise_log') {
-
-      pdf.text("Question Wise Log Detail", 105, 10, { align: "center" })
-
-    } else if (tabValue === 'question_wise_time_taken') {
-
-      pdf.text("Question Wise Time Taken Detail", 105, 10, { align: "center" })
-
-    }
-
     const rawLogos = [
       candidateDetails?.ssc_image,
       candidateDetails?.agency_image,
@@ -291,13 +274,16 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
 
     const pageWidth = pdf.internal.pageSize.getWidth();
 
-    const boxWidth = 50;
-    const boxHeight = 50;
+    const boxWidth = 30;
+    const boxHeight = 30;
     const gap = 5;
 
     let x = 10;
-    let y = 15;
+    let y = 10;
 
+    // ======================
+    // DRAW LOGOS FIRST
+    // ======================
     for (const logo of logos) {
       try {
         const img = new Image();
@@ -348,60 +334,172 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
       }
     }
 
+    // ======================
+    // TITLE BELOW LOGOS
+    // ======================
+    const titleY =
+      logos.length > 0
+        ? y + boxHeight + 2
+        : 15;
+
+    if (tabValue === 'result_sheet') {
+
+      pdf.text("Result Sheet", 105, titleY, { align: "center" })
+
+    }
+
+    if (tabValue === 'question_wise_log') {
+
+      pdf.text("Question Wise Log Detail", 105, titleY, { align: "center" })
+
+    } else if (tabValue === 'question_wise_time_taken') {
+
+      pdf.text("Question Wise Time Taken Detail", 105, titleY, { align: "center" })
+
+    }
+
     // ✅ next section starts here
-    const currentY = y + boxHeight + 5;
+    // const currentY = y + logos.length > 0 ? boxHeight : 0 + 5;
+    const currentY = titleY + 10;
 
     // // ✅ Next content starts after logos
     // const currentY = y + logoHeight + 5;
 
-    // ✅ Candidate Details (2-column)
-    autoTable(pdf, {
-      startY: currentY,
-      theme: "plain",
-      styles: {
-        fontSize: 9,
-        cellPadding: 2,
-      },
-      columnStyles: {
-        0: { cellWidth: 35, fontStyle: "bold" },
-        1: { cellWidth: 55 },
-        2: { cellWidth: 35, fontStyle: "bold" },
-        3: { cellWidth: 55 },
-      },
-      margin:{left:5,right:5},
-      body: [
-        [
-          "Batch ID:", candidateDetails?.batch ?? "-",
-          "Scheme:", candidateDetails?.scheme ?? "-"
-        ],
-        [
-          "Sub Scheme:", candidateDetails?.sub_scheme ?? "-",
-          "Assessment Date:", candidateDetails?.assessment_date ?? "-"
-        ],
-        [
-          "Job Role:", candidateDetails?.qp ?? "-",
-          "TP/PIA's Name:", candidateDetails?.partner ?? "-"
-        ],
-        [
-          "Candidate's Name:", candidateDetails?.name ?? "-",
-          "Candidate's ID:", candidateDetails?.candidate_id ?? "-"
-        ],
-        [
-          "Aadhaar No.:", candidateDetails?.aadhaar ?? "-",
-          "Total Marks:", tabValue === 'result_sheet' ? candidateDetails?.total_marks ?? "-" : candidateDetails?.total_theory_marks ?? "-",
-        ],
-        [
-          "Obtained Marks:", tabValue === 'result_sheet' ? candidateDetails?.obtained_marks ?? "-" : candidateDetails?.obtained_theory_marks ?? "-",
-          "Result:", tabValue === 'result_sheet' ? candidateDetails?.result_status ?? "-" : candidateDetails?.theory_result_status ?? "-",
-        ],
-        [
-          "Percentage (%):", tabValue === 'result_sheet' ? candidateDetails?.percentage ?? "-" : candidateDetails?.theory_percentage ?? "-"
-        ],
-      ],
-    });
-
     if (tabValue === 'result_sheet') {
 
+      let candidateEndY = currentY;
+      let summaryEndY = currentY;
+      
+      // ✅ Candidate Details (2-column)
+      autoTable(pdf, {
+        startY: currentY,
+        theme: "plain",
+        styles: {
+          fontSize: 9,
+          cellPadding: 2,
+        },
+        columnStyles: {
+          0: { cellWidth: 35, fontStyle: "bold" },
+          1: { cellWidth: 55 },
+        },
+        margin:{left:5,right:5},
+        body: [
+          
+          [
+            "Candidate's Name:", candidateDetails?.name ?? "",
+          ],
+          [
+            "Candidate's ID:", candidateDetails?.candidate_id ?? ""
+          ],
+          [
+            "Batch ID:", candidateDetails?.batch ?? "",
+          ],
+          [
+            "Aadhaar No.:", candidateDetails?.aadhaar ?? "",
+          ],
+          [
+            "Scheme:", candidateDetails?.scheme ?? ""
+          ],
+          [
+            "Sub Scheme:", candidateDetails?.sub_scheme ?? "",
+          ],
+          [
+            "Assessment Date:", candidateDetails?.assessment_date ?? ""
+          ],
+          [
+            "TP/PIA's Name:", candidateDetails?.partner ?? ""
+          ],
+          [
+            "Job Role:", candidateDetails?.qp ?? "",
+          ],
+        ],
+      });
+
+      candidateEndY = (pdf as any).lastAutoTable.finalY;
+
+      // Summary Report
+      autoTable(pdf, {
+        startY: currentY,
+        margin: { left: 118 },
+        theme: "grid",
+
+        head: [
+          [
+            { content: "Summary", colSpan: 4, styles:{ halign:'center', fillColor: process.env.NEXT_PUBLIC_PRIMARY_COLOR || "#0047AB", textColor: "#FFFFFF", fontStyle: 'bold' } }
+          ],
+          ["S. No.", "NOS Name", "Total Marks", "Obtained Marks"]
+        ],
+
+        body: [
+          ...candidateDetails?.summary_report.map((row:any) => [
+            row.sr_no,
+            row.nos_name,
+            row.total_marks,
+            row.obtained_marks
+          ]),
+
+          // totals rows
+          [
+            {
+              content: "Total Marks",
+              colSpan: 2,
+              styles: { fontStyle: 'bold' }
+            },
+            candidateDetails?.total_marks ?? "",
+            candidateDetails?.obtained_marks ?? ""
+          ],
+          [
+            {
+              content: "Percentage (%)",
+              colSpan: 2,
+              styles: { fontStyle: 'bold' }
+            },
+            "100",
+            candidateDetails?.percentage ?? "",
+          ],
+          [
+            {
+              content: "Result",
+              colSpan: 2,
+              styles: { fontStyle: 'bold' }
+            },
+            {
+              content: candidateDetails?.result_status ?? "",
+              colSpan: 2,
+              styles: { fontStyle: 'bold', textColor: candidateDetails?.result_status === "PASS" ? "#16a34a" : candidateDetails?.result_status === "FAIL" ? "#dc2626" : "#000000" }
+            }
+          ]
+        ],
+
+        styles: {
+          fontSize: 7,
+          cellPadding: 1.5,
+          overflow: "linebreak",
+          halign: "center",
+          textColor: "#000000"
+        },
+
+        headStyles:{
+          fillColor: false,
+          textColor: "#000000",
+          fontStyle: 'bold',
+          lineWidth: 0.1,
+          halign: 'center'
+        },
+
+        columnStyles: {
+          0: { cellWidth: 12 },
+          1: { cellWidth: 34 },
+          2: { cellWidth: 20 },
+          3: { cellWidth: 20 }
+        }
+      });
+
+      summaryEndY = (pdf as any).lastAutoTable.finalY;
+
+      const topSectionEndY = Math.max(candidateEndY, summaryEndY) + 5;
+
+      // theory table
       if(theoryTableRows.length > 0) {
 
         autoTable(pdf,{
@@ -421,7 +519,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
             row.max_marks,
             row.obtained_marks
           ]),
-          startY: (pdf as any).lastAutoTable.finalY + 5,
+          startY: topSectionEndY,
           theme:'grid',
           headStyles:{
             fillColor: false,
@@ -439,7 +537,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
             0:{cellWidth:14},   // Sr
             1:{cellWidth:30},  // NOS
             2:{cellWidth:30},  // PC
-            3:{cellWidth:30},  // Question
+            3:{cellWidth:33},  // Question
             4:{cellWidth:26},  // Correct
             5:{cellWidth:26},  // Response
             6:{cellWidth:20},   // Max Marks
@@ -449,6 +547,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
         });
       }
 
+      // practical table
       if(practicalTableRows.length > 0) {
 
         autoTable(pdf,{
@@ -492,6 +591,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
         });
       }
 
+      // viva table
       if(vivaTableRows.length > 0) {
 
         autoTable(pdf,{
@@ -535,6 +635,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
         });
       }
 
+      // project table
       if(projectTableRows.length > 0) {
 
         autoTable(pdf,{
@@ -575,6 +676,59 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
           margin:{left:5,right:5},
         });
       }
+
+
+    } else {
+
+      // ✅ Candidate Details (2-column)
+      autoTable(pdf, {
+        startY: currentY,
+        theme: "plain",
+        styles: {
+          fontSize: 9,
+          cellPadding: 2,
+        },
+        columnStyles: {
+          0: { cellWidth: 35, fontStyle: "bold" },
+          1: { cellWidth: 55 },
+          2: { cellWidth: 35, fontStyle: "bold" },
+          3: { cellWidth: 55 },
+        },
+        margin:{left:5,right:5},
+        body: [
+          [
+            "Batch ID:", candidateDetails?.batch ?? "-",
+            "Scheme:", candidateDetails?.scheme ?? "-"
+          ],
+          [
+            "Sub Scheme:", candidateDetails?.sub_scheme ?? "-",
+            "Assessment Date:", candidateDetails?.assessment_date ?? "-"
+          ],
+          [
+            "Job Role:", candidateDetails?.qp ?? "-",
+            "TP/PIA's Name:", candidateDetails?.partner ?? "-"
+          ],
+          [
+            "Candidate's Name:", candidateDetails?.name ?? "-",
+            "Candidate's ID:", candidateDetails?.candidate_id ?? "-"
+          ],
+          [
+            "Aadhaar No.:", candidateDetails?.aadhaar ?? "-",
+            "Total Marks:", tabValue === 'result_sheet' ? candidateDetails?.total_marks ?? "-" : candidateDetails?.total_theory_marks ?? "-",
+          ],
+          [
+            "Obtained Marks:", tabValue === 'result_sheet' ? candidateDetails?.obtained_marks ?? "-" : candidateDetails?.obtained_theory_marks ?? "-",
+            "Result:", tabValue === 'result_sheet' ? candidateDetails?.result_status ?? "-" : candidateDetails?.theory_result_status ?? "-",
+          ],
+          [
+            "Percentage (%):", tabValue === 'result_sheet' ? candidateDetails?.percentage ?? "-" : candidateDetails?.theory_percentage ?? "-"
+          ],
+        ],
+      });
+
+    }
+
+    if (tabValue === 'result_sheet') {
 
     } else {
 
