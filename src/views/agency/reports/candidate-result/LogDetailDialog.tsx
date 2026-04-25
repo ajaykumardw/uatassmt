@@ -726,12 +726,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
         ],
       });
 
-    }
-
-    if (tabValue === 'result_sheet') {
-
-    } else {
-
+      // Question Wise Log Table and Question Wise Time Taken Table (same data, different column names)
       autoTable(pdf,{
         head:[tableColumn],
 
@@ -828,9 +823,10 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
         // }
 
       });
+
     }
 
-    let fileName = "";
+    let fileName = "Result_Sheet.pdf";
 
     if (tabValue === 'result_sheet') {
       fileName = `${selectedCandidate}_Result_Sheet.pdf`;
