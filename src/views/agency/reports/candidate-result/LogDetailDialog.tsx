@@ -765,7 +765,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
         pdf.addPage();
         footerStartY = 20; // reset top margin for new page
       }
-      
+
       // const footerStartY = (pdf as any).lastAutoTable.finalY + 15;
       
       const pageWidth = pdf.internal.pageSize.getWidth();
@@ -898,8 +898,8 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
 
       pdf.text("Seal & Sign", rightX, rightLabelY);
 
-      const rightBoxY = rightLabelY + 1;
-      const rightBoxX = rightX + (blockWidth - boxSize) / 2;
+      // const rightBoxY = rightLabelY + 1;
+      // const rightBoxX = rightX + (blockWidth - boxSize) / 2;
 
       // ==========================
       // LEFT SIDE IMAGE (STAMP)
