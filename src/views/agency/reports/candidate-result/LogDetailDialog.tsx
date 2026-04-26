@@ -780,7 +780,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
       );
 
       pdf.text(
-        `Assessment Agency's Head Name - ${candidateDetails?.agency_head_name ?? ""}`,
+        `Assessment Agency's Head Name - ${candidateDetails?.agency_head_name ?? "Raju Sharma"}`,
         leftX,
         footerStartY + 5
       );
