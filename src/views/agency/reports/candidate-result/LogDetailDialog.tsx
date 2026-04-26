@@ -752,14 +752,28 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
         });
       }
 
-      const footerStartY = (pdf as any).lastAutoTable.finalY + 15;
+      const pageHeight = pdf.internal.pageSize.getHeight();
 
+      // estimate footer height (safe buffer)
+      const estimatedFooterHeight = 50;
+
+      
+      let footerStartY = (pdf as any).lastAutoTable.finalY + 15;
+      
+      // 👉 check if footer fits in current page
+      if (footerStartY + estimatedFooterHeight > pageHeight) {
+        pdf.addPage();
+        footerStartY = 20; // reset top margin for new page
+      }
+      
+      // const footerStartY = (pdf as any).lastAutoTable.finalY + 15;
+      
       const pageWidth = pdf.internal.pageSize.getWidth();
       const margin = 10;
-
+      
       // left + right section start
       const leftX = margin;
-      const blockWidth = 70;
+      const blockWidth = 90;
       const rightX = pageWidth - margin - blockWidth;
 
       pdf.setFontSize(9);
@@ -767,90 +781,202 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
       // ==========================
       // HEADER TEXT
       // ==========================
-      pdf.text(
-        `Assessment Agency Name - ${candidateDetails?.agency_name ?? ""}`,
+      // drawWrappedText(
+      //   `Assessment Agency Name - ${candidateDetails?.agency_name ?? ""}`,
+      //   leftX,
+      //   footerStartY
+      // );
+
+      // drawWrappedText(
+      //   `TP Name - ${candidateDetails?.partner ?? ""}`,
+      //   rightX,
+      //   footerStartY
+      // );
+
+      // drawWrappedText(
+      //   `Assessment Agency's Head Name - ${candidateDetails?.agency_head_name ?? "Raju Sharma"}`,
+      //   leftX,
+      //   footerStartY + 5
+      // );
+
+      // drawWrappedText(
+      //   `Center Manager's Name - ${candidateDetails?.center_manager_name ?? ""}`,
+      //   rightX,
+      //   footerStartY + 5
+      // );
+
+      const drawLabelValue = (
+        label: string,
+        value: string,
+        x: number,
+        y: number,
+        width: number
+      ) => {
+        const labelText = `${label} - `;
+        
+        // get label width
+        const labelWidth = pdf.getTextWidth(labelText);
+
+        // remaining width for value
+        const valueWidth = width - labelWidth;
+
+        // split ONLY value
+        const valueLines = pdf.splitTextToSize(value || '', valueWidth);
+
+        // first line → label + first value line
+        pdf.text(labelText + (valueLines[0] || ''), x, y);
+
+        // remaining lines → aligned under value
+        valueLines.slice(1).forEach((line: string, i: number) => {
+          pdf.text(line, x + labelWidth, y + (i + 1) * 4);
+        });
+
+        return valueLines.length * 4;
+      };
+
+      // LEFT SIDE
+      let leftY = footerStartY;
+
+      leftY += drawLabelValue(
+        'Assessment Agency Name',
+        candidateDetails?.agency_name ?? '',
         leftX,
-        footerStartY
+        leftY,
+        blockWidth
       );
 
-      pdf.text(
-        `TP Name - ${candidateDetails?.partner ?? ""}`,
-        rightX,
-        footerStartY
-      );
-
-      pdf.text(
-        `Assessment Agency's Head Name - ${candidateDetails?.agency_head_name ?? "Raju Sharma"}`,
+      leftY += drawLabelValue(
+        "Assessment Agency's Head Name",
+        candidateDetails?.agency_head_name ?? 'Raju Sharma',
         leftX,
-        footerStartY + 5
+        leftY + 2,
+        blockWidth
       );
 
-      pdf.text(
-        `Center Manager's Name - ${candidateDetails?.center_manager_name ?? ""}`,
+      let rightY = footerStartY;
+
+      rightY += drawLabelValue(
+        'TP Name',
+        candidateDetails?.partner ?? '',
         rightX,
-        footerStartY + 5
+        rightY,
+        blockWidth
+      );
+
+      rightY += drawLabelValue(
+        "Center Manager's Name",
+        candidateDetails?.center_manager_name ?? '',
+        rightX,
+        rightY + 2,
+        blockWidth
       );
 
       
       // ==========================
       // LABELS
       // ==========================
-      pdf.text("Seal & Sign", leftX, footerStartY + 5 + 5);
-      pdf.text("Seal & Sign", rightX, footerStartY + 5 + 5);
+      // spacing after text
+      const spacing = 4;
 
       // ==========================
-      // SIGN / STAMP BOX SETTINGS
+      // LEFT SIDE (dynamic)
       // ==========================
+      const leftLabelY = leftY + spacing;
+
+      pdf.text("Seal & Sign", leftX, leftLabelY);
+
       const boxSize = 25;
-      const boxTopY = footerStartY + 12;
+      const leftBoxY = leftLabelY + 1;
 
-      // left square box
-      const leftBoxX = leftX + 10;
-
-      // right square box
-      // const rightBoxX = rightX + 10;
-
-      // // draw square areas
-      // pdf.rect(leftBoxX, boxTopY, boxSize, boxSize);
-      // pdf.rect(rightBoxX, boxTopY, boxSize, boxSize);
+      // center align box inside block (optional but better)
+      const leftBoxX = leftX + (blockWidth - boxSize) / 2;
 
       // ==========================
-      // ONLY LEFT SIDE IMAGE
+      // RIGHT SIDE (dynamic)
       // ==========================
-      // if (candidateDetails?.agency_sign) {
-      //   try {
-      //     const img = candidateDetails.agency_sign.startsWith("data:image")
-      //       ? candidateDetails.agency_sign
-      //       : await urlToBase64(candidateDetails.agency_sign);
+      const rightLabelY = rightY + spacing;
 
-      //     if (img) {
-      //       pdf.addImage(
-      //         img,
-      //         "PNG",
-      //         leftBoxX + 2,
-      //         boxTopY + 2,
-      //         boxSize - 4,
-      //         boxSize - 4
-      //       );
-      //     }
-      //   } catch {}
-      // }
+      pdf.text("Seal & Sign", rightX, rightLabelY);
 
-      // temporary stamp
+      const rightBoxY = rightLabelY + 1;
+      const rightBoxX = rightX + (blockWidth - boxSize) / 2;
+
+      // ==========================
+      // LEFT SIDE IMAGE (STAMP)
+      // ==========================
       try {
-        const img = await urlToBase64(`${process.env.NEXT_PUBLIC_APP_URL}/images/stamp/vistaskills_seal_sign.png`);
+        const img = await urlToBase64(
+          `${process.env.NEXT_PUBLIC_APP_URL}/images/stamp/vistaskills_seal_sign.png`
+        );
 
         if (img) {
           pdf.addImage(
             img,
             "PNG",
-            leftBoxX + 2,
-            boxTopY + 2,
+            leftBoxX,
+            leftBoxY,
             boxSize,
             boxSize
           );
         }
       } catch {}
+
+      // pdf.text("Seal & Sign", leftX, footerStartY + 5 + 5);
+      // pdf.text("Seal & Sign", rightX, footerStartY + 5 + 5);
+
+      // // ==========================
+      // // SIGN / STAMP BOX SETTINGS
+      // // ==========================
+      // const boxSize = 25;
+      // const boxTopY = footerStartY + 12;
+
+      // // left square box
+      // const leftBoxX = leftX + 10;
+
+      // // right square box
+      // // const rightBoxX = rightX + 10;
+
+      // // // draw square areas
+      // // pdf.rect(leftBoxX, boxTopY, boxSize, boxSize);
+      // // pdf.rect(rightBoxX, boxTopY, boxSize, boxSize);
+
+      // // ==========================
+      // // ONLY LEFT SIDE IMAGE
+      // // ==========================
+      // // if (candidateDetails?.agency_sign) {
+      // //   try {
+      // //     const img = candidateDetails.agency_sign.startsWith("data:image")
+      // //       ? candidateDetails.agency_sign
+      // //       : await urlToBase64(candidateDetails.agency_sign);
+
+      // //     if (img) {
+      // //       pdf.addImage(
+      // //         img,
+      // //         "PNG",
+      // //         leftBoxX + 2,
+      // //         boxTopY + 2,
+      // //         boxSize - 4,
+      // //         boxSize - 4
+      // //       );
+      // //     }
+      // //   } catch {}
+      // // }
+
+      // // temporary stamp
+      // try {
+      //   const img = await urlToBase64(`${process.env.NEXT_PUBLIC_APP_URL}/images/stamp/vistaskills_seal_sign.png`);
+
+      //   if (img) {
+      //     pdf.addImage(
+      //       img,
+      //       "PNG",
+      //       leftBoxX + 2,
+      //       boxTopY + 2,
+      //       boxSize,
+      //       boxSize
+      //     );
+      //   }
+      // } catch {}
 
 
       // // Signature Labels
