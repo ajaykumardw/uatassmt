@@ -911,8 +911,8 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
           pdf.addImage(
             img,
             "PNG",
-            leftBoxX,
-            leftBoxY,
+            leftBoxX - 10,
+            leftBoxY - 3,
             boxSize,
             boxSize
           );
