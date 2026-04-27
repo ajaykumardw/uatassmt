@@ -97,7 +97,7 @@ import prisma from "@/libs/prisma";
 
 import { decrypt } from "@/utils/encryption";
 
-import { agencyImagePath, sscImagePath } from "@/configs/customDataConfig";
+import { agencyImagePath, agencyUsersFilePath, sscImagePath } from "@/configs/customDataConfig";
 import getValidImage from "@/utils/getValidImage";
 
 // =======================================
@@ -718,6 +718,10 @@ export async function GET(
     ? getValidImage(student.batch.agency.avatar, `agency/${student.batch.agency.id}`)
     : null;
 
+  const tpImage = student.batch.training_partner?.avatar
+    ? getValidImage(student.batch.training_partner.avatar, `agency/users/${student.batch.training_partner.id}`)
+    : null;
+
   return NextResponse.json({
 
     candidate: {
@@ -725,6 +729,8 @@ export async function GET(
       ssc_image: sscImage ? sscImagePath(student.batch.qualification_pack.ssc.id, sscImage) || null : null,
 
       agency_image: agencyImage ? agencyImagePath(student.batch.agency.id, agencyImage) || null : null,
+
+      tp_image: tpImage ? agencyUsersFilePath(student.batch.training_partner.id, tpImage) || null : null,
 
       agency_name: agencyName || "",
 
