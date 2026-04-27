@@ -34,7 +34,8 @@ import CustomTextField from '@core/components/mui/TextField'
 import { agencyImagePath } from '@/configs/customDataConfig'
 
 type FormData = InferInput<typeof schema> & {
-  profileImage: File | string
+  profileImage: File | string,
+  signImage: File | string,
 }
 
 
@@ -60,6 +61,8 @@ const AgencyEditForm = ({ currentAgency, stateData, citiesData }: { stateData?: 
   const [cityData, setCityData] = useState<any[]>(citiesData)
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [fileInput, setAgencyImageInput] = useState<File | string>('');
+  const [signImgSrc, setSignImgSrc] = useState<string | null>(null);
+  const [signFileInput, setSignFileInput] = useState<File | string>('');
 
   // const [formData, setFormData] = useState<FormData>({
   //   companyName: '',
@@ -89,7 +92,8 @@ const AgencyEditForm = ({ currentAgency, stateData, citiesData }: { stateData?: 
       city: currentAgency?.city_id?.toString() || '',
       pincode: currentAgency?.pin_code || '',
       address: currentAgency?.address || '',
-      profileImage: ''
+      profileImage: '',
+      signImage: '',
     }
   })
 
@@ -132,6 +136,7 @@ const AgencyEditForm = ({ currentAgency, stateData, citiesData }: { stateData?: 
     const formData = new FormData();
 
     data.profileImage = fileInput as File;
+    data.signImage = signFileInput as File;
 
     formData.append('companyName', data.companyName);
     formData.append('contactPersonFirstName', data.contactPersonFirstName);
@@ -144,6 +149,7 @@ const AgencyEditForm = ({ currentAgency, stateData, citiesData }: { stateData?: 
     formData.append('pincode', data.pincode);
     formData.append('address', data.address);
     formData.append('profileImage', data.profileImage || '');
+    formData.append('signImage', data.signImage || '');
 
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/agency/${currentAgency?.id}`, {
 
@@ -175,7 +181,7 @@ const AgencyEditForm = ({ currentAgency, stateData, citiesData }: { stateData?: 
 
     }
   }
-  
+
   const handleFileInputChange = (file: ChangeEvent) => {
     const reader = new FileReader()
     const { files } = file.target as HTMLInputElement
@@ -187,12 +193,31 @@ const AgencyEditForm = ({ currentAgency, stateData, citiesData }: { stateData?: 
 
     }
   }
-  
+
   const handleFileInputReset = () => {
 
     setAgencyImageInput('')
 
     setImgSrc(null);
+  }
+
+  const handleSignFileInputChange = (file: ChangeEvent) => {
+    const reader = new FileReader()
+    const { files } = file.target as HTMLInputElement
+
+    if (files && files.length !== 0) {
+      reader.onload = () => setSignImgSrc(reader.result as string)
+      reader.readAsDataURL(files[0])
+      setSignFileInput(files[0])
+
+    }
+  }
+
+  const handleSignFileInputReset = () => {
+
+    setSignFileInput('')
+
+    setSignImgSrc(null);
   }
 
   return (
@@ -234,6 +259,35 @@ const AgencyEditForm = ({ currentAgency, stateData, citiesData }: { stateData?: 
                     </Button>
                   </div>
                   <Typography>Allowed JPG, GIF or PNG. Max size of 800K</Typography>
+                </div>
+              </div>
+            </Grid>
+            <Grid item xs={12}>
+              <div className='flex flex-col items-center gap-6'>
+                {signImgSrc ? (
+                  <img width={100} className='rounded' src={signImgSrc} alt='Profile' />
+                ) : (currentAgency?.sign_image ? (
+                      <img width={100} className='rounded' src={agencyImagePath(currentAgency.id, `sign/${currentAgency.sign_image}`)} alt='Profile' />
+                    ) : (
+                  <Avatar />
+                ))}
+                <div className='flex flex-grow flex-col gap-4'>
+                  <div className='flex flex-col sm:flex-row gap-4'>
+                    <Button component='label' variant='outlined' htmlFor='sign-image'>
+                      Upload Sign
+                      <input
+                        hidden
+                        type='file'
+                        accept='image/png, image/jpeg'
+                        onChange={handleSignFileInputChange}
+                        id='sign-image'
+                      />
+                    </Button>
+                    <Button variant='tonal' color='secondary' onClick={handleSignFileInputReset}>
+                      Reset
+                    </Button>
+                  </div>
+                  <Typography>Allowed JPG or PNG. Max size of 800K</Typography>
                 </div>
               </div>
             </Grid>

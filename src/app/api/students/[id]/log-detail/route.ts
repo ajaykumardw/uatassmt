@@ -249,10 +249,21 @@ export async function GET(
                 avatar: true,
                 first_name: true,
                 last_name: true,
-                company_name: true
+                company_name: true,
+                sign_image: true,
               }
             },
-            training_partner: true
+            training_partner: true,
+            training_center: {
+              select: {
+                id: true,
+                company_name: true,
+                first_name: true,
+                last_name: true,
+                sign_image: true
+              }
+            },
+            center_spoc_person_name: true,
           }
         }
       }
@@ -725,6 +736,9 @@ export async function GET(
     ? getValidImage(student.batch.training_partner.avatar, `agency/users/${student.batch.training_partner.id}`)
     : null;
 
+  const agencyStamp = student.batch.agency?.sign_image ? getValidImage(student.batch.agency.sign_image, `agency/${student.batch.agency.id}/sign`) : null;
+  const tcStamp = student.batch.training_center?.sign_image ? getValidImage(student.batch.training_center.sign_image, `agency/users/${student.batch.training_center.id}/sign`) : null;
+
   return NextResponse.json({
 
     candidate: {
@@ -732,11 +746,14 @@ export async function GET(
       ssc_image: sscImage ? sscImagePath(student.batch.qualification_pack.ssc.id, sscImage) || null : null,
 
       agency_image: agencyImage ? agencyImagePath(student.batch.agency.id, agencyImage) || null : null,
+      agency_sign: agencyStamp ? agencyImagePath(student.batch.agency.id, `sign/${agencyStamp}`) || null : null,
 
       tp_image: tpImage ? agencyUsersFilePath(student.batch.training_partner.id, tpImage) || null : null,
+      tc_sign: tcStamp ? agencyUsersFilePath(student.batch.training_center.id, `sign/${tcStamp}`) || null : null,
 
       agency_name: agencyName || "",
       agency_head_name: student.batch.agency ? (student.batch.agency?.first_name + " " + student.batch.agency?.last_name).trim() : "",
+      center_manager_name: student.batch?.center_spoc_person_name ? student.batch.center_spoc_person_name : student.batch.training_center ? (student.batch.training_center?.first_name + " " + student.batch.training_center?.last_name).trim() : "",
 
       name: student.candidate_name.toUpperCase(),
       candidate_id: student.candidate_id,

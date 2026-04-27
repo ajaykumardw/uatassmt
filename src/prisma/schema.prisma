@@ -451,6 +451,7 @@ model users {
   role_id Int?
   fcm_token     String?      @db.Text
   role role? @relation(fields: [role_id], references: [id])
+  sign_image    String?
 
   sector_skills sector_skill_councils[]
   user_additional_data users_additional_data?

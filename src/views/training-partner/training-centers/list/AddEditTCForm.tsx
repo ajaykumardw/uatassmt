@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useState } from 'react'
+import { type ChangeEvent, useState } from 'react'
 
 // MUI Imports
 import Grid from '@mui/material/Grid'
@@ -11,6 +11,8 @@ import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import MenuItem from '@mui/material/MenuItem'
+import Typography from '@mui/material/Typography'
+import Avatar from '@mui/material/Avatar'
 import { CircularProgress } from '@mui/material'
 
 // Component Imports
@@ -34,9 +36,11 @@ import CustomTextField from '@core/components/mui/TextField'
 
 
 import type { UsersType } from '@/types/users/usersType'
+import { agencyUsersFilePath } from '@/configs/customDataConfig'
 
 type AddEditTCDialogData = InferInput<typeof schema> & {
-  tpId?: number
+  tpId?: number,
+  signImage: File | string,
 }
 
 type AddEditTCDialogProps = {
@@ -95,6 +99,9 @@ const AddEditTCForm = ({ open, tpId, tcId, handleClose, updateTCList, data, stat
   // const [stateData, setStateData] = useState<state[]>()
 
   const [cityData, setCityData] = useState<city[]>(cities || [])
+
+  const [signImgSrc, setSignImgSrc] = useState<string | null>(null);
+  const [signFileInput, setSignFileInput] = useState<File | string>('');
 
   // console.log("city data", cityData);
 
@@ -173,7 +180,8 @@ const AddEditTCForm = ({ open, tpId, tcId, handleClose, updateTCList, data, stat
       city: data?.city_id?.toString() || '',
       address: data?.address || '',
       pinCode: data?.pin_code || '',
-      phoneNumber: data?.mobile_no || ''
+      phoneNumber: data?.mobile_no || '',
+      signImage: '',
     }
   })
 
@@ -214,19 +222,39 @@ const AddEditTCForm = ({ open, tpId, tcId, handleClose, updateTCList, data, stat
     setLoading(true)
     data.tpId = tpId;
 
+    data.signImage = signFileInput as File;
+
+    const formData = new FormData();
+
+    formData.append('tcId', data.tcId);
+    formData.append('tcName', data.tcName);
+    formData.append('email', data.email);
+    formData.append('status', data.status);
+    formData.append('firstName', data.firstName);
+    formData.append('lastName', data.lastName);
+    formData.append('state', data.state);
+    formData.append('city', data.city);
+    formData.append('address', data.address);
+    formData.append('pinCode', data.pinCode);
+    formData.append('phoneNumber', data.phoneNumber);
+
+    if (data.signImage) {
+      formData.append('signImage', data.signImage);
+    }
+
     if (tcId) {
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tc/${tcId}`, {
 
         method: 'POST',
 
-        headers: {
+        // headers: {
 
-          'Content-Type': 'application/json'
+        //   'Content-Type': 'application/json'
 
-        },
+        // },
 
-        body: JSON.stringify(data)
+        body: formData
 
       });
 
@@ -286,6 +314,25 @@ const AddEditTCForm = ({ open, tpId, tcId, handleClose, updateTCList, data, stat
     handleClose();
   }
 
+  const handleSignFileInputChange = (file: ChangeEvent) => {
+    const reader = new FileReader()
+    const { files } = file.target as HTMLInputElement
+
+    if (files && files.length !== 0) {
+      reader.onload = () => setSignImgSrc(reader.result as string)
+      reader.readAsDataURL(files[0])
+      setSignFileInput(files[0])
+
+    }
+  }
+
+  const handleSignFileInputReset = () => {
+
+    setSignFileInput('')
+
+    setSignImgSrc(null);
+  }
+
   const handleReset = () => {
 
     if(tcId){
@@ -318,6 +365,35 @@ const AddEditTCForm = ({ open, tpId, tcId, handleClose, updateTCList, data, stat
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent className='overflow-visible pbs-0 sm:pli-16'>
           <Grid container spacing={5}>
+            <Grid item xs={12}>
+              <div className='flex flex-col items-center gap-6'>
+                {signImgSrc ? (
+                  <img width={100} className='rounded' src={signImgSrc} alt='Profile' />
+                ) : (data?.sign_image ? (
+                      <img width={100} className='rounded' src={agencyUsersFilePath(data.id, `sign/${data.sign_image}`)} alt='Profile' />
+                    ) : (
+                  <Avatar />
+                ))}
+                <div className='flex flex-grow flex-col gap-4'>
+                  <div className='flex flex-col sm:flex-row gap-4'>
+                    <Button component='label' variant='outlined' htmlFor='sign-image'>
+                      Upload Sign
+                      <input
+                        hidden
+                        type='file'
+                        accept='image/png, image/jpeg'
+                        onChange={handleSignFileInputChange}
+                        id='sign-image'
+                      />
+                    </Button>
+                    <Button variant='tonal' color='secondary' onClick={handleSignFileInputReset}>
+                      Reset
+                    </Button>
+                  </div>
+                  <Typography>Allowed JPG or PNG. Max size of 800K</Typography>
+                </div>
+              </div>
+            </Grid>
             <Grid item xs={12} sm={6}>
               <Controller
                 control={control}

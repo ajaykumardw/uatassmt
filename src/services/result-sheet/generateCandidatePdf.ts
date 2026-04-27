@@ -1,127 +1,68 @@
-import { type SyntheticEvent, useEffect, useState } from "react";
+import fs from "fs/promises";
 
-import Button from "@mui/material/Button"
-import Dialog from "@mui/material/Dialog"
-import DialogContent from "@mui/material/DialogContent"
-import DialogTitle from "@mui/material/DialogTitle"
-import CircularProgress from "@mui/material/CircularProgress";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable"
 
-// import XLSX from 'xlsx';
-
-// import { format } from "date-fns";
-
-// import type { batches, nos, pc, students } from "@prisma/client";
-
-// import tableStyles from '@core/styles/table.module.css'
-import TabContext from "@mui/lab/TabContext";
-import Tab from '@mui/material/Tab';
-import TabPanel from "@mui/lab/TabPanel";
-
-import Divider from "@mui/material/Divider";
-
-import CustomTabList from "@/@core/components/mui/TabList";
-import DialogCloseButton from "@/components/dialogs/DialogCloseButton";
-import QuestionWiseTimeTakenTable from "./QuestionWiseTimeTakenTable";
-import QuestionWiseLogDetailTable from "./QuestionWiseLogDetailTable";
-import CandidateDetail from "./CandidateDetail";
-import QuestionReportTable from "./QuestionReportTable";
-
-
-// import { agencyImagePath } from "@/configs/customDataConfig";
-
-
-
-type QuestionWiseLogDetailDialogProps = {
-  open: boolean
-  handleClose: () => void
-  selectedCandidate: string | null
-  candidateId: number | null
-}
-
-const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } : QuestionWiseLogDetailDialogProps) => {
-
-  const [logDetail, setLogDetail] = useState<any>(null);
-  const [practicalReport, setPracticalReport] = useState<any>(null);
-  const [vivaReport, setVivaReport] = useState<any>(null);
-  const [projectReport, setProjectReport] = useState<any>(null);
-  const [candidateDetails, setCandidateDetails] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [tabValue, setTabValue] = useState('result_sheet');
-
-//   const handleGenerateReport = async () => {
-
-//     const XLSX = await import('xlsx');
-
-//     // Get the table element
-//     const table = document.querySelector('.table-pc-wise');
-
-//     // Check if the table exists
-//     if (table) {
-//       // Convert the HTML table to a worksheet
-//       const ws = XLSX.utils.table_to_sheet(table, { sheet: 'PC Wise Result' });
-
-//       // Create a new workbook
-//       const wb = XLSX.utils.book_new();
-
-//       // Append the worksheet to the workbook
-//       XLSX.utils.book_append_sheet(wb, ws, 'PC Wise Result');
-
-//       // Write and download the Excel file
-//       XLSX.writeFile(wb, `Question_wise_log_details.xlsx`);
-//     } else {
-//       console.error('Table not found!');
-//     }
-//   };
-
-  const svgToPngBase64 = (svgBase64: string): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-
-      img.src = svgBase64;
-
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-
-        canvas.width = img.width || 24;
-        canvas.height = img.height || 24;
-
-        const ctx = canvas.getContext("2d");
-
-        ctx?.drawImage(img, 0, 0);
-
-        resolve(canvas.toDataURL("image/png"));
-      };
-    });
-  };
-
-  const urlToBase64 = async (url: string): Promise<string | null> => {
-    try {
+// ===============================
+// URL / FILE PATH -> BASE64
+// server-side safe
+// ===============================
+const urlToBase64 = async (
+  url: string
+): Promise<string | null> => {
+  try {
+    // remote url
+    if (
+      url.startsWith("http://") ||
+      url.startsWith("https://")
+    ) {
       const res = await fetch(url);
-      const blob = await res.blob();
 
-      return await new Promise((resolve) => {
+      if (!res.ok) return null;
 
-        const reader = new FileReader();
+      const arr = await res.arrayBuffer();
 
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(blob);
-      });
-    } catch {
-      return null;
+      const mime =
+        res.headers.get("content-type") ||
+        "image/png";
+
+      return `data:${mime};base64,${Buffer.from(
+        arr
+      ).toString("base64")}`;
     }
-  };
 
-  const handleGeneratePDF = async () => {
+    // local file path
+    const file = await fs.readFile(url);
 
-    setLoading(true);
+    const ext = url.split(".").pop()?.toLowerCase();
 
-    const { default: jsPDF } = await import("jspdf");
-    const autoTable = (await import("jspdf-autotable")).default;
+    let mime = "image/png";
 
-    const passIcon = "data:image/svg+xml;base64," + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#16a34a" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12l5 5L20 7"/></svg>`);
+    if (ext === "jpg" || ext === "jpeg")
+      mime = "image/jpeg";
+    else if (ext === "svg")
+      mime = "image/svg+xml";
+    else if (ext === "webp")
+      mime = "image/webp";
 
-    const failIcon = "data:image/svg+xml;base64," + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#dc2626" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg>`);
+    return `data:${mime};base64,${file.toString(
+      "base64"
+    )}`;
+  } catch {
+    return null;
+  }
+};
 
+export const generateCandidatePdf = async (data: any, assets: any, type: string = 'result_sheet') => {
+
+  const practicalReport = data?.practical_report || [];
+  const vivaReport = data?.viva_report || [];
+  const projectReport = data?.project_report || [];
+  const candidateDetails = data?.candidate || {};
+
+  const passIcon = "data:image/svg+xml;base64," + Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#16a34a" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12l5 5L20 7"/></svg>`).toString("base64");
+
+    const failIcon = "data:image/svg+xml;base64," + Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#dc2626" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg>`).toString("base64");
 
 
     const pdf = new jsPDF({
@@ -136,14 +77,14 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
       "NOS Name",
       "PC Name",
       "Question",
-      tabValue === 'question_wise_log' ? "Correct Answer" : "Question open time (in hh:mm:ss)",
-      tabValue === 'question_wise_log' ? "Candidate's Response" : "Question close time (in hh:mm:ss)",
-      tabValue === 'question_wise_log' ? "Status" : "Duration"
+      type === 'question_wise_log' ? "Correct Answer" : "Question open time (in hh:mm:ss)",
+      type === 'question_wise_log' ? "Candidate's Response" : "Question close time (in hh:mm:ss)",
+      type === 'question_wise_log' ? "Status" : "Duration"
     ];
 
     const tableRows:any[] = [];
 
-    logDetail?.forEach((item:any)=>{
+    data?.forEach((item:any)=>{
 
       tableRows.push({
         sr_no: item.sr_no ,
@@ -151,15 +92,15 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
         pc_name: item.pc_name ,
         question: item.question ,
 
-        col1: tabValue === 'question_wise_log'
+        col1: type === 'question_wise_log'
           ? item.correct_answer
           : item.open_time,
 
-        col2: tabValue === 'question_wise_log'
+        col2: type === 'question_wise_log'
           ? item.candidate_response
           : item.submit_time,
 
-        col3: tabValue === 'question_wise_log'
+        col3: type === 'question_wise_log'
           ? item.status
           : item.duration
       });
@@ -167,8 +108,8 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
     });
 
 
-    const passIconPng = await svgToPngBase64(passIcon);
-    const failIconPng = await svgToPngBase64(failIcon);
+    const passIconPng = passIcon;
+    const failIconPng = failIcon;
 
     pdf.setFontSize(14);
 
@@ -205,7 +146,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
     const vivaTableRows:any[] = [];
     const projectTableRows:any[] = [];
 
-    logDetail?.forEach((item:any)=>{
+    data?.forEach((item:any)=>{
 
       theoryTableRows.push({
         sr_no: item.sr_no ,
@@ -253,87 +194,6 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
       });
     });
 
-    // const rawLogos = [
-    //   candidateDetails?.ssc_image,
-    //   candidateDetails?.agency_image,
-    //   candidateDetails?.tp_image,
-    // ].filter(Boolean);
-
-    // // 🔥 convert all to base64
-    // const logos: string[] = [];
-
-    // for (const logo of rawLogos) {
-    //   if (logo.startsWith("data:image")) {
-    //     logos.push(logo); // already base64
-    //   } else {
-    //     const base64 = await urlToBase64(logo);
-
-    //     if (base64) logos.push(base64);
-    //   }
-    // }
-
-    // const pageWidth = pdf.internal.pageSize.getWidth();
-
-    // const boxWidth = 30;
-    // const boxHeight = 30;
-    // const gap = 5;
-
-    // let x = 10;
-    // let y = 10;
-
-    // // ======================
-    // // DRAW LOGOS FIRST
-    // // ======================
-    // for (const logo of logos) {
-    //   try {
-    //     const img = new Image();
-
-    //     img.src = logo;
-
-    //     await new Promise((resolve) => {
-    //       img.onload = resolve;
-    //     });
-
-    //     const imgW = img.width;
-    //     const imgH = img.height;
-
-    //     // ✅ scale like object-fit: contain
-    //     const scale = Math.min(boxWidth / imgW, boxHeight / imgH);
-
-    //     const drawWidth = imgW * scale;
-    //     const drawHeight = imgH * scale;
-
-    //     // ✅ center inside box
-    //     const offsetX = (boxWidth - drawWidth) / 2;
-    //     const offsetY = (boxHeight - drawHeight) / 2;
-
-    //     // 👉 wrap if needed
-    //     if (x + boxWidth > pageWidth - 10) {
-    //       x = 10;
-    //       y += boxHeight + gap;
-    //     }
-
-    //     // (optional) draw box border for debugging
-    //     // pdf.rect(x, y, boxWidth, boxHeight);
-
-    //     pdf.addImage(
-    //       logo,
-    //       "PNG",
-    //       x + offsetX,
-    //       y + offsetY,
-    //       drawWidth,
-    //       drawHeight
-    //     );
-
-    //     x += boxWidth + gap;
-
-    //   } catch {
-
-    //     // ignore broken images
-
-    //   }
-    // }
-
    const pageWidth = pdf.internal.pageSize.getWidth();
 
     const boxWidth = 30;
@@ -346,20 +206,69 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
     const rightX = pageWidth - boxWidth - 10;
 
     const headerLogos = [
-      { src: candidateDetails?.agency_image, x: leftX },
-      { src: candidateDetails?.ssc_image, x: centerX },
-      { src: candidateDetails?.tp_image, x: rightX }
+      { src: assets?.agency_image, x: leftX },
+      { src: assets?.ssc_image, x: centerX },
+      { src: assets?.tp_image, x: rightX }
     ];
+
+    // for (const item of headerLogos) {
+    //   try {
+    //     // always reserve space
+    //     const slotX = item.x;
+    //     const slotY = y;
+
+    //     // optional debug / placeholder border
+    //     // pdf.rect(slotX, slotY, boxWidth, boxHeight);
+
+    //     if (!item.src) continue;
+
+    //     const logo = item.src.startsWith("data:image")
+    //       ? item.src
+    //       : await urlToBase64(item.src);
+
+    //     if (!logo) continue;
+
+    //     const img = new Image();
+
+    //     img.src = logo;
+
+    //     await new Promise((resolve, reject) => {
+    //       img.onload = resolve;
+    //       img.onerror = reject;
+    //     });
+
+    //     const imgW = img.width;
+    //     const imgH = img.height;
+
+    //     const scale = Math.min(
+    //       boxWidth / imgW,
+    //       boxHeight / imgH
+    //     );
+
+    //     const drawWidth = imgW * scale;
+    //     const drawHeight = imgH * scale;
+
+    //     const offsetX = (boxWidth - drawWidth) / 2;
+    //     const offsetY = (boxHeight - drawHeight) / 2;
+
+    //     pdf.addImage(
+    //       logo,
+    //       "PNG",
+    //       slotX + offsetX,
+    //       slotY + offsetY,
+    //       drawWidth,
+    //       drawHeight
+    //     );
+
+    //   } catch {
+
+    //     // broken image => keep empty slot
+
+    //   }
+    // }
 
     for (const item of headerLogos) {
       try {
-        // always reserve space
-        const slotX = item.x;
-        const slotY = y;
-
-        // optional debug / placeholder border
-        // pdf.rect(slotX, slotY, boxWidth, boxHeight);
-
         if (!item.src) continue;
 
         const logo = item.src.startsWith("data:image")
@@ -368,43 +277,16 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
 
         if (!logo) continue;
 
-        const img = new Image();
-
-        img.src = logo;
-
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-        });
-
-        const imgW = img.width;
-        const imgH = img.height;
-
-        const scale = Math.min(
-          boxWidth / imgW,
-          boxHeight / imgH
-        );
-
-        const drawWidth = imgW * scale;
-        const drawHeight = imgH * scale;
-
-        const offsetX = (boxWidth - drawWidth) / 2;
-        const offsetY = (boxHeight - drawHeight) / 2;
-
         pdf.addImage(
           logo,
           "PNG",
-          slotX + offsetX,
-          slotY + offsetY,
-          drawWidth,
-          drawHeight
+          item.x,
+          y,
+          boxWidth,
+          boxHeight
         );
 
-      } catch {
-
-        // broken image => keep empty slot
-
-      }
+      } catch {}
     }
 
     // ======================
@@ -417,17 +299,17 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
 
     const titleY = y + boxHeight + 2;
 
-    if (tabValue === 'result_sheet') {
+    if (type === 'result_sheet') {
 
       pdf.text("Result Sheet", 105, titleY, { align: "center" })
 
     }
 
-    if (tabValue === 'question_wise_log') {
+    if (type === 'question_wise_log') {
 
       pdf.text("Question Wise Log Detail", 105, titleY, { align: "center" })
 
-    } else if (tabValue === 'question_wise_time_taken') {
+    } else if (type === 'question_wise_time_taken') {
 
       pdf.text("Question Wise Time Taken Detail", 105, titleY, { align: "center" })
 
@@ -440,7 +322,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
     // // ✅ Next content starts after logos
     // const currentY = y + logoHeight + 5;
 
-    if (tabValue === 'result_sheet') {
+    if (type === 'result_sheet') {
 
       let candidateEndY = currentY;
       let summaryEndY = currentY;
@@ -911,8 +793,8 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
           pdf.addImage(
             img,
             "PNG",
-            leftBoxX,
-            leftBoxY,
+            leftBoxX - 10,
+            leftBoxY - 3,
             boxSize,
             boxSize
           );
@@ -1050,14 +932,14 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
           ],
           [
             "Aadhaar No.:", candidateDetails?.aadhaar ?? "-",
-            "Total Marks:", tabValue === 'result_sheet' ? candidateDetails?.total_marks ?? "-" : candidateDetails?.total_theory_marks ?? "-",
+            "Total Marks:", type === 'result_sheet' ? candidateDetails?.total_marks ?? "-" : candidateDetails?.total_theory_marks ?? "-",
           ],
           [
-            "Obtained Marks:", tabValue === 'result_sheet' ? candidateDetails?.obtained_marks ?? "-" : candidateDetails?.obtained_theory_marks ?? "-",
-            "Result:", tabValue === 'result_sheet' ? candidateDetails?.result_status ?? "-" : candidateDetails?.theory_result_status ?? "-",
+            "Obtained Marks:", type === 'result_sheet' ? candidateDetails?.obtained_marks ?? "-" : candidateDetails?.obtained_theory_marks ?? "-",
+            "Result:", type === 'result_sheet' ? candidateDetails?.result_status ?? "-" : candidateDetails?.theory_result_status ?? "-",
           ],
           [
-            "Percentage (%):", tabValue === 'result_sheet' ? candidateDetails?.percentage ?? "-" : candidateDetails?.theory_percentage ?? "-"
+            "Percentage (%):", type === 'result_sheet' ? candidateDetails?.percentage ?? "-" : candidateDetails?.theory_percentage ?? "-"
           ],
         ],
       });
@@ -1073,7 +955,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
           row.question,
           row.col1,
           row.col2,
-          tabValue === 'question_wise_log' ? "" : row.col3,
+          type === 'question_wise_log' ? "" : row.col3,
         ]),
 
         // startY:20,
@@ -1097,16 +979,16 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
           1:{cellWidth:28},  // NOS
           2:{cellWidth:28},  // PC
           3:{cellWidth:52},  // Question
-          4:{cellWidth: tabValue === "question_wise_log" ? 32 : 30},  // Correct
-          5:{cellWidth: tabValue === "question_wise_log" ? 32 : 30},  // Response
-          6:{cellWidth: tabValue === "question_wise_log" ? 13 : 17},   // Status
+          4:{cellWidth: type === "question_wise_log" ? 32 : 30},  // Correct
+          5:{cellWidth: type === "question_wise_log" ? 32 : 30},  // Response
+          6:{cellWidth: type === "question_wise_log" ? 13 : 17},   // Status
         },
 
         margin:{left:5,right:5},
 
         // ✅ DRAW ICON HERE
         didDrawCell: function (data) {
-          if (data.section === 'body' && data.column.index === 6 && tabValue === 'question_wise_log') {
+          if (data.section === 'body' && data.column.index === 6 && type === 'question_wise_log') {
 
             const item = tableRows?.[data.row.index];
 
@@ -1164,119 +1046,26 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
 
     let fileName = "Result_Sheet.pdf";
 
-    if (tabValue === 'result_sheet') {
-      fileName = `${selectedCandidate}_Result_Sheet.pdf`;
+    if (type === 'result_sheet') {
+      fileName = `${candidateDetails?.candidate_id}_Result_Sheet.pdf`;
     }
 
-    if (tabValue === 'question_wise_log') {
-      fileName = `${selectedCandidate}_Question_Wise_Log_Detail.pdf`;
-    } else if (tabValue === 'question_wise_time_taken') {
-      fileName = `${selectedCandidate}_Question_Wise_Time_Taken_Detail.pdf`;
+    if (type === 'question_wise_log') {
+      fileName = `${candidateDetails?.candidate_id}_Question_Wise_Log_Detail.pdf`;
+    } else if (type === 'question_wise_time_taken') {
+      fileName = `${candidateDetails?.candidate_id}_Question_Wise_Time_Taken_Detail.pdf`;
     }
 
-    pdf.save(fileName);
+    // pdf.save(fileName);
 
-    setLoading(false);
+    // return buffer for zip worker
+    const pdfBuffer = Buffer.from(
+      pdf.output("arraybuffer")
+    );
 
-  };
+    return {
+      fileName,
+      buffer: pdfBuffer
+    };
 
-  const getLogDetails = async (candidateId: number) => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students/${candidateId}/log-detail`).then(res => res.json());
-
-    console.log("log details: ", res);
-
-    setLogDetail(res.report);
-    setCandidateDetails(res.candidate)
-    setPracticalReport(res?.practical_report);
-    setVivaReport(res?.viva_report);
-    setProjectReport(res?.project_report);
-
-  }
-
-
-  useEffect(() => {
-    if (candidateId) {
-      getLogDetails(candidateId);
-    }
-  }, [candidateId]);
-
-  const handleTabChange = (event: SyntheticEvent, newValue: string) => {
-    setTabValue(newValue)
-  }
-
-  return (
-    <Dialog
-      fullWidth
-      open={open}
-      onClose={handleClose}
-      keepMounted
-      maxWidth='xl'
-      scroll='body'
-      sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}
-    >
-      <DialogCloseButton onClick={handleClose} disableRipple>
-        <i className='tabler-x' />
-      </DialogCloseButton>
-      <DialogTitle variant='h4' className='flex gap-2 flex-wrap justify-between text-center sm:pbs-16 sm:pbe-6 sm:pli-16'>
-        Individual Candidate Report - {selectedCandidate}
-
-        {/* <Button
-          color='secondary'
-          variant='tonal'
-          startIcon={<i className='tabler-upload' />}
-          className='is-full sm:is-auto'
-          onClick={handleGenerateReport}
-        >
-          Export
-        </Button> */}
-
-        <Button
-          color='primary'
-          variant='tonal'
-          startIcon={loading ? <CircularProgress size={18}/> : <i className='tabler-file' />}
-          onClick={handleGeneratePDF}
-          disabled={loading}
-        >
-          PDF
-        </Button>
-      </DialogTitle>
-      <Divider className="mb-4" />
-      <DialogContent className='overflow-visible pbs-0 sm:pli-16'>
-        <TabContext value={tabValue}>
-          <CustomTabList pill='true' onChange={handleTabChange} variant="scrollable" aria-label="Candidate Report">
-            <Tab value='result_sheet' label="Result Sheet" />
-            <Tab value='question_wise_log' label="Question Wise Log" />
-            <Tab value='question_wise_time_taken' label="Question Wise Time Taken" />
-          </CustomTabList>
-          <TabPanel value='result_sheet'>
-            <div className='overflow-x-auto'>
-              <CandidateDetail candidateDetails={candidateDetails} />
-              {/* <QuestionWiseLogDetailTable logDetail={logDetail} /> */}
-              <QuestionReportTable logDetail={logDetail} type="Theory" />
-              <QuestionReportTable logDetail={practicalReport} type="Practical" />
-              <QuestionReportTable logDetail={vivaReport} type="Viva" />
-            </div>
-          </TabPanel>
-          <TabPanel value='question_wise_log'>
-            <div className='overflow-x-auto'>
-              <CandidateDetail candidateDetails={{...candidateDetails, total_marks: candidateDetails?.total_theory_marks, obtained_marks: candidateDetails?.obtained_theory_marks, percentage: candidateDetails?.theory_percentage, result_status: candidateDetails?.theory_result_status}} />
-              <QuestionWiseLogDetailTable logDetail={logDetail} />
-            </div>
-          </TabPanel>
-          <TabPanel value='question_wise_time_taken'>
-            <div className='overflow-x-auto'>
-              {candidateDetails && (
-                <CandidateDetail candidateDetails={{...candidateDetails, total_marks: candidateDetails?.total_theory_marks, obtained_marks: candidateDetails?.obtained_theory_marks, percentage: candidateDetails?.theory_percentage, result_status: candidateDetails?.theory_result_status}} />
-              )}
-              {logDetail && (
-                <QuestionWiseTimeTakenTable logDetail={logDetail} />
-              )}
-            </div>
-          </TabPanel>
-        </TabContext>
-      </DialogContent>
-    </Dialog>
-  )
 }
-
-export default LogDetailDialog;

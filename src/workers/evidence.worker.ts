@@ -16,7 +16,7 @@ const worker = new Worker(
 
   "evidenceZip",
 
-  async (job) => {
+  async (job: any) => {
 
     const { jobId } =
       job.data;

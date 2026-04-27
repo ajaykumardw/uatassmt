@@ -42,18 +42,29 @@ export async function POST(
 
   const id = context.params.id;
   const formData = await req.formData()
-  const { email, companyName, contactPersonFirstName, contactPersonLastName, phoneNumber, landlineNumber, state, city, pincode, address, profileImage } = Object.fromEntries(formData)
+  const { email, companyName, contactPersonFirstName, contactPersonLastName, phoneNumber, landlineNumber, state, city, pincode, address, profileImage, signImage } = Object.fromEntries(formData)
 
-  
+
   let filename = '';
-  
+
   if (profileImage) {
 
     const file = profileImage as File;
     const ext = file.name.split(".").pop();
-    
+
     filename = `${randomUUID()}.${ext}`;
-  
+
+  }
+
+  let signFilename = '';
+
+  if (signImage) {
+
+    const file = signImage as File;
+    const ext = file.name.split(".").pop();
+
+    signFilename = `${randomUUID()}.${ext}`;
+
   }
 
   const agencyExist = await prisma.users.findUnique({
@@ -83,7 +94,8 @@ export async function POST(
         city_id: Number(city),
         pin_code: pincode.toString(),
         address: address.toString(),
-        avatar: filename || agencyExist.avatar
+        avatar: filename || agencyExist.avatar,
+        sign_image: signFilename || agencyExist.sign_image
       }
     })
 
@@ -101,14 +113,37 @@ export async function POST(
         }
 
         const file = profileImage as File;
-  
+
         const uploadDir = path.join(process.cwd(), 'storage', 'uploads', 'agency', result.id.toString());
-        
+
         await fsp.mkdir(uploadDir, { recursive: true });
-  
+
         // Save file
         const filePath = path.join(uploadDir, filename);
-  
+
+        await pipeline(file.stream() as any, fs.createWriteStream(filePath));
+      }
+
+      if(signFilename){
+
+        if(agencyExist.sign_image){
+
+          const oldSignFilePath = path.join(process.cwd(), 'storage', 'uploads', 'agency', id.toString(), 'sign', agencyExist.sign_image);
+
+          if(fs.existsSync(oldSignFilePath)){
+            await fsp.unlink(oldSignFilePath);
+          }
+        }
+
+        const file = signImage as File;
+
+        const uploadDir = path.join(process.cwd(), 'storage', 'uploads', 'agency', result.id.toString(), 'sign');
+
+        await fsp.mkdir(uploadDir, { recursive: true });
+
+        // Save file
+        const filePath = path.join(uploadDir, signFilename);
+
         await pipeline(file.stream() as any, fs.createWriteStream(filePath));
       }
 

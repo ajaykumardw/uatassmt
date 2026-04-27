@@ -40,3 +40,39 @@ export async function createZipJob(
   return job;
 
 }
+
+export async function createResultZipJob(
+
+  batchId: number,
+  requestedBy: number
+
+) {
+
+  const job = await prisma.jobs.create({
+
+    data: {
+      job_type: "generate_result_sheet_zip",
+      reference_id: batchId,
+      reference_type: "batch",
+      payload: {},
+      status: "pending",
+      progress: 0,
+      requested_by: requestedBy
+    }
+
+  });
+
+  await evidenceQueue.add(
+
+    "resultZip",
+
+    {
+
+      jobId: job.id
+
+    }
+
+  );
+
+  return job;
+}

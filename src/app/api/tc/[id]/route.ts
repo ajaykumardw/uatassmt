@@ -1,3 +1,10 @@
+import fs from "fs";
+import fsp from "fs/promises";
+import path from 'path';
+import { randomUUID } from "crypto";
+
+import { pipeline } from "stream/promises";
+
 // Next Imports
 import { NextResponse } from 'next/server'
 
@@ -8,6 +15,7 @@ import { getServerSession } from 'next-auth';
 import prisma from '@/libs/prisma';
 
 import { authOptions } from '@/libs/auth';
+import { storageFolders } from "@/configs/customDataConfig";
 
 export async function GET(
   req: Request,
@@ -33,12 +41,25 @@ export async function GET(
 
 export async function POST(req: Request, context: { params: { id: number } }) {
 
-  const { tcId, tcName, email, status, firstName, lastName, phoneNumber, state, city, address, pinCode } = await req.json()
+  const formData = await req.formData();
+
+  const { tcId, tcName, email, status, firstName, lastName, phoneNumber, state, city, address, pinCode, signImage } = Object.fromEntries(formData.entries());
 
   const session = await getServerSession(authOptions)
   const agency_id = Number(session?.user?.agency_id)
 
   const id = Number(context.params.id);
+
+  let filename = '';
+
+  if (signImage) {
+
+    const file = signImage as File;
+    const ext = file.name.split(".").pop();
+
+    filename = `${randomUUID()}.${ext}`;
+
+  }
 
   const userExist = await prisma.users.findUnique({
     where: {
@@ -54,8 +75,8 @@ export async function POST(req: Request, context: { params: { id: number } }) {
         id: id
       },
       data: {
-        user_name: tcId,
-        company_name: tcName,
+        user_name: tcId.toString(),
+        company_name: tcName.toString(),
         email: email as string,
         first_name: firstName.toString(),
         last_name: lastName.toString(),
@@ -64,11 +85,27 @@ export async function POST(req: Request, context: { params: { id: number } }) {
         city_id: Number(city),
         pin_code: pinCode.toString(),
         address: address.toString(),
-        status: Number(status)
+        status: Number(status),
+        sign_image: filename ? filename : userExist?.sign_image
       }
     })
 
     if(result){
+
+      if(filename){
+
+        const file = signImage as File;
+
+        // const uploadDir = path.join(process.cwd(), 'storage', 'uploads', 'agency', result.id.toString());
+        const uploadDir = path.join(process.cwd(), storageFolders.storage, storageFolders.uploads, storageFolders.agency, storageFolders.users, result.id.toString(), 'sign');
+
+        await fsp.mkdir(uploadDir, { recursive: true });
+
+        // Save file
+        const filePath = path.join(uploadDir, filename);
+
+        await pipeline(file.stream() as any, fs.createWriteStream(filePath));
+      }
 
       return NextResponse.json({ success: true, message: "Training Center updated successfully." })
     }
