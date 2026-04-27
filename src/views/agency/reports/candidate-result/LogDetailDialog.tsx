@@ -444,7 +444,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
 
       let candidateEndY = currentY;
       let summaryEndY = currentY;
-      
+
       // ✅ Candidate Details (2-column)
       autoTable(pdf, {
         startY: currentY,
@@ -459,7 +459,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
         },
         margin:{left:5,right:5},
         body: [
-          
+
           [
             "Candidate's Name:", candidateDetails?.name ?? "",
           ],
@@ -757,9 +757,9 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
       // estimate footer height (safe buffer)
       const estimatedFooterHeight = 50;
 
-      
+
       let footerStartY = (pdf as any).lastAutoTable.finalY + 15;
-      
+
       // 👉 check if footer fits in current page
       if (footerStartY + estimatedFooterHeight > pageHeight) {
         pdf.addPage();
@@ -767,10 +767,10 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
       }
 
       // const footerStartY = (pdf as any).lastAutoTable.finalY + 15;
-      
+
       const pageWidth = pdf.internal.pageSize.getWidth();
       const margin = 10;
-      
+
       // left + right section start
       const leftX = margin;
       const blockWidth = 90;
@@ -813,7 +813,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
         width: number
       ) => {
         const labelText = `${label} - `;
-        
+
         // get label width
         const labelWidth = pdf.getTextWidth(labelText);
 
@@ -847,7 +847,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
 
       leftY += drawLabelValue(
         "Assessment Agency's Head Name",
-        candidateDetails?.agency_head_name ?? 'Raju Sharma',
+        candidateDetails?.agency_head_name ?? '',
         leftX,
         leftY + 2,
         blockWidth
@@ -871,7 +871,7 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
         blockWidth
       );
 
-      
+
       // ==========================
       // LABELS
       // ==========================

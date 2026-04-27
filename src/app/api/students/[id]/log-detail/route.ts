@@ -247,6 +247,9 @@ export async function GET(
               select: {
                 id: true,
                 avatar: true,
+                first_name: true,
+                last_name: true,
+                company_name: true
               }
             },
             training_partner: true
@@ -733,6 +736,7 @@ export async function GET(
       tp_image: tpImage ? agencyUsersFilePath(student.batch.training_partner.id, tpImage) || null : null,
 
       agency_name: agencyName || "",
+      agency_head_name: student.batch.agency ? (student.batch.agency?.first_name + " " + student.batch.agency?.last_name).trim() : "",
 
       name: student.candidate_name.toUpperCase(),
       candidate_id: student.candidate_id,
