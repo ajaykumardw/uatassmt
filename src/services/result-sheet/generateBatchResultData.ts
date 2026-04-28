@@ -160,7 +160,8 @@ export const generateBatchResultData = async (
 
   const students = await prisma.students.findMany({
     where: {
-      batch_id: batchId
+      batch_id: batchId,
+      attendance: 1
     },
     select: {
       id: true,

@@ -1061,7 +1061,7 @@ const CandidateWiseResultTable = () => {
                 Import Questions
               </Button> */}
               {selectedBatch &&
-                <ResultSheetAction batchId={selectedBatch} />
+                <ResultSheetAction key={selectedBatch} batchId={selectedBatch} />
               }
             {/* </>
             } */}

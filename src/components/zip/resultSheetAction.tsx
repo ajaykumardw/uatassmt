@@ -109,7 +109,7 @@ const ResultSheetAction = ({ batchId }: { batchId: number }) => {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
 
-  }, [])
+  }, [batchId])
 
   // Function to handle file download
   const handleDownload = async () => {
