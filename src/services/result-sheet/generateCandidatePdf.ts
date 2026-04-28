@@ -1,4 +1,5 @@
 import fs from "fs/promises";
+import path from "path";
 
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"
@@ -11,7 +12,46 @@ const urlToBase64 = async (
   url: string
 ): Promise<string | null> => {
   try {
-    // remote url
+    // Handle localhost/internal URLs as local files
+    if (
+      url.includes("localhost:3000") ||
+      url.includes(process.env.NEXT_PUBLIC_APP_URL || "")
+    ) {
+      const relativePath = url
+        .replace("http://localhost:3000/", "")
+        .replace("https://localhost:3000/", "")
+        .replace(
+          (process.env.NEXT_PUBLIC_APP_URL || "") + "/",
+          ""
+        );
+
+      const fullPath = path.join(
+        process.cwd(),
+        relativePath
+      );
+
+      const file = await fs.readFile(fullPath);
+
+      const ext = fullPath
+        .split(".")
+        .pop()
+        ?.toLowerCase();
+
+      let mime = "image/png";
+
+      if (ext === "jpg" || ext === "jpeg")
+        mime = "image/jpeg";
+      else if (ext === "svg")
+        mime = "image/svg+xml";
+      else if (ext === "webp")
+        mime = "image/webp";
+
+      return `data:${mime};base64,${file.toString(
+        "base64"
+      )}`;
+    }
+
+    // External remote URL
     if (
       url.startsWith("http://") ||
       url.startsWith("https://")
@@ -31,7 +71,7 @@ const urlToBase64 = async (
       ).toString("base64")}`;
     }
 
-    // local file path
+    // Direct local path
     const file = await fs.readFile(url);
 
     const ext = url.split(".").pop()?.toLowerCase();
@@ -48,7 +88,10 @@ const urlToBase64 = async (
     return `data:${mime};base64,${file.toString(
       "base64"
     )}`;
-  } catch {
+  } catch (e) {
+
+    console.log("Image failed:", url, e);
+
     return null;
   }
 };
@@ -59,6 +102,8 @@ export const generateCandidatePdf = async (data: any, assets: any, type: string 
   const vivaReport = data?.viva_report || [];
   const projectReport = data?.project_report || [];
   const candidateDetails = data?.candidate || {};
+
+  console.log("assests on bulk pdf generation:", assets);
 
   const passIcon = "data:image/svg+xml;base64," + Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#16a34a" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12l5 5L20 7"/></svg>`).toString("base64");
 
@@ -267,6 +312,31 @@ export const generateCandidatePdf = async (data: any, assets: any, type: string 
     //   }
     // }
 
+    // for (const item of headerLogos) {
+    //   try {
+    //     console.log("Loading image:", item.src);
+    //     if (!item.src) continue;
+
+    //     const logo = item.src.startsWith("data:image")
+    //       ? item.src
+    //       : await urlToBase64(item.src);
+
+    //     if (!logo) continue;
+
+    //     pdf.addImage(
+    //       logo,
+    //       "PNG",
+    //       item.x,
+    //       y,
+    //       boxWidth,
+    //       boxHeight
+    //     );
+
+    //   } catch (error){
+    //     console.log("failed to add image in pdf:", error)
+    //   }
+    // }
+
     for (const item of headerLogos) {
       try {
         if (!item.src) continue;
@@ -277,16 +347,47 @@ export const generateCandidatePdf = async (data: any, assets: any, type: string 
 
         if (!logo) continue;
 
-        pdf.addImage(
-          logo,
-          "PNG",
-          item.x,
-          y,
-          boxWidth,
-          boxHeight
+        // Detect image format
+        const format = logo.includes("image/jpeg")
+          ? "JPEG"
+          : logo.includes("image/webp")
+          ? "WEBP"
+          : "PNG";
+
+        // Get real dimensions
+        const props = pdf.getImageProperties(logo);
+
+        const imgW = props.width;
+        const imgH = props.height;
+
+        // contain scale
+        const scale = Math.min(
+          boxWidth / imgW,
+          boxHeight / imgH
         );
 
-      } catch {}
+        const drawWidth = imgW * scale;
+        const drawHeight = imgH * scale;
+
+        // center inside box
+        const drawX =
+          item.x + (boxWidth - drawWidth) / 2;
+
+        const drawY =
+          y + (boxHeight - drawHeight) / 2;
+
+        pdf.addImage(
+          logo,
+          format,
+          drawX,
+          drawY,
+          drawWidth,
+          drawHeight
+        );
+
+      } catch (error) {
+        console.log("failed to add image:", error);
+      }
     }
 
     // ======================
@@ -787,16 +888,43 @@ export const generateCandidatePdf = async (data: any, assets: any, type: string 
       // LEFT SIDE IMAGE (STAMP)
       // ==========================
       try {
-        const img = candidateDetails?.agency_sign ? await urlToBase64(candidateDetails?.agency_sign) : null;
+        const img = assets?.agency_sign
+          ? await urlToBase64(assets?.agency_sign)
+          : null;
 
         if (img) {
+          const format = img.includes("image/jpeg")
+            ? "JPEG"
+            : img.includes("image/webp")
+            ? "WEBP"
+            : "PNG";
+
+          const props = pdf.getImageProperties(img);
+
+          const imgW = props.width;
+          const imgH = props.height;
+
+          const scale = Math.min(
+            boxSize / imgW,
+            boxSize / imgH
+          );
+
+          const drawW = imgW * scale;
+          const drawH = imgH * scale;
+
+          const drawX =
+            (leftBoxX - 10) + (boxSize - drawW) / 2;
+
+          const drawY =
+            (leftBoxY - 3) + (boxSize - drawH) / 2;
+
           pdf.addImage(
             img,
-            "PNG",
-            leftBoxX - 10,
-            leftBoxY - 3,
-            boxSize,
-            boxSize
+            format,
+            drawX,
+            drawY,
+            drawW,
+            drawH
           );
         }
       } catch {}
@@ -805,19 +933,82 @@ export const generateCandidatePdf = async (data: any, assets: any, type: string 
       // RIGHT SIDE IMAGE (STAMP)
       // =========================
       try {
-        const img = candidateDetails?.tc_sign ? await urlToBase64(candidateDetails?.tc_sign) : null;
+        const img = assets?.tc_sign
+          ? await urlToBase64(assets?.tc_sign)
+          : null;
 
         if (img) {
+          const format = img.includes("image/jpeg")
+            ? "JPEG"
+            : img.includes("image/webp")
+            ? "WEBP"
+            : "PNG";
+
+          const props = pdf.getImageProperties(img);
+
+          const imgW = props.width;
+          const imgH = props.height;
+
+          const scale = Math.min(
+            boxSize / imgW,
+            boxSize / imgH
+          );
+
+          const drawW = imgW * scale;
+          const drawH = imgH * scale;
+
+          const drawX =
+            (rightBoxX - 10) + (boxSize - drawW) / 2;
+
+          const drawY =
+            (rightBoxY - 3) + (boxSize - drawH) / 2;
+
           pdf.addImage(
             img,
-            "PNG",
-            rightBoxX - 10,
-            rightBoxY - 3,
-            boxSize,
-            boxSize
+            format,
+            drawX,
+            drawY,
+            drawW,
+            drawH
           );
         }
       } catch {}
+
+      // // ==========================
+      // // LEFT SIDE IMAGE (STAMP)
+      // // ==========================
+      // try {
+      //   const img = assets?.agency_sign ? await urlToBase64(assets?.agency_sign) : null;
+
+      //   if (img) {
+      //     pdf.addImage(
+      //       img,
+      //       "PNG",
+      //       leftBoxX - 10,
+      //       leftBoxY - 3,
+      //       boxSize,
+      //       boxSize
+      //     );
+      //   }
+      // } catch {}
+
+      // // =========================
+      // // RIGHT SIDE IMAGE (STAMP)
+      // // =========================
+      // try {
+      //   const img = assets?.tc_sign ? await urlToBase64(assets?.tc_sign) : null;
+
+      //   if (img) {
+      //     pdf.addImage(
+      //       img,
+      //       "PNG",
+      //       rightBoxX - 10,
+      //       rightBoxY - 3,
+      //       boxSize,
+      //       boxSize
+      //     );
+      //   }
+      // } catch {}
 
       // pdf.text("Seal & Sign", leftX, footerStartY + 5 + 5);
       // pdf.text("Seal & Sign", rightX, footerStartY + 5 + 5);
