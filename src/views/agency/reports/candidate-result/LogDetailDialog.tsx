@@ -601,12 +601,15 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
             textColor: "#000000",
             fontStyle: 'bold',
             lineWidth: 0.1,
+            halign: "center"
           },
           styles:{
             fontSize:7,
             cellPadding:2,
             lineWidth: 0.1,
-            overflow:'linebreak'
+            overflow:'linebreak',
+            halign: "center",
+            textColor: "#000000"
           },
           columnStyles:{
             0:{cellWidth:14},   // Sr
@@ -647,12 +650,15 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
             textColor: "#000000",
             fontStyle: 'bold',
             lineWidth: 0.1,
+            halign: "center"
           },
           styles:{
             fontSize:7,
             cellPadding:2,
             lineWidth: 0.1,
-            overflow:'linebreak'
+            overflow:'linebreak',
+            halign: "center",
+            textColor: "#000000"
           },
           columnStyles:{
             0:{cellWidth:14},   // Sr
@@ -691,12 +697,15 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
             textColor: "#000000",
             fontStyle: 'bold',
             lineWidth: 0.1,
+            halign: "center"
           },
           styles:{
             fontSize:7,
             cellPadding:2,
             lineWidth: 0.1,
-            overflow:'linebreak'
+            overflow:'linebreak',
+            halign: "center",
+            textColor: "#000000"
           },
           columnStyles:{
             0:{cellWidth:14},   // Sr
@@ -733,13 +742,16 @@ const LogDetailDialog = ({ open, handleClose, selectedCandidate, candidateId } :
             fillColor: false,
             textColor: "#000000",
             fontStyle: 'bold',
-            lineWidth: 0.1
+            lineWidth: 0.1,
+            halign: "center"
           },
           styles:{
             fontSize:7,
             cellPadding:2,
             lineWidth: 0.1,
-            overflow:'linebreak'
+            overflow:'linebreak',
+            halign: "center",
+            textColor: "#000000"
           },
           columnStyles:{
             0:{cellWidth:14},    // Sr
