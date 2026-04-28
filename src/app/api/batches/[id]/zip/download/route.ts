@@ -31,6 +31,7 @@ function createReadableStreamFromNodeStream(nodeStream: fs.ReadStream): Readable
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const batchId = parseInt(params.id);
+  const type = request.nextUrl.searchParams.get("type") || "generate_zip";
 
   // Validate batch ID
   if (isNaN(batchId)) {
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     where: {
       reference_id: batchId,
       reference_type: 'batch',
-      job_type: 'generate_zip',
+      job_type: type,
       status: 'completed',
     },
     select: {

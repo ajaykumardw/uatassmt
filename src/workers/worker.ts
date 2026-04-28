@@ -22,12 +22,12 @@ console.log("Redis Status:", redis.status);
 
 const worker = new Worker(
 
-  "documentJobs",
+  "evidenceZip",
 
   async (job) => {
     try {
       switch (job.name) {
-        case "evidenceZip":
+        case "generateZip":
           return await processEvidence(job);
 
         case "resultZip":

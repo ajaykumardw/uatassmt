@@ -2,12 +2,9 @@
 
 import { useRef, useState, useEffect } from 'react'
 
-import { Button, Chip, CircularProgress } from '@mui/material'
+import { Button, Chip, CircularProgress, Tooltip } from '@mui/material'
 
 import { toast } from 'react-toastify'
-
-import DownloadEvidence from './DownloadEvidence'
-import type { FolderKey } from '@/configs/customDataConfig'
 
 type JobType = {
   id: number
@@ -16,9 +13,8 @@ type JobType = {
   file_path?: string
 }
 
-const ZipAction = ({ batchId }: { batchId: number }) => {
+const ResultSheetAction = ({ batchId }: { batchId: number }) => {
   const [job, setJob] = useState<JobType | null>(null)
-  const [open, setOpen] = useState(false)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // 🔁 polling
@@ -47,21 +43,19 @@ const ZipAction = ({ batchId }: { batchId: number }) => {
         } else {
 
           toast.error('Zip generation failed')
-
         }
       }
     }, 2000)
   }
 
   // 🚀 called from dialog
-  const handleGenerate = async (folders: FolderKey[]) => {
+  const handleGenerate = async () => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/batches/${batchId}/zip/generate`,
+        `${process.env.NEXT_PUBLIC_API_URL}/batches/${batchId}/zip/result-sheet`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ folders })
         }
       )
 
@@ -87,7 +81,7 @@ const ZipAction = ({ batchId }: { batchId: number }) => {
     try {
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/batches/${batchId}/zip/job`
+        `${process.env.NEXT_PUBLIC_API_URL}/batches/${batchId}/zip/job?type=generate_result_sheet_zip`
       )
 
       const data = await res.json()
@@ -130,7 +124,7 @@ const ZipAction = ({ batchId }: { batchId: number }) => {
     try {
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/batches/${batchId}/zip/download`,
+        `${process.env.NEXT_PUBLIC_API_URL}/batches/${batchId}/zip/download?type=generate_result_sheet_zip`,
         {
           method: 'GET',
           headers: {
@@ -183,14 +177,17 @@ const ZipAction = ({ batchId }: { batchId: number }) => {
 
   return (
     <div className='flex items-center gap-2'>
-      <Button
-        variant="contained"
-        onClick={() => setOpen(true)}
-        disabled={isGeneratingDisabled}
-        size='small'
-      >
-        {job?.status === 'completed' ? 'Regenerate Zip' : 'Generate Zip'}
-      </Button>
+      <Tooltip title={job?.status === 'completed' ? 'Regenerate PDF' : 'Generate PDF'}>
+        <Button
+          variant="contained"
+          onClick={handleGenerate}
+          disabled={isGeneratingDisabled}
+          size='small'
+          startIcon={<i className={job?.status === 'completed' ? "tabler-refresh" : "tabler-file-plus"} />}
+        >
+          {job?.status === 'completed' ? 'PDF' : 'PDF'}
+        </Button>
+      </Tooltip>
       {
         job?.status === 'pending' && <Chip className='capitalize' label="Pending" color='warning' variant='tonal' />
       }
@@ -209,18 +206,13 @@ const ZipAction = ({ batchId }: { batchId: number }) => {
           color="success"
           onClick={handleDownload}
           size='small'
+          startIcon={<i className="tabler-download" />}
         >
-          Download Zip
+          Result Sheet
         </Button>
       )}
-
-      <DownloadEvidence
-        open={open}
-        onClose={() => setOpen(false)}
-        onSubmit={handleGenerate}
-      />
     </div>
   )
 }
 
-export default ZipAction
+export default ResultSheetAction

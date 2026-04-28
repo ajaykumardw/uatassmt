@@ -7,7 +7,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   const batchId = parseInt(params.id);
-  
+  const type = request.nextUrl.searchParams.get("type") || "generate_zip";
+
   if (isNaN(batchId)) {
     return NextResponse.json({ message: "Invalid batch ID" }, { status: 400 });
   }
@@ -16,7 +17,7 @@ export async function GET(
     where: {
       reference_id: batchId,
       reference_type: "batch",
-      job_type: "generate_zip"
+      job_type: type
     },
     orderBy: {
       created_at: "desc"

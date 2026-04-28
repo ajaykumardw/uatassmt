@@ -75,6 +75,7 @@ import tableStyles from '@core/styles/table.module.css'
 
 import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
 import LogDetailDialog from './LogDetailDialog';
+import ResultSheetAction from '@/components/zip/resultSheetAction';
 
 // declare module '@tanstack/table-core' {
 //   interface FilterFns {
@@ -1059,14 +1060,9 @@ const CandidateWiseResultTable = () => {
               >
                 Import Questions
               </Button> */}
-            {/* <Button
-              variant='contained'
-              startIcon={<i className='tabler-plus' />}
-              onClick={() => setAddQuestionOpen(!addQuestionOpen)}
-              className='is-full sm:is-auto'
-            >
-              Add New Exam Set
-            </Button> */}
+              {selectedBatch &&
+                <ResultSheetAction batchId={selectedBatch} />
+              }
             {/* </>
             } */}
           </div>

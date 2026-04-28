@@ -84,7 +84,7 @@ export const generateCandidatePdf = async (data: any, assets: any, type: string 
 
     const tableRows:any[] = [];
 
-    data?.forEach((item:any)=>{
+    data?.report?.forEach((item:any)=>{
 
       tableRows.push({
         sr_no: item.sr_no ,
@@ -146,7 +146,7 @@ export const generateCandidatePdf = async (data: any, assets: any, type: string 
     const vivaTableRows:any[] = [];
     const projectTableRows:any[] = [];
 
-    data?.forEach((item:any)=>{
+    data?.report?.forEach((item:any)=>{
 
       theoryTableRows.push({
         sr_no: item.sr_no ,

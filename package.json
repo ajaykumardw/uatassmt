@@ -13,7 +13,8 @@
     "build:icons": "tsx src/assets/iconify-icons/bundle-icons-css.ts",
     "migrate": "dotenv -e .env -- npx prisma migrate dev",
     "postinstall": "prisma generate && npm run build:icons",
-    "worker": "tsx src/workers/evidence.worker.ts"
+    "worker-old": "tsx src/workers/evidence.worker.ts",
+    "worker": "tsx src/workers/worker.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "1.5.0",

@@ -122,13 +122,41 @@ export const processResult = async (
     const folderPath = path.join(
       process.cwd(),
       "storage",
-      "exports",
+      "uploads",
+      "zips",
       "results"
     );
 
     await fs.mkdir(folderPath, {
       recursive: true,
     });
+
+    const oldJobs = await prisma.jobs.findMany({
+      where: {
+        reference_id: batchId,
+        job_type: "generate_result_sheet_zip",
+        reference_type: "batch",
+        file_path: {
+          not: null
+        }
+      },
+      select: {
+        id: true,
+        file_path: true
+      }
+    });
+
+    console.log("Old jobs with files:", oldJobs);
+
+    for (const item of oldJobs) {
+      if (!item.file_path) continue;
+
+      try {
+        await fs.unlink(
+          path.join(process.cwd(), item.file_path)
+        );
+      } catch {}
+    }
 
     const fileName = `Candidates_Result_Sheet_of_${batchName}_${format(new Date(), "dd-MMM-yyyy")}.zip`;
 
@@ -168,11 +196,6 @@ export const processResult = async (
     for (const candidate of data.candidates) {
       const pdfFile =
         await generateCandidatePdf(candidate, data.assets);
-
-      archive.append(
-        pdfFile.buffer,
-        { name: pdfFile.fileName }
-      );
 
       archive.append(
         pdfFile.buffer,
@@ -226,7 +249,7 @@ export const processResult = async (
     // COMPLETE
     // =========================
     const dbFilePath =
-      `storage/uploads/zips/${fileName}`;
+      `storage/uploads/zips/results/${fileName}`;
 
     await prisma.jobs.update({
       where: {

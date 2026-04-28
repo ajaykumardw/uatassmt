@@ -662,7 +662,7 @@ export const generateBatchResultData = async (
           batch.agency?.last_name || ""
         }`.trim(),
 
-        tc_manager_name: batch?.center_spoc_person_name ? batch.center_spoc_person_name : `${batch.training_center?.first_name || ""} ${batch.training_center?.last_name || ""}`.trim(),
+        center_manager_name: batch?.center_spoc_person_name ? batch.center_spoc_person_name : `${batch.training_center?.first_name || ""} ${batch.training_center?.last_name || ""}`.trim(),
 
         total_marks: totalMarks,
         obtained_marks: obtainedMarks,
