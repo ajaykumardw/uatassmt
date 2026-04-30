@@ -21,7 +21,8 @@ export const ExpectedStudentExcelHeaders = [
   'Address',
   'City',
   'State',
-  'Mobile No'
+  'Mobile No',
+  "Aadhaar No"
 ];
 
 export const ExpectedStudentExcelHeadersWithoutBatchId = [
@@ -36,7 +37,8 @@ export const ExpectedStudentExcelHeadersWithoutBatchId = [
   'Address',
   'City',
   'State',
-  'Mobile No'
+  'Mobile No',
+  "Aadhaar No"
 ];
 
 export const ExpectedTheoryQuestionExcelHeaders = [

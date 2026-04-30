@@ -540,12 +540,15 @@ model students {
   practical_group  student_groups?    @relation("practicalGroup", fields: [practical_group_id], references: [id])
   viva_group       student_groups?    @relation("vivaGroup", fields: [viva_group_id], references: [id])
   attendance Int? @default(0) @db.TinyInt
+  result String? @db.VarChar(20) @default("Pending")
 
   student_exam_set_results student_exam_set_results[]
   exam_set_results exam_set_results[]
   student_question_attempts student_question_attempts[]
   media_files media_files[]
   captured_files student_captured_images[]
+
+  @@index([result])
 }
 
 model student_groups {

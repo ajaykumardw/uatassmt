@@ -154,6 +154,12 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
           <MenuItem href={`/${locale}/reports/candidate-result`}>Candidate wise Report</MenuItem>
           <MenuItem href={`/${locale}/reports/miscellaneous-reports`}>Miscellaneous Reports</MenuItem>
         </SubMenu>
+        <SubMenu label="Analysis" icon={<i className='tabler-report' />}>
+          <MenuItem href={`/${locale}/analysis/assessor-wise-result`}>Assessor wise Result %</MenuItem>
+          <MenuItem href={`/${locale}/analysis/batch-wise-result`}>Batch wise Result %</MenuItem>
+          <MenuItem href={`/${locale}/analysis/ssc-wise-result`}>SSC wise Result %</MenuItem>
+          <MenuItem href={`/${locale}/analysis/assessor-rating`} disabled>Assessor Rating</MenuItem>
+        </SubMenu>
         <SubMenu label="Feedback Forms" icon={<i className='tabler-report' />}>
           <MenuItem href={`/${locale}/feedback-forms/list`}>List</MenuItem>
           <MenuItem href={`/${locale}/feedback-forms/create`}>Create</MenuItem>

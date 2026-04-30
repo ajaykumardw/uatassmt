@@ -65,8 +65,8 @@ const FeedBackPage = () => {
 
       const data = await res.json();
 
-      console.log("data: ", data);
-      console.log("data: ", data);
+      // console.log("data: ", data);
+      // console.log("data: ", data);
 
       if (!res.ok) throw new Error("Failed to fetch feedback form");
 

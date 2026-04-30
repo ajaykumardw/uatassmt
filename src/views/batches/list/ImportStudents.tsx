@@ -26,6 +26,7 @@ import AppReactDropzone from '@/libs/styles/AppReactDropzone';
 import TablePaginationComponent from '@/components/TablePaginationComponent';
 
 import { ExpectedStudentExcelHeaders, ExpectedStudentExcelHeadersWithoutBatchId } from '@/configs/customDataConfig';
+import { isValidAadhaar } from '@/libs/aadhaar';
 
 type StudentsTypeWithError = {
   BatchName: {value: string, error: string}
@@ -43,7 +44,8 @@ type StudentsTypeWithError = {
   Address: {value: string, error: string}
   City: {value: string, error: string}
   State: {value: string, error: string}
-  MobileNo: {value: number, error: string}
+  MobileNo: {value: number, error: string},
+  AadhaarNo: {value: number, error: string}
 }
 
 const checkUnique = async (input: any) => {
@@ -158,6 +160,12 @@ const studentSchema = v.objectAsync(
         'Mobile must be 10 digits'
       )
     ),
+    AadhaarNo: v.pipe(
+      v.optional(v.union([v.string(), v.number()])),
+      v.transform(v => (v ? String(v).replace(/\s+/g, '') : v)),
+      v.check(v => !v || /^\d{12}$/.test(v.toString()), 'Aadhaar must be exactly 12 digits'),
+      v.check(v => !v || isValidAadhaar(v.toString()), 'Invalid Aadhaar number'),
+    ),
   }
 )
 
@@ -228,6 +236,12 @@ const studentSchemaWithoutBatch = v.objectAsync(
         'Mobile must be 10 digits'
       )
     ),
+    AadhaarNo: v.pipe(
+      v.optional(v.union([v.string(), v.number()])),
+      v.transform(v => (v ? String(v).replace(/\s+/g, '') : v)),
+      v.check(v => !v || /^\d{12}$/.test(v.toString()), 'Aadhaar must be exactly 12 digits'),
+      v.check(v => !v || isValidAadhaar(v.toString()), 'Invalid Aadhaar number'),
+    ),
   }
 )
 
@@ -262,7 +276,8 @@ const mapKeys = (data: any[]) => data.map((item: any) => ({
   Address: item['Address'],
   City: item['City'],
   State: item['State'],
-  MobileNo: item['Mobile No']
+  MobileNo: item['Mobile No'],
+  AadhaarNo: item['Aadhaar No']
 }));
 
 const columnHelper = createColumnHelper<StudentsTypeWithError>()
@@ -458,7 +473,7 @@ const ImportStudents = ({ batch, onBack }: { batch: number | null, onBack: () =>
             // Process students
             const validatedData = [];
 
-            for (const [index, item] of mappedData.entries()) {
+            for (const item of mappedData) {
               const batchName = batch ? batch : item.BatchName.toString();
 
               // Fetch batch details from the database
@@ -481,7 +496,7 @@ const ImportStudents = ({ batch, onBack }: { batch: number | null, onBack: () =>
                 continue; // Skip to the next iteration
               }
 
-              console.log(`Processing [${index}]: current count of students upload`, batchDetail.currentCount);
+              // console.log(`Processing [${index}]: current count of students upload`, batchDetail.currentCount);
 
               // Calculate remaining capacity
               const remainingCapacity = batchDetail.batchSize - batchDetail.currentCount;
@@ -504,14 +519,15 @@ const ImportStudents = ({ batch, onBack }: { batch: number | null, onBack: () =>
               } : null;
 
               // Debugging: Log current counts and capacity
-              console.log(`Processing Candidate ID [${index}]: ${item.CandidateId}`);
-              console.log(`Current Count: ${batchDetail.currentCount}, Batch Size: ${batchDetail.batchSize}, Remaining Capacity: ${remainingCapacity}`);
-              console.log(`Exceeds Batch Size: ${exceedsBatchSize}`);
+              // console.log(`Processing Candidate ID [${index}]: ${item.CandidateId}`);
+              // console.log(`Current Count: ${batchDetail.currentCount}, Batch Size: ${batchDetail.batchSize}, Remaining Capacity: ${remainingCapacity}`);
+              // console.log(`Exceeds Batch Size: ${exceedsBatchSize}`);
 
               // If there's space, increment the current count for the batch
               if (!exceedsBatchSize) {
                 batchCounts[batchId].currentCount += 1; // Increment the count since we're allowing this student
-                console.log(`Student added [${index}]. New Current Count: ${batchCounts[batchId].currentCount}`);
+
+                // console.log(`Student added [${index}]. New Current Count: ${batchCounts[batchId].currentCount}`);
               }
 
               // Augment issues with any new validation errors
@@ -539,12 +555,12 @@ const ImportStudents = ({ batch, onBack }: { batch: number | null, onBack: () =>
 
             // Transform data
 
-            console.log("validated data", validatedData);
+            // console.log("validated data", validatedData);
 
 
             const filteredData = validatedData.filter(item => item.result.issues === undefined);
 
-            console.log("filtered data", filteredData);
+            // console.log("filtered data", filteredData);
 
             const transformedStudents = validatedData.map((trainee: any) => {
               const transformed: {[key: string]: { value: any; error: string | null; }} = {};
@@ -808,6 +824,17 @@ const ImportStudents = ({ batch, onBack }: { batch: number | null, onBack: () =>
               {row.original.MobileNo?.value}
             </Typography>
             <Typography variant='body2' color="error">{row.original.MobileNo.error}</Typography>
+          </div>
+        )
+      }),
+      columnHelper.accessor('AadhaarNo.value', {
+        header: 'Aadhaar No.',
+        cell: ({ row }) => (
+          <div className="flex flex-col">
+            <Typography color='text.primary' >
+              {row.original.AadhaarNo?.value}
+            </Typography>
+            <Typography variant='body2' color="error">{row.original.AadhaarNo.error}</Typography>
           </div>
         )
       }),

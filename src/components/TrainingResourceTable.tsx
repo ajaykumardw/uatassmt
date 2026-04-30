@@ -329,6 +329,7 @@ export default function TrainingResourceTable() {
           <Pagination
             shape='rounded'
             color='primary'
+            variant='tonal'
             count={pageCount}
             page={page + 1}
             onChange={(_, value) => setPage(value - 1)}

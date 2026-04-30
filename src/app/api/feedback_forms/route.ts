@@ -12,9 +12,17 @@ export async function GET(request: Request) {
   const searchParams = new URL(request.url).searchParams;
   const type = searchParams.get('type');
 
+  const session = await getServerSession(authOptions);
+  const agencyId = session?.user?.agency_id;
+
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   if (type) {
     const form = await prisma.feedback_forms.findFirst({
       where: {
+        created_by: Number(agencyId),
         form_type: type === 'candidate' ? 1 : 2,
       },
       include: {
@@ -27,6 +35,9 @@ export async function GET(request: Request) {
   }
 
   const forms = await prisma.feedback_forms.findMany({
+    where: {
+      created_by: Number(agencyId)
+    },
     include: {
       feedback_questions: true,
       feedback_responses: true,
