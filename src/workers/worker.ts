@@ -5,6 +5,7 @@ import { redis } from "../libs/redis";
 import { processEvidence } from "./handlers/processEvidence";
 
 import { processResult } from "./handlers/processResult";
+import { processBatchResult } from "./handlers/processCandidateResult";
 
 // import { processCertificate } from "./handlers/processCertificate";
 
@@ -32,6 +33,9 @@ const worker = new Worker(
 
         case "resultZip":
           return await processResult(job);
+
+        case "updateResult":
+          return await processBatchResult(job);
 
         // case "certificateZip":
         //   return await processCertificate(job);

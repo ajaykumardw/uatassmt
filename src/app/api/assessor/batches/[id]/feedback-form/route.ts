@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import prisma from '@/libs/prisma';
 
 import { FeedbackFormTypes, QuestionTypes, storageFolders } from "@/configs/customDataConfig";
+import { updateCandidateResultJob } from '@/services/job.service';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
 
@@ -270,7 +271,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       answers = JSON.parse(answersRaw);
 
       if (!Array.isArray(answers)) {
-      
+
         return NextResponse.json({
           status: "Error",
           statusCode: 400,
@@ -297,7 +298,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     });
 
     if (isExistingFeedback) {
-      
+
       return NextResponse.json({
         status: 'Error',
         statusCode: 400,
@@ -372,6 +373,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         data: answersData
       });
     }
+
+    // 4. Update batch as completed (if needed) and trigger result update job
+    await prisma.batches.update({
+      where: { id: batchId },
+      data: { batch_completed: 1 }
+    });
+
+    await updateCandidateResultJob(batchId, Number(decoded.id));
 
     return NextResponse.json({
       status: 'Success',

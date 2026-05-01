@@ -15,6 +15,7 @@ import IconButton from '@mui/material/IconButton'
 import TablePagination from '@mui/material/TablePagination'
 import type { TextFieldProps } from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
+import Chip from '@mui/material/Chip'
 
 // Third-party Imports
 import classnames from 'classnames'
@@ -68,6 +69,9 @@ import EditStudentDrawer from './EditStudentDrawer'
 import OptionMenu from '@/@core/components/option-menu'
 import ChangePasswordDialog from '@/components/ChangePasswordDialog'
 import CapturedImageDialog from '@/components/student/CapturedImageDialog'
+
+import { handleUpdateResult } from './actions/updateResult'
+
 
 // declare module '@tanstack/table-core' {
 //   interface FilterFns {
@@ -330,6 +334,21 @@ const StudentListTable = () => {
       //     </Typography>
       //   )
       // }),
+
+      columnHelper.accessor('result', {
+        header: 'Result',
+        cell: ({ row }) => (
+          <Typography color='text.primary' className='font-medium'>
+            {row.original.result == null ? (
+              <Button variant='outlined' size='small' color='secondary' onClick={() => handleUpdateResult(row.original.id)}>
+                Update Result
+              </Button>
+            ) :(
+              <Chip label={row.original.result} color={row.original.result == 'pass' ? 'success' : 'error'} className='capitalize' />
+            )}
+          </Typography>
+        )
+      }),
 
       columnHelper.accessor('action', {
         header: 'Action',

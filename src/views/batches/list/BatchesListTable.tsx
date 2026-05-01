@@ -205,6 +205,7 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
   const [assessorData, setAssessorsData] = useState<UsersType[]>([]);
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [selectedBatch, setSelectedBatch] = useState<number | null>(null);
+  const [loadingResultIds, setLoadingResultIds] = useState<number[]>([]);
 
   // download evidence
   // const [downloadEvidenceDialogOpen, setDownloadEvidenceDialogOpen] = useState(false);
@@ -305,7 +306,37 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
   //   setDownloadEvidenceDialogOpen(true);
   // }
 
+  const handleUpdateResult = async (batchId: number) => {
 
+    setLoadingResultIds(prev => [...prev, batchId]);
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches/${batchId}/complete`, {
+        method: 'POST',
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        toast.success(result.message || 'Batch Completed.', {
+          hideProgressBar: false
+        });
+      } else {
+        toast.error(result.message || 'Failed to complete batch.', {
+          hideProgressBar: false
+        });
+      }
+
+    } catch (error) {
+      console.error(error);
+      toast.error('Something went wrong!', {
+        hideProgressBar: false
+      });
+    } finally {
+      setLoadingResultIds(prev => prev.filter(id => id !== batchId));
+    }
+
+  }
 
   const columns = useMemo<ColumnDef<BatchesTypeWithAction, any>[]>(
     () => [
@@ -587,61 +618,80 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
 
       columnHelper.accessor('action', {
         header: 'Action',
-        cell: ({row}) => (
-          <div className='flex items-center'>
-            <Link href={getLocalizedUrl(`batches/edit/${row.original.id}`, locale as Locale)} className='flex'>
-              <IconButton>
-                <i className='tabler-edit text-[22px] text-textSecondary' />
-              </IconButton>
-            </Link>
-            <ZipAction batchId={row.original.id} />
-            {/* <Button onClick={() => handleDownloadEvidence(row.original.id)} disabled={jobStatus[row.original.id]?.status === 'pending' || jobStatus[row.original.id]?.status === 'processing'}>
-              Generate Zip
-            </Button>
-            { jobStatus[row.original.id]?.status === 'pending' ?
-              'Pending'
-              :
-              jobStatus[row.original.id]?.status === 'processing' ?
-              `Processing ${jobStatus[row.original.id]?.progress || 0}%`
-              :
-              jobStatus[row.original.id]?.status === 'completed' ?
-              `Download Zip`
-              : ''
-            } */}
-            {/* <Button onClick={() => handleDownloadEvidence(row.original.id)}>
-              Generate Zip
-            </Button> */}
-            {/* <IconButton onClick={() => handleDownloadEvidence(row.original.id)}>
-              <i className='tabler-download text-[22px] text-textSecondary' />
-            </IconButton> */}
-            {/* <IconButton>
-              <Link href={getLocalizedUrl('apps/user/view', locale as Locale)} className='flex'>
-                <i className='tabler-eye text-[22px] text-textSecondary' />
+        cell: ({row}) => {
+          const isLoading = loadingResultIds.includes(row.original.id);
+          const showUpdateButton = row.original.assessment_start_datetime && row.original.assessment_end_datetime && new Date() > new Date(row.original.assessment_end_datetime) && !row.original.batch_completed;
+
+          return (
+            <div className='flex items-center'>
+              {showUpdateButton && (
+                <Tooltip title='Complete Batch'>
+                  <CustomIconButton
+                    variant='outlined'
+                    size='small'
+                    color='success'
+                    onClick={() => handleUpdateResult(row.original.id)}
+                    disabled={isLoading}
+                    startIcon={isLoading ? <CircularProgress size={20} color='inherit' /> : null}
+                  >
+                    <i className="tabler-check" />
+                  </CustomIconButton>
+                </Tooltip>
+              )}
+              <Link href={getLocalizedUrl(`batches/edit/${row.original.id}`, locale as Locale)} className='flex'>
+                <IconButton>
+                  <i className='tabler-edit text-[22px] text-textSecondary' />
+                </IconButton>
               </Link>
-            </IconButton>
-            <OptionMenu
-              iconClassName='text-[22px] text-textSecondary'
-              options={[
-                {
-                  text: 'Download',
-                  icon: 'tabler-download text-[22px]',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                },
-                {
-                  text: 'Edit',
-                  icon: 'tabler-edit text-[22px]',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                }
-              ]}
-            /> */}
-          </div>
-        ),
+              <ZipAction batchId={row.original.id} />
+              {/* <Button onClick={() => handleDownloadEvidence(row.original.id)} disabled={jobStatus[row.original.id]?.status === 'pending' || jobStatus[row.original.id]?.status === 'processing'}>
+                Generate Zip
+              </Button>
+              { jobStatus[row.original.id]?.status === 'pending' ?
+                'Pending'
+                :
+                jobStatus[row.original.id]?.status === 'processing' ?
+                `Processing ${jobStatus[row.original.id]?.progress || 0}%`
+                :
+                jobStatus[row.original.id]?.status === 'completed' ?
+                `Download Zip`
+                : ''
+              } */}
+              {/* <Button onClick={() => handleDownloadEvidence(row.original.id)}>
+                Generate Zip
+              </Button> */}
+              {/* <IconButton onClick={() => handleDownloadEvidence(row.original.id)}>
+                <i className='tabler-download text-[22px] text-textSecondary' />
+              </IconButton> */}
+              {/* <IconButton>
+                <Link href={getLocalizedUrl('apps/user/view', locale as Locale)} className='flex'>
+                  <i className='tabler-eye text-[22px] text-textSecondary' />
+                </Link>
+              </IconButton>
+              <OptionMenu
+                iconClassName='text-[22px] text-textSecondary'
+                options={[
+                  {
+                    text: 'Download',
+                    icon: 'tabler-download text-[22px]',
+                    menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
+                  },
+                  {
+                    text: 'Edit',
+                    icon: 'tabler-edit text-[22px]',
+                    menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
+                  }
+                ]}
+              /> */}
+            </div>
+          )
+        },
         enableSorting: false
       })
     ],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [loadingResultIds]
   )
 
   useEffect(() => {

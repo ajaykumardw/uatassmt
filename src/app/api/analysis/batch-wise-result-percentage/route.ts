@@ -240,9 +240,9 @@ export async function GET(req: NextRequest) {
         if (student.attendance === 1) {
           assessed++;
 
-          if (student.result == "Pass") {
+          if (student.result == "pass") {
             pass++;
-          } else if (student.result == "Fail") {
+          } else if (student.result == "fail") {
             fail++;
           }
         }
