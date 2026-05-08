@@ -51,22 +51,22 @@ export async function POST(req: Request) {
 
   const mappedData = await Promise.all(data.map(async (item: any) => ({
     batch_id: Number(item.batchId),
-    candidate_id: item.CandidateId.toString(),
-    user_name: item.CandidateId.toString(),
-    password: await hash(item.Password.toString(), 8),
-    candidate_name: item.CandidateName.toString(),
+    candidate_id: item.CandidateId.toString().trim(),
+    user_name: item.CandidateId.toString().trim(),
+    password: await hash(item.Password.toString().trim(), 8),
+    candidate_name: item.CandidateName.toString().trim(),
     gender: item.Gender && item.Gender.toLowerCase(),
-    category: item.Category,
+    category: item.Category.trim(),
     date_of_birth: item.DOB && new Date(item.DOB.split('.').reverse().join('-')),
-    father_name: item.FatherName,
-    mother_name: item.MotherName,
-    address: item.Address,
-    city: item.City,
-    state: item.State,
-    mobile_no: item.MobileNo && item.MobileNo.toString(),
+    father_name: item.FatherName.toString().trim(),
+    mother_name: item.MotherName.toString().trim(),
+    address: item.Address.toString().trim(),
+    city: item.City.toString().trim(),
+    state: item.State.toString().trim(),
+    mobile_no: item.MobileNo && item.MobileNo.toString().trim(),
     agency_id: agencyId,
     created_by: createdBy,
-    aadhaar_no: item.AadhaarNo && isValidAadhaar(item.AadhaarNo.toString()) ? encrypt(item.AadhaarNo.toString()) : null
+    aadhaar_no: item.AadhaarNo && isValidAadhaar(item.AadhaarNo.toString().trim()) ? encrypt(item.AadhaarNo.toString().trim()) : null
   })));
 
   const result = await prisma.students.createMany({

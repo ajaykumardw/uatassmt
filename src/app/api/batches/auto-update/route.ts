@@ -2,12 +2,14 @@
 
 export const dynamic = "force-dynamic";
 
-import path from "path";
-import fs from "fs/promises";
+// import path from "path";
+// import fs from "fs/promises";
 
 import { NextResponse } from "next/server";
 
-import ExcelJS from "exceljs";
+import { compare } from 'bcrypt'
+
+import { Workbook } from "exceljs";
 
 import type { Prisma } from "@prisma/client";
 
@@ -19,19 +21,27 @@ import type {
   feedback_response_answers
 } from "@prisma/client";
 
+import { getServerSession } from "next-auth";
+
+import { format } from "date-fns";
+
+import { authOptions } from "@/libs/auth";
+
 import prisma from "@/libs/prisma";
 
-const FILE_PATH = path.join(
-  process.cwd(),
-  "storage",
-  "uploads",
-  "corrections",
-  "batch-date-correction.xlsx"
-);
+// const FILE_PATH = path.join(
+//   process.cwd(),
+//   "storage",
+//   "uploads",
+//   "corrections",
+//   "batch-date-correction.xlsx"
+// );
 
 type LogRow = {
   row: number;
   batch_name: string;
+  date?: string;
+  actual_date?: string;
   status: string;
 };
 
@@ -415,23 +425,85 @@ async function processBatch(
   }
 }
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    try {
-      await fs.access(FILE_PATH);
-    } catch {
+
+    // try {
+    //   await fs.access(FILE_PATH);
+    // } catch {
+    //   return NextResponse.json({
+    //     success: false,
+    //     message: "File not found"
+    //   });
+    // }
+
+    const session = await getServerSession(authOptions);
+    const authUser = session?.user;
+
+    if(authUser?.user_type != 'AG' || !authUser.id){
       return NextResponse.json({
         success: false,
-        message: "File not found"
-      });
+        message: "Unauthorized"
+      }, { status: 403 });
     }
 
-    const workbook =
-      new ExcelJS.Workbook();
+    const formData = await req.formData();
 
-    await workbook.xlsx.readFile(
-      FILE_PATH
-    );
+    const file = formData.get("file") as File;
+    const password = formData.get("password") as string;
+
+    if (!file) {
+      return NextResponse.json({
+        success: false,
+        message: "File is required"
+      }, { status: 400 });
+    }
+
+    if (!password) {
+      return NextResponse.json({
+        success: false,
+        message: "Password is required"
+      }, { status: 400 });
+    }
+
+    const user = await prisma.users.findFirst({
+      where: {
+        id: Number(authUser.id),
+      },
+      select: {
+        id: true,
+        user_type: true,
+        password: true,
+      }
+    });
+
+    if (!user) {
+      return NextResponse.json({
+        success: false,
+        message: "User not found"
+      }, { status: 404 });
+    }
+
+    const isValidPassword = user.password ? await compare(password, user.password) : false;
+
+    if (!isValidPassword) {
+      return NextResponse.json({
+        success: false,
+        message: "Invalid password"
+      }, { status: 403 });
+    }
+
+    const buffer = await file.arrayBuffer();
+
+    // const workbook =
+    //   new ExcelJS.Workbook();
+
+    const workbook = new Workbook();
+
+    // await workbook.xlsx.readFile(
+    //   FILE_PATH
+    // );
+    await workbook.xlsx.load(buffer);
 
     const sheet =
       workbook.worksheets[0];
@@ -441,7 +513,7 @@ export async function POST() {
         success: false,
         message:
           "Worksheet not found"
-      });
+      }, { status: 404 });
     }
 
     const headerRow =
@@ -477,7 +549,7 @@ export async function POST() {
         success: false,
         message:
           "Columns required: batch_name, date"
-      });
+      }, { status: 400 });
     }
 
     // const logs: LogRow[] = [];
@@ -541,6 +613,7 @@ export async function POST() {
           {
             where: {
               batch_name: batchName,
+              agency_id: Number(authUser.id),
               auto_update: 0
             }
           }
@@ -551,8 +624,9 @@ export async function POST() {
           row: rowNumber,
           batch_name:
             batchName,
+          date: format(startDate, "dd-MM-yyyy"),
           status:
-            "Batch Not Found / Already Updated"
+            "Failed: Batch Not Found / Already Updated"
         });
 
         continue;
@@ -564,7 +638,7 @@ export async function POST() {
         startDate,
         endDate,
         batch
-      })
+      });
 
       if (jobs.length >= LIMIT) {
         break;
@@ -833,19 +907,27 @@ export async function POST() {
       jobs.map(job => processBatch(job))
     )
 
-    results.forEach((result, index) => {
+    results.forEach((result: any, index: number) => {
       const item = jobs[index];
 
       if (result.status === "fulfilled") {
         logs.push({
           row: item.rowNumber,
           batch_name: item.batchName,
+          date: format(item.startDate, "dd-MM-yyyy"),
+          actual_date: item?.batch?.assessment_start_datetime
+            ? format(item.batch.assessment_start_datetime, "dd-MM-yyyy")
+            : undefined,
           status: "Updated Successfully"
         });
       } else {
         logs.push({
           row: item.rowNumber,
           batch_name: item.batchName,
+          date: format(item.startDate, "dd-MM-yyyy"),
+          actual_date: item?.batch?.assessment_start_datetime
+            ? format(item.batch.assessment_start_datetime, "dd-MM-yyyy")
+            : undefined,
           status: "Failed: " + result.reason
         });
       }

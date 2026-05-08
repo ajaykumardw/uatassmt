@@ -262,22 +262,22 @@ const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
 // Map your keys to the schema
 const mapKeys = (data: any[]) => data.map((item: any) => ({
   BatchName: item['Batch ID'],
-  CandidateId: item['Candidate ID'],
-  Password: item['Password'],
+  CandidateId: item['Candidate ID'].trim(),
+  Password: item['Password'].trim(),
 
   // NameOfTrainingAgency: item['Name of Training Agency'],
 
-  CandidateName: item['Candidate Name'],
-  Gender: item['Gender(M/F/T)'],
-  Category: item['Category(Gen/SC/ST/BC/OBC/OC)'],
+  CandidateName: item['Candidate Name'].trim(),
+  Gender: item['Gender(M/F/T)'].trim(),
+  Category: item['Category(Gen/SC/ST/BC/OBC/OC)'].trim(),
   DOB: item['DOB'],
-  FatherName: item['Father\'s name'],
-  MotherName: item['Mother\'s name'],
-  Address: item['Address'],
-  City: item['City'],
-  State: item['State'],
-  MobileNo: item['Mobile No'],
-  AadhaarNo: item['Aadhaar No']
+  FatherName: item['Father\'s name'].trim(),
+  MotherName: item['Mother\'s name'].trim(),
+  Address: item['Address'].trim(),
+  City: item['City'].trim(),
+  State: item['State'].trim(),
+  MobileNo: item['Mobile No'].trim(),
+  AadhaarNo: item['Aadhaar No'].trim()
 }));
 
 const columnHelper = createColumnHelper<StudentsTypeWithError>()

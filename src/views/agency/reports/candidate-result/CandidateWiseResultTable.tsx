@@ -853,6 +853,86 @@ const CandidateWiseResultTable = () => {
     setLogDetailOpen(!logDetailOpen);
   }
 
+  // const handleGenerateCertificate = async (candidateId: number) => {
+
+  //   const res = await fetch(
+  //     `${process.env.NEXT_PUBLIC_API_URL}/certificate/generate`,
+  //     {
+  //       method: "POST",
+
+  //       headers: {
+  //         "Content-Type": "application/json"
+  //       },
+
+  //       body: JSON.stringify({
+  //         candidateId: candidateId,
+  //       })
+  //     }
+  //   );
+
+  //   const blob = await res.blob();
+
+  //   const url =
+  //     window.URL.createObjectURL(blob);
+
+  //   window.open(url);
+
+  // }
+
+  const handleGenerateCertificate = async (
+    candidateId: number
+  ) => {
+
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/certificate/generate`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          candidateId
+        })
+      }
+    );
+
+    if (!res.ok) {
+
+      const error =
+        await res.json();
+
+      alert(
+        error.message ||
+        "Failed to generate certificate"
+      );
+
+      return;
+    }
+
+    const blob =
+      await res.blob();
+
+    const url =
+      window.URL.createObjectURL(blob);
+
+    const a =
+      document.createElement("a");
+
+    a.href = url;
+
+    a.download =
+      `certificate-${candidateId}.pdf`;
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    a.remove();
+
+    window.URL.revokeObjectURL(url);
+  };
 
   // const studentPcTheoryMarks = getTheoryMarksPerStudent(batchReportData?.students || []);
   // const { theoryMarks, practicalMarks, vivaMarks, absentStudents } = getTheoryMarksPerStudent(batchReportData?.students || [], batchReportData?.qualification_pack || null);
@@ -917,7 +997,7 @@ const CandidateWiseResultTable = () => {
 
           return (
             <div className="flex items-center gap-3">
-              {isAbsent ? null : (
+              {isAbsent ? null : (<>
                 <Button
                   variant="outlined"
                   size="small"
@@ -925,6 +1005,14 @@ const CandidateWiseResultTable = () => {
                 >
                   View Report
                 </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => handleGenerateCertificate(row.original.id)}
+                >
+                  Generate Certificate
+                </Button>
+              </>
               )}
             </div>
           );

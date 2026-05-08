@@ -251,15 +251,25 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const batchId = Number(params.id);
     const formData = await req.formData();
 
-    const feedback_form_id = formData.get("feedback_form_id")?.toString();
+    const feedback_form_id_raw = formData.get("feedback_form_id")?.toString();
     const user_type = 2; // Since this endpoint is specifically for assessor feedback, we can set user_type to 2 (Assessor)
     const answersRaw = formData.get("answers")?.toString();
 
-    if (!feedback_form_id || !user_type || !answersRaw) {
+    if (!feedback_form_id_raw || !user_type || !answersRaw) {
       return NextResponse.json({
         status: 'Error',
         statusCode: 400,
         message: 'Missing required fields'
+      }, { status: 400 });
+    }
+
+    const feedback_form_id = Number(feedback_form_id_raw);
+
+    if (isNaN(feedback_form_id)) {
+      return NextResponse.json({
+        status: 'Error',
+        statusCode: 400,
+        message: 'Invalid feedback_form_id'
       }, { status: 400 });
     }
 

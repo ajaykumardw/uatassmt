@@ -1,22 +1,28 @@
 export const dynamic = "force-dynamic";
 
-import path from "path";
+// import path from "path";
 
-import fs from "fs/promises";
+// import fs from "fs/promises";
 
 import { NextResponse } from "next/server";
 
+import { compare } from 'bcrypt'
+
 import { Workbook } from 'exceljs'
+
+import { getServerSession } from "next-auth";
+
+import { authOptions } from "@/libs/auth";
 
 import prisma from "@/libs/prisma";
 
-const FILE_PATH = path.join(
-  process.cwd(),
-  "storage",
-  "uploads",
-  "corrections",
-  "candidate_id_correction.xlsx"
-);
+// const FILE_PATH = path.join(
+//   process.cwd(),
+//   "storage",
+//   "uploads",
+//   "corrections",
+//   "candidate_id_correction.xlsx"
+// );
 
 type MappingRow = {
   row: number;
@@ -35,26 +41,85 @@ function esc(value: string) {
   return value.replace(/'/g, "''");
 }
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
+
+    const formData = await req.formData();
+    const file = formData.get("file") as File;
+    const password = formData.get("password") as string;
+
+    const session = await getServerSession(authOptions);
+    const authUser = session?.user;
+
+    if (!authUser || authUser.user_type !== 'AG') {
+      return NextResponse.json({
+        success: false,
+        message: "Unauthorized"
+      }, { status: 401 });
+    }
+
+    if (!file) {
+      return NextResponse.json({
+        success: false,
+        message: "File is required"
+      }, { status: 400 });
+    }
+
+    if (!password) {
+      return NextResponse.json({
+        success: false,
+        message: "Password is required"
+      }, { status: 400 });
+    }
+
+
+    const user = await prisma.users.findFirst({
+      where: {
+        id: Number(authUser.id),
+      },
+      select: {
+        id: true,
+        user_type: true,
+        password: true,
+      }
+    });
+
+    if (!user) {
+      return NextResponse.json({
+        success: false,
+        message: "User not found"
+      }, { status: 404 });
+    }
+
+    const isValidPassword = user.password ? await compare(password, user.password) : false;
+
+    if (!isValidPassword) {
+      return NextResponse.json({
+        success: false,
+        message: "Invalid password"
+      }, { status: 403 });
+    }
+
     // ==========================================
     // FILE CHECK
     // ==========================================
-    try {
-      await fs.access(FILE_PATH);
-    } catch {
-      return NextResponse.json({
-        success: false,
-        message: "File not found"
-      });
-    }
+    // try {
+    //   await fs.access(FILE_PATH);
+    // } catch {
+    //   return NextResponse.json({
+    //     success: false,
+    //     message: "File not found"
+    //   });
+    // }
 
     // ==========================================
     // LOAD EXCEL
     // ==========================================
     const workbook = new Workbook();
 
-    await workbook.xlsx.readFile(FILE_PATH);
+    // await workbook.xlsx.readFile(FILE_PATH);
+
+    await workbook.xlsx.load(await file.arrayBuffer());
 
     const sheet = workbook.worksheets[0];
 
@@ -62,6 +127,8 @@ export async function POST() {
       return NextResponse.json({
         success: false,
         message: "Worksheet not found"
+      }, {
+        status: 404
       });
     }
 
@@ -91,7 +158,7 @@ export async function POST() {
         success: false,
         message:
           "Columns required: candidate_id, new_candidate_id"
-      });
+      }, { status: 400 });
     }
 
     // ==========================================
@@ -123,7 +190,7 @@ export async function POST() {
       return NextResponse.json({
         success: false,
         message: "No valid rows found"
-      });
+      }, { status: 400 });
     }
 
     const logs: LogRow[] = [];
@@ -146,7 +213,8 @@ export async function POST() {
       where: {
         candidate_id: {
           in: oldIds
-        }
+        },
+        agency_id: 1
       },
       select: {
         id: true,
@@ -188,7 +256,7 @@ export async function POST() {
           old_id: row.old_id,
           new_id: row.new_id,
           status:
-            "Duplicate New Candidate ID in Excel"
+            "Failed: Duplicate New Candidate ID in Excel"
         });
         continue;
       }
@@ -199,7 +267,7 @@ export async function POST() {
           old_id: row.old_id,
           new_id: row.new_id,
           status:
-            "Old Candidate ID not found"
+            "Failed: Old Candidate ID not found"
         });
         continue;
       }
@@ -214,7 +282,7 @@ export async function POST() {
           old_id: row.old_id,
           new_id: row.new_id,
           status:
-            "New Candidate ID already exists"
+            "Failed: New Candidate ID already exists"
         });
         continue;
       }

@@ -854,8 +854,10 @@ model report_type_fields {
 
 model certificate_template {
   id        Int   @id @default(autoincrement())
+  agency_id Int
   name      String
   config    Json
+  html       String @db.LongText
   is_active  Boolean  @default(false)
   created_by Int?
   created_at DateTime @default(now()) @db.DateTime(0)
