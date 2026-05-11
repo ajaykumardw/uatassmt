@@ -225,6 +225,17 @@ const updateBatchWiseCandidateResult = async (
         viva_exam_set_id: true,
         assessment_start_datetime: true,
         qualification_pack: true,
+        training_partner: {
+          select: {
+            id: true,
+            company_name: true,
+            state: {
+              select: {
+                state_code: true,
+              },
+            },
+          }
+        }
       },
     });
 
@@ -337,6 +348,46 @@ const updateBatchWiseCandidateResult = async (
     let processed = 0;
     const total = students.length;
 
+    const tp = batch.training_partner;
+
+    const companyName = tp?.company_name || "";
+
+    let tpShortName = "";
+
+      const match = companyName.match(/\(([^)]+)\)/);
+
+    if (match) {
+
+        // Case 1: If parentheses exist, take the value inside
+        tpShortName = match[1];
+
+    } else {
+
+      // Case 2: Otherwise, build initials from words
+      tpShortName = companyName
+          .split(" ")
+          .map(word => word[0])
+          .filter(char => /[A-Za-z]/.test(char)) // keep only letters
+          .join("");
+    }
+
+    const tpStateCode = tp?.state?.state_code;
+
+    const usedRandoms = new Set();
+
+    function getUniqueThreeDigits() {
+
+        let num;
+
+        do {
+            num = Math.floor(100 + Math.random() * 900); // 100–999
+        } while (usedRandoms.has(num));
+
+        usedRandoms.add(num);
+
+        return String(num);
+    }
+
     for (let i = 0; i < students.length; i += chunkSize) {
       const chunk = students.slice(i, i + chunkSize);
 
@@ -373,9 +424,26 @@ const updateBatchWiseCandidateResult = async (
               ? "pass"
               : "fail";
 
+          let certificate_no: string | null = null;
+
+          if (result === "pass") {
+
+            const uniqueNum = getUniqueThreeDigits();
+            const agencyShortName = 'VISTA';
+
+            certificate_no = [
+              agencyShortName,
+              tpShortName,
+              tpStateCode,
+              uniqueNum
+            ].filter(Boolean).join("|");
+
+            // certificate_no = `${agencyShortName}|${tpShortName}|${tpStateCode || ""}|${uniqueNum}`;
+          }
+
           return prisma.students.update({
             where: { id: s.id },
-            data: { result },
+            data: { result, certificate_no },
           });
         })
       );

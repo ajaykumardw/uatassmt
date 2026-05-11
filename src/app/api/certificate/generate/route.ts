@@ -195,6 +195,7 @@ export async function POST(req: NextRequest) {
           candidate_name: true,
           father_name: true,
           gender: true,
+          certificate_no: true,
 
           batch: {
             select: {
@@ -217,7 +218,13 @@ export async function POST(req: NextRequest) {
 
               training_partner: {
                 select: {
-                  company_name: true
+                  user_name: true,
+                  company_name: true,
+                  state: {
+                    select: {
+                      state_code: true,
+                    }
+                  }
                 }
               }
             }
@@ -277,7 +284,7 @@ export async function POST(req: NextRequest) {
     //   const now = new Date();
     //   const year = now.getFullYear();
     //   const month = now.getMonth() + 1;
-      
+
     //   return month >= 4 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
     // })();
 
@@ -322,9 +329,9 @@ export async function POST(req: NextRequest) {
       //   `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=certificate-${candidate.id}`
       qr_code: qrCode,
 
-      certificate_no: `CERT-${candidate.id.toString().padStart(6, "0")}`,
+      certificate_no: candidate.certificate_no,
       issue_date: format(new Date(), "dd/MM/yyyy"),
-      system_identification_no: `${candidate.batch.scheme.scheme_name.trim()}/${getFY()}/UP2019CR26944/${candidate.batch.batch_name?.trim()}/${candidate.candidate_id.trim()}`,
+      system_identification_no: `${candidate.batch.scheme.scheme_name.trim()}/${getFY()}/${candidate.batch.training_partner?.state?.state_code || ""}${candidate.batch.training_partner?.user_name?.trim() || ""}/${candidate.batch.batch_name?.trim()}/${candidate.candidate_id.trim()}`,
     };
 
     // ================= HTML =================

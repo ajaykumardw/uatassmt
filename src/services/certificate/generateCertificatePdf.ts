@@ -1,10 +1,7 @@
-// utils/generateCertificatesZip.ts
+// services/certificate/generateCertificatePdf.ts
 
 import fs from "fs";
-import os from "os";
 import path from "path";
-
-import { pathToFileURL } from "url";
 
 import archiver from "archiver";
 
@@ -17,40 +14,19 @@ import type {
   PDFOptions
 } from "puppeteer";
 
-
 // ================= TYPES =================
 
 export type CandidateData = {
-
-  id: number;
 
   candidate_id: string;
 
   candidate_name: string;
 
-  agency_name: string;
-
-  agency_logo: string;
-
-  agency_stamp: string;
-
-  head_name: string;
-
   father_name: string;
-
-  qp_name: string;
-
-  qp_level: string;
-
-  scheme: string;
-
-  tp_name: string;
 
   qr_code: string;
 
   certificate_no: string;
-
-  issue_date: string;
 
   system_identification_no: string;
 };
@@ -77,26 +53,136 @@ async function getBrowser() {
 
       args: [
         "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--allow-file-access-from-files"
+        "--disable-setuid-sandbox"
       ]
     });
 
   return browser;
 }
 
-// ================= HELPERS =================
+// ================= FILE TO BASE64 =================
 
-function toFileUrl(
+const imageCache =
+  new Map<string, string>();
+
+function fileToBase64(
   relativePath: string
 ) {
 
-  const absolutePath =
-    path.resolve(relativePath);
+  if (!relativePath) {
+    return "";
+  }
 
-  return pathToFileURL(
-    absolutePath
-  ).href;
+  if (
+    imageCache.has(relativePath)
+  ) {
+
+    return imageCache.get(
+      relativePath
+    )!;
+  }
+
+  const cleanedPath =
+    relativePath.startsWith("/")
+      ? relativePath.substring(1)
+      : relativePath;
+
+  const absolutePath =
+    path.join(
+      process.cwd(),
+      cleanedPath
+    );
+
+  if (
+    !fs.existsSync(
+      absolutePath
+    )
+  ) {
+
+    console.log(
+      "File not found:",
+      absolutePath
+    );
+
+    return "";
+  }
+
+  const ext =
+    path.extname(
+      absolutePath
+    )
+      .substring(1)
+      .toLowerCase();
+
+  const mime =
+    ext === "jpg" ||
+      ext === "jpeg"
+      ? "image/jpeg"
+      : ext === "png"
+        ? "image/png"
+        : ext === "webp"
+          ? "image/webp"
+          : `image/${ext}`;
+
+  const buffer =
+    fs.readFileSync(
+      absolutePath
+    );
+
+  const base64 =
+    `data:${mime};base64,${buffer.toString("base64")}`;
+
+  imageCache.set(
+    relativePath,
+    base64
+  );
+
+  return base64;
+}
+
+// ================= CONVERT STATIC IMAGES =================
+
+function convertStorageImagesToBase64(
+  html: string
+) {
+
+  // background-image
+
+  html =
+    html.replace(
+
+      /url\((['"]?)(\/storage\/[^'")]+)\1\)/gi,
+
+      (_, quote, filePath) => {
+
+        const base64 =
+          fileToBase64(
+            filePath
+          );
+
+        return `url("${base64}")`;
+      }
+    );
+
+  // img src
+
+  html =
+    html.replace(
+
+      /src=(['"])(\/storage\/[^'"]+)\1/gi,
+
+      (_, quote, filePath) => {
+
+        const base64 =
+          fileToBase64(
+            filePath
+          );
+
+        return `src="${base64}"`;
+      }
+    );
+
+  return html;
 }
 
 // ================= MAIN =================
@@ -104,7 +190,7 @@ function toFileUrl(
 export const generateCertificatesZip =
   async (
 
-    htmlTemplate: string,
+    preparedHtml: string,
 
     config: {
       width: number;
@@ -113,10 +199,19 @@ export const generateCertificatesZip =
 
     candidates: CandidateData[],
 
-    zipPath: string
+    zipPath: string,
+
+    onProgress?: (
+      progress: number,
+      completed: number,
+      total: number
+    ) => Promise<void> | void
   ) => {
 
-    // ================= CREATE ZIP DIR =================
+    // ================= ZIP DIR =================
+
+    console.log("start time", new Date().toISOString());
+    console.time("generateCertificatesZip");
 
     const zipDir =
       path.dirname(
@@ -150,6 +245,13 @@ export const generateCertificatesZip =
       );
     }
 
+    // ================= PREPARE STATIC HTML ONLY ONCE =================
+
+    const staticHtml =
+      convertStorageImagesToBase64(
+        preparedHtml
+      );
+
     // ================= BROWSER =================
 
     const activeBrowser =
@@ -167,12 +269,10 @@ export const generateCertificatesZip =
         "zip",
         {
           zlib: {
-            level: 9
+            level: 0
           }
         }
       );
-
-    // ================= ARCHIVE ERROR =================
 
     archive.on(
       "error",
@@ -183,12 +283,16 @@ export const generateCertificatesZip =
 
     archive.pipe(output);
 
-    // ================= CONCURRENCY =================
+    const total = candidates.length;
+
+    let completed = 0;
+
+    // ================= LIMIT =================
 
     const limit =
-      pLimit(3);
+      pLimit(10);
 
-    // ================= GENERATE PDFs =================
+    // ================= GENERATE =================
 
     await Promise.all(
 
@@ -198,10 +302,10 @@ export const generateCertificatesZip =
           return limit(
             async () => {
 
-              // ================= HTML =================
+              // ================= DYNAMIC HTML =================
 
               let html =
-                htmlTemplate;
+                staticHtml;
 
               Object.entries(
                 candidate
@@ -218,50 +322,11 @@ export const generateCertificatesZip =
                 }
               );
 
-              // ================= REMOVE REMAINING =================
-
               html =
                 html.replace(
                   /{{(.*?)}}/g,
                   ""
                 );
-
-              // ================= FIX STORAGE URLS =================
-
-              html =
-                html.replace(
-                  /url\((['"]?)\/storage\/(.*?)\1\)/g,
-                  (_, quote, filePath) => {
-
-                    const fullPath =
-                      toFileUrl(
-                        `storage/${filePath}`
-                      );
-
-                    return `url("${fullPath}")`;
-                  }
-                );
-
-              html =
-                html.replace(
-                  /src=(['"])\/storage\/(.*?)\1/g,
-                  (_, quote, filePath) => {
-
-                    const fullPath =
-                      toFileUrl(
-                        `storage/${filePath}`
-                      );
-
-                    return `src="${fullPath}"`;
-                  }
-                );
-
-              // ================= BASE URL =================
-
-              const baseUrl =
-                pathToFileURL(
-                  process.cwd() + "/"
-                ).href;
 
               // ================= FINAL HTML =================
 
@@ -273,8 +338,6 @@ export const generateCertificatesZip =
                   <head>
 
                     <meta charset="UTF-8" />
-
-                    <base href="${baseUrl}" />
 
                     <style>
 
@@ -298,46 +361,10 @@ export const generateCertificatesZip =
                 </html>
               `;
 
-                // ================= TEMP HTML FILE =================
-              
-                const tempHtmlPath =
-                    path.join(
-                        os.tmpdir(),
-                        `certificate-${Date.now()}.html`
-                    );
-            
-                fs.writeFileSync(
-                    tempHtmlPath,
-                    finalHtml,
-                    "utf-8"
-                );
-
               // ================= PAGE =================
 
               const page =
                 await activeBrowser.newPage();
-
-              // ================= AUTO RECOVERY =================
-
-              page.on(
-                "error",
-                async () => {
-
-                  try {
-
-                    await browser?.close();
-
-                  } catch {}
-
-                  browser = null;
-                }
-              );
-
-              page.setDefaultNavigationTimeout(
-                0
-              );
-
-              // ================= VIEWPORT =================
 
               await page.setViewport({
 
@@ -352,56 +379,13 @@ export const generateCertificatesZip =
                 "screen"
               );
 
-              // ================= LOAD HTML =================
+              // ================= CONTENT =================
 
-            //   await page.setContent(
-            //     finalHtml,
-            //     {
-            //       waitUntil:
-            //         "domcontentloaded"
-            //     }
-            //   );
-
-            await page.goto(
-                pathToFileURL(tempHtmlPath).href,
+              await page.setContent(
+                finalHtml,
                 {
-                    waitUntil: "domcontentloaded"
-                }
-            );
-
-              // ================= WAIT IMAGES =================
-
-              await page.evaluate(
-                async () => {
-
-                  const images =
-                    Array.from(
-                      document.images
-                    );
-
-                  await Promise.all(
-
-                    images.map((img) => {
-
-                      if (
-                        img.complete
-                      ) {
-
-                        return Promise.resolve();
-                      }
-
-                      return new Promise<void>(
-                        (resolve) => {
-
-                          img.onload =
-                            () => resolve();
-
-                          img.onerror =
-                            () => resolve();
-                        }
-                      );
-                    })
-                  );
+                  waitUntil:
+                    "domcontentloaded"
                 }
               );
 
@@ -415,7 +399,8 @@ export const generateCertificatesZip =
                 height:
                   `${config.height}px`,
 
-                printBackground: true,
+                printBackground:
+                  true,
 
                 margin: {
                   top: "0px",
@@ -430,37 +415,34 @@ export const generateCertificatesZip =
                   pdfOptions
                 );
 
-                if (
-                    fs.existsSync(tempHtmlPath)
-                ) {
-                    fs.unlinkSync(tempHtmlPath);
-                }
-
-              // ================= CLOSE PAGE =================
-
               await page.close();
 
-              // ================= APPEND ZIP =================
-              const pdfBuffer = Buffer.from(pdf);
+              // ================= APPEND =================
 
               archive.append(
-                pdfBuffer,
+                Buffer.from(pdf),
                 {
                   name:
                     `${candidate.candidate_name}-${candidate.candidate_id}.pdf`
                 }
               );
+
+              completed++;
+
+              if (onProgress) {
+
+                await onProgress((completed / total) * 100, completed, total);
+                
+              }
             }
           );
         }
       )
     );
 
-    // ================= FINALIZE ZIP =================
+    // ================= FINALIZE =================
 
     await archive.finalize();
-
-    // ================= WAIT ZIP =================
 
     await new Promise<void>(
       (resolve, reject) => {
@@ -477,7 +459,7 @@ export const generateCertificatesZip =
       }
     );
 
-    // ================= OPTIONAL RESET =================
+    // ================= RESET =================
 
     processedJobs++;
 
@@ -489,14 +471,17 @@ export const generateCertificatesZip =
 
         await browser?.close();
 
-      } catch {}
+      } catch { }
 
       browser = null;
 
       processedJobs = 0;
     }
 
+    console.timeEnd("generateCertificatesZip");
+    console.log("end time", new Date().toISOString());
+
     // ================= RETURN =================
 
     return zipPath;
-};
+  };

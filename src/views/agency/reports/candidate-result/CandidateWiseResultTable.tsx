@@ -995,10 +995,11 @@ const CandidateWiseResultTable = () => {
         header: 'Action',
         cell: ({ row }) => {
           const isAbsent = row.original.attendance == 0;
+          const isPass = row.original.result === "pass";
 
           return (
             <div className="flex items-center gap-3">
-              {isAbsent ? null : (<>
+              {isAbsent ? null : (
                 <Button
                   variant="outlined"
                   size="small"
@@ -1006,6 +1007,8 @@ const CandidateWiseResultTable = () => {
                 >
                   View Report
                 </Button>
+              )}
+              {isPass && (
                 <Button
                   variant="outlined"
                   size="small"
@@ -1013,7 +1016,6 @@ const CandidateWiseResultTable = () => {
                 >
                   Generate Certificate
                 </Button>
-              </>
               )}
             </div>
           );

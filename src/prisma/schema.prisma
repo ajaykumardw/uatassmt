@@ -542,6 +542,7 @@ model students {
   viva_group       student_groups?    @relation("vivaGroup", fields: [viva_group_id], references: [id])
   attendance Int? @default(0) @db.TinyInt
   result String? @db.VarChar(20) @default("Pending")
+  certificate_no String? @db.VarChar(100)
 
   student_exam_set_results student_exam_set_results[]
   exam_set_results exam_set_results[]
