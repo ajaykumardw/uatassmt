@@ -258,26 +258,28 @@ const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   return itemRank.passed
 }
 
+const safeTrim = (value: any) =>
+  value?.toString().trim() || '';
 
 // Map your keys to the schema
 const mapKeys = (data: any[]) => data.map((item: any) => ({
-  BatchName: item['Batch ID'],
-  CandidateId: item['Candidate ID'].trim(),
-  Password: item['Password'].trim(),
+  BatchName: safeTrim(item['Batch ID']),
+  CandidateId: safeTrim(item['Candidate ID']),
+  Password: safeTrim(item['Password']),
 
   // NameOfTrainingAgency: item['Name of Training Agency'],
 
-  CandidateName: item['Candidate Name'].trim(),
-  Gender: item['Gender(M/F/T)'].trim(),
-  Category: item['Category(Gen/SC/ST/BC/OBC/OC)'].trim(),
-  DOB: item['DOB'],
-  FatherName: item['Father\'s name'].trim(),
-  MotherName: item['Mother\'s name'].trim(),
-  Address: item['Address'].trim(),
-  City: item['City'].trim(),
-  State: item['State'].trim(),
-  MobileNo: item['Mobile No'].trim(),
-  AadhaarNo: item['Aadhaar No'].trim()
+  CandidateName: safeTrim(item['Candidate Name']),
+  Gender: safeTrim(item['Gender(M/F/T)']),
+  Category: safeTrim(item['Category(Gen/SC/ST/BC/OBC/OC)']),
+  DOB: safeTrim(item['DOB']),
+  FatherName: safeTrim(item['Father\'s name']),
+  MotherName: safeTrim(item['Mother\'s name']),
+  Address: safeTrim(item['Address']),
+  City: safeTrim(item['City']),
+  State: safeTrim(item['State']),
+  MobileNo: safeTrim(item['Mobile No']),
+  AadhaarNo: safeTrim(item['Aadhaar No'])
 }));
 
 const columnHelper = createColumnHelper<StudentsTypeWithError>()
