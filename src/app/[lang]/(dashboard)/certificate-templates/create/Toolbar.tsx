@@ -745,6 +745,7 @@ export default function Toolbar({ canvas, fabric }: any) {
       left: canvas.getWidth() - 250,
       top: canvas.getHeight() - 130,
       fontSize: 16,
+      textAlign: "center",
       fill: color,
       editable: false
     });

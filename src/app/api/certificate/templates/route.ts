@@ -257,7 +257,7 @@ export async function POST(req: NextRequest) {
     const bgFile = formData.get("background") as File;
 
     if (bgFile) {
-      backgroundUrl = await saveFile(bgFile, template.width, template.height, 90, "fill");
+      backgroundUrl = await saveFile(bgFile, template.width, template.height, 100, "fill");
     }
 
     // ================= FILE MAP =================

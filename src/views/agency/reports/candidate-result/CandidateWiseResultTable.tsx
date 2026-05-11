@@ -76,6 +76,7 @@ import tableStyles from '@core/styles/table.module.css'
 import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
 import LogDetailDialog from './LogDetailDialog';
 import ResultSheetAction from '@/components/zip/resultSheetAction';
+import CertificateZipAction from '@/components/zip/CertficateZipAction';
 
 // declare module '@tanstack/table-core' {
 //   interface FilterFns {
@@ -1149,7 +1150,11 @@ const CandidateWiseResultTable = () => {
                 Import Questions
               </Button> */}
               {selectedBatch &&
+              <>
+                <CertificateZipAction key={selectedBatch} batchId={selectedBatch} />
                 <ResultSheetAction key={selectedBatch} batchId={selectedBatch} />
+              </>
+
               }
             {/* </>
             } */}

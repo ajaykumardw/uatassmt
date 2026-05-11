@@ -407,6 +407,7 @@ model sector_skill_councils {
 model state {
   state_id   Int     @id @default(autoincrement())
   state_name String  @db.VarChar(80)
+  state_code String  @db.VarChar(5)
   country_id Int     @default(1)
   is_active  Boolean @default(true)
   users      users[]

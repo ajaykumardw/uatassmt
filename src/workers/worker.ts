@@ -6,6 +6,7 @@ import { processEvidence } from "./handlers/processEvidence";
 
 import { processResult } from "./handlers/processResult";
 import { processBatchResult } from "./handlers/processCandidateResult";
+import { processCertificate } from "./handlers/processCertificate";
 
 // import { processCertificate } from "./handlers/processCertificate";
 
@@ -36,6 +37,9 @@ const worker = new Worker(
 
         case "updateResult":
           return await processBatchResult(job);
+
+        case "generateCertificate":
+          return await processCertificate(job);
 
         // case "certificateZip":
         //   return await processCertificate(job);

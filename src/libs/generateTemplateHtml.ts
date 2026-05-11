@@ -60,9 +60,7 @@ export default function generateTemplateHtml(template: any) {
 
             transform-origin:top left;
           "
-        >
-          ${el.text}
-        </div>
+        >${el.text}</div>
       `;
     }
 
@@ -116,9 +114,7 @@ export default function generateTemplateHtml(template: any) {
 
             transform-origin:top left;
           "
-        >
-          ${el.text}
-        </div>
+        >${el.text}</div>
       `;
     }
 

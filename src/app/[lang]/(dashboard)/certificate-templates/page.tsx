@@ -148,7 +148,11 @@ export default function TemplateListing() {
       head_name: `<strong>${agencyData?.head_name || "Director"}</strong>`,
       agency_logo: agencyData?.agency_logo || "",
       agency_stamp: agencyData?.agency_stamp || "",
-      qr_code: "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=certificate"
+      qr_code: "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=certificate",
+      certificate_no: `CERT-003030`,
+      issue_date: "09/05/2026",
+      system_identification_no: `NON-PMKVY/2026-27/UP2019CR26944/DEMOAWF01/CAN_2663`,
+          
     };
 
     Object.entries(replacements).forEach(([key, value]) => {

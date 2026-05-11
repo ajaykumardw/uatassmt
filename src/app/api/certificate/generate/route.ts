@@ -23,6 +23,7 @@ import prisma from "@/libs/prisma";
 import { authOptions } from "@/libs/auth";
 
 import { getAgencyImagePath } from "@/configs/customDataConfig";
+import { getFY } from "@/utils/getFY";
 
 // ================= TYPES =================
 
@@ -272,13 +273,13 @@ export async function POST(req: NextRequest) {
         }
       );
 
-    const financialYear = (() => {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = now.getMonth() + 1;
+    // const financialYear = (() => {
+    //   const now = new Date();
+    //   const year = now.getFullYear();
+    //   const month = now.getMonth() + 1;
       
-      return month >= 4 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
-    })();
+    //   return month >= 4 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+    // })();
 
     // ================= DATA =================
 
@@ -293,9 +294,7 @@ export async function POST(req: NextRequest) {
       agency_stamp:
         agencyStamp,
 
-      head_name:
-        `${agencyData?.first_name || ""}
-        ${agencyData?.last_name || ""}`.trim(),
+      head_name: `${agencyData?.first_name || ""} ${agencyData?.last_name || ""}`.trim(),
 
       candidate_name:
         candidate.candidate_name,
@@ -325,7 +324,7 @@ export async function POST(req: NextRequest) {
 
       certificate_no: `CERT-${candidate.id.toString().padStart(6, "0")}`,
       issue_date: format(new Date(), "dd/MM/yyyy"),
-      system_identification_no: `${candidate.batch.scheme.scheme_name.trim()}/${financialYear}/UP2019CR26944/${candidate.batch.batch_name?.trim()}/${candidate.candidate_id.trim()}`,
+      system_identification_no: `${candidate.batch.scheme.scheme_name.trim()}/${getFY()}/UP2019CR26944/${candidate.batch.batch_name?.trim()}/${candidate.candidate_id.trim()}`,
     };
 
     // ================= HTML =================
