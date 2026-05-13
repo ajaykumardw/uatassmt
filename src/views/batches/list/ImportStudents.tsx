@@ -146,6 +146,26 @@ const studentSchema = v.objectAsync(
     DOB: v.pipe(
       v.optional(v.string()),
       v.transform(v => v?.trim()),
+      v.check(
+        v => {
+          if (!v) return true;
+
+          const regex = /^\d{2}\.\d{2}\.\d{4}$/;
+
+          if (!regex.test(v)) return false;
+
+          const [day, month, year] = v.split('.').map(Number);
+
+          const date = new Date(year, month - 1, day);
+
+          return (
+            date.getFullYear() === year &&
+            date.getMonth() === month - 1 &&
+            date.getDate() === day
+          );
+        },
+        'DOB must be a valid date in dd.mm.yyyy format'
+      )
     ),
     FatherName: v.optional(v.pipe(v.string('Father\'s name type should be string'), v.trim() , v.maxLength(191, 'The max length for Father Name is 191 characters.'))),
     MotherName: v.optional(v.pipe(v.string('Mother\'s name type should be string'), v.trim() , v.maxLength(191, 'The max length for Mother Name is 191 characters.'))),
@@ -222,6 +242,26 @@ const studentSchemaWithoutBatch = v.objectAsync(
     DOB: v.pipe(
       v.optional(v.string()),
       v.transform(v => v?.trim()),
+      v.check(
+        v => {
+          if (!v) return true;
+
+          const regex = /^\d{2}\.\d{2}\.\d{4}$/;
+
+          if (!regex.test(v)) return false;
+
+          const [day, month, year] = v.split('.').map(Number);
+
+          const date = new Date(year, month - 1, day);
+
+          return (
+            date.getFullYear() === year &&
+            date.getMonth() === month - 1 &&
+            date.getDate() === day
+          );
+        },
+        'DOB must be a valid date in dd.mm.yyyy format'
+      )
     ),
     FatherName: v.optional(v.pipe(v.string('Father\'s name type should be string'), v.trim() , v.maxLength(191, 'The max length for Father Name is 191 characters.'))),
     MotherName: v.optional(v.pipe(v.string('Mother\'s name type should be string'), v.trim() , v.maxLength(191, 'The max length for Mother Name is 191 characters.'))),

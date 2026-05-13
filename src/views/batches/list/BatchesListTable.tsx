@@ -338,6 +338,62 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
 
   }
 
+  const generateOMRHTML = async (
+    questions: number,
+    options: string[]
+  ) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches/14/omr/generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          questions,
+          options,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to generate OMR sheet");
+      }
+
+      // const text = await res.text();
+
+      // console.log(text);
+
+      const blob = await res.blob();
+
+      console.log(blob);
+      console.log(blob.size);
+      console.log(blob.type);
+
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+
+      a.href = url;
+      a.download = "omr-sheet.pdf";
+
+      document.body.appendChild(a);
+
+      a.click();
+
+      a.remove();
+
+      // IMPORTANT
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 5000);
+
+      return url;
+    } catch (error) {
+      console.error("OMR generation error:", error);
+
+      return null;
+    }
+  };
+
   const columns = useMemo<ColumnDef<BatchesTypeWithAction, any>[]>(
     () => [
       {
@@ -755,6 +811,15 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
               placeholder='Search Batch'
               className='is-full sm:is-auto'
             />
+            <Button
+              color='secondary'
+              variant='tonal'
+              startIcon={<i className='tabler-upload' />}
+              className='is-full sm:is-auto'
+              onClick={() => generateOMRHTML(100,["A", "B", "C", "D"])}
+            >
+              Generate OMR
+            </Button>
             <Button
               color='secondary'
               variant='tonal'

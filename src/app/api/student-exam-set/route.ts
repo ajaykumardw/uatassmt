@@ -123,6 +123,16 @@ export async function GET(req: NextRequest) {
         }
       })
 
+      const isFeedbackFromSubmitted = await prisma.feedback_responses.findFirst({
+        where: {
+          user_id: Number(candidateId),
+          user_type: 1
+        },
+        select: {
+          id: true
+        }
+      })
+
       if (!exam) {
         return NextResponse.json({
           status: 'Error',
@@ -234,6 +244,7 @@ export async function GET(req: NextRequest) {
         instruction: exam?.batch?.theory_exam_set?.instruction,
 
         theory_questions: questions || [],
+        feedback_submitted: isFeedbackFromSubmitted ? true : false
       }
 
       if (data.question_random) {

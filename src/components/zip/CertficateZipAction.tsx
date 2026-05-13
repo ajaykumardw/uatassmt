@@ -94,13 +94,20 @@ const CertificateZipAction = ({ batchId }: { batchId: number }) => {
       } else if (data.job?.status === 'completed') {
 
         setJob(data.job)
+      } else {
+        setJob(null)
       }
     } catch (err) {
+
+      setJob(null)
+
       console.error('Error fetching existing zip job:', err)
     }
   }
 
   useEffect(() => {
+
+    setJob(null) // Reset job state when batchId changes
 
     fetchExistingJob()
 

@@ -18,6 +18,8 @@ import type {
 
 export type CandidateData = {
 
+  fileName: string;
+
   candidate_id: string;
 
   candidate_name: string;
@@ -422,8 +424,7 @@ export const generateCertificatesZip =
               archive.append(
                 Buffer.from(pdf),
                 {
-                  name:
-                    `${candidate.candidate_name}-${candidate.candidate_id}.pdf`
+                  name: candidate.fileName
                 }
               );
 
@@ -432,7 +433,7 @@ export const generateCertificatesZip =
               if (onProgress) {
 
                 await onProgress((completed / total) * 100, completed, total);
-                
+
               }
             }
           );

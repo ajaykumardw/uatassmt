@@ -1153,8 +1153,8 @@ const CandidateWiseResultTable = () => {
               </Button> */}
               {selectedBatch &&
               <>
-                <CertificateZipAction key={selectedBatch} batchId={selectedBatch} />
-                <ResultSheetAction key={selectedBatch} batchId={selectedBatch} />
+                <CertificateZipAction key={`cert-${selectedBatch}`} batchId={selectedBatch} />
+                <ResultSheetAction key={`result-${selectedBatch}`} batchId={selectedBatch} />
               </>
 
               }

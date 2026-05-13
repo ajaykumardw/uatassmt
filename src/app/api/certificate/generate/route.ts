@@ -301,7 +301,7 @@ export async function POST(req: NextRequest) {
       agency_stamp:
         agencyStamp,
 
-      head_name: `${agencyData?.first_name || ""} ${agencyData?.last_name || ""}`.trim(),
+      head_name: `<b>${agencyData?.first_name || ""} ${agencyData?.last_name || ""}</b>`.trim(),
 
       candidate_name:
         candidate.candidate_name,

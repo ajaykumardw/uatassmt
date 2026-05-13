@@ -24,6 +24,7 @@ const ExamTest = () => {
   const [batchData, setBatchData] = useState<batches | null>(null);
   const [studentExamResults, setStudentExamResults] = useState< student_exam_set_results | null>(null);
   const [remainingAttempts, setRemainingAttempts] = useState<number>(0)
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState<boolean>(false);
 
   const getExamInstructions = async () => {
     const data = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student-exam-set`).then(function (res) { return res.json() });
@@ -44,6 +45,7 @@ const ExamTest = () => {
     // );
 
     setExamSet(data.batch.theory_exam_set);
+    setFeedbackSubmitted(data.feedback_submitted);
 
   }
 
@@ -185,7 +187,7 @@ const ExamTest = () => {
 
           </CardContent>
           {examSet && remainingAttempts > 0 && batchData?.assessment_start_datetime && new Date(batchData?.assessment_start_datetime) <= new Date() &&
-            batchData?.assessment_end_datetime && new Date() <= new Date(batchData?.assessment_end_datetime) && (
+            batchData?.assessment_end_datetime && new Date() <= new Date(batchData?.assessment_end_datetime) && !feedbackSubmitted && (
               <CardActions>
                 <Button variant="contained" onClick={() => handleStartExam(examPageUrl)}>
                   {batchData.login_restrict && remainingAttempts < batchData.login_restrict ? 'Resume Exam' : 'Start Exam'}

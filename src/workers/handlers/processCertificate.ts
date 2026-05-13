@@ -188,7 +188,7 @@ export const processCertificate = async (
     const staticData = {
 
       agency_name:
-        agency?.company_name || "",
+        `<b>${agency?.company_name || ""}</b>`.trim(),
 
       agency_logo:
         agencyLogo,
@@ -197,19 +197,19 @@ export const processCertificate = async (
         agencyStamp,
 
       head_name:
-        `${agency?.first_name || ""} ${agency?.last_name || ""}`.trim(),
+        `<b>${agency?.first_name || ""} ${agency?.last_name || ""}</b>`.trim(),
 
       qp_name:
-        `${batch.qualification_pack.qualification_pack_name} (${batch.qualification_pack.qualification_pack_id})`,
+        `<b>${batch.qualification_pack.qualification_pack_name} (${batch.qualification_pack.qualification_pack_id})</b>`.trim(),
 
       qp_level:
-        batch.qualification_pack.nsqf_level,
+        `<b>${batch.qualification_pack.nsqf_level}</b>`.trim(),
 
       scheme:
-        batch.scheme.scheme_name || "",
+        `<b>${batch.scheme.scheme_name || ""}</b>`.trim(),
 
       tp_name:
-        tp?.company_name || "",
+        `<b>${tp?.company_name || ""}</b>`.trim(),
 
       issue_date:
         issueDate
@@ -258,18 +258,19 @@ export const processCertificate = async (
 
                 return {
 
+                  fileName: `${candidate.candidate_name.trim()}_${candidate.candidate_id.trim()}.pdf`,
+
                   candidate_id:
                     candidate.candidate_id,
 
-                  candidate_name:
-                    candidate.candidate_name,
+                  candidate_name: `<b>${candidate.candidate_name}</b>`.trim(),
 
                   father_name:
                     candidate.gender === "m"
-                      ? `S/O ${candidate.father_name}`
+                      ? `S/O <b>${candidate.father_name}</b>`.trim()
                       : candidate.gender === "f"
-                        ? `D/O ${candidate.father_name}`
-                        : `C/O ${candidate.father_name}`,
+                        ? `D/O <b>${candidate.father_name}</b>`.trim()
+                        : `C/O <b>${candidate.father_name}</b>`.trim(),
 
                   qr_code:
                     qrCode,
