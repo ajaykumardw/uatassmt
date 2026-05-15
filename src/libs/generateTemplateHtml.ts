@@ -276,12 +276,13 @@ export default function generateTemplateHtml(template: any) {
   <style>
     *{
       box-sizing:border-box;
+      font-family:Times New Roman, serif !important;
     }
 
     body{
       margin:0;
       padding:0;
-      font-family:Arial, sans-serif;
+      font-family:Times New Roman, serif !important;
     }
 
     .certificate{

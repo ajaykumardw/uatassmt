@@ -53,6 +53,7 @@ model batches {
   students                  students[]
   center_inspections         inspection_media[]
   agency                     users @relation("BatchToAgency", fields: [agency_id], references: [id])
+  theory_paper              offline_candidate_papers[] @relation("theory_paper")
 }
 
 model schemes {
@@ -549,74 +550,113 @@ model students {
   student_question_attempts student_question_attempts[]
   media_files media_files[]
   captured_files student_captured_images[]
+  theory_papers offline_candidate_papers[]  @relation("theory_paper")
 
   @@index([result])
 }
 
-model student_groups {
+model offline_candidate_papers {
   id Int @id @default(autoincrement())
+
   batch_id Int
-  group_id String @db.VarChar(60)
-  group_type String @db.VarChar(5)
-  group_photo String? @db.VarChar(255)
-  group_video String? @db.VarChar(255)
+
+  student_id Int
+
+  exam_set_id Int
+
+  paper_code String @unique @db.VarChar(50)
+
+  // complete frozen mapping
+  mapping Json
+
+  question_count Int
+
+  pdf_path String? @db.VarChar(255)
+
+  omr_pdf_path String? @db.VarChar(255)
+
+  created_by Int
+
+  created_at DateTime @default(now()) @db.DateTime(0)
+
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
+
+  batch batches @relation("theory_paper", fields: [batch_id], references: [id], onDelete: Cascade)
+
+  student students @relation("theory_paper", fields: [student_id], references: [id], onDelete: Cascade)
+
+  exam_set exam_sets @relation(fields: [exam_set_id], references: [id], onDelete: Cascade)
+
+  @@unique([student_id, exam_set_id])
+  @@index([batch_id])
+  @@index([student_id])
+  @@index([exam_set_id])
+}
+
+model student_groups {
+  id  Int      @id @default(autoincrement())
+  batch_id Int
+  group_id String   @db.VarChar(60)
+  group_type String   @db.VarChar(5)
+  group_photo String?  @db.VarChar(255)
+  group_video String?  @db.VarChar(255)
   created_by Int
   created_at DateTime @default(now()) @db.DateTime(0)
   updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
 
-  theory_students students[] @relation("theoryGroup")
+  theory_students    students[] @relation("theoryGroup")
   practical_students students[] @relation("practicalGroup")
-  viva_students students[] @relation("vivaGroup")
+  viva_students      students[] @relation("vivaGroup")
 
   media_files media_files[]
 
 }
 
 model student_question_attempts {
-  id Int @id @default(autoincrement())
-  student_id Int
-  question_id Int
-  assessor_id Int?
-  max_marks Decimal@db.Decimal(10, 2)
-  obtained_marks Decimal? @db.Decimal(10, 2)
-  attempt_no Int @default(1)
-  attempted_at DateTime @default(now()) @db.DateTime(0)
-  evaluated_at DateTime? @db.DateTime(0)
-  remarks String? @db.Text
-  created_at DateTime @default(now()) @db.DateTime(0)
-  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
+  id             Int       @id @default(autoincrement())
+  student_id     Int
+  question_id    Int
+  assessor_id    Int?
+  max_marks      Decimal   @db.Decimal(10, 2)
+  obtained_marks Decimal?  @db.Decimal(10, 2)
+  attempt_no     Int       @default(1)
+  attempted_at   DateTime  @default(now()) @db.DateTime(0)
+  evaluated_at   DateTime? @db.DateTime(0)
+  remarks        String?   @db.Text
+  created_at     DateTime  @default(now()) @db.DateTime(0)
+  updated_at     DateTime  @default(now()) @updatedAt @db.DateTime(0)
 
-  student students @relation(fields: [student_id], references: [id])
+  student  students  @relation(fields: [student_id], references: [id])
   question questions @relation(fields: [question_id], references: [id])
 
   @@unique([student_id, question_id, attempt_no])
 }
 
 model exam_instructions {
-  id            Int                   @id @default(autoincrement())
-  ssc_id        Int
-  instruction   String                @db.Text
-  agency_id     Int
-  created_by    Int
-  created_at    DateTime              @default(now()) @db.DateTime(0)
-  updated_at    DateTime              @default(now()) @updatedAt @db.DateTime(0)
-  status        Int                   @default(1) @db.TinyInt
-  ssc           sector_skill_councils @relation(fields: [ssc_id], references: [id])
-  agency        users                 @relation(fields: [agency_id], references: [id])
+  id          Int                   @id @default(autoincrement())
+  ssc_id      Int
+  instruction String                @db.Text
+  agency_id   Int
+  created_by  Int
+  created_at  DateTime              @default(now()) @db.DateTime(0)
+  updated_at  DateTime              @default(now()) @updatedAt @db.DateTime(0)
+  status      Int                   @default(1) @db.TinyInt
+  ssc         sector_skill_councils @relation(fields: [ssc_id], references: [id])
+  agency      users                 @relation(fields: [agency_id], references: [id])
 }
 
 model log_sessions {
-  id         Int            @id @default(autoincrement())
-  user_id    Int
-  unique_session_id String? @db.VarChar(120)
-  user_type  log_user_type  @default(U)
-  auth_image String?        @db.Text
-  status     log_status     @default(IN)
-  ip_address String?        @db.VarChar(20)
-  user_agent String?        @db.VarChar(255)
-  login_at   DateTime?      @db.DateTime(0)
-  logout_at  DateTime?      @db.DateTime(0)
-  user       users          @relation(fields: [user_id], references: [id])
+  id                Int           @id @default(autoincrement())
+  user_id           Int
+  unique_session_id String?       @db.VarChar(120)
+  user_type         log_user_type @default(U)
+  auth_image        String?       @db.Text
+  status            log_status    @default(IN)
+  ip_address        String?       @db.VarChar(20)
+  user_agent        String?       @db.VarChar(255)
+  login_at          DateTime?     @db.DateTime(0)
+  logout_at         DateTime?     @db.DateTime(0)
+  user              users         @relation(fields: [user_id], references: [id])
 }
 
 model exam_sets {
@@ -638,16 +678,17 @@ model exam_sets {
   created_at      DateTime      @default(now()) @db.DateTime(0)
   updated_at      DateTime      @default(now()) @updatedAt @db.DateTime(0)
 
-  exam_sets_questions exam_sets_questions[]
-  batch               batches[] @relation("theory_exam_set")
-  practical_batch     batches[] @relation("practical_exam_set")
-  viva_batch          batches[] @relation("viva_exam_set")
-  qp                  qualification_packs @relation(fields: [qp_id], references: [id])
+  exam_sets_questions      exam_sets_questions[]
+  batch                    batches[]                  @relation("theory_exam_set")
+  practical_batch          batches[]                  @relation("practical_exam_set")
+  viva_batch               batches[]                  @relation("viva_exam_set")
+  qp                       qualification_packs        @relation(fields: [qp_id], references: [id])
   student_exam_set_results student_exam_set_results[]
+  offline_candidate_papers offline_candidate_papers[]
 }
 
 model exam_sets_questions {
-  id          Int @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   agency_id   Int
   exam_set_id Int
   question_id Int
@@ -663,15 +704,15 @@ model exam_sets_questions {
 }
 
 model training_resources {
-  id Int @id @default(autoincrement())
-  ssc_id Int?
-  name String @db.VarChar(255)
-  file String? @db.Text
-  description String? @db.VarChar(255)
-  status Int           @default(1) @db.TinyInt
-  created_by Int
-  created_at DateTime @default(now()) @db.DateTime(0)
-  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
+  id                      Int                       @id @default(autoincrement())
+  ssc_id                  Int?
+  name                    String                    @db.VarChar(255)
+  file                    String?                   @db.Text
+  description             String?                   @db.VarChar(255)
+  status                  Int                       @default(1) @db.TinyInt
+  created_by              Int
+  created_at              DateTime                  @default(now()) @db.DateTime(0)
+  updated_at              DateTime                  @default(now()) @updatedAt @db.DateTime(0)
   user_training_resources user_training_resources[]
 }
 
@@ -688,12 +729,12 @@ model user_training_resources {
 }
 
 model feedback_forms {
-  id          Int      @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   form_name  String   @db.VarChar(100)
-  form_type   Int @db.TinyInt
-  created_by  Int
-  created_at  DateTime @default(now()) @db.DateTime(0)
-  updated_at  DateTime @default(now()) @updatedAt @db.DateTime(0)
+  form_type  Int      @db.TinyInt
+  created_by Int
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
 
   feedback_questions feedback_questions[]
   feedback_responses feedback_responses[]
@@ -742,78 +783,78 @@ model feedback_response_answers {
   created_at           DateTime @default(now()) @db.DateTime(0)
   updated_at           DateTime @default(now()) @updatedAt @db.DateTime(0)
 
-  feedback_response   feedback_responses @relation(fields: [feedback_response_id], references: [id])
-  feedback_question   feedback_questions @relation(fields: [feedback_question_id], references: [id])
+  feedback_response feedback_responses @relation(fields: [feedback_response_id], references: [id])
+  feedback_question feedback_questions @relation(fields: [feedback_question_id], references: [id])
 }
 
 model inspection_media {
-  id Int @id @default(autoincrement())
+  id          Int                   @id @default(autoincrement())
   category_id Int
-  batch_id Int
+  batch_id    Int
   assessor_id Int
-  media_type inspection_media_type
-  file_name String @db.VarChar(255)
+  media_type  inspection_media_type
+  file_name   String                @db.VarChar(255)
   uploaded_by Int
-  uploaded_at DateTime @default(now()) @db.DateTime(0)
-  created_at DateTime @default(now()) @db.DateTime(0)
-  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
+  uploaded_at DateTime              @default(now()) @db.DateTime(0)
+  created_at  DateTime              @default(now()) @db.DateTime(0)
+  updated_at  DateTime              @default(now()) @updatedAt @db.DateTime(0)
 
-  latitude String? @db.VarChar(100)
-  longitude String? @db.VarChar(100)
-  city String? @db.VarChar(100)
+  latitude   String? @db.VarChar(100)
+  longitude  String? @db.VarChar(100)
+  city       String? @db.VarChar(100)
   ip_address String? @db.VarChar(60)
 
   category categories @relation(fields: [category_id], references: [id])
-  batch batches @relation(fields: [batch_id], references: [id])
-  assessor users @relation(fields: [assessor_id], references: [id])
+  batch    batches    @relation(fields: [batch_id], references: [id])
+  assessor users      @relation(fields: [assessor_id], references: [id])
 }
 
 model media_files {
-  id          Int       @id @default(autoincrement())
+  id           Int      @id @default(autoincrement())
   batch_id     Int
-  group_id     Int?      // null if individual media
-  candidate_id Int?      // null if group media
-  type        String     // "photo" | "video"
-  filename    String
-  created_at DateTime @default(now()) @db.DateTime(0)
-  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
-  created_by Int
-  latitude String? @db.VarChar(100)
-  longitude String? @db.VarChar(100)
-  city String? @db.VarChar(100)
-  ip_address String? @db.VarChar(60)
+  group_id     Int? // null if individual media
+  candidate_id Int? // null if group media
+  type         String // "photo" | "video"
+  filename     String
+  created_at   DateTime @default(now()) @db.DateTime(0)
+  updated_at   DateTime @default(now()) @updatedAt @db.DateTime(0)
+  created_by   Int
+  latitude     String?  @db.VarChar(100)
+  longitude    String?  @db.VarChar(100)
+  city         String?  @db.VarChar(100)
+  ip_address   String?  @db.VarChar(60)
 
-  group       student_groups? @relation(fields: [group_id], references: [id])
-  candidate   students?    @relation(fields: [candidate_id], references: [id])
+  group     student_groups? @relation(fields: [group_id], references: [id])
+  candidate students?       @relation(fields: [candidate_id], references: [id])
 }
 
 model jobs {
-  id Int @id @default(autoincrement())
-  job_type String @db.VarChar(50)
-  reference_id Int
-  reference_type String @db.VarChar(50)
-  payload Json?
-  status job_status @default(pending)
-  progress Int @default(0) @db.TinyInt
-  result Json?
-  file_path String? @db.VarChar(255)
-  error_message String? @db.Text
-  retry_count Int @default(0) @db.TinyInt
-  requested_by Int?
-  started_at DateTime?
-  completed_at DateTime?
-  created_at DateTime @default(now()) @db.DateTime(0)
-  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
+  id             Int        @id @default(autoincrement())
+  job_type       String     @db.VarChar(50)
+  reference_id   Int
+  reference_type String     @db.VarChar(50)
+  payload        Json?
+  status         job_status @default(pending)
+  progress       Int        @default(0) @db.TinyInt
+  result         Json?
+  file_path      String?    @db.VarChar(255)
+  error_message  String?    @db.Text
+  retry_count    Int        @default(0) @db.TinyInt
+  requested_by   Int?
+  started_at     DateTime?
+  completed_at   DateTime?
+  created_at     DateTime   @default(now()) @db.DateTime(0)
+  updated_at     DateTime   @default(now()) @updatedAt @db.DateTime(0)
 
   @@index([job_type])
   @@index([status])
   @@index([reference_id])
-
 }
+
 model report_types {
-  id         Int      @id @default(autoincrement())
-  name       String   @db.VarChar(100)
-  code       String   @unique @db.VarChar(50)
+  id   Int    @id @default(autoincrement())
+  name String @db.VarChar(100)
+  code String @unique @db.VarChar(50)
 
   created_by Int?
   created_at DateTime @default(now()) @db.DateTime(0)
@@ -823,9 +864,9 @@ model report_types {
 }
 
 model report_fields {
-  id         Int      @id @default(autoincrement())
-  field_name String   @db.VarChar(100)
-  field_code String   @unique @db.VarChar(50)
+  id         Int    @id @default(autoincrement())
+  field_name String @db.VarChar(100)
+  field_code String @unique @db.VarChar(50)
 
   created_by Int?
   created_at DateTime @default(now()) @db.DateTime(0)
@@ -835,18 +876,18 @@ model report_fields {
 }
 
 model report_type_fields {
-  id              Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
   report_type_id  Int
   report_field_id Int
 
-  sort_order      Int      @default(0)
-  is_default      Boolean  @default(false)
-  is_required     Boolean  @default(false)
+  sort_order  Int     @default(0)
+  is_default  Boolean @default(false)
+  is_required Boolean @default(false)
 
-  created_by      Int?
-  created_at      DateTime @default(now()) @db.DateTime(0)
-  updated_at      DateTime @default(now()) @updatedAt @db.DateTime(0)
+  created_by Int?
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
 
   reportType  report_types  @relation(fields: [report_type_id], references: [id], onDelete: Cascade)
   reportField report_fields @relation(fields: [report_field_id], references: [id], onDelete: Cascade)
@@ -855,11 +896,11 @@ model report_type_fields {
 }
 
 model certificate_template {
-  id        Int   @id @default(autoincrement())
-  agency_id Int
-  name      String
-  config    Json
-  html       String @db.LongText
+  id         Int      @id @default(autoincrement())
+  agency_id  Int
+  name       String
+  config     Json
+  html       String   @db.LongText
   is_active  Boolean  @default(false)
   created_by Int?
   created_at DateTime @default(now()) @db.DateTime(0)

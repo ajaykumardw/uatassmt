@@ -394,6 +394,131 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
     }
   };
 
+  // const handleGeneratePaper = async (batchId: number) => {
+  //   try {
+  //     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches/${batchId}/omr/paper`, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //     });
+
+  //     const result = await res.json();
+
+  //     if (res.ok) {
+  //       toast.success(result.message || 'Question paper generated successfully.', {
+  //         hideProgressBar: false
+  //       });
+  //     } else {
+  //       toast.error(result.message || 'Failed to generate question paper.', {
+  //         hideProgressBar: false
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("Question paper generation error:", error);
+  //     toast.error('Something went wrong while generating question paper!', {
+  //       hideProgressBar: false
+  //     });
+  //   }
+  // };
+
+  const handleGeneratePaper = async (
+    batchId: number
+  ) => {
+
+    try {
+
+      const res = await fetch(
+
+        `${process.env.NEXT_PUBLIC_API_URL}/batches/${batchId}/omr/paper`,
+
+        {
+          method: "POST",
+        }
+      );
+
+      if (!res.ok) {
+
+        const error =
+          await res.json();
+
+        toast.error(
+
+          error.message ||
+
+          "Failed to generate paper.",
+
+          {
+            hideProgressBar: false
+          }
+        );
+
+        return;
+      }
+
+      // PDF BLOB
+
+      const blob =
+        await res.blob();
+
+      // CREATE URL
+
+      const url =
+        window.URL.createObjectURL(
+          blob
+        );
+
+      // CREATE A TAG
+
+      const a =
+        document.createElement("a");
+
+      a.href = url;
+
+      a.download =
+        `batch-${batchId}-question-paper.pdf`;
+
+      document.body.appendChild(a);
+
+      // DOWNLOAD
+
+      a.click();
+
+      // CLEANUP
+
+      a.remove();
+
+      window.URL.revokeObjectURL(
+        url
+      );
+
+      toast.success(
+
+        "Question paper generated successfully.",
+
+        {
+          hideProgressBar: false
+        }
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Question paper generation error:",
+        error
+      );
+
+      toast.error(
+
+        "Something went wrong while generating question paper!",
+
+        {
+          hideProgressBar: false
+        }
+      );
+    }
+  };
+
   const columns = useMemo<ColumnDef<BatchesTypeWithAction, any>[]>(
     () => [
       {
@@ -492,6 +617,15 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
                   className='is-full sm:is-auto'
                 >
                   View
+                </Button>
+                <Button
+                  variant='tonal'
+                  size='small'
+                  startIcon={<i className='tabler-file-text' />}
+                  onClick={() => handleGeneratePaper(row.original.id)}
+                  className='is-full sm:is-auto'
+                >
+                  Paper
                 </Button>
               </div>
             );
