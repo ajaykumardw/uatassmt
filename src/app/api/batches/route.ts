@@ -40,6 +40,8 @@ export async function GET(req: Request) {
       assessment_start_datetime: true,
       assessment_end_datetime: true,
       assessor_id: true,
+      question_paper: true,
+      omr_sheet: true,
       qualification_pack: {
         select: {
           id: true,
@@ -107,16 +109,34 @@ export async function GET(req: Request) {
           scheme_code: true
         }
       },
-      students: true
+
+      // students: true,
+
+      _count: {
+        select: {
+          students: true
+        }
+      }
     },
     orderBy: {
       assessment_start_datetime: "desc"
     }
   });
 
+  const path = 'storage/uploads/agency/batches/'
+
+  const optimizedBatches = batches.map(batch => {
+    return {
+      ...batch,
+      question_paper: batch.question_paper ? path + batch.id +"/question-paper/"+batch.question_paper : null,
+      omr_sheet: batch.omr_sheet ? path + batch.id + "/omr-sheet/" + batch.omr_sheet : null,
+      total_students: batch._count.students || null
+    }
+  })
+
   // console.log(batches)
 
-  return NextResponse.json(batches);
+  return NextResponse.json(optimizedBatches);
 }
 
 export async function POST(req: Request) {

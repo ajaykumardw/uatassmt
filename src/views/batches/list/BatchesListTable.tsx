@@ -78,10 +78,11 @@ import type { UsersType } from '@/types/users/usersType'
 import AssignAssessorDialog from '@/components/batches/dialogs/AssignAssessorDialog'
 
 import CustomIconButton from '@/@core/components/mui/IconButton'
+import OptionMenu from '@/@core/components/option-menu'
 
 // import DownloadEvidence from '@/components/zip/DownloadEvidence'
 
-import ZipAction from '@/components/zip/ZipAction'
+// import ZipAction from '@/components/zip/ZipAction'
 
 
 // declare module '@tanstack/table-core' {
@@ -101,6 +102,7 @@ type BatchesTypeWithAction = batches & {
   scheme: schemes
   sub_scheme: schemes
   students?: students[]
+  total_students?: number
   assessor: UsersType
   theory_exam_set: exam_sets
   practical_exam_set: exam_sets
@@ -339,11 +341,12 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
   }
 
   const generateOMRHTML = async (
+    batchId: number,
     questions: number,
     options: string[]
   ) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches/14/omr/generate`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches/${batchId}/omr/generate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -358,35 +361,59 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
         throw new Error("Failed to generate OMR sheet");
       }
 
+      const result = await res.json();
+
+      console.log("result:", result)
+
+      toast.success(
+
+        "OMR Sheet generated successfully.",
+
+        {
+          hideProgressBar: false
+        }
+      );
+
       // const text = await res.text();
 
       // console.log(text);
 
-      const blob = await res.blob();
+      // const blob = await res.blob();
 
-      console.log(blob);
-      console.log(blob.size);
-      console.log(blob.type);
+      // console.log(blob);
+      // console.log(blob.size);
+      // console.log(blob.type);
 
-      const url = window.URL.createObjectURL(blob);
+      // const url = window.URL.createObjectURL(blob);
 
-      const a = document.createElement("a");
+      // const a = document.createElement("a");
+      // const disposition = res.headers.get("Content-Disposition");
 
-      a.href = url;
-      a.download = "omr-sheet.pdf";
+      // let filename = "omr-sheet.pdf";
 
-      document.body.appendChild(a);
+      // if (disposition) {
+      //   const match = disposition.match(/filename="?([^"]+)"?/);
 
-      a.click();
+      //   if (match?.[1]) {
+      //     filename = match[1];
+      //   }
+      // }
 
-      a.remove();
+      // a.href = url;
+      // a.download = filename;
 
-      // IMPORTANT
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-      }, 5000);
+      // document.body.appendChild(a);
 
-      return url;
+      // a.click();
+
+      // a.remove();
+
+      // // IMPORTANT
+      // setTimeout(() => {
+      //   window.URL.revokeObjectURL(url);
+      // }, 5000);
+
+      // return url;
     } catch (error) {
       console.error("OMR generation error:", error);
 
@@ -456,41 +483,46 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
         return;
       }
 
+      const result = await res.json();
+
       // PDF BLOB
 
-      const blob =
-        await res.blob();
+      // const blob =
+      //   await res.blob();
 
-      // CREATE URL
+      // // CREATE URL
 
-      const url =
-        window.URL.createObjectURL(
-          blob
-        );
+      // const url =
+      //   window.URL.createObjectURL(
+      //     blob
+      //   );
 
-      // CREATE A TAG
+      // // CREATE A TAG
 
-      const a =
-        document.createElement("a");
+      // const a =
+      //   document.createElement("a");
 
-      a.href = url;
+      // a.href = url;
 
-      a.download =
-        `batch-${batchId}-question-paper.pdf`;
+      // const filename = res.headers.get("Content-Disposition")?.split("filename=")[1] || `batch-${batchId}-question-paper.pdf`;
 
-      document.body.appendChild(a);
+      // a.download = filename;
 
-      // DOWNLOAD
+      // document.body.appendChild(a);
 
-      a.click();
+      // // DOWNLOAD
 
-      // CLEANUP
+      // a.click();
 
-      a.remove();
+      // // CLEANUP
 
-      window.URL.revokeObjectURL(
-        url
-      );
+      // a.remove();
+
+      // window.URL.revokeObjectURL(
+      //   url
+      // );
+
+      console.log("result:", result)
 
       toast.success(
 
@@ -584,10 +616,10 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
       columnHelper.accessor('students', {
         header: 'Students',
         cell: ({ row }) => {
-          if(row.original.students?.length && row.original.students?.length > 0){
+          if(row.original.total_students && row.original.total_students > 0){
             return (
               <div className='flex items-center gap-1.5'>
-                {row.original.students && row.original.students.length === Number(row.original.batch_size) ? (
+                {row.original.total_students && row.original.total_students === Number(row.original.batch_size) ? (
                   null
                 ) : (
                   <Tooltip title='Add Students'>
@@ -605,7 +637,7 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
                 <Button
                   variant='tonal'
                   size='small'
-                  startIcon={row.original.students?.length}
+                  startIcon={row.original.total_students}
 
                   // onClick={() => {
                   //   localStorage.setItem("ssc_id", '1');
@@ -626,6 +658,17 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
                   className='is-full sm:is-auto'
                 >
                   Paper
+                </Button>
+                <Button
+                  color='success'
+                  variant='tonal'
+                  size='small'
+                  startIcon={<i className='tabler-upload' />}
+                  className='is-full sm:is-auto'
+                  onClick={() => generateOMRHTML(row.original.id, 100,["A", "B", "C", "D"])}
+                  disabled={row.original.question_paper === null}
+                >
+                  Generate OMR
                 </Button>
               </div>
             );
@@ -833,7 +876,7 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
                   <i className='tabler-edit text-[22px] text-textSecondary' />
                 </IconButton>
               </Link>
-              <ZipAction batchId={row.original.id} />
+              {/* <ZipAction batchId={row.original.id} /> */}
               {/* <Button onClick={() => handleDownloadEvidence(row.original.id)} disabled={jobStatus[row.original.id]?.status === 'pending' || jobStatus[row.original.id]?.status === 'processing'}>
                 Generate Zip
               </Button>
@@ -857,22 +900,54 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
                 <Link href={getLocalizedUrl('apps/user/view', locale as Locale)} className='flex'>
                   <i className='tabler-eye text-[22px] text-textSecondary' />
                 </Link>
-              </IconButton>
+              </IconButton> */}
               <OptionMenu
                 iconClassName='text-[22px] text-textSecondary'
                 options={[
                   {
-                    text: 'Download',
-                    icon: 'tabler-download text-[22px]',
-                    menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
+                    text: row.original.question_paper ? "Regenerate Paper" : "Generate Paper",
+                    icon: 'tabler-file-text text-[22px]',
+                    menuItemProps: { className: "flex items-center gap-2 text-textSecondary", onClick:() => handleGeneratePaper(row.original.id) }
                   },
+                  ...(row.original.question_paper ? [
+                    {
+                      text: 'View Paper',
+                      icon: 'tabler-eye text-[22px]',
+                      menuItemProps: {
+                        className: 'flex items-center gap-2 text-textSecondary',
+
+                        onClick: () => {
+                          window.open(
+                            `${process.env.NEXT_PUBLIC_APP_URL}/${row.original.question_paper}`,
+                            "_blank"
+                          );
+                        }
+                      }
+                    }
+                  ] : []),
                   {
-                    text: 'Edit',
-                    icon: 'tabler-edit text-[22px]',
-                    menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                  }
+                    text: row.original.omr_sheet ? "Regenerate OMR Sheet" : "Generate OMR Sheet",
+                    icon: 'tabler-file-text text-[22px]',
+                    menuItemProps: { disabled: !row.original.question_paper, className: "flex items-center gap-2 text-textSecondary", onClick:() => generateOMRHTML(row.original.id, 100,["A", "B", "C", "D"]) }
+                  },
+                  ...(row.original.omr_sheet ? [
+                    {
+                      text: 'View OMR Sheet',
+                      icon: 'tabler-eye text-[22px]',
+                      menuItemProps: {
+                        className: 'flex items-center gap-2 text-textSecondary',
+
+                        onClick: () => {
+                          window.open(
+                            `${process.env.NEXT_PUBLIC_APP_URL}/${row.original.omr_sheet}`,
+                            "_blank"
+                          );
+                        }
+                      }
+                    }
+                  ] : []),
                 ]}
-              /> */}
+              />
             </div>
           )
         },
@@ -945,15 +1020,6 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
               placeholder='Search Batch'
               className='is-full sm:is-auto'
             />
-            <Button
-              color='secondary'
-              variant='tonal'
-              startIcon={<i className='tabler-upload' />}
-              className='is-full sm:is-auto'
-              onClick={() => generateOMRHTML(100,["A", "B", "C", "D"])}
-            >
-              Generate OMR
-            </Button>
             <Button
               color='secondary'
               variant='tonal'

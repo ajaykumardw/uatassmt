@@ -72,12 +72,29 @@ export async function POST(req: Request, context: { params: { id: number } }) {
 
       console.log("User updated: ", id);
 
-      await prisma.users_additional_data.update({
+      // await prisma.users_additional_data.update({
+      //   where: {
+      //     user_id: id
+      //   },
+      //   data: {
+      //     gst_no: gstNumber.toString(),
+      //     pan_card_no: panCardNumber?.toString() || '',
+      //     contact_person_address: contactPersonAddress?.toString() || ''
+      //   }
+      // })
+
+      await prisma.users_additional_data.upsert({
         where: {
           user_id: id
         },
-        data: {
-          gst_no: gstNumber.toString(),
+        update: {
+          gst_no: gstNumber?.toString() || '',
+          pan_card_no: panCardNumber?.toString() || '',
+          contact_person_address: contactPersonAddress?.toString() || ''
+        },
+        create: {
+          user_id: id,
+          gst_no: gstNumber?.toString() || '',
           pan_card_no: panCardNumber?.toString() || '',
           contact_person_address: contactPersonAddress?.toString() || ''
         }

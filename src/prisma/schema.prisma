@@ -49,6 +49,9 @@ model batches {
   center_spoc_person_email  String? @db.VarChar(100)
   center_spoc_person_phone  String? @db.VarChar(15)
   auto_update               Int?      @default(0) @db.TinyInt
+  hard_copy_received        Int? @default(0) @db.TinyInt
+  question_paper            String? @db.VarChar(255)
+  omr_sheet                 String? @db.VarChar(255)
 
   students                  students[]
   center_inspections         inspection_media[]
@@ -570,10 +573,6 @@ model offline_candidate_papers {
   mapping Json
 
   question_count Int
-
-  pdf_path String? @db.VarChar(255)
-
-  omr_pdf_path String? @db.VarChar(255)
 
   created_by Int
 

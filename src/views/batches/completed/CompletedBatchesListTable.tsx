@@ -12,7 +12,8 @@ import Card from '@mui/material/Card'
 import CardHeader from '@mui/material/CardHeader'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
-import IconButton from '@mui/material/IconButton'
+
+// import IconButton from '@mui/material/IconButton'
 
 // import { styled } from '@mui/material/styles'
 
@@ -51,6 +52,8 @@ import { format } from 'date-fns'
 
 import { Chip, CircularProgress, Tooltip } from '@mui/material'
 
+import OptionMenu from '@/@core/components/option-menu'
+
 import type { Locale } from '@configs/i18n'
 
 // Component Imports
@@ -78,6 +81,9 @@ import type { UsersType } from '@/types/users/usersType'
 import AssignAssessorDialog from '@/components/batches/dialogs/AssignAssessorDialog'
 
 import CustomIconButton from '@/@core/components/mui/IconButton'
+import { changeHardCopyStatus } from './actions'
+
+import ZipAction from '@/components/zip/ZipAction'
 
 
 // declare module '@tanstack/table-core' {
@@ -287,6 +293,33 @@ const CompletedBatchesListTable = ({ tableData, updateBatchList }: { tableData?:
 
   }
 
+  const handleHardCopyStatus = async (
+    batchId: number,
+    status: number | null
+  ) => {
+
+    const finalStatus = status ?? 0;
+
+    const res = await changeHardCopyStatus(
+      batchId,
+      finalStatus
+    );
+
+    if (res.success) {
+
+      setData(prev =>
+        (prev || []).map(batch =>
+          batch.id === batchId
+            ? {
+                ...batch,
+                hard_copy_received: finalStatus
+              }
+            : batch
+        )
+      );
+    }
+  }
+
   const columns = useMemo<ColumnDef<BatchesTypeWithAction, any>[]>(
     () => [
       {
@@ -386,7 +419,7 @@ const CompletedBatchesListTable = ({ tableData, updateBatchList }: { tableData?:
         header: 'Center ID',
         cell: ({ row }) => (
           <Typography color='text.primary' >
-            {row.original.training_center.company_name}
+            {row.original.training_center.user_name}
           </Typography>
         )
       }),
@@ -496,31 +529,34 @@ const CompletedBatchesListTable = ({ tableData, updateBatchList }: { tableData?:
         header: 'Action',
         cell: ({row}) => (
           <div className='flex items-center'>
-            <Link href={getLocalizedUrl(`batches/edit/${row.original.id}`, locale as Locale)} className='flex'>
-              <IconButton>
-                <i className='tabler-edit text-[22px] text-textSecondary' />
-              </IconButton>
-            </Link>
-            {/* <IconButton>
-              <Link href={getLocalizedUrl('apps/user/view', locale as Locale)} className='flex'>
-                <i className='tabler-eye text-[22px] text-textSecondary' />
-              </Link>
-            </IconButton>
+            <ZipAction batchId={row.original.id} />
             <OptionMenu
               iconClassName='text-[22px] text-textSecondary'
               options={[
                 {
-                  text: 'Download',
-                  icon: 'tabler-download text-[22px]',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
+                  text: 'Hard Copy Received',
+                  icon: row.original.hard_copy_received === 1
+                    ? 'tabler-checkbox text-green-600 text-[22px]'
+                    : 'tabler-square text-textSecondary text-[22px]',
+                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary', onClick:async() => handleHardCopyStatus(row.original.id, row.original.hard_copy_received === 1 ? 0 : 1) }
                 },
-                {
-                  text: 'Edit',
-                  icon: 'tabler-edit text-[22px]',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                }
+
+                // {
+                //   text: (
+                //     <Link
+                //       href={getLocalizedUrl(
+                //         `batches/edit/${row.original.id}`,
+                //         locale as Locale
+                //       )}
+                //       className='flex items-center gap-2 w-full text-textSecondary'
+                //     >
+                //       <i className='tabler-edit text-[22px] text-textSecondary' />
+                //       Edit
+                //     </Link>
+                //   ),
+                // }
               ]}
-            /> */}
+            />
           </div>
         ),
         enableSorting: false
