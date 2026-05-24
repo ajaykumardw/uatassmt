@@ -49,7 +49,7 @@ import { toast } from 'react-toastify'
 
 import { format } from 'date-fns'
 
-import { Chip, CircularProgress, Tooltip } from '@mui/material'
+import { Chip, CircularProgress, LinearProgress, Tooltip } from '@mui/material'
 
 import type { Locale } from '@configs/i18n'
 
@@ -208,6 +208,15 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [selectedBatch, setSelectedBatch] = useState<number | null>(null);
   const [loadingResultIds, setLoadingResultIds] = useState<number[]>([]);
+  
+  const [jobProgress, setJobProgress] = useState<{
+    [key: number]: {
+      progress: number
+      status: string
+    }
+  }>({});
+  
+  const [activeJobIds, setActiveJobIds] = useState<number[]>([]);
 
   // download evidence
   // const [downloadEvidenceDialogOpen, setDownloadEvidenceDialogOpen] = useState(false);
@@ -229,6 +238,90 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
       localStorage.removeItem('formSubmitMessage');
     }
   }, []);
+
+  useEffect(() => {
+
+    if (activeJobIds.length === 0) {
+      return;
+    }
+
+    const interval = setInterval(async () => {
+
+      try {
+
+        const query =
+          activeJobIds.join(",");
+
+        const res = await fetch(
+
+          `${process.env.NEXT_PUBLIC_API_URL}/jobs/progress?batchIds=${query}`
+
+        );
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+
+        const mapped: any = {};
+
+        const completedOrFailed: number[] = [];
+
+        data.forEach((job: any) => {
+
+          mapped[job.batch_id] = {
+
+            progress: job.progress,
+
+            status: job.status
+
+          };
+
+          if (
+
+            job.status === "completed" ||
+
+            job.status === "failed"
+
+          ) {
+
+            completedOrFailed.push(
+              job.batch_id
+            );
+
+          }
+
+        });
+
+        setJobProgress(prev => ({
+          ...prev,
+          ...mapped
+        }));
+
+        if (
+          completedOrFailed.length > 0
+        ) {
+
+          setActiveJobIds(prev =>
+            prev.filter(
+              id =>
+                !completedOrFailed.includes(id)
+            )
+          );
+
+        }
+
+      } catch (error) {
+
+        console.error(error);
+
+      }
+
+    }, 2000);
+
+    return () =>
+      clearInterval(interval);
+
+  }, [activeJobIds]);
 
   const handleViewStudentsClick = (row: BatchesTypeWithAction) => {
     localStorage.setItem("ssc_id", row.qualification_pack.ssc.id.toString());
@@ -455,6 +548,22 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
 
     try {
 
+      // LOCAL PENDING STATE
+
+      setJobProgress(prev => ({
+
+        ...prev,
+
+        [batchId]: {
+
+          progress: 0,
+
+          status: "pending"
+
+        }
+
+      }));
+
       const res = await fetch(
 
         `${process.env.NEXT_PUBLIC_API_URL}/batches/${batchId}/omr/paper`,
@@ -464,14 +573,27 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
         }
       );
 
+      const result = await res.json();
+
       if (!res.ok) {
 
-        const error =
-          await res.json();
+        setJobProgress(prev => ({
+
+          ...prev,
+
+          [batchId]: {
+
+            progress: 0,
+
+            status: "failed"
+
+          }
+
+        }));
 
         toast.error(
 
-          error.message ||
+          result.message ||
 
           "Failed to generate paper.",
 
@@ -482,8 +604,6 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
 
         return;
       }
-
-      const result = await res.json();
 
       // PDF BLOB
 
@@ -522,11 +642,11 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
       //   url
       // );
 
-      console.log("result:", result)
-
       toast.success(
 
-        "Question paper generated successfully.",
+        result.message ||
+
+        "Question paper generation started.",
 
         {
           hideProgressBar: false
@@ -535,10 +655,18 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
 
     } catch (error) {
 
-      console.error(
-        "Question paper generation error:",
-        error
-      );
+      console.error(error);
+
+      setJobProgress(prev => ({
+
+        ...prev,
+
+        [batchId]: {
+          progress: 0,
+          status: "failed"
+        }
+
+      }));
 
       toast.error(
 
@@ -599,11 +727,98 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
 
       columnHelper.accessor('batch_name', {
         header: 'Batch Name',
-        cell: ({ row }) => (
+        cell: ({ row }) => (<>
           <Typography color='text.primary' className='font-medium'>
             {row.original.batch_name}
           </Typography>
-        )
+          
+          {jobProgress[row.original.id] && (
+
+            <div className='mt-2'>
+
+              {
+
+                jobProgress[row.original.id]
+                  .status === "pending" && (
+
+                  <Typography
+                    variant='caption'
+                    color='warning.main'
+                  >
+                    Queued...
+                  </Typography>
+
+                )
+
+              }
+
+              {
+
+                jobProgress[row.original.id]
+                  .status === "processing" && (
+
+                  <>
+
+                    <LinearProgress
+                      variant='determinate'
+                      value={
+                        jobProgress[row.original.id]
+                          .progress
+                      }
+                    />
+
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
+                      {
+                        jobProgress[row.original.id]
+                          .progress
+                      }%
+                    </Typography>
+
+                  </>
+
+                )
+
+              }
+
+              {
+
+                jobProgress[row.original.id]
+                  .status === "completed" && (
+
+                  <Typography
+                    variant='caption'
+                    color='success.main'
+                  >
+                    Paper Generated
+                  </Typography>
+
+                )
+
+              }
+
+              {
+
+                jobProgress[row.original.id]
+                  .status === "failed" && (
+
+                  <Typography
+                    variant='caption'
+                    color='error.main'
+                  >
+                    Failed
+                  </Typography>
+
+                )
+
+              }
+
+            </div>
+
+          )}
+        </>)
       }),
       columnHelper.accessor('batch_size', {
         header: 'Batch Size',
@@ -956,7 +1171,7 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
     ],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [loadingResultIds]
+    [loadingResultIds, jobProgress, activeJobIds]
   )
 
   useEffect(() => {

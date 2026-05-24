@@ -561,6 +561,8 @@ model students {
 model offline_candidate_papers {
   id Int @id @default(autoincrement())
 
+  agency_id Int
+
   batch_id Int
 
   student_id Int

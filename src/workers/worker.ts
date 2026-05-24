@@ -7,6 +7,7 @@ import { processEvidence } from "./handlers/processEvidence";
 import { processResult } from "./handlers/processResult";
 import { processBatchResult } from "./handlers/processCandidateResult";
 import { processCertificate } from "./handlers/processCertificate";
+import { processQuestionPaper } from "./handlers/processQuestionPaper";
 
 // import { processCertificate } from "./handlers/processCertificate";
 
@@ -40,6 +41,9 @@ const worker = new Worker(
 
         case "generateCertificate":
           return await processCertificate(job);
+
+        case "generateQuestionPaper":
+          return await processQuestionPaper(job);
 
         // case "certificateZip":
         //   return await processCertificate(job);
