@@ -817,7 +817,7 @@ export const processQuestionPaper = async (
 
 
             const html = `
-        
+
                 <div class="paper">
                   <div class="content">
                     ${questionsHTML}
@@ -836,42 +836,42 @@ export const processQuestionPaper = async (
                       margin: 0;
                       padding: 0;
                     }
-        
+
                     @page {
                       margin: 40px 40px 40px 40px;
                       padding: 160px 20px 10px 20px;
                       border: 2px solid black;
                     }
-        
+
                     body{
                       font-family: Arial, "Noto Sans Devanagari", sans-serif;
                       font-size:14px;
                       line-height:1.5;
                     }
-        
+
                     .watermark {
                       position: fixed;
                       top: calc(50% - 80px);
                       left: 50%;
                       transform: translate(-50%, -50%);
                     }
-        
+
                     .watermark img {
                       opacity: 0.1;
                       width: 500px;
                       height: auto;
                       display: block;
                     }
-        
+
                     .paper{
                       page-break-after:always;
                       padding-bottom:30px;
                     }
-        
+
                     .paper:last-child{
                       page-break-after:auto;
                     }
-        
+
                     .nos-heading{
                       margin-top: 0px;
                       margin-bottom: 15px;
@@ -883,37 +883,37 @@ export const processQuestionPaper = async (
                       justify-content: space-between;
                       align-items: center;
                     }
-        
+
                     .nos-heading * {
                       font-size: 12px;
                       font-weight: bold;
                     }
-        
+
                     .nos-marks {
                       border-left: 1px solid #000;
                       padding-left: 10px;
                       margin-left: 10px;
                     }
-        
+
                     .question{
                       margin-bottom: 6px;
                     }
-        
+
                     .question *{
                       font-size: 12px;
                     }
-        
+
                     .question-title {
                       display: flex;
                       justify-content: space-between;
                       align-items: center;
                       gap: 4px;
                     }
-        
+
                     .question-title *{
                       font-weight:bold;
                     }
-        
+
                     .options {
                       display: grid;
                       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -921,7 +921,7 @@ export const processQuestionPaper = async (
                       row-gap: 2px;
                       margin-left: 20px;
                     }
-        
+
                   </style>
                 </head>
                 <body>
@@ -1044,6 +1044,18 @@ export const processQuestionPaper = async (
 
 
     } catch (error) {
-        throw error;
+
+      await prisma.jobs.update({
+
+        where: {
+          id: Number(jobId)
+        },
+        data: {
+          status: "failed",
+          completed_at: new Date()
+        }
+      });
+
+      throw error;
     }
 }

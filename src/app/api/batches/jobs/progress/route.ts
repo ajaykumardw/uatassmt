@@ -1,5 +1,5 @@
 
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 import { getServerSession } from "next-auth";
 
@@ -7,7 +7,7 @@ import { authOptions } from "@/libs/auth";
 
 import prisma from "@/libs/prisma";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
 
   try {
 
@@ -19,6 +19,27 @@ export async function GET() {
 
     const userType =
       session?.user.user_type;
+
+    const searchParams = req.nextUrl.searchParams;
+
+    const batchIds = searchParams.get("batchIds");
+
+    // const batchId = await req.searchParams.get("batchId");
+
+    if (!batchIds) {
+
+      return NextResponse.json(
+
+        {
+          message: "Batch ID is required"
+        },
+
+        {
+          status: 400
+        }
+       );
+
+     }
 
     if (userType !== "AG") {
 
@@ -42,27 +63,28 @@ export async function GET() {
 
         where: {
 
-          type:
+          job_type:
             "generate_question_paper",
 
-          status: {
+          // status: {
 
-            in: [
+          //   in: [
 
-              "pending",
+          //     "pending",
 
-              "processing"
+          //     "processing"
 
-            ]
+          //   ]
+
+          // },
+          reference_id: {
+
+            in: batchIds.split(",").map(Number)
 
           },
 
-          batch: {
-
-            agency_id: userId
-
-          }
-
+          reference_type: "batch",
+          requested_by: userId
         },
 
         orderBy: {
@@ -73,7 +95,9 @@ export async function GET() {
 
         select: {
 
-          batch_id: true,
+          id: true,
+
+          reference_id: true,
 
           progress: true,
 

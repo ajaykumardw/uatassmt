@@ -143,17 +143,73 @@ export async function createQuestionPaperJob(
   batchId: number,
   requestedBy: number
 ) {
-  const job = await prisma.jobs.create({
-    data: {
+
+  // CHECK ACTIVE JOB
+  const existingJob = await prisma.jobs.findFirst({
+    where: {
       job_type: "generate_question_paper",
       reference_id: batchId,
       reference_type: "batch",
-      payload: {},
-      status: "pending",
-      progress: 0,
-      requested_by: requestedBy
     }
   });
+
+  // RETURN EXISTING JOB
+  // ALREADY RUNNING
+  if (
+    existingJob &&
+    ["pending", "processing"].includes(existingJob.status)
+  ) {
+
+    return existingJob;
+
+  }
+
+  let job;
+
+  // RETRY EXISTING JOB
+  if (existingJob) {
+
+    job = await prisma.jobs.update({
+
+      where: {
+        id: existingJob.id
+      },
+
+      data: {
+
+        status: "pending",
+
+        progress: 0,
+
+        payload: {},
+
+        requested_by: requestedBy,
+
+        retry_count: {
+          increment: 1
+        }
+
+      }
+
+    });
+
+  } else {
+
+    // CREATE NEW JOB
+    job = await prisma.jobs.create({
+      data: {
+        job_type: "generate_question_paper",
+        reference_id: batchId,
+        reference_type: "batch",
+        payload: {},
+        status: "pending",
+        progress: 0,
+        requested_by: requestedBy
+      }
+    });
+
+  }
+
 
   await evidenceQueue.add(
     "generateQuestionPaper",
@@ -161,6 +217,15 @@ export async function createQuestionPaperJob(
       jobId: job.id
     }
   );
+
+  console.log(
+    "Created question paper job with ID:",
+    job.id,
+    "for batch ID:",
+    batchId,
+    "and job data:",
+    job
+   );
 
   return job;
 }

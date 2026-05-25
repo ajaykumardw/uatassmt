@@ -239,11 +239,15 @@ export async function POST(
       }, { status: 400 });
     }
 
-    const job = createQuestionPaperJob(
+    const job = await createQuestionPaperJob(
 
       batchId,
       userId
     );
+
+    console.log(
+      "Created question paper job with ID:",
+      job);
 
     return NextResponse.json({
       job
@@ -1034,13 +1038,13 @@ export async function POST(
     //   const pdf = await generatePDF(page, browser, finalHtml, headerHtml);
 
     //   const mPdf = await PDFDocument.load(pdf);
-      
+
     //   const pages =
     //     await masterPdf.copyPages(
     //       mPdf,
     //       mPdf.getPageIndices()
     //     );
-      
+
     //   pages.forEach((p) => masterPdf.addPage(p));
 
     //   // pdfBuffers.push(Buffer.from(pdf));

@@ -79,6 +79,7 @@ import AssignAssessorDialog from '@/components/batches/dialogs/AssignAssessorDia
 
 import CustomIconButton from '@/@core/components/mui/IconButton'
 import OptionMenu from '@/@core/components/option-menu'
+import BatchOptionMenu from './BatchOptionMenu'
 
 // import DownloadEvidence from '@/components/zip/DownloadEvidence'
 
@@ -208,15 +209,6 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [selectedBatch, setSelectedBatch] = useState<number | null>(null);
   const [loadingResultIds, setLoadingResultIds] = useState<number[]>([]);
-  
-  const [jobProgress, setJobProgress] = useState<{
-    [key: number]: {
-      progress: number
-      status: string
-    }
-  }>({});
-  
-  const [activeJobIds, setActiveJobIds] = useState<number[]>([]);
 
   // download evidence
   // const [downloadEvidenceDialogOpen, setDownloadEvidenceDialogOpen] = useState(false);
@@ -239,89 +231,6 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
     }
   }, []);
 
-  useEffect(() => {
-
-    if (activeJobIds.length === 0) {
-      return;
-    }
-
-    const interval = setInterval(async () => {
-
-      try {
-
-        const query =
-          activeJobIds.join(",");
-
-        const res = await fetch(
-
-          `${process.env.NEXT_PUBLIC_API_URL}/jobs/progress?batchIds=${query}`
-
-        );
-
-        if (!res.ok) return;
-
-        const data = await res.json();
-
-        const mapped: any = {};
-
-        const completedOrFailed: number[] = [];
-
-        data.forEach((job: any) => {
-
-          mapped[job.batch_id] = {
-
-            progress: job.progress,
-
-            status: job.status
-
-          };
-
-          if (
-
-            job.status === "completed" ||
-
-            job.status === "failed"
-
-          ) {
-
-            completedOrFailed.push(
-              job.batch_id
-            );
-
-          }
-
-        });
-
-        setJobProgress(prev => ({
-          ...prev,
-          ...mapped
-        }));
-
-        if (
-          completedOrFailed.length > 0
-        ) {
-
-          setActiveJobIds(prev =>
-            prev.filter(
-              id =>
-                !completedOrFailed.includes(id)
-            )
-          );
-
-        }
-
-      } catch (error) {
-
-        console.error(error);
-
-      }
-
-    }, 2000);
-
-    return () =>
-      clearInterval(interval);
-
-  }, [activeJobIds]);
 
   const handleViewStudentsClick = (row: BatchesTypeWithAction) => {
     localStorage.setItem("ssc_id", row.qualification_pack.ssc.id.toString());
@@ -456,8 +365,6 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
 
       const result = await res.json();
 
-      console.log("result:", result)
-
       toast.success(
 
         "OMR Sheet generated successfully.",
@@ -467,46 +374,6 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
         }
       );
 
-      // const text = await res.text();
-
-      // console.log(text);
-
-      // const blob = await res.blob();
-
-      // console.log(blob);
-      // console.log(blob.size);
-      // console.log(blob.type);
-
-      // const url = window.URL.createObjectURL(blob);
-
-      // const a = document.createElement("a");
-      // const disposition = res.headers.get("Content-Disposition");
-
-      // let filename = "omr-sheet.pdf";
-
-      // if (disposition) {
-      //   const match = disposition.match(/filename="?([^"]+)"?/);
-
-      //   if (match?.[1]) {
-      //     filename = match[1];
-      //   }
-      // }
-
-      // a.href = url;
-      // a.download = filename;
-
-      // document.body.appendChild(a);
-
-      // a.click();
-
-      // a.remove();
-
-      // // IMPORTANT
-      // setTimeout(() => {
-      //   window.URL.revokeObjectURL(url);
-      // }, 5000);
-
-      // return url;
     } catch (error) {
       console.error("OMR generation error:", error);
 
@@ -548,21 +415,6 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
 
     try {
 
-      // LOCAL PENDING STATE
-
-      setJobProgress(prev => ({
-
-        ...prev,
-
-        [batchId]: {
-
-          progress: 0,
-
-          status: "pending"
-
-        }
-
-      }));
 
       const res = await fetch(
 
@@ -576,20 +428,6 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
       const result = await res.json();
 
       if (!res.ok) {
-
-        setJobProgress(prev => ({
-
-          ...prev,
-
-          [batchId]: {
-
-            progress: 0,
-
-            status: "failed"
-
-          }
-
-        }));
 
         toast.error(
 
@@ -605,48 +443,9 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
         return;
       }
 
-      // PDF BLOB
-
-      // const blob =
-      //   await res.blob();
-
-      // // CREATE URL
-
-      // const url =
-      //   window.URL.createObjectURL(
-      //     blob
-      //   );
-
-      // // CREATE A TAG
-
-      // const a =
-      //   document.createElement("a");
-
-      // a.href = url;
-
-      // const filename = res.headers.get("Content-Disposition")?.split("filename=")[1] || `batch-${batchId}-question-paper.pdf`;
-
-      // a.download = filename;
-
-      // document.body.appendChild(a);
-
-      // // DOWNLOAD
-
-      // a.click();
-
-      // // CLEANUP
-
-      // a.remove();
-
-      // window.URL.revokeObjectURL(
-      //   url
-      // );
-
       toast.success(
 
-        result.message ||
-
-        "Question paper generation started.",
+        result.message || "Question paper generation started.",
 
         {
           hideProgressBar: false
@@ -657,16 +456,6 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
 
       console.error(error);
 
-      setJobProgress(prev => ({
-
-        ...prev,
-
-        [batchId]: {
-          progress: 0,
-          status: "failed"
-        }
-
-      }));
 
       toast.error(
 
@@ -709,116 +498,13 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
           </div>
         )
       }),
-
-      // columnHelper.accessor('role_id', {
-      //   header: 'Role',
-      //   cell: ({ row }) => (
-      //     <div className='flex items-center gap-2'>
-      //       <Icon
-      //         className={userRoleObj[row.original.role.id].icon}
-      //         sx={{ color: `var(--mui-palette-${userRoleObj[row.original.role.id].color}-main)` }}
-      //       />
-      //       <Typography className='capitalize' color='text.primary'>
-      //         {row.original.role.name}
-      //       </Typography>
-      //     </div>
-      //   )
-      // }),
-
       columnHelper.accessor('batch_name', {
         header: 'Batch Name',
-        cell: ({ row }) => (<>
+        cell: ({ row }) => (
           <Typography color='text.primary' className='font-medium'>
             {row.original.batch_name}
           </Typography>
-          
-          {jobProgress[row.original.id] && (
-
-            <div className='mt-2'>
-
-              {
-
-                jobProgress[row.original.id]
-                  .status === "pending" && (
-
-                  <Typography
-                    variant='caption'
-                    color='warning.main'
-                  >
-                    Queued...
-                  </Typography>
-
-                )
-
-              }
-
-              {
-
-                jobProgress[row.original.id]
-                  .status === "processing" && (
-
-                  <>
-
-                    <LinearProgress
-                      variant='determinate'
-                      value={
-                        jobProgress[row.original.id]
-                          .progress
-                      }
-                    />
-
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                    >
-                      {
-                        jobProgress[row.original.id]
-                          .progress
-                      }%
-                    </Typography>
-
-                  </>
-
-                )
-
-              }
-
-              {
-
-                jobProgress[row.original.id]
-                  .status === "completed" && (
-
-                  <Typography
-                    variant='caption'
-                    color='success.main'
-                  >
-                    Paper Generated
-                  </Typography>
-
-                )
-
-              }
-
-              {
-
-                jobProgress[row.original.id]
-                  .status === "failed" && (
-
-                  <Typography
-                    variant='caption'
-                    color='error.main'
-                  >
-                    Failed
-                  </Typography>
-
-                )
-
-              }
-
-            </div>
-
-          )}
-        </>)
+        )
       }),
       columnHelper.accessor('batch_size', {
         header: 'Batch Size',
@@ -1116,7 +802,8 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
                   <i className='tabler-eye text-[22px] text-textSecondary' />
                 </Link>
               </IconButton> */}
-              <OptionMenu
+              <BatchOptionMenu row={row} />
+              {/* <OptionMenu
                 iconClassName='text-[22px] text-textSecondary'
                 options={[
                   {
@@ -1162,7 +849,7 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
                     }
                   ] : []),
                 ]}
-              />
+              /> */}
             </div>
           )
         },
@@ -1171,7 +858,7 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
     ],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [loadingResultIds, jobProgress, activeJobIds]
+    [loadingResultIds]
   )
 
   useEffect(() => {
