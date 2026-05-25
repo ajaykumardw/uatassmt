@@ -1,11 +1,13 @@
 'use client'
 
-import {FC, useRef, useState, useEffect } from 'react'
+import {type FC, useRef, useState, useEffect } from 'react'
 
 import { toast } from "react-toastify";
 
 import LinearProgress from "@mui/material/LinearProgress";
+
 import Typography from "@mui/material/Typography"
+
 import OptionMenu from "@/@core/components/option-menu";
 
 type RowType = {
@@ -253,6 +255,7 @@ const BatchOptionMenu: FC<Props> = ({
                 </Typography>
               </div>
             ),
+            
             // icon: 'tabler-loader text-[22px] animate-spin',
             menuItemProps: {
               className:

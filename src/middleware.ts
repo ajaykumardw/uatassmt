@@ -152,6 +152,10 @@ export default withAuth(
     // Private routes (All routes except guest and shared routes that can only be accessed by logged in users)
     const privateRoute = ![...guestRoutes, ...sharedRoutes].some(route => pathname.endsWith(route))
 
+    if (pathname.startsWith('/cbil-report')) {
+      return NextResponse.next()
+    }
+
     // If the user is not logged in and is trying to access a private route, redirect to the login page
     if (!isUserLoggedIn && privateRoute) {
       let redirectUrl = '/login'

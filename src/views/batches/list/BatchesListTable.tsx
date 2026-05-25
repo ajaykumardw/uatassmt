@@ -49,7 +49,7 @@ import { toast } from 'react-toastify'
 
 import { format } from 'date-fns'
 
-import { Chip, CircularProgress, LinearProgress, Tooltip } from '@mui/material'
+import { Chip, CircularProgress, Tooltip } from '@mui/material'
 
 import type { Locale } from '@configs/i18n'
 
@@ -78,7 +78,6 @@ import type { UsersType } from '@/types/users/usersType'
 import AssignAssessorDialog from '@/components/batches/dialogs/AssignAssessorDialog'
 
 import CustomIconButton from '@/@core/components/mui/IconButton'
-import OptionMenu from '@/@core/components/option-menu'
 import BatchOptionMenu from './BatchOptionMenu'
 
 // import DownloadEvidence from '@/components/zip/DownloadEvidence'
@@ -342,44 +341,44 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
 
   }
 
-  const generateOMRHTML = async (
-    batchId: number,
-    questions: number,
-    options: string[]
-  ) => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches/${batchId}/omr/generate`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          questions,
-          options,
-        }),
-      });
+  // const generateOMRHTML = async (
+  //   batchId: number,
+  //   questions: number,
+  //   options: string[]
+  // ) => {
+  //   try {
+  //     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches/${batchId}/omr/generate`, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         questions,
+  //         options,
+  //       }),
+  //     });
 
-      if (!res.ok) {
-        throw new Error("Failed to generate OMR sheet");
-      }
+  //     if (!res.ok) {
+  //       throw new Error("Failed to generate OMR sheet");
+  //     }
 
-      const result = await res.json();
+  //     const result = await res.json();
 
-      toast.success(
+  //     toast.success(
 
-        "OMR Sheet generated successfully.",
+  //       "OMR Sheet generated successfully.",
 
-        {
-          hideProgressBar: false
-        }
-      );
+  //       {
+  //         hideProgressBar: false
+  //       }
+  //     );
 
-    } catch (error) {
-      console.error("OMR generation error:", error);
+  //   } catch (error) {
+  //     console.error("OMR generation error:", error);
 
-      return null;
-    }
-  };
+  //     return null;
+  //   }
+  // };
 
   // const handleGeneratePaper = async (batchId: number) => {
   //   try {
@@ -409,64 +408,64 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
   //   }
   // };
 
-  const handleGeneratePaper = async (
-    batchId: number
-  ) => {
+  // const handleGeneratePaper = async (
+  //   batchId: number
+  // ) => {
 
-    try {
-
-
-      const res = await fetch(
-
-        `${process.env.NEXT_PUBLIC_API_URL}/batches/${batchId}/omr/paper`,
-
-        {
-          method: "POST",
-        }
-      );
-
-      const result = await res.json();
-
-      if (!res.ok) {
-
-        toast.error(
-
-          result.message ||
-
-          "Failed to generate paper.",
-
-          {
-            hideProgressBar: false
-          }
-        );
-
-        return;
-      }
-
-      toast.success(
-
-        result.message || "Question paper generation started.",
-
-        {
-          hideProgressBar: false
-        }
-      );
-
-    } catch (error) {
-
-      console.error(error);
+  //   try {
 
 
-      toast.error(
+  //     const res = await fetch(
 
-        "Something went wrong while generating question paper!",
+  //       `${process.env.NEXT_PUBLIC_API_URL}/batches/${batchId}/omr/paper`,
 
-        {
-          hideProgressBar: false
-        }
-      );
-    }
-  };
+  //       {
+  //         method: "POST",
+  //       }
+  //     );
+
+  //     const result = await res.json();
+
+  //     if (!res.ok) {
+
+  //       toast.error(
+
+  //         result.message ||
+
+  //         "Failed to generate paper.",
+
+  //         {
+  //           hideProgressBar: false
+  //         }
+  //       );
+
+  //       return;
+  //     }
+
+  //     toast.success(
+
+  //       result.message || "Question paper generation started.",
+
+  //       {
+  //         hideProgressBar: false
+  //       }
+  //     );
+
+  //   } catch (error) {
+
+  //     console.error(error);
+
+
+  //     toast.error(
+
+  //       "Something went wrong while generating question paper!",
+
+  //       {
+  //         hideProgressBar: false
+  //       }
+  //     );
+  //   }
+  // };
 
   const columns = useMemo<ColumnDef<BatchesTypeWithAction, any>[]>(
     () => [
@@ -551,7 +550,7 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
                 >
                   View
                 </Button>
-                <Button
+                {/* <Button
                   variant='tonal'
                   size='small'
                   startIcon={<i className='tabler-file-text' />}
@@ -570,7 +569,7 @@ const BatchesListTable = ({ tableData, updateBatchList }: { tableData?: BatchesW
                   disabled={row.original.question_paper === null}
                 >
                   Generate OMR
-                </Button>
+                </Button> */}
               </div>
             );
           }
