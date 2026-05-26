@@ -7,7 +7,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 
-import { Prisma } from "@prisma/client";
+import { exam_set_type, Prisma } from "@prisma/client";
 
 import prisma from "@/libs/prisma";
 
@@ -109,8 +109,8 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
                 id_back_image: student.id_back_image ? `${process.env.NEXT_PUBLIC_APP_URL}/${relativePath}/${student.id_back_image}` : null,
                 batch: undefined,
                 student_exam_set_results: undefined,
-                online_theory_exam_status: student.student_exam_set_results.some(result => result.exam_set.set_type === 'T') ? 1 : student.batch.batch_completed ? 2 : 0,
-                online_theory_exam_status_text: student.student_exam_set_results.some(result => result.exam_set.set_type === 'T') ? 'Submitted' : student.batch.batch_completed ? 'Absent' : 'Pending',
+                online_theory_exam_status: student.student_exam_set_results.some(result => result.exam_set.set_type === exam_set_type.T) ? 1 : student.batch.batch_completed ? 2 : 0,
+                online_theory_exam_status_text: student.student_exam_set_results.some(result => result.exam_set.set_type === exam_set_type.T) ? 'Submitted' : student.batch.batch_completed ? 'Absent' : 'Pending',
             };
         });
 

@@ -8,7 +8,7 @@ import { processResult } from "./handlers/processResult";
 import { processBatchResult } from "./handlers/processCandidateResult";
 import { processCertificate } from "./handlers/processCertificate";
 import { processQuestionPaper } from "./handlers/processQuestionPaper";
-import { processOMRSheet } from "./handlers/processOMRSheet";
+import { processOMRSheet } from "./handlers/processOMR";
 
 // import { processCertificate } from "./handlers/processCertificate";
 
