@@ -1,7 +1,6 @@
 import prisma from "@/libs/prisma";
 
-import { evidenceQueue }
-  from "@/libs/queue";
+import { evidenceQueue } from "@/libs/queue";
 
 export async function createZipJob(
 
@@ -218,14 +217,65 @@ export async function createQuestionPaperJob(
     }
   );
 
-  console.log(
-    "Created question paper job with ID:",
-    job.id,
-    "for batch ID:",
-    batchId,
-    "and job data:",
-    job
-   );
+  return job;
+}
+
+export async function createOMRSheetJob(
+  batchId: number,
+  requestedBy: number
+) {
+  const existingJob = await prisma.jobs.findFirst({
+    where: {
+      job_type: "generate_omr_sheet",
+      reference_id: batchId,
+      reference_type: "batch",
+    }
+  });
+
+  if (
+    existingJob &&
+    ["pending", "processing"].includes(existingJob.status)
+  ) {
+    return existingJob;
+  }
+
+  let job;
+
+  if (existingJob) {
+    job = await prisma.jobs.update({
+      where: {
+        id: existingJob.id
+      },
+      data: {
+        status: "pending",
+        progress: 0,
+        payload: {},
+        requested_by: requestedBy,
+        retry_count: {
+          increment: 1
+        }
+      }
+    });
+  } else {
+    job = await prisma.jobs.create({
+      data: {
+        job_type: "generate_omr_sheet",
+        reference_id: batchId,
+        reference_type: "batch",
+        payload: {},
+        status: "pending",
+        progress: 0,
+        requested_by: requestedBy
+      }
+    });
+  }
+
+  await evidenceQueue.add(
+    "generateOMRSheet",
+    {
+      jobId: job.id
+    }
+  );
 
   return job;
 }

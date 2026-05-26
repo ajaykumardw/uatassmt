@@ -93,10 +93,17 @@ export async function GET(req: NextRequest) {
                 assessment_start_datetime: true,
                 assessment_end_datetime: true,
                 assessor_id: true,
+                question_paper: true,
+                omr_sheet: true,
                 qualification_pack:{
                   select: {
                     qualification_pack_id: true,
                     qualification_pack_name: true,
+                    ssc: {
+                      select: {
+                        ssc_code: true
+                      }
+                    }
                   }
                 },
                 training_partner: {
@@ -170,6 +177,8 @@ export async function GET(req: NextRequest) {
         //   }
         // });
 
+        const path = 'storage/uploads/agency/batches/'
+
         const mappedBatches = batches.map((batch) => ({
             ...batch,
             theory_completed: "40",
@@ -177,6 +186,8 @@ export async function GET(req: NextRequest) {
             viva_completed: "20",
             total_completed: "90",
             assessment_mode: ModeOfAssessment.find(m => m.id === String(batch.assessment_mode))?.label || null,
+            question_paper: batch.question_paper ? path + batch.id +"/question-paper/"+batch.question_paper : null,
+            omr_sheet: batch.omr_sheet ? path + batch.id + "/omr-sheet/" + batch.omr_sheet : null,
             training_center: batch.training_center
                 ? {
                     ...batch.training_center,

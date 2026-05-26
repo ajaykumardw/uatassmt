@@ -8,6 +8,7 @@ import { processResult } from "./handlers/processResult";
 import { processBatchResult } from "./handlers/processCandidateResult";
 import { processCertificate } from "./handlers/processCertificate";
 import { processQuestionPaper } from "./handlers/processQuestionPaper";
+import { processOMRSheet } from "./handlers/processOMRSheet";
 
 // import { processCertificate } from "./handlers/processCertificate";
 
@@ -44,6 +45,9 @@ const worker = new Worker(
 
         case "generateQuestionPaper":
           return await processQuestionPaper(job);
+
+        case "generateOMRSheet":
+          return await processOMRSheet(job);
 
         // case "certificateZip":
         //   return await processCertificate(job);

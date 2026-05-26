@@ -50,6 +50,7 @@ export async function POST(req: Request) {
 
     const session = await getServerSession(authOptions);
     const authUser = session?.user;
+    const userId = Number(session?.user?.id);
 
     if (!authUser || authUser.user_type !== 'AG') {
       return NextResponse.json({
@@ -214,7 +215,7 @@ export async function POST(req: Request) {
         candidate_id: {
           in: oldIds
         },
-        agency_id: 1
+        agency_id: userId
       },
       select: {
         id: true,

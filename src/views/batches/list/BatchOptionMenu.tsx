@@ -93,8 +93,7 @@ const handleGeneratePaper = async (
 
 const generateOMRHTML = async (
   batchId: number,
-  questions: number,
-  options: string[]
+  startOMRPolling: (batchId: number) => void
 ) => {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches/${batchId}/omr/generate`, {
@@ -102,23 +101,28 @@ const generateOMRHTML = async (
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        questions,
-        options,
-      }),
     });
-
-    if (!res.ok) {
-      throw new Error("Failed to generate OMR sheet");
-    }
 
     const result = await res.json();
 
+    if (!res.ok) {
+      toast.error(
+        result.message || "Failed to generate OMR sheet.",
+        {
+          hideProgressBar: false
+        }
+      );
+
+      return null;
+    }
+
     console.log("result:", result)
+
+    startOMRPolling(result.data.job.reference_id);
 
     toast.success(
 
-      "OMR Sheet generated successfully.",
+      "OMR Sheet generated started.",
 
       {
         hideProgressBar: false
@@ -137,7 +141,9 @@ const BatchOptionMenu: FC<Props> = ({
 }) => {
 
   const [job, setJob] = useState<JobType | null>(null)
+  const [omrJob, setOmrJob] = useState<JobType | null>(null)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const omrIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const data = row.original;
 
   // 🔁 polling
@@ -174,6 +180,40 @@ const BatchOptionMenu: FC<Props> = ({
     }, 2000)
   }
 
+  // 🔁 polling
+  const startOMRPolling = (batchId: number) => {
+    if (omrIntervalRef.current) clearInterval(omrIntervalRef.current)
+
+    omrIntervalRef.current = setInterval(async () => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/batches/${batchId}/zip/job?type=generate_omr_sheet`
+      )
+
+      const result = await res.json()
+      const data = result.job;
+
+      setOmrJob(data)
+
+      console.log("Polling job data:", data)
+
+      const status = data?.status?.trim().toLowerCase();
+
+      if (status === 'completed' || status === 'failed') {
+        clearInterval(omrIntervalRef.current!)
+        omrIntervalRef.current = null
+
+        if (status === 'completed') {
+
+          toast.success('OMR Sheet generated.')
+
+        } else {
+
+          toast.error('OMR Sheet generation failed')
+        }
+      }
+    }, 2000)
+  }
+
   // 🔄 Check for existing job on mount
   const fetchExistingJob = async () => {
 
@@ -204,20 +244,54 @@ const BatchOptionMenu: FC<Props> = ({
     }
   }
 
+  // 🔄 Check for existing job on mount
+  const fetchExistingOMRJob = async () => {
+
+    try {
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/batches/${data?.id}/zip/job?type=generate_omr_sheet`
+      )
+
+      const result = await res.json()
+
+      if (result.job && (result.job.status !== 'completed' && result.job.status !== 'failed')) {
+
+        setOmrJob(result.job)
+        startOMRPolling(result.job.reference_id) // Resume polling
+
+      } else if (result.job?.status === 'completed') {
+
+        setOmrJob(result.job)
+      } else {
+        setOmrJob(null)
+      }
+    } catch (err) {
+
+      setOmrJob(null)
+
+      console.error('Error fetching existing zip job:', err)
+    }
+  }
+
   useEffect(() => {
 
     setJob(null) // Reset job state when batchId changes
+    setOmrJob(null) // Reset job state when batchId changes
 
     fetchExistingJob()
+    fetchExistingOMRJob()
 
     return () => {
 
       if (intervalRef.current) clearInterval(intervalRef.current)
+      if (omrIntervalRef.current) clearInterval(omrIntervalRef.current)
     }
 
   }, [data.id])
 
-  const loading = job && (job.status === 'pending' || job.status === 'processing') || false
+  const loading = job && (job.status === 'pending' || job.status === 'processing') || false;
+  const omrLoading = omrJob && (omrJob.status === 'pending' || omrJob.status === 'processing') || false;
 
   const options = [
     {
@@ -255,7 +329,7 @@ const BatchOptionMenu: FC<Props> = ({
                 </Typography>
               </div>
             ),
-            
+
             // icon: 'tabler-loader text-[22px] animate-spin',
             menuItemProps: {
               className:
@@ -290,12 +364,48 @@ const BatchOptionMenu: FC<Props> = ({
         : "Generate OMR Sheet",
       icon: "tabler-file-text text-[22px]",
       menuItemProps: {
-        disabled: !data.question_paper || loading,
+        disabled: !data.question_paper || loading || omrLoading,
         className: "flex items-center gap-2 text-textSecondary",
         onClick: () =>
-          generateOMRHTML(data.id, 100, ["A", "B", "C", "D"]),
+          generateOMRHTML(data.id, startOMRPolling),
       },
     },
+
+    ...(omrJob?.status === 'pending' ? [
+      {
+        text: "Pending OMR Generation",
+        icon: "tabler-loader text-[22px] animate-spin",
+        menuItemProps: {
+          className: "flex items-center gap-2 text-textSecondary cursor-not-allowed",
+          disabled: true
+        },
+      }
+    ] : []),
+
+    ...(omrJob?.status === 'processing'
+      ? [
+        {
+          text: (
+            <div className="w-full">
+              <LinearProgress
+                variant="determinate"
+                value={omrJob.progress || 0}
+              />
+              <Typography>
+                {omrJob.progress || 0}%
+              </Typography>
+            </div>
+          ),
+
+          // icon: 'tabler-loader text-[22px] animate-spin',
+          menuItemProps: {
+            className:
+              'flex items-center gap-2 text-textSecondary',
+            readOnly: true
+          },
+        },
+      ]
+    : []),
 
     ...(data.omr_sheet
       ? [

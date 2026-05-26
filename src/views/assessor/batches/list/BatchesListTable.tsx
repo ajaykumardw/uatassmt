@@ -9,9 +9,7 @@ import { useEffect, useState, useMemo } from 'react'
 // MUI Imports
 import Card from '@mui/material/Card'
 import CardHeader from '@mui/material/CardHeader'
-import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
-import CircularProgress from '@mui/material/CircularProgress'
 
 // import { styled } from '@mui/material/styles'
 
@@ -48,7 +46,7 @@ import { toast } from 'react-toastify'
 
 import { format } from 'date-fns'
 
-import { Chip, Tooltip } from '@mui/material'
+import { Chip } from '@mui/material'
 
 // import type { Locale } from '@configs/i18n'
 
@@ -72,7 +70,9 @@ import { MenuProps, TableRowLimit } from '@/configs/customDataConfig'
 
 import type { UsersType } from '@/types/users/usersType'
 
-import { authFetch } from '@/components/AuthFetch'
+// import { authFetch } from '@/components/AuthFetch'
+
+import KitOptionMenu from './KitOptionMenu'
 
 type BatchesTypeWithAction = batches & {
   action?: string
@@ -152,7 +152,23 @@ const BatchesListTable = ({ tableData }: { tableData?: BatchesWithQP[] }) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [data, setData] = useState(...[tableData])
   const [globalFilter, setGlobalFilter] = useState('')
-  const [loadingIds, setLoadingIds] = useState<number[]>([]);
+
+  // const [loadingIds, setLoadingIds] = useState<number[]>([]);
+  // const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  // const [selectedRowId, setSelectedRowId] = useState<number | null>(null)
+
+  // const handleClick = (
+  //   event: MouseEvent<HTMLButtonElement>,
+  //   rowId: number
+  // ) => {
+  //   setAnchorEl(event.currentTarget)
+  //   setSelectedRowId(rowId)
+  // }
+
+  // const handleClose = () => {
+  //   setAnchorEl(null)
+  //   setSelectedRowId(null)
+  // }
 
   // Hooks
   // const { lang: locale } = useParams()
@@ -170,52 +186,52 @@ const BatchesListTable = ({ tableData }: { tableData?: BatchesWithQP[] }) => {
     }
   }, []);
 
-  const handleDownloadAssessmentKit = async (batchId: number) => {
+  // const handleDownloadAssessmentKit = async (batchId: number) => {
 
-    setLoadingIds(prev => [...prev, batchId]);
+  //   setLoadingIds(prev => [...prev, batchId]);
 
-    try {
-      await new Promise(resolve => setTimeout(resolve, 3000));
+  //   try {
+  //     await new Promise(resolve => setTimeout(resolve, 3000));
 
-      const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/assessor/batches/${batchId}/assessment-kit`, {
-        method: 'GET',
-      });
+  //     const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/assessor/batches/${batchId}/assessment-kit`, {
+  //       method: 'GET',
+  //     });
 
-      if(res.ok) {
-        const blob = await res.blob();
+  //     if(res.ok) {
+  //       const blob = await res.blob();
 
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
+  //       const url = window.URL.createObjectURL(blob);
+  //       const link = document.createElement('a');
 
-        link.href = url;
-        const name = res.headers.get('Content-Disposition')?.split('filename=')[1] || `assessment_kit_batch_${batchId}.zip`;
+  //       link.href = url;
+  //       const name = res.headers.get('Content-Disposition')?.split('filename=')[1] || `assessment_kit_batch_${batchId}.zip`;
 
-        link.setAttribute('download', name); //or any other extension
-        document.body.appendChild(link);
-        link.click();
-        link.parentNode?.removeChild(link);
-      } else {
+  //       link.setAttribute('download', name); //or any other extension
+  //       document.body.appendChild(link);
+  //       link.click();
+  //       link.parentNode?.removeChild(link);
+  //     } else {
 
-        const errorData = await res.json();
+  //       const errorData = await res.json();
 
-        toast.error(errorData.message || "Failed to download assessment kit");
+  //       toast.error(errorData.message || "Failed to download assessment kit");
 
-        console.error("Error downloading assessment kit:", errorData);
-      }
+  //       console.error("Error downloading assessment kit:", errorData);
+  //     }
 
 
-    } catch (error) {
+  //   } catch (error) {
 
-      console.error("Error downloading assessment kit:", error);
+  //     console.error("Error downloading assessment kit:", error);
 
-      toast.error("Failed to download assessment kit");
+  //     toast.error("Failed to download assessment kit");
 
-    } finally {
+  //   } finally {
 
-      setLoadingIds(prev => prev.filter(id => id !== batchId));
-    }
+  //     setLoadingIds(prev => prev.filter(id => id !== batchId));
+  //   }
 
-  }
+  // }
 
   const columns = useMemo<ColumnDef<BatchesTypeWithAction, any>[]>(
     () => [
@@ -331,24 +347,36 @@ const BatchesListTable = ({ tableData }: { tableData?: BatchesWithQP[] }) => {
         header: 'Action',
         cell: ({row}) =>  {
 
-          const isLoading = loadingIds.includes(row.original.id);
+          // const isLoading = loadingIds.includes(row.original.id);
+          // const open = selectedRowId === row.original.id
 
-          return (
-            <div className='flex items-center'>
-              <Tooltip title="Download Assessment Kit">
-                <Button startIcon={isLoading ? <CircularProgress size={20} /> : <i className='tabler-download' />} onClick={() => handleDownloadAssessmentKit(row.original.id)} variant='outlined' size='small' disabled={isLoading}>
-                  Assessment Kit
-                </Button>
-              </Tooltip>
-              {/* <ZipAction batchId={row.original.id} /> */}
-            </div>
-          )},
+          return <KitOptionMenu batchId={row.original.id} questionPaper={row.original.question_paper} omrSheet={row.original.omr_sheet} />
+        },
         enableSorting: false
       })
+
+      // columnHelper.accessor('action', {
+      //   header: 'Action',
+      //   cell: ({row}) =>  {
+
+      //     const isLoading = loadingIds.includes(row.original.id);
+
+      //     return (
+      //       <div className='flex items-center'>
+      //         <Tooltip title="Download Assessment Kit">
+      //           <Button startIcon={isLoading ? <CircularProgress size={20} /> : <i className='tabler-download' />} onClick={() => handleDownloadAssessmentKit(row.original.id)} variant='outlined' size='small' disabled={isLoading}>
+      //             Assessment Kit
+      //           </Button>
+      //         </Tooltip>
+      //         {/* <ZipAction batchId={row.original.id} /> */}
+      //       </div>
+      //     )},
+      //   enableSorting: false
+      // })
     ],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [loadingIds]
+    []
   )
 
   const table = useReactTable({

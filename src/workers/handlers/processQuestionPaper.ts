@@ -1052,7 +1052,7 @@ export const processQuestionPaper = async (
         },
         data: {
           status: "failed",
-          completed_at: new Date()
+          error_message: error instanceof Error ? error.message : "Unknown error",
         }
       });
 
