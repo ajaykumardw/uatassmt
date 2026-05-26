@@ -235,6 +235,176 @@
 // export default CibilReportPage
 
 
+// "use client"
+
+// import { useState, type ChangeEvent, type FormEvent } from "react"
+
+// import jsPDF from "jspdf"
+
+// interface FormData {
+//   name: string
+//   dob: string
+//   pan: string
+//   mobile: string
+//   email: string
+// }
+
+// const CibilReportPage = () => {
+//   const [formData, setFormData] = useState<FormData>({
+//     name: "",
+//     dob: "",
+//     pan: "",
+//     mobile: "",
+//     email: "",
+//   })
+  
+//   const [isLoading, setIsLoading] = useState(false)
+//   const [score, setScore] = useState<number | null>(null)
+
+//   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+//     const { name, value } = e.target
+    
+//     setFormData((prev) => ({ ...prev, [name]: value }))
+//   }
+
+//   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+//     e.preventDefault()
+//     setIsLoading(true)
+    
+//     // Simulate API call
+//     await new Promise((resolve) => setTimeout(resolve, 1500))
+
+//     // Demo: random score between 300–900
+//     const randomScore = Math.floor(Math.random() * (900 - 300 + 1)) + 300
+    
+//     setScore(randomScore)
+
+//     setIsLoading(false)
+//   }
+
+//   const downloadPDF = () => {
+//     const doc = new jsPDF()
+    
+//     doc.setFontSize(18)
+//     doc.text("CIBIL Report", 20, 20)
+
+//     doc.setFontSize(12)
+//     doc.text(`Name: ${formData.name}`, 20, 40)
+//     doc.text(`DOB: ${formData.dob}`, 20, 50)
+//     doc.text(`PAN: ${formData.pan}`, 20, 60)
+//     doc.text(`Mobile: ${formData.mobile}`, 20, 70)
+//     doc.text(`Email: ${formData.email}`, 20, 80)
+
+//     doc.setFontSize(14)
+//     doc.text(`CIBIL Score: ${score}`, 20, 100)
+
+//     doc.save("CIBIL_Report.pdf")
+//   }
+
+//   return (
+//     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
+//       <div className="max-w-md mx-auto">
+//         {/* Form UI */}
+//         {!score && (
+//           <div className="bg-white rounded-2xl shadow-xl p-6">
+//             <h1 className="text-2xl font-bold mb-4">CIBIL Score Check</h1>
+//             <form onSubmit={handleSubmit} className="space-y-5">
+//               <input
+//                 type="text"
+//                 name="name"
+//                 value={formData.name}
+//                 onChange={handleChange}
+//                 placeholder="Full Name"
+//                 required
+//                 className="w-full border rounded px-3 py-2"
+//               />
+//               <input
+//                 type="date"
+//                 name="dob"
+//                 value={formData.dob}
+//                 onChange={handleChange}
+//                 required
+//                 className="w-full border rounded px-3 py-2"
+//               />
+//               <input
+//                 type="text"
+//                 name="pan"
+//                 value={formData.pan}
+//                 onChange={handleChange}
+//                 placeholder="PAN Number"
+//                 required
+//                 className="w-full border rounded px-3 py-2 uppercase"
+//               />
+//               <input
+//                 type="tel"
+//                 name="mobile"
+//                 value={formData.mobile}
+//                 onChange={handleChange}
+//                 placeholder="Mobile Number"
+//                 required
+//                 className="w-full border rounded px-3 py-2"
+//               />
+//               <input
+//                 type="email"
+//                 name="email"
+//                 value={formData.email}
+//                 onChange={handleChange}
+//                 placeholder="Email Address"
+//                 required
+//                 className="w-full border rounded px-3 py-2"
+//               />
+
+//               <button
+//                 type="submit"
+//                 disabled={isLoading}
+//                 className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+//               >
+//                 {isLoading ? "Checking..." : "Check My Score"}
+//               </button>
+//             </form>
+//           </div>
+//         )}
+
+//         {/* Response UI */}
+//         {score && (
+//           <div className="bg-white rounded-2xl shadow-xl p-6 text-center">
+//             <h2 className="text-xl font-bold mb-2">Your CIBIL Score</h2>
+//             <div className="text-6xl font-extrabold text-blue-600 mb-4">
+//               {score}
+//             </div>
+//             <p className="text-gray-600 mb-6">
+//               {score >= 750
+//                 ? "Excellent! You have a strong credit profile."
+//                 : score >= 650
+//                 ? "Good! You may be eligible for most loans."
+//                 : score >= 550
+//                 ? "Fair. Improve repayment history for better chances."
+//                 : "Poor. Work on clearing dues and improving credit habits."}
+//             </p>
+//             <div className="flex justify-center gap-4">
+//               <button
+//                 onClick={downloadPDF}
+//                 className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+//               >
+//                 Download PDF
+//               </button>
+//               <button
+//                 onClick={() => setScore(null)}
+//                 className="bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200 transition"
+//               >
+//                 Check Again
+//               </button>
+//             </div>
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   )
+// }
+
+// export default CibilReportPage
+
+
 "use client"
 
 import { useState, type ChangeEvent, type FormEvent } from "react"
@@ -242,24 +412,75 @@ import { useState, type ChangeEvent, type FormEvent } from "react"
 import jsPDF from "jspdf"
 
 interface FormData {
-  name: string
+  first_name: string
+  last_name: string
   dob: string
   pan: string
   mobile: string
   email: string
+  street_address: string
+  city: string
+  postal_code: string
+  region: string
 }
+
+
+// Region codes constant
+const REGION_CODES = [
+  { code: 1, name: "Jammu & Kashmir" },
+  { code: 2, name: "Himachal Pradesh" },
+  { code: 3, name: "Punjab" },
+  { code: 4, name: "Chandigarh" },
+  { code: 5, name: "Uttarakhand" },
+  { code: 6, name: "Haryana" },
+  { code: 7, name: "Delhi" },
+  { code: 8, name: "Rajasthan" },
+  { code: 9, name: "Uttar Pradesh" },
+  { code: 10, name: "Bihar" },
+  { code: 11, name: "Sikkim" },
+  { code: 12, name: "Arunachal Pradesh" },
+  { code: 13, name: "Nagaland" },
+  { code: 14, name: "Manipur" },
+  { code: 15, name: "Mizoram" },
+  { code: 16, name: "Tripura" },
+  { code: 17, name: "Meghalaya" },
+  { code: 18, name: "Assam" },
+  { code: 19, name: "West Bengal" },
+  { code: 20, name: "Jharkhand" },
+  { code: 21, name: "Odisha" },
+  { code: 22, name: "Chhattisgarh" },
+  { code: 23, name: "Madhya Pradesh" },
+  { code: 24, name: "Gujarat" },
+  { code: 25, name: "Daman & Diu" },
+  { code: 26, name: "Dadra & Nagar Haveli" },
+  { code: 27, name: "Maharashtra" },
+  { code: 28, name: "Andhra Pradesh" },
+  { code: 29, name: "Karnataka" },
+  { code: 30, name: "Goa" },
+  { code: 31, name: "Lakshadweep" },
+  { code: 32, name: "Kerala" },
+  { code: 33, name: "Tamil Nadu" },
+  { code: 34, name: "Puducherry" },
+  { code: 35, name: "Andaman & Nicobar Islands" },
+  { code: 36, name: "Telangana" },
+]
 
 const CibilReportPage = () => {
   const [formData, setFormData] = useState<FormData>({
-    name: "",
+    first_name: "",
+    last_name: "",
     dob: "",
     pan: "",
     mobile: "",
     email: "",
+    street_address: "",
+    city: "",
+    postal_code: "",
+    region: "",
   })
-  
+
   const [isLoading, setIsLoading] = useState(false)
-  const [score, setScore] = useState<number | null>(null)
+  const [reportUrl, setReportUrl] = useState<string | null>(null)
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -270,14 +491,20 @@ const CibilReportPage = () => {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
-    
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500))
 
-    // Demo: random score between 300–900
-    const randomScore = Math.floor(Math.random() * (900 - 300 + 1)) + 300
+    // Call backend API route
+    const res = await fetch("/cibil-report/api", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    })
+
+    const data = await res.json()
     
-    setScore(randomScore)
+    console.log("CIBIL API Response:", data)
+
+    // Extract report URL if available
+    setReportUrl(data?.data?.data?.htmlUrl || null)
 
     setIsLoading(false)
   }
@@ -289,109 +516,72 @@ const CibilReportPage = () => {
     doc.text("CIBIL Report", 20, 20)
 
     doc.setFontSize(12)
-    doc.text(`Name: ${formData.name}`, 20, 40)
+    doc.text(`Name: ${formData.first_name} ${formData.last_name}`, 20, 40)
     doc.text(`DOB: ${formData.dob}`, 20, 50)
     doc.text(`PAN: ${formData.pan}`, 20, 60)
     doc.text(`Mobile: ${formData.mobile}`, 20, 70)
     doc.text(`Email: ${formData.email}`, 20, 80)
+    doc.text(`Address: ${formData.street_address}, ${formData.city}`, 20, 90)
+    doc.text(`Postal Code: ${formData.postal_code}`, 20, 100)
+    doc.text(`Region: ${formData.region}`, 20, 110)
 
-    doc.setFontSize(14)
-    doc.text(`CIBIL Score: ${score}`, 20, 100)
+    if (reportUrl) {
+      doc.text(`Report URL: ${reportUrl}`, 20, 130)
+    }
 
     doc.save("CIBIL_Report.pdf")
+  }
+
+  const handleRegionChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = e.target
+    
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
       <div className="max-w-md mx-auto">
-        {/* Form UI */}
-        {!score && (
+        {!reportUrl && (
           <div className="bg-white rounded-2xl shadow-xl p-6">
-            <h1 className="text-2xl font-bold mb-4">CIBIL Score Check</h1>
+            <h1 className="text-2xl font-bold mb-4">Generate CIBIL Report</h1>
             <form onSubmit={handleSubmit} className="space-y-5">
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Full Name"
-                required
-                className="w-full border rounded px-3 py-2"
-              />
-              <input
-                type="date"
-                name="dob"
-                value={formData.dob}
-                onChange={handleChange}
-                required
-                className="w-full border rounded px-3 py-2"
-              />
-              <input
-                type="text"
-                name="pan"
-                value={formData.pan}
-                onChange={handleChange}
-                placeholder="PAN Number"
-                required
-                className="w-full border rounded px-3 py-2 uppercase"
-              />
-              <input
-                type="tel"
-                name="mobile"
-                value={formData.mobile}
-                onChange={handleChange}
-                placeholder="Mobile Number"
-                required
-                className="w-full border rounded px-3 py-2"
-              />
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Email Address"
-                required
-                className="w-full border rounded px-3 py-2"
-              />
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-              >
-                {isLoading ? "Checking..." : "Check My Score"}
+              <input type="text" name="first_name" value={formData.first_name} onChange={handleChange} placeholder="First Name" required className="w-full border rounded px-3 py-2" />
+              <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} placeholder="Last Name" required className="w-full border rounded px-3 py-2" />
+              <input type="date" name="dob" value={formData.dob} onChange={handleChange} required className="w-full border rounded px-3 py-2" />
+              <input type="text" name="pan" value={formData.pan} onChange={handleChange} placeholder="PAN Number" required className="w-full border rounded px-3 py-2 uppercase" />
+              <input type="tel" name="mobile" value={formData.mobile} onChange={handleChange} placeholder="Mobile Number" required className="w-full border rounded px-3 py-2" />
+              <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" required className="w-full border rounded px-3 py-2" />
+              <input type="text" name="street_address" value={formData.street_address} onChange={handleChange} placeholder="Street Address" required className="w-full border rounded px-3 py-2" />
+              <input type="text" name="city" value={formData.city} onChange={handleChange} placeholder="City" required className="w-full border rounded px-3 py-2" />
+              <input type="text" name="postal_code" value={formData.postal_code} onChange={handleChange} placeholder="Postal Code" required className="w-full border rounded px-3 py-2" />
+              {/* <input type="text" name="region" value={formData.region} onChange={handleChange} placeholder="Region Code (e.g. 28)" required className="w-full border rounded px-3 py-2" /> */}
+              <select name="region" value={formData.region} onChange={handleRegionChange} required className="w-full border rounded px-3 py-2">
+                <option value="" disabled>Select Region</option>
+                {REGION_CODES.map((region) => (
+                  <option key={region.code} value={region.code}>
+                    {region.name} ({region.code})
+                  </option>
+                ))}
+              </select>
+              <button type="submit" disabled={isLoading} className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
+                {isLoading ? "Generating..." : "Generate Report"}
               </button>
             </form>
           </div>
         )}
 
-        {/* Response UI */}
-        {score && (
+        {reportUrl && (
           <div className="bg-white rounded-2xl shadow-xl p-6 text-center">
-            <h2 className="text-xl font-bold mb-2">Your CIBIL Score</h2>
-            <div className="text-6xl font-extrabold text-blue-600 mb-4">
-              {score}
-            </div>
-            <p className="text-gray-600 mb-6">
-              {score >= 750
-                ? "Excellent! You have a strong credit profile."
-                : score >= 650
-                ? "Good! You may be eligible for most loans."
-                : score >= 550
-                ? "Fair. Improve repayment history for better chances."
-                : "Poor. Work on clearing dues and improving credit habits."}
-            </p>
+            <h2 className="text-xl font-bold mb-2">CIBIL Report Generated</h2>
+            <p className="text-gray-600 mb-6">Your report is ready. Click below to view or download.</p>
             <div className="flex justify-center gap-4">
-              <button
-                onClick={downloadPDF}
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-              >
+              <a href={reportUrl} target="_blank" rel="noopener noreferrer" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                View Report
+              </a>
+              <button onClick={downloadPDF} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
                 Download PDF
               </button>
-              <button
-                onClick={() => setScore(null)}
-                className="bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200 transition"
-              >
+              <button onClick={() => setReportUrl(null)} className="bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200 transition">
                 Check Again
               </button>
             </div>

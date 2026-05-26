@@ -152,7 +152,7 @@ export default withAuth(
     // Private routes (All routes except guest and shared routes that can only be accessed by logged in users)
     const privateRoute = ![...guestRoutes, ...sharedRoutes].some(route => pathname.endsWith(route))
 
-    if (pathname.startsWith('/cbil-report')) {
+    if (pathname.startsWith('/cibil-report')) {
       return NextResponse.next()
     }
 
