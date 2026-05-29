@@ -1,6 +1,7 @@
 'use client'
 
 // React Imports
+import React, { forwardRef } from 'react'
 import type { ComponentProps, MouseEvent } from 'react'
 
 // Next Imports
@@ -11,17 +12,20 @@ type Props = Omit<ComponentProps<typeof NextLink>, 'href' | 'onClick'> & {
   onClick?: (event: MouseEvent<HTMLAnchorElement>) => void
 }
 
-const Link = (props: Props) => {
+const Link = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
   // Props
   const { href, onClick, ...rest } = props
 
   return (
     <NextLink
+      ref={ref}
       {...rest}
       href={href || '/'}
       onClick={onClick ? e => onClick(e) : !href ? e => e.preventDefault() : undefined}
     />
   )
-}
+})
+
+Link.displayName = 'Link'
 
 export default Link

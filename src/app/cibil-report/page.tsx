@@ -224,7 +224,7 @@
 
 //         {/* Footer Note */}
 //         <p className="text-center text-xs text-gray-500 mt-6 px-4">
-//           Your credit score won't be affected by checking your own report. 
+//           Your credit score won't be affected by checking your own report.
 //           We never share your data with third parties.
 //         </p>
 //       </div>
@@ -257,26 +257,26 @@
 //     mobile: "",
 //     email: "",
 //   })
-  
+
 //   const [isLoading, setIsLoading] = useState(false)
 //   const [score, setScore] = useState<number | null>(null)
 
 //   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
 //     const { name, value } = e.target
-    
+
 //     setFormData((prev) => ({ ...prev, [name]: value }))
 //   }
 
 //   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
 //     e.preventDefault()
 //     setIsLoading(true)
-    
+
 //     // Simulate API call
 //     await new Promise((resolve) => setTimeout(resolve, 1500))
 
 //     // Demo: random score between 300–900
 //     const randomScore = Math.floor(Math.random() * (900 - 300 + 1)) + 300
-    
+
 //     setScore(randomScore)
 
 //     setIsLoading(false)
@@ -284,7 +284,7 @@
 
 //   const downloadPDF = () => {
 //     const doc = new jsPDF()
-    
+
 //     doc.setFontSize(18)
 //     doc.text("CIBIL Report", 20, 20)
 
@@ -409,14 +409,14 @@
 
 import { useState, type ChangeEvent, type FormEvent } from "react"
 
-import jsPDF from "jspdf"
+// import jsPDF from "jspdf"
 
 interface FormData {
   first_name: string
   last_name: string
   dob: string
   pan: string
-  mobile: string
+  phone: string
   email: string
   street_address: string
   city: string
@@ -427,42 +427,42 @@ interface FormData {
 
 // Region codes constant
 const REGION_CODES = [
-  { code: 1, name: "Jammu & Kashmir" },
-  { code: 2, name: "Himachal Pradesh" },
-  { code: 3, name: "Punjab" },
-  { code: 4, name: "Chandigarh" },
-  { code: 5, name: "Uttarakhand" },
-  { code: 6, name: "Haryana" },
-  { code: 7, name: "Delhi" },
-  { code: 8, name: "Rajasthan" },
-  { code: 9, name: "Uttar Pradesh" },
-  { code: 10, name: "Bihar" },
-  { code: 11, name: "Sikkim" },
-  { code: 12, name: "Arunachal Pradesh" },
-  { code: 13, name: "Nagaland" },
-  { code: 14, name: "Manipur" },
-  { code: 15, name: "Mizoram" },
-  { code: 16, name: "Tripura" },
-  { code: 17, name: "Meghalaya" },
-  { code: 18, name: "Assam" },
-  { code: 19, name: "West Bengal" },
-  { code: 20, name: "Jharkhand" },
-  { code: 21, name: "Odisha" },
-  { code: 22, name: "Chhattisgarh" },
-  { code: 23, name: "Madhya Pradesh" },
-  { code: 24, name: "Gujarat" },
-  { code: 25, name: "Daman & Diu" },
-  { code: 26, name: "Dadra & Nagar Haveli" },
-  { code: 27, name: "Maharashtra" },
-  { code: 28, name: "Andhra Pradesh" },
-  { code: 29, name: "Karnataka" },
-  { code: 30, name: "Goa" },
-  { code: 31, name: "Lakshadweep" },
-  { code: 32, name: "Kerala" },
-  { code: 33, name: "Tamil Nadu" },
-  { code: 34, name: "Puducherry" },
-  { code: 35, name: "Andaman & Nicobar Islands" },
-  { code: 36, name: "Telangana" },
+  { code: "01", name: "Jammu & Kashmir" },
+  { code: "02", name: "Himachal Pradesh" },
+  { code: "03", name: "Punjab" },
+  { code: "04", name: "Chandigarh" },
+  { code: "05", name: "Uttarakhand" },
+  { code: "06", name: "Haryana" },
+  { code: "07", name: "Delhi" },
+  { code: "08", name: "Rajasthan" },
+  { code: "09", name: "Uttar Pradesh" },
+  { code: "10", name: "Bihar" },
+  { code: "11", name: "Sikkim" },
+  { code: "12", name: "Arunachal Pradesh" },
+  { code: "13", name: "Nagaland" },
+  { code: "14", name: "Manipur" },
+  { code: "15", name: "Mizoram" },
+  { code: "16", name: "Tripura" },
+  { code: "17", name: "Meghalaya" },
+  { code: "18", name: "Assam" },
+  { code: "19", name: "West Bengal" },
+  { code: "20", name: "Jharkhand" },
+  { code: "21", name: "Odisha" },
+  { code: "22", name: "Chhattisgarh" },
+  { code: "23", name: "Madhya Pradesh" },
+  { code: "24", name: "Gujarat" },
+  { code: "25", name: "Daman & Diu" },
+  { code: "26", name: "Dadra & Nagar Haveli" },
+  { code: "27", name: "Maharashtra" },
+  { code: "28", name: "Andhra Pradesh" },
+  { code: "29", name: "Karnataka" },
+  { code: "30", name: "Goa" },
+  { code: "31", name: "Lakshadweep" },
+  { code: "32", name: "Kerala" },
+  { code: "33", name: "Tamil Nadu" },
+  { code: "34", name: "Puducherry" },
+  { code: "35", name: "Andaman & Nicobar Islands" },
+  { code: "36", name: "Telangana" },
 ]
 
 const CibilReportPage = () => {
@@ -471,7 +471,7 @@ const CibilReportPage = () => {
     last_name: "",
     dob: "",
     pan: "",
-    mobile: "",
+    phone: "",
     email: "",
     street_address: "",
     city: "",
@@ -484,7 +484,7 @@ const CibilReportPage = () => {
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    
+
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
@@ -500,7 +500,7 @@ const CibilReportPage = () => {
     })
 
     const data = await res.json()
-    
+
     console.log("CIBIL API Response:", data)
 
     // Extract report URL if available
@@ -509,32 +509,32 @@ const CibilReportPage = () => {
     setIsLoading(false)
   }
 
-  const downloadPDF = () => {
-    const doc = new jsPDF()
-    
-    doc.setFontSize(18)
-    doc.text("CIBIL Report", 20, 20)
+  // const downloadPDF = () => {
+  //   const doc = new jsPDF()
 
-    doc.setFontSize(12)
-    doc.text(`Name: ${formData.first_name} ${formData.last_name}`, 20, 40)
-    doc.text(`DOB: ${formData.dob}`, 20, 50)
-    doc.text(`PAN: ${formData.pan}`, 20, 60)
-    doc.text(`Mobile: ${formData.mobile}`, 20, 70)
-    doc.text(`Email: ${formData.email}`, 20, 80)
-    doc.text(`Address: ${formData.street_address}, ${formData.city}`, 20, 90)
-    doc.text(`Postal Code: ${formData.postal_code}`, 20, 100)
-    doc.text(`Region: ${formData.region}`, 20, 110)
+  //   doc.setFontSize(18)
+  //   doc.text("CIBIL Report", 20, 20)
 
-    if (reportUrl) {
-      doc.text(`Report URL: ${reportUrl}`, 20, 130)
-    }
+  //   doc.setFontSize(12)
+  //   doc.text(`Name: ${formData.first_name} ${formData.last_name}`, 20, 40)
+  //   doc.text(`DOB: ${formData.dob}`, 20, 50)
+  //   doc.text(`PAN: ${formData.pan}`, 20, 60)
+  //   doc.text(`Phone: ${formData.phone}`, 20, 70)
+  //   doc.text(`Email: ${formData.email}`, 20, 80)
+  //   doc.text(`Address: ${formData.street_address}, ${formData.city}`, 20, 90)
+  //   doc.text(`Postal Code: ${formData.postal_code}`, 20, 100)
+  //   doc.text(`Region: ${formData.region}`, 20, 110)
 
-    doc.save("CIBIL_Report.pdf")
-  }
+  //   if (reportUrl) {
+  //     doc.text(`Report URL: ${reportUrl}`, 20, 130)
+  //   }
+
+  //   doc.save("CIBIL_Report.pdf")
+  // }
 
   const handleRegionChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target
-    
+
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
@@ -549,7 +549,7 @@ const CibilReportPage = () => {
               <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} placeholder="Last Name" required className="w-full border rounded px-3 py-2" />
               <input type="date" name="dob" value={formData.dob} onChange={handleChange} required className="w-full border rounded px-3 py-2" />
               <input type="text" name="pan" value={formData.pan} onChange={handleChange} placeholder="PAN Number" required className="w-full border rounded px-3 py-2 uppercase" />
-              <input type="tel" name="mobile" value={formData.mobile} onChange={handleChange} placeholder="Mobile Number" required className="w-full border rounded px-3 py-2" />
+              <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="Phone Number" required className="w-full border rounded px-3 py-2" />
               <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" required className="w-full border rounded px-3 py-2" />
               <input type="text" name="street_address" value={formData.street_address} onChange={handleChange} placeholder="Street Address" required className="w-full border rounded px-3 py-2" />
               <input type="text" name="city" value={formData.city} onChange={handleChange} placeholder="City" required className="w-full border rounded px-3 py-2" />
@@ -573,14 +573,11 @@ const CibilReportPage = () => {
         {reportUrl && (
           <div className="bg-white rounded-2xl shadow-xl p-6 text-center">
             <h2 className="text-xl font-bold mb-2">CIBIL Report Generated</h2>
-            <p className="text-gray-600 mb-6">Your report is ready. Click below to view or download.</p>
+            <p className="text-gray-600 mb-6">Your report is ready. Click below to view.</p>
             <div className="flex justify-center gap-4">
               <a href={reportUrl} target="_blank" rel="noopener noreferrer" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
                 View Report
               </a>
-              <button onClick={downloadPDF} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
-                Download PDF
-              </button>
               <button onClick={() => setReportUrl(null)} className="bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200 transition">
                 Check Again
               </button>

@@ -80,7 +80,7 @@ const checkUserExists = async (userId: string, isSSC?: boolean, isStudent?: bool
   } catch (error) {
 
     console.error("Error checking user existence:", error);
-    
+
     return false;
 
   }
@@ -120,7 +120,7 @@ export default withAuth(
     const guestRoutes = ['login', 'register', 'forgot-password']
 
     // Shared routes (Routes that can be accessed by both guest and logged in users)
-    const sharedRoutes = ['shared-route']
+    const sharedRoutes = ['shared-route', 'privacy-policy', 'terms']
 
 
     const splittedPathname=pathname.split("/")
@@ -151,9 +151,18 @@ export default withAuth(
 
     // Private routes (All routes except guest and shared routes that can only be accessed by logged in users)
     const privateRoute = ![...guestRoutes, ...sharedRoutes].some(route => pathname.endsWith(route))
+    const sharedRoute = sharedRoutes.some(route => pathname.endsWith(route))
 
     if (pathname.startsWith('/cibil-report')) {
       return NextResponse.next()
+    }
+
+    if (pathname.startsWith('/front-pages/')) {
+      return NextResponse.next()
+    }
+
+    if (sharedRoute) {
+      return isUrlMissingLocale(pathname) ? localizedRedirect(pathname, locale, request) : NextResponse.next()
     }
 
     // If the user is not logged in and is trying to access a private route, redirect to the login page

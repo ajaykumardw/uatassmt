@@ -103,6 +103,7 @@ type BatchesTypeWithAction = batches & {
   scheme: schemes
   sub_scheme: schemes
   students?: students[]
+  total_students?: number
   assessor: UsersType
 
   // role: role
@@ -385,12 +386,12 @@ const CompletedBatchesListTable = ({ tableData, updateBatchList }: { tableData?:
       columnHelper.accessor('students', {
         header: 'Students',
         cell: ({ row }) => {
-          if(row.original.students?.length && row.original.students?.length > 0){
+          if(row.original.total_students && row.original.total_students > 0){
             return (
               <Button
                 variant='tonal'
                 size='small'
-                startIcon={row.original.students?.length}
+                startIcon={row.original.total_students}
 
                 // onClick={() => {
                 //   localStorage.setItem("ssc_id", '1');

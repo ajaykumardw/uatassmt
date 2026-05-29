@@ -34,7 +34,7 @@ const RootLayout = ({ children, params }: ChildrenType & { params: { lang: Local
   const direction = i18n.langDirection[params.lang]
 
   return (
-    <html id='__next' lang={params.lang} dir={direction}>
+    <html id='__next' lang={params.lang} dir={direction} suppressHydrationWarning>
       <body className='flex is-full min-bs-full flex-auto flex-col'>
         {children}
       </body>

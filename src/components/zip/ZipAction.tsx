@@ -8,6 +8,7 @@ import { toast } from 'react-toastify'
 
 import DownloadEvidence from './DownloadEvidence'
 import type { FolderKey } from '@/configs/customDataConfig'
+import { getFiles } from '@/views/batches/completed/actions'
 
 type JobType = {
   id: number
@@ -19,7 +20,25 @@ type JobType = {
 const ZipAction = ({ batchId }: { batchId: number }) => {
   const [job, setJob] = useState<JobType | null>(null)
   const [open, setOpen] = useState(false)
+  const [files, setFiles] = useState<any>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    if (open) {
+
+      const fetchFiles = async () => {
+
+        const res = await getFiles(batchId)
+
+        console.log("Files for batch", batchId, res)
+
+        setFiles(res?.files || {});
+      }
+
+      fetchFiles()
+    }
+
+  }, [open])
 
   // 🔁 polling
   const startPolling = (jobId: number) => {
@@ -218,6 +237,7 @@ const ZipAction = ({ batchId }: { batchId: number }) => {
         open={open}
         onClose={() => setOpen(false)}
         onSubmit={handleGenerate}
+        files={files}
       />
     </div>
   )

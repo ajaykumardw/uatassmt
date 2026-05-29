@@ -46,3 +46,38 @@ export async function changeHardCopyStatus(
   }
 
 }
+
+export async function getFiles(batchId: number) {
+  const inspectionMedia = await prisma.inspection_media.findMany({
+    where: {
+      batch_id: batchId,
+    },
+    include: {
+      category: {
+        select: {
+          category_name: true,
+        },
+      },
+    },
+  });
+
+  const result: Record<string, { count: number }> = {};
+
+  for (const media of inspectionMedia) {
+    const categoryName =
+      media.category?.category_name || "Uncategorized";
+
+    if (!result[categoryName]) {
+      result[categoryName] = {
+        count: 0,
+      };
+    }
+
+    result[categoryName].count += 1;
+  }
+
+  return {
+    success: true,
+    files: result,
+  };
+}

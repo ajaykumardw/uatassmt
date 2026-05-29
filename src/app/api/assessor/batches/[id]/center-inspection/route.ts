@@ -198,8 +198,10 @@ export async function POST(
 
     // allowed keys
     const allowedKeys = [
+      "building_photo",
       "building_photo_outside",
       "selfie_with_center",
+      "selfie_with_center_board",
       "selfie_with_center_board_evening",
       "center_video",
       "equipment_photo",

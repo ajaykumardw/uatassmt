@@ -438,7 +438,9 @@ async function collectTheoryFiles(
 ) {
   const allMedia = await prisma.media_files.findMany({
     where: {
-      type: "theory",
+
+      // type: "theory",
+
       OR: [
         { candidate: { batch_id: batchId } },
         { group: { batch_id: batchId, group_type: "theory" } }
@@ -564,7 +566,9 @@ async function collectPracticalFiles(
 ) {
   const allMedia = await prisma.media_files.findMany({
     where: {
-      type: "practical",
+
+      // type: "practical",
+
       OR: [
         { candidate: { batch_id: batchId } },
         { group: { batch_id: batchId, group_type: "practical" } }
@@ -627,7 +631,9 @@ async function collectVivaFiles(
 ) {
   const allMedia = await prisma.media_files.findMany({
     where: {
-      type: "viva",
+
+      // type: "viva",
+
       OR: [
         { candidate: { batch_id: batchId } },
         { group: { batch_id: batchId, group_type: "viva" } }

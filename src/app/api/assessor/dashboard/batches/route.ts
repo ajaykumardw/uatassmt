@@ -201,6 +201,10 @@ export async function GET(req: NextRequest) {
                 }
             },
             photo_limits: {
+                selfie_with_center: {
+                    min: 1,
+                    max: 1
+                },
                 selfie_with_center_board: {
                     min: 1,
                     max: 1

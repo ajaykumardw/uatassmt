@@ -4,7 +4,7 @@ const cache = new Map();
 
 export async function POST(request: Request) {
   try {
-    
+
     const body = await request.json();
     const key = `${body.pan}`;
 
@@ -24,10 +24,10 @@ export async function POST(request: Request) {
 
     const payload = {
         ...body,
-        
+
         token: "0RpOs49PrgG2HGzzp8V5So5dAXerrW",
         first_name: body.first_name,
-        last_name: "Kumar",
+        last_name: body.last_name,
         id_type: "TaxId",
         id_number: body.pan,
         dob: body.dob,
@@ -36,8 +36,8 @@ export async function POST(request: Request) {
         email: body.email,
         street_address: body.street_address || "Jalandhar Cantt",
         city: body.city || "Jalandhar",
-        postal_code: body.postal_code || 144005,
-        region: body.region || 28,
+        postal_code: Number(body.postal_code) || 144005,
+        region: body.region || "28",
         address_type: 1,
         legal_copy_status: "Accept",
         user_consent_data_share: true

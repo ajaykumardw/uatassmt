@@ -2,7 +2,7 @@ import { type FormEvent, useState } from "react";
 
 import Grid from "@mui/material/Grid";
 
-import { Button, Checkbox, Dialog, DialogContent, DialogTitle, FormControlLabel } from "@mui/material";
+import { Button, Checkbox, Chip, Dialog, DialogContent, DialogTitle, FormControlLabel } from "@mui/material";
 
 import { type FolderKey, folders } from "@/configs/customDataConfig";
 
@@ -10,10 +10,19 @@ import DialogCloseButton from "../dialogs/DialogCloseButton";
 
 // import { toast } from "react-toastify";
 
-const DownloadEvidence = ({ open, onClose, onSubmit }: { open: boolean; onClose: () => void, onSubmit: (folders: FolderKey[]) => void }) => {
+
+const DownloadEvidence = ({ open, onClose, onSubmit, files }: { open: boolean; onClose: () => void, onSubmit: (folders: FolderKey[]) => void, files: Record<string, { count: number }> }) => {
   const [selectedFolders, setSelectedFolders] = useState<FolderKey[]>(folders.filter(folder => folder.status === 1).map(folder => folder.id));
   const [intermediateCheckbox, setIntermediateCheckbox] = useState<boolean>(false);
-  
+
+  const getCount = (folderId: string) => {
+    // const folder = folders.find(f => f.id === folderId);
+
+    // if (!folder) return 0;
+
+    return files?.[folderId]?.count || 0;
+  };
+
   // const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // const pollJob = (jobId: number, batchId: number) => {
@@ -172,7 +181,7 @@ const DownloadEvidence = ({ open, onClose, onSubmit }: { open: boolean; onClose:
                   control={
                     <Checkbox disabled={folder.status === 0} checked={selectedFolders.includes(folder.id)} onChange={() => handleFolderClick(folder.id)} />
                   }
-                  label={folder.name}
+                  label={<>{folder.name} ({getCount(folder.id)}) <Chip label={getCount(folder.id)} size="small" /></>}
                 />
               </Grid>
             ))}
