@@ -277,18 +277,18 @@ const generateAttendancePdf = async (batch: any) => {
     // doc.addImage(leftLogo, "PNG", 5, topY, 22, 14);
 
     if (tpLogo) {
-      doc.addImage(tpLogo, "JPEG", 5, topY, imageSize.width, 0);
+      doc.addImage(tpLogo, "JPEG", 5, topY, 0, imageSize.height);
     }
 
     if (sscLogo) {
-      doc.addImage(sscLogo, "JPEG", imageSize.width + 5, topY, imageSize.width, 0);
+      doc.addImage(sscLogo, "JPEG", imageSize.width + 5, topY, 0, imageSize.height);
     }
 
     // Right Logo
     // doc.addImage(rightLogo, "PNG", 183, topY, 22, 14);
 
     if (agencyLogo) {
-      doc.addImage(agencyLogo, "JPEG", 183, topY, imageSize.width, 0);
+      doc.addImage(agencyLogo, "JPEG", 183, topY, 0, imageSize.height);
     }
 
     // // Placeholder Box (remove after real logo)
@@ -299,7 +299,7 @@ const generateAttendancePdf = async (batch: any) => {
     doc.setFontSize(11);
 
     doc.text(
-      batch?.agency?.company_name || "",
+      batch?.agency?.company_name.toUpperCase() || "",
       pageWidth / 2,
       11,
       { align: "center" }
