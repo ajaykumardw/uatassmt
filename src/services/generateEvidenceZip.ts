@@ -1,6 +1,10 @@
-import { getBatchCenterInspectionFilePath, getBatchGroupMediaFilePath, getBatchIndividualCandidateMediaFilePath, getBatchIndividualCandidateTheoryCapturedFilePath } from "@/configs/customDataConfig";
+import fs from "fs";
 
 import prisma from "@/libs/prisma";
+
+import { storageFolders, getBatchCenterInspectionFilePath, getBatchGroupMediaFilePath, getBatchIndividualCandidateMediaFilePath, getBatchIndividualCandidateTheoryCapturedFilePath } from "@/configs/customDataConfig";
+
+import { generateCandidateAadhaarPdf } from "./generateCandidateAadhaarPdf";
 
 // import path from "path";
 
@@ -73,6 +77,24 @@ export async function generateEvidenceZip(
 
   }
 
+  if (selectedFolders.includes("assessor_feedback")) {
+
+    tasks.push(
+
+      collectInspectionFiles(batchId, files, selectedFolders)
+    );
+
+  }
+
+  if (selectedFolders.includes("student_image_and_aadhaar")) {
+
+    tasks.push(
+
+      collectCandidateAadhaarFiles(batchId, files)
+
+    );
+
+  }
 
 
   /* Theory Evidence */
@@ -688,4 +710,75 @@ async function collectVivaFiles(
   }).filter(Boolean) as EvidenceFile[];
 
   files.push(...mappedFiles);
+}
+
+export async function collectAssessorFeedbackFile(
+  batchId: number,
+  files: EvidenceFile[]
+) {
+
+
+  const filePath = `${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.agency}/${storageFolders.batches}/${batchId.toString()}/assessor_feedback/assessor-feedback.pdf`;
+
+  if (!fs.existsSync(filePath)) {
+
+    return;
+  }
+
+  files.push({
+    fullPath: filePath,
+    zipPath: `assessor_feedback/assessor-feedback.pdf`
+  })
+}
+
+export async function collectCandidateAadhaarFiles(
+  batchId: number,
+  files: EvidenceFile[]
+) {
+
+  const students = await prisma.students.findMany({
+    where: {
+      batch_id: batchId
+    },
+    select: {
+      id: true,
+      candidate_id: true,
+      image: true,
+      id_front_image: true,
+      id_back_image: true,
+    }
+  });
+
+  for (const student of students) {
+
+    const holdWithAadhaar = student.image ? `${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.agency}/${storageFolders.batches}/${batchId.toString()}/${storageFolders.student}/${student.id.toString()}/images/${student.image}` : null;
+
+    if (holdWithAadhaar && fs.existsSync(holdWithAadhaar)) {
+
+      files.push({
+        fullPath: holdWithAadhaar,
+        zipPath: `candidates/${student.candidate_id}/hold_with_aadhaar/${student.image}`
+      });
+
+    }
+  }
+
+  const generatedFiles = await generateCandidateAadhaarPdf(batchId);
+
+  if (generatedFiles.length > 0) {
+
+    for (const student of students) {
+
+      const aadhaarPath = `${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.agency}/${storageFolders.batches}/${batchId.toString()}/${storageFolders.student}/${student.id.toString()}/aadhaar/${student.id_front_image}`;
+
+      if (fs.existsSync(aadhaarPath)) {
+        files.push({
+          fullPath: aadhaarPath,
+          zipPath: `candidates/${student.candidate_id}/aadhaar/${student.candidate_id}_aadhaar.pdf`
+        });
+      }
+
+    }
+  }
+
 }

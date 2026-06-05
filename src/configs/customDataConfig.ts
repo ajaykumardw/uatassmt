@@ -222,8 +222,8 @@ export const folders = [
     status: 1 as 0 | 1
   },
   {
-    id: "assessor_signature",
-    name: "Assessor Signature",
+    id: "assessor_feedback",
+    name: "Assessor Feedback",
     status: 1 as 0 | 1
   },
   {
@@ -349,6 +349,11 @@ export const folders = [
   {
     id: "selfie_with_center_board_evening",
     name: "Selfie With Center Board Evening",
+    status: 1 as 0 | 1
+  },
+  {
+    id: "student_image_and_aadhaar",
+    name: "Student Image and Aadhaar",
     status: 1 as 0 | 1
   },
   {

@@ -2,7 +2,7 @@ import { type FormEvent, useState } from "react";
 
 import Grid from "@mui/material/Grid";
 
-import { Button, Checkbox, Chip, Dialog, DialogContent, DialogTitle, FormControlLabel } from "@mui/material";
+import { Button, Checkbox, Chip, Dialog, DialogContent, DialogTitle, DialogActions, FormControlLabel, Card, CardContent, Typography } from "@mui/material";
 
 import { type FolderKey, folders } from "@/configs/customDataConfig";
 
@@ -10,8 +10,13 @@ import DialogCloseButton from "../dialogs/DialogCloseButton";
 
 // import { toast } from "react-toastify";
 
+type FileCount = {
+  id: string;
+  name: string;
+  count: number;
+};
 
-const DownloadEvidence = ({ open, onClose, onSubmit, files }: { open: boolean; onClose: () => void, onSubmit: (folders: FolderKey[]) => void, files: Record<string, { count: number }> }) => {
+const DownloadEvidence = ({ open, onClose, onSubmit, files }: { open: boolean; onClose: () => void, onSubmit: (folders: FolderKey[]) => void, files: FileCount[] }) => {
   const [selectedFolders, setSelectedFolders] = useState<FolderKey[]>(folders.filter(folder => folder.status === 1).map(folder => folder.id));
   const [intermediateCheckbox, setIntermediateCheckbox] = useState<boolean>(false);
 
@@ -20,7 +25,7 @@ const DownloadEvidence = ({ open, onClose, onSubmit, files }: { open: boolean; o
 
     // if (!folder) return 0;
 
-    return files?.[folderId]?.count || 0;
+    return files?.find((f: FileCount) => f.id === folderId)?.count || 0;
   };
 
   // const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -142,6 +147,66 @@ const DownloadEvidence = ({ open, onClose, onSubmit, files }: { open: boolean; o
   // }
 
 
+  // return (
+  //   <Dialog
+  //     fullWidth
+  //     maxWidth='md'
+  //     open={open}
+  //     onClose={handleClose}
+  //     sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}
+  //   >
+  //     <DialogCloseButton onClick={handleClose} disableRipple>
+  //       <i className='tabler-x' />
+  //     </DialogCloseButton>
+  //     <DialogTitle>Download Evidence</DialogTitle>
+  //     <DialogContent>
+  //       <form onSubmit={handleSubmit}>
+  //         <Grid container>
+  //           <Grid item xs={12}>
+  //             <FormControlLabel
+  //               control={
+  //                 <Checkbox
+  //                   checked={selectedFolders.length === folders.length}
+  //                   indeterminate={intermediateCheckbox}
+  //                   onChange={() => {
+  //                     if (selectedFolders.length === folders.filter(folder => folder.status === 1).length) {
+  //                       setSelectedFolders([]);
+  //                     } else {
+  //                       setSelectedFolders(folders.filter(folder => folder.status === 1).map(folder => folder.id));
+  //                     }
+  //                   }}
+  //                 />
+  //               }
+  //               label="Select All"
+  //             />
+  //           </Grid>
+  //           {folders.map(folder => (
+  //             <Grid item xs={12} sm={6} key={folder.id}>
+  //               <FormControlLabel
+  //                 control={
+  //                   <Checkbox disabled={folder.status === 0} checked={selectedFolders.includes(folder.id)} onChange={() => handleFolderClick(folder.id)} />
+  //                 }
+  //                 sx={{
+  //                   width: '100%',
+  //                   '& .MuiFormControlLabel-label': {
+  //                     flexGrow: 1,
+  //                   },
+  //                 }}
+  //                 label={<div className="flex justify-between items-center gap-2">{folder.name} <Chip label={getCount(folder.id)} size="small" className="mr-3" variant="outlined" color={getCount(folder.id) > 0 ? "success" : "default"} /></div>}
+  //               />
+  //             </Grid>
+  //           ))}
+  //         </Grid>
+  //         <Grid>
+  //           <Button type="submit" variant="contained" sx={{ mt: 2 }}>
+  //             Generate
+  //           </Button>
+  //         </Grid>
+  //       </form>
+  //     </DialogContent>
+  //   </Dialog>
+  // )
+
   return (
     <Dialog
       fullWidth
@@ -153,44 +218,148 @@ const DownloadEvidence = ({ open, onClose, onSubmit, files }: { open: boolean; o
       <DialogCloseButton onClick={handleClose} disableRipple>
         <i className='tabler-x' />
       </DialogCloseButton>
-      <DialogTitle>Download Evidence</DialogTitle>
-      <DialogContent>
+
+      <DialogTitle>
+        <div className='flex items-center justify-between'>
+          <span>Download Evidence</span>
+
+          <Chip
+            color='primary'
+            label={`${selectedFolders.length} Selected`}
+          />
+        </div>
+      </DialogTitle>
+
+      <DialogContent dividers>
         <form onSubmit={handleSubmit}>
-          <Grid container>
-            <Grid item xs={12}>
+          <Card variant='outlined' className='mb-4'>
+            <CardContent className='py-3'>
               <FormControlLabel
                 control={
                   <Checkbox
-                    checked={selectedFolders.length === folders.length}
+                    checked={
+                      selectedFolders.length ===
+                      folders.filter(f => f.status === 1).length
+                    }
                     indeterminate={intermediateCheckbox}
                     onChange={() => {
-                      if (selectedFolders.length === folders.filter(folder => folder.status === 1).length) {
+                      if (
+                        selectedFolders.length ===
+                        folders.filter(f => f.status === 1).length
+                      ) {
                         setSelectedFolders([]);
                       } else {
-                        setSelectedFolders(folders.filter(folder => folder.status === 1).map(folder => folder.id));
+                        setSelectedFolders(
+                          folders
+                            .filter(f => f.status === 1)
+                            .map(f => f.id)
+                        );
                       }
                     }}
                   />
                 }
-                label="Select All"
+                label={
+                  <Typography fontWeight={600}>
+                    Select All Documents
+                  </Typography>
+                }
               />
-            </Grid>
-            {folders.map(folder => (
-              <Grid item xs={12} sm={6} key={folder.id}>
-                <FormControlLabel
-                  control={
-                    <Checkbox disabled={folder.status === 0} checked={selectedFolders.includes(folder.id)} onChange={() => handleFolderClick(folder.id)} />
-                  }
-                  label={<>{folder.name} ({getCount(folder.id)}) <Chip label={getCount(folder.id)} size="small" /></>}
-                />
-              </Grid>
-            ))}
+            </CardContent>
+          </Card>
+
+          <Grid container spacing={2}>
+            {folders.map(folder => {
+              const selected = selectedFolders.includes(folder.id);
+              const count = getCount(folder.id);
+
+              return (
+                <Grid item xs={12} sm={6} key={folder.id}>
+                  <Card
+                    variant='outlined'
+                    onClick={() => {
+                      if (folder.status === 1) {
+                        handleFolderClick(folder.id);
+                      }
+                    }}
+                    sx={{
+                      cursor:
+                        folder.status === 0
+                          ? 'not-allowed'
+                          : 'pointer',
+                      borderColor: selected
+                        ? 'primary.main'
+                        : 'divider',
+                      bgcolor: selected
+                        ? 'action.selected'
+                        : 'background.paper',
+                      opacity:
+                        folder.status === 0
+                          ? 0.5
+                          : 1,
+                      transition: 'all .2s ease',
+                      '&:hover': {
+                        borderColor: 'primary.main'
+                      }
+                    }}
+                  >
+                    <CardContent
+                      sx={{
+                        py: 2,
+                        '&:last-child': {
+                          pb: 2
+                        }
+                      }}
+                    >
+                      <div className='flex items-center justify-between'>
+                        <div className='flex items-center gap-2'>
+                          <Checkbox
+                            checked={selected}
+                            disabled={folder.status === 0}
+                          />
+
+                          <Typography variant='body2'>
+                            {folder.name}
+                          </Typography>
+                        </div>
+
+                        <Chip
+                          size='small'
+                          label={count}
+                          color={
+                            count > 0
+                              ? 'success'
+                              : 'default'
+                          }
+                          variant={
+                            count > 0
+                              ? 'filled'
+                              : 'outlined'
+                          }
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              );
+            })}
           </Grid>
-          <Grid>
-            <Button type="submit" variant="contained" sx={{ mt: 2 }}>
-              Generate
+
+          <DialogActions sx={{ mt: 4, px: 0 }}>
+            <Button
+              variant='outlined'
+              onClick={handleClose}
+            >
+              Cancel
             </Button>
-          </Grid>
+
+            <Button
+              type='submit'
+              variant='contained'
+              disabled={!selectedFolders.length}
+            >
+              Generate ZIP
+            </Button>
+          </DialogActions>
         </form>
       </DialogContent>
     </Dialog>
