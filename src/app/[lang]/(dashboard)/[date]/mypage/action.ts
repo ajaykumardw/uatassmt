@@ -153,53 +153,93 @@ export async function passCandidates(formData: FormData) {
         continue;
       }
 
-      // ---- 2. Process each listed candidate in this batch ----
+      // =====================================================================
+      // OPTIMIZATION: Batch all DB reads before processing candidates.
+      // Instead of N queries per candidate, we do 4 total queries for the batch.
+      // =====================================================================
+
+      // ---- 2a. Fetch all batch students at once (1 query vs N) ----
+      const allStudents = await prisma.students.findMany({
+        where: { batch_id: batch.id }
+      });
+
+      const studentsByCandidateId = new Map(allStudents.map(s => [s.candidate_id, s]));
+
+      // ---- 2b. Check theory exam set (fail fast for the whole batch) ----
+      const theoryExamSetId = batch.theory_exam_set_id;
+
+      if (!theoryExamSetId) {
+        for (const { rowNumber, candidateId } of group.candidates) {
+          const s = studentsByCandidateId.get(candidateId);
+
+          logs.push({
+            row: rowNumber, batch_name: batchName, candidate_id: candidateId,
+            candidate_name: s?.candidate_name,
+            status: "Failed: No theory exam set assigned to this batch"
+          });
+        }
+
+        continue;
+      }
+
+      // ---- 2c. Batch fetch exam results & questions in parallel (3 queries total) ----
+      const allStudentIds = allStudents.map(s => s.id);
+
+      const [allStudentExamResults, allExamResults, examSetQuestions] = await Promise.all([
+        prisma.student_exam_set_results.findMany({
+          where: { student_id: { in: allStudentIds }, exam_set_id: theoryExamSetId }
+        }),
+        prisma.exam_set_results.findMany({
+          where: { student_id: { in: allStudentIds }, exam_set_id: theoryExamSetId },
+          select: { id: true, student_id: true, question_id: true, student_answer: true, correct_answer: true }
+        }),
+        prisma.exam_sets_questions.findMany({
+          where: { exam_set_id: theoryExamSetId },
+          select: { question_id: true, marks: true }
+        })
+      ]);
+
+      // ---- 2d. Build in-memory lookup maps (fast, no DB) ----
+      const studentExamResultsByStudentId = new Map(allStudentExamResults.map(r => [r.student_id, r]));
+      const examResultsByStudentId = new Map<number, typeof allExamResults>();
+
+      for (const r of allExamResults) {
+        if (!examResultsByStudentId.has(r.student_id)) examResultsByStudentId.set(r.student_id, []);
+        examResultsByStudentId.get(r.student_id)!.push(r);
+      }
+
+      const marksMap = new Map(examSetQuestions.map(eq => [eq.question_id, eq.marks]));
+      const totalMarks = examSetQuestions.reduce((sum, eq) => sum + eq.marks, 0);
+
+      // Pre-built correct_answer lookup (eliminates extra query for toUpdateRecords)
+      const examResultCorrectMap = new Map(allExamResults.map(r => [r.id, r.correct_answer]));
+
+      // ---- 3. Process each listed candidate (zero per-candidate DB reads) ----
       for (const { rowNumber, candidateId, targetPercent } of group.candidates) {
         try {
-          const student = await prisma.students.findFirst({
-            where: { candidate_id: candidateId, batch_id: batch.id }
-          });
+          // In-memory lookup (zero DB queries)
+          const student = studentsByCandidateId.get(candidateId);
 
           if (!student) {
             logs.push({ row: rowNumber, batch_name: batchName, candidate_id: candidateId, status: "Failed: Candidate not found in this batch" });
             continue;
           }
 
-          const theoryExamSetId = batch.theory_exam_set_id;
-
-          if (!theoryExamSetId) {
-            logs.push({ row: rowNumber, batch_name: batchName, candidate_id: candidateId, candidate_name: student.candidate_name, status: "Failed: No theory exam set assigned to this batch" });
-            continue;
-          }
-
-          const studentExamResult = await prisma.student_exam_set_results.findUnique({
-            where: {
-              student_id_exam_set_id: { student_id: student.id, exam_set_id: theoryExamSetId }
-            }
-          });
+          // In-memory lookup (zero DB queries)
+          const studentExamResult = studentExamResultsByStudentId.get(student.id);
 
           if (!studentExamResult) {
             logs.push({ row: rowNumber, batch_name: batchName, candidate_id: candidateId, candidate_name: student.candidate_name, status: "Failed: No exam attempt found for theory exam" });
             continue;
           }
 
-          const examResults = await prisma.exam_set_results.findMany({
-            where: { student_id: student.id, exam_set_id: theoryExamSetId },
-            select: { id: true, question_id: true, student_answer: true, correct_answer: true }
-          });
+          // In-memory lookup (zero DB queries)
+          const examResults = examResultsByStudentId.get(student.id);
 
-          if (examResults.length === 0) {
+          if (!examResults || examResults.length === 0) {
             logs.push({ row: rowNumber, batch_name: batchName, candidate_id: candidateId, candidate_name: student.candidate_name, status: "Failed: No question results found" });
             continue;
           }
-
-          const examSetQuestions = await prisma.exam_sets_questions.findMany({
-            where: { exam_set_id: theoryExamSetId },
-            select: { question_id: true, marks: true }
-          });
-
-          const marksMap = new Map(examSetQuestions.map(eq => [eq.question_id, eq.marks]));
-          const totalMarks = examSetQuestions.reduce((sum, eq) => sum + eq.marks, 0);
 
           const incorrectList: Array<{ id: number; question_id: number; marks: number }> = [];
           let currentCorrectCount = 0;
@@ -415,10 +455,10 @@ export async function passCandidates(formData: FormData) {
 
           const newActualPercentage = totalMarks > 0 ? ((currentCorrectMarks + correctedMarks) / totalMarks) * 100 : 0;
 
-          const toUpdateRecords = await prisma.exam_set_results.findMany({
-            where: { id: { in: toCorrect } },
-            select: { id: true, correct_answer: true }
-          });
+          // Use pre-fetched data instead of an extra DB query
+          const toUpdateRecords = toCorrect
+            .map(id => ({ id, correct_answer: examResultCorrectMap.get(id) }))
+            .filter((r): r is { id: number; correct_answer: number } => r.correct_answer !== undefined);
 
           await prisma.$transaction(
             toUpdateRecords.map(record =>
@@ -527,7 +567,6 @@ export async function passCandidates(formData: FormData) {
 
       // Calculate average theory percentage of all students in this batch
       let avgPercent: number | null = null;
-      const theoryExamSetId = batch.theory_exam_set_id;
 
       if (theoryExamSetId && totalStudents > 0) {
         const allStudents = await prisma.students.findMany({
