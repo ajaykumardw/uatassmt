@@ -253,6 +253,7 @@
 
 // export default updateCandidateResultStatus;
 
+import { STUDENT_RESULT } from "@/configs/customDataConfig";
 import prisma from "@/libs/prisma";
 
 const updateCandidateResultStatus = async (studentId: number) => {
@@ -429,8 +430,8 @@ const updateCandidateResultStatus = async (studentId: number) => {
       practicalOk &&
       vivaOk &&
       overallPercentage >= Number(qp.overall_cutoff_marks)
-        ? "pass"
-        : "fail";
+        ? STUDENT_RESULT.PASS
+        : STUDENT_RESULT.FAIL;
 
     // 🔥 UPDATE
     await prisma.students.update({

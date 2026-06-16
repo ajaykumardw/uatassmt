@@ -63,7 +63,7 @@ import AddUsersDialog from '@/components/users/dialogs/AddUsersDialog'
 // import { formatDate } from '@/utils/formateDate'
 
 
-import { GenderMap, MenuProps, TableRowLimit } from '@/configs/customDataConfig'
+import { GenderMap, MenuProps, STUDENT_RESULT, TableRowLimit } from '@/configs/customDataConfig'
 
 import EditStudentDrawer from './EditStudentDrawer'
 import OptionMenu from '@/@core/components/option-menu'
@@ -344,7 +344,7 @@ const StudentListTable = () => {
                 Update Result
               </Button>
             ) :(
-              <Chip label={row.original.result} color={row.original.result == 'pass' ? 'success' : 'error'} className='capitalize' />
+              <Chip label={row.original.result} color={row.original.result === STUDENT_RESULT.PASS ? 'success' : 'error'} className='capitalize' />
             )}
           </Typography>
         )

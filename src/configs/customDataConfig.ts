@@ -559,3 +559,9 @@ export const folders = [
 // ] as const;
 
 export type FolderKey = typeof folders[number]["id"];
+
+export const STUDENT_RESULT = {
+  PENDING: 0,
+  PASS: 1,
+  FAIL: 2
+} as const;

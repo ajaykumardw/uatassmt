@@ -9,6 +9,7 @@ import { startOfDay, endOfDay } from "date-fns";
 import prisma from "@/libs/prisma";
 
 import { authOptions } from "@/libs/auth";
+import { STUDENT_RESULT } from "../../../../configs/customDataConfig";
 
 export const dynamic = "force-dynamic";
 
@@ -240,9 +241,9 @@ export async function GET(req: NextRequest) {
         if (student.attendance === 1) {
           assessed++;
 
-          if (student.result == "pass") {
+          if (student.result === STUDENT_RESULT.PASS) {
             pass++;
-          } else if (student.result == "fail") {
+          } else if (student.result == STUDENT_RESULT.FAIL) {
             fail++;
           }
         }

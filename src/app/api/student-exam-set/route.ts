@@ -305,6 +305,7 @@ export async function GET(req: NextRequest) {
       id: true,
       student_exam_set_results: true,
       exam_set_results: true,
+      batch_id: true,
       batch: {
         select: {
           assessment_start_datetime: true,

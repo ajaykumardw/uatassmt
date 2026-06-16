@@ -73,7 +73,7 @@ import tableStyles from '@core/styles/table.module.css'
 
 // import CustomAvatar from '@/@core/components/mui/Avatar';
 
-import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
+import { MenuProps, STUDENT_RESULT, TableRowLimit } from '@/configs/customDataConfig';
 import LogDetailDialog from './LogDetailDialog';
 import ResultSheetAction from '@/components/zip/resultSheetAction';
 import CertificateZipAction from '@/components/zip/CertficateZipAction';
@@ -995,7 +995,7 @@ const CandidateWiseResultTable = () => {
         header: 'Action',
         cell: ({ row }) => {
           const isAbsent = row.original.attendance == 0;
-          const isPass = row.original.result === "pass";
+          const isPass = row.original.result === STUDENT_RESULT.PASS;
 
           return (
             <div className="flex items-center gap-3">

@@ -30,11 +30,12 @@ const Page = () => {
     const sheet = workbook.addWorksheet("Sample");
 
     // headers
-    sheet.addRow(["batch_name", "candidate_id"]);
+    sheet.addRow(["batch_name", "candidate_id", "percentage"]);
 
     // sample rows
-    sheet.addRow(["Batch123", "CAND124"]);
-    sheet.addRow(["Batch125", "CAND126"]);
+    sheet.addRow(["Batch123", "CAND124", ""]);
+    sheet.addRow(["Batch125", "CAND126", ""]);
+    sheet.addRow(["Batch127", "CAND127", "80"]);
 
     // style header
     sheet.getRow(1).font = { bold: true };
@@ -53,7 +54,7 @@ const Page = () => {
     const a = document.createElement("a");
 
     a.href = url;
-    a.download = "bulk-candidate-id-update-sample.xlsx";
+    a.download = "bulk-candidate-pass-sample.xlsx";
     a.click();
 
     window.URL.revokeObjectURL(url);
@@ -103,7 +104,7 @@ const Page = () => {
 
       // setResponse(data);
 
-      console.log("data: ", res);
+      setResponse(res);
     } catch (error) {
       console.error(error);
 
@@ -182,42 +183,106 @@ const Page = () => {
             <LinearProgress className="w-full" />
           )}
 
-          {/* Response */}
-          {response?.logs && (
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell><b>Sr. No.</b></TableCell>
-                    <TableCell><b>Row No.</b></TableCell>
-                    <TableCell><b>Old Candidate ID</b></TableCell>
-                    <TableCell><b>New Candidate ID</b></TableCell>
-                    <TableCell><b>Status</b></TableCell>
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {response.logs.map((item: any, index: number) => (
-                    <TableRow key={index}>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell>{item.row}</TableCell>
-                      <TableCell>{item.old_id}</TableCell>
-                      <TableCell>{item.new_id}</TableCell>
-                      <TableCell
-                        style={{
-                          color: item.status.includes("Failed")
-                            ? "red"
-                            : "green",
-                          fontWeight: 500
-                        }}
-                      >
-                        {item.status}
-                      </TableCell>
+          {/* Batch Stats */}
+          {response?.batchStats && response.batchStats.length > 0 && (
+            <div className="mb-4">
+              <Typography variant="h6" className="mb-2">Batch Pass Percentage</Typography>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell><b>Batch Name</b></TableCell>
+                      <TableCell><b>Total Students</b></TableCell>
+                      <TableCell><b>Passed</b></TableCell>
+                      <TableCell><b>Avg Pass %</b></TableCell>
+                      <TableCell><b>Batch Target %</b></TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {response.batchStats.map((stat: any, index: number) => (
+                      <TableRow key={index}>
+                        <TableCell>{stat.batch_name}</TableCell>
+                        <TableCell>{stat.total_students}</TableCell>
+                        <TableCell>{stat.passed_students}</TableCell>
+                        <TableCell
+                          style={{
+                            color: stat.batch_target_percentage !== null && (stat.average_pass_percentage ?? 0) < stat.batch_target_percentage ? "red" : "green",
+                            fontWeight: 500
+                          }}
+                        >
+                          {stat.average_pass_percentage !== null ? `${(n => { const [w, d = ''] = n.toString().split('.');
+
+                            return `${w}.${(d + '00').slice(0, 2)}`; })(stat.average_pass_percentage)}%` : "-"}
+                        </TableCell>
+                        <TableCell>{stat.batch_target_percentage !== null ? `${stat.batch_target_percentage}%` : "-"}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </div>
+          )}
+
+          {/* Detailed Logs */}
+          {response?.logs && response.logs.length > 0 && (
+            <div>
+              <Typography variant="h6" className="mb-2">Candidate Logs</Typography>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell><b>Sr. No.</b></TableCell>
+                      <TableCell><b>Row No.</b></TableCell>
+                      <TableCell><b>Batch Name</b></TableCell>
+                      <TableCell><b>Candidate ID</b></TableCell>
+                      <TableCell><b>Candidate Name</b></TableCell>
+                      <TableCell><b>Target %</b></TableCell>
+                      <TableCell><b>Actual %</b></TableCell>
+                      <TableCell><b>Old Correct</b></TableCell>
+                      <TableCell><b>New Correct</b></TableCell>
+                      <TableCell><b>Old Incorrect</b></TableCell>
+                      <TableCell><b>New Incorrect</b></TableCell>
+                      <TableCell><b>Status</b></TableCell>
+                    </TableRow>
+                  </TableHead>
+
+                  <TableBody>
+                    {response.logs.map((item: any, index: number) => (
+                      <TableRow key={index}>
+                        <TableCell>{index + 1}</TableCell>
+                        <TableCell>{item.row || "-"}</TableCell>
+                        <TableCell>{item.batch_name}</TableCell>
+                        <TableCell>{item.candidate_id}</TableCell>
+                        <TableCell>{item.candidate_name || "-"}</TableCell>
+                        <TableCell>{item.target_percentage != null ? `${item.target_percentage}%` : "Default"}</TableCell>
+                        <TableCell>{item.actual_percentage != null ? `${(n => { const [w, d = ''] = n.toString().split('.');
+
+                          return `${w}.${(d + '00').slice(0, 2)}`; })(item.actual_percentage)}%` : "-"}
+                        </TableCell>
+                        <TableCell>{item.old_correct ?? "-"}</TableCell>
+                        <TableCell>{item.new_correct ?? "-"}</TableCell>
+                        <TableCell>{item.old_incorrect ?? "-"}</TableCell>
+                        <TableCell>{item.new_incorrect ?? "-"}</TableCell>
+                        <TableCell
+                          style={{
+                            color: item.status.includes("Failed") || item.status.includes("Error")
+                              ? "red"
+                              : item.status === "Success"
+                                ? "green"
+                                : item.status.includes("Auto-passed")
+                                  ? "blue"
+                                  : "orange",
+                            fontWeight: 500
+                          }}
+                        >
+                          {item.status}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </div>
           )}
         </CardContent>
       </Card>

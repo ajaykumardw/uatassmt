@@ -199,6 +199,7 @@
 import { format } from "date-fns";
 
 import prisma from "@/libs/prisma";
+import { STUDENT_RESULT } from "@/configs/customDataConfig";
 
 const safePercent = (obtained: number, total: number) => {
   if (!total || total === 0) return 0;
@@ -421,12 +422,12 @@ const updateBatchWiseCandidateResult = async (
             practicalOk &&
             vivaOk &&
             overallPercent >= Number(qp.overall_cutoff_marks)
-              ? "pass"
-              : "fail";
+              ? STUDENT_RESULT.PASS
+              : STUDENT_RESULT.FAIL;
 
           let certificate_no: string | null = null;
 
-          if (result === "pass") {
+          if (result === STUDENT_RESULT.PASS) {
 
             const uniqueNum = getUniqueThreeDigits();
             const agencyShortName = 'VISTA';

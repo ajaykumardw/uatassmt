@@ -545,8 +545,12 @@ model students {
   practical_group  student_groups?    @relation("practicalGroup", fields: [practical_group_id], references: [id])
   viva_group       student_groups?    @relation("vivaGroup", fields: [viva_group_id], references: [id])
   attendance Int? @default(0) @db.TinyInt
-  result String? @db.VarChar(20) @default("Pending")
+
+  // result String? @db.VarChar(20) @default("Pending")
+
+  result Int? @default(0) @db.TinyInt
   certificate_no String? @db.VarChar(100)
+  is_auto     Int      @default(0) @db.TinyInt
 
   student_exam_set_results student_exam_set_results[]
   exam_set_results exam_set_results[]
@@ -555,7 +559,8 @@ model students {
   captured_files student_captured_images[]
   theory_papers offline_candidate_papers[]  @relation("theory_paper")
 
-  @@index([result])
+  // @@index([result])
+  @@index([batch_id, result])
 }
 
 model offline_candidate_papers {
