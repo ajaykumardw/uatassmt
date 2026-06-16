@@ -17,12 +17,14 @@ export async function generateAssessorFeedbackPdf(
       user_type: 2
     },
     include: {
-      batch: {
-        select: {
-          id: true,
-          batch_name: true
-        }
-      },
+
+      // batch: {
+      //   select: {
+      //     id: true,
+      //     batch_name: true
+      //   }
+      // },
+      
       feedback_form: {
         include: {
           feedback_questions: {
@@ -44,9 +46,9 @@ export async function generateAssessorFeedbackPdf(
     return
   }
 
-  if (!feedbackResponse.batch) {
-    return
-  }
+  // if (!feedbackResponse.batch) {
+  //   return
+  // }
 
   const answerMap = new Map(
     feedbackResponse.feedback_response_answers.map(answer => [
