@@ -14,7 +14,7 @@ import prisma from "@/libs/prisma";
 
 import { generateCertificatesZip } from "@/services/certificate/generateCertificatePdf";
 
-import { getAgencyImagePath } from "@/configs/customDataConfig";
+import { getAgencyImagePath, STUDENT_RESULT } from "@/configs/customDataConfig";
 
 import { getFY } from "@/utils/getFY";
 
@@ -103,7 +103,7 @@ export const processCertificate = async (
           students: {
 
             where: {
-              result: "pass"
+              result: STUDENT_RESULT.PASS
             },
 
             select: {
