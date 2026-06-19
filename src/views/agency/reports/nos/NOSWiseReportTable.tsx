@@ -1,13 +1,7 @@
 'use client'
 
-import React from 'react';
-
 // React Imports
-import { useEffect, useState,
-
-  //  useMemo, Fragment
-
-   } from 'react';
+import React, { useEffect, useState, Fragment } from 'react';
 
 // MUI Imports
 import Card from '@mui/material/Card';
@@ -179,6 +173,7 @@ type nosWithPcs = nos & {
 // };
 
 type Question = {
+  id: number;
   question_type: string;
   marks: number;
   pc_questions: {
@@ -270,7 +265,7 @@ const roundMark = (value:number)=>{
 const distributeMarksByPcWeight = (
   question:any,
   obtainedMarks:number,
-  markField:"practical_marks" | "viva_marks",
+  markField:"practical_marks" | "viva_marks" | "theory_marks",
   pcStore:Record<string,number>,
   nosStore:Record<string,number>
 )=>{
@@ -325,7 +320,7 @@ const distributeMarksByPcWeight = (
 
 };
 
-const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): FinalResult => {
+const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null, examSetQuestionsMarks?: Record<number, number>): FinalResult => {
   const theoryMarks: TheoryMarksResult = {};
 
   const practicalMarks: PracticalMarksResult = {};
@@ -361,46 +356,62 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null): Final
     const grossMax = qp?.total_marks ?? 0;
     const overAllCutOff = qp?.overall_cutoff_marks ?? 0;
 
+    // Keep only the LAST entry per question (matches server-side Map behavior)
+    const theoryQuestionMap: Record<string, { isCorrect: boolean; question: any }> = {};
+
     student.exam_set_results.forEach((res) => {
-      const isCorrect = res.student_answer === res.correct_answer;
       const question = res.question;
 
-      if (question.question_type === "theory") {
-          question.pc_questions.forEach((pcQuestion) => {
-            const pcId = pcQuestion.pc.pc_id;
-            const nosId = pcQuestion.pc?.nos?.nos_id;
-            const theoryMark = parseFloat(pcQuestion.pc.theory_marks.toString());
+      if (question.question_type !== "theory") return;
 
-            if (!isNaN(theoryMark)) {
-              const earnedMark = isCorrect ? theoryMark : 0;
+      theoryQuestionMap[question.id] = {
+        isCorrect: res.student_answer === res.correct_answer,
+        question,
+      };
+    });
 
-              pcMarks[pcId] = (pcMarks[pcId] || 0) + earnedMark;
+    Object.values(theoryQuestionMap).forEach(({ isCorrect, question }) => {
+      const obtainedMarks = isCorrect ? (examSetQuestionsMarks?.[question.id] ?? question.marks ?? 0) : 0;
 
-              if (nosId) {
-                nosMarks[nosId] = (nosMarks[nosId] || 0) + earnedMark;
-              }
-            }
-          });
-
-        // question.pc_questions.forEach((pc: pc & { nos: nos }) => {
-        //   const pcId = pc.pc_id;
-        //   const nosId = pc?.nos?.nos_id;
-        //   const theoryMark = parseFloat(pc.theory_marks.toString());
-
-        //   if (!isNaN(theoryMark)) {
-        //     const earnedMark = isCorrect ? theoryMark : 0;
-
-        //     pcMarks[pcId] = (pcMarks[pcId] || 0) + earnedMark;
-
-        //     // NOS-wise total 👇
-
-        //     if (nosId) {
-        //       nosMarks[nosId] = (nosMarks[nosId] || 0) + earnedMark;
-        //     }
-        //   }
-
-        // });
+      if (obtainedMarks > 0) {
+        distributeMarksByPcWeight(
+          question,
+          obtainedMarks,
+          "theory_marks",
+          pcMarks,
+          nosMarks
+        );
       }
+
+      question.pc_questions.forEach((pcQuestion: any) => {
+        const pcId = String(pcQuestion.pc.id);
+        const nosId = pcQuestion.pc?.nos?.nos_id;
+
+        if (pcMarks[pcId] === undefined) {
+          pcMarks[pcId] = 0;
+        }
+
+        if (nosId && nosMarks[nosId] === undefined) {
+          nosMarks[nosId] = 0;
+        }
+      });
+
+      // cap each PC at its theory_marks
+      question.pc_questions.forEach((pcQuestion: any) => {
+        const pcId = String(pcQuestion.pc.id);
+        const nosId = pcQuestion.pc?.nos?.nos_id;
+        const theoryMark = Number(pcQuestion.pc.theory_marks || 0);
+
+        if (pcMarks[pcId] !== undefined && pcMarks[pcId] > theoryMark) {
+          const excess = pcMarks[pcId] - theoryMark;
+
+          pcMarks[pcId] = theoryMark;
+
+          if (nosId && nosMarks[nosId] !== undefined) {
+            nosMarks[nosId] = Math.max(0, nosMarks[nosId] - excess);
+          }
+        }
+      });
     });
 
     // PRACTICAL + VIVA
@@ -818,7 +829,13 @@ const NOSWiseReportTable = () => {
   // };
 
   // const studentPcTheoryMarks = getTheoryMarksPerStudent(batchReportData?.students || []);
-  const { theoryMarks, totalTheoryMarks, practicalMarks, totalPracticalMarks, vivaMarks, totalVivaMarks, grossTotal, absentStudents, passedStudents, failedStudents } = getTheoryMarksPerStudent(batchReportData?.students || [], batchReportData?.qualification_pack || null);
+  const examSetQuestionsMarks: Record<number, number> = {};
+
+  (batchReportData as any)?.theory_exam_set?.exam_sets_questions?.forEach((esq: any) => {
+    examSetQuestionsMarks[esq.questions.id] = esq.marks ?? esq.questions.marks ?? 0;
+  });
+
+  const { theoryMarks, totalTheoryMarks, practicalMarks, totalPracticalMarks, vivaMarks, totalVivaMarks, grossTotal, absentStudents, passedStudents, failedStudents } = getTheoryMarksPerStudent(batchReportData?.students || [], batchReportData?.qualification_pack || null, examSetQuestionsMarks);
 
   const activeExamCount =
   (batchReportData?.theory_exam_set_id ? 1 : 0) +
@@ -996,7 +1013,7 @@ const NOSWiseReportTable = () => {
                     // n?.pcs && n.pcs.length > 0 ? (
                     //   n.pcs.map((p, idx) => (
 
-                        <React.Fragment key={idx}>
+                        <Fragment key={idx}>
                           {batchReportData?.theory_exam_set_id &&
                             <td>Theory</td>
                           }
@@ -1006,7 +1023,7 @@ const NOSWiseReportTable = () => {
                           {batchReportData?.viva_exam_set_id &&
                             <td>Viva</td>
                           }
-                        </React.Fragment>
+                        </Fragment>
 
                     //   ))
                     // ) : null
@@ -1022,7 +1039,7 @@ const NOSWiseReportTable = () => {
                   batchReportData?.nos?.map((n, index) => (
                     n?.pcs && n.pcs.length > 0 ? (
                       n.pcs.map((p, idx) => (
-                        <React.Fragment key={`${index} - ${idx}`}>
+                        <Fragment key={`${index} - ${idx}`}>
                           {batchReportData?.theory_exam_set_id &&
                             <td>{p.theory_marks.toString()}</td>
                           }
@@ -1032,7 +1049,7 @@ const NOSWiseReportTable = () => {
                           {batchReportData?.viva_exam_set_id &&
                             <td>{p.viva_marks.toString()}</td>
                           }
-                        </React.Fragment>
+                        </Fragment>
                       ))
                     ) : null
                   ))
@@ -1055,7 +1072,7 @@ const NOSWiseReportTable = () => {
                     );
 
                     return (
-                      <React.Fragment key={index}>
+                      <Fragment key={index}>
                         {batchReportData?.theory_exam_set_id && (
                           <td>{totalTheory}</td>
                         )}
@@ -1065,7 +1082,7 @@ const NOSWiseReportTable = () => {
                         {batchReportData?.viva_exam_set_id && (
                           <td>{totalViva}</td>
                         )}
-                      </React.Fragment>
+                      </Fragment>
                     );
                   })
                 : null}
@@ -1092,7 +1109,7 @@ const NOSWiseReportTable = () => {
                     {batchReportData.nos.map((nos) =>
 
                       // nos.pcs.map((pc) => (
-                      //   <React.Fragment key={`${student.candidate_id}-${pc.pc_id}`}>
+                      //   <Fragment key={`${student.candidate_id}-${pc.pc_id}`}>
                       //     {batchReportData.theory_exam_set_id && (
                       //       <td>{theoryMarks[student.candidate_id]?.pcs?.[pc.pc_id] ?? 0}</td>
                       //     )}
@@ -1102,10 +1119,10 @@ const NOSWiseReportTable = () => {
                       //     {batchReportData.viva_exam_set_id && (
                       //       <td>--</td> // Replace with viva logic if needed
                       //     )}
-                      //   </React.Fragment>
+                      //   </Fragment>
                       // ))
 
-                      <React.Fragment key={`${student.candidate_id}-${nos.nos_id}`}>
+                      <Fragment key={`${student.candidate_id}-${nos.nos_id}`}>
                         {batchReportData.theory_exam_set_id && (
                           <td>{theoryMarks[student.candidate_id]?.nos?.[nos.nos_id] ?? '--'}</td>
                         )}
@@ -1115,7 +1132,7 @@ const NOSWiseReportTable = () => {
                         {batchReportData.viva_exam_set_id && (
                           <td>{vivaMarks[student.candidate_id]?.nos?.[nos.nos_id] ?? '--'}</td> // Replace with viva logic if needed
                         )}
-                      </React.Fragment>
+                      </Fragment>
                     )}
                     <td className='light-gray'>{totalTheoryMarks[student.candidate_id] ?? 0}</td>
                     {batchReportData?.practical_exam_set_id && <td className='light-gray'>{totalPracticalMarks[student.candidate_id] ?? 0}</td>}
@@ -1133,14 +1150,14 @@ const NOSWiseReportTable = () => {
                     <td className={
                       absentStudents.includes(student.candidate_id)
                             ? 'absent'             // or 'warning' if you want it highlighted
-                            : ( ( (grossTotal[student.candidate_id] ?? 0) / batchReportData.qualification_pack.total_marks ) * 100 ) >= (batchReportData?.qualification_pack?.overall_cutoff_marks ?? 0)
+                            : ((grossTotal[student.candidate_id] ?? 0) / batchReportData.qualification_pack.total_marks) * 100 >= (batchReportData?.qualification_pack?.overall_cutoff_marks ?? 0)
                               ? 'pass'
                               : 'fail'
                     }>
                       {
                         absentStudents.includes(student.candidate_id)
                           ? 'Absent'
-                          : ( ( (grossTotal[student.candidate_id] ?? 0) / batchReportData.qualification_pack.total_marks ) * 100 ) >= (batchReportData?.qualification_pack?.overall_cutoff_marks ?? 0)
+                          : ((grossTotal[student.candidate_id] ?? 0) / batchReportData.qualification_pack.total_marks) * 100 >= (batchReportData?.qualification_pack?.overall_cutoff_marks ?? 0)
                             ? 'Pass'
                             : 'Fail'
                       }

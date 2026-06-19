@@ -1,13 +1,7 @@
 'use client'
 
-import React from 'react';
-
 // React Imports
-import { useEffect, useState,
-
-  //  useMemo, Fragment
-
-   } from 'react';
+import React, { useEffect, useState, Fragment } from 'react';
 
 // MUI Imports
 import Card from '@mui/material/Card';
@@ -820,7 +814,7 @@ const PCWiseReportTable = () => {
                   batchReportData?.nos?.map((n) => (
                     n?.pcs && n.pcs.length > 0 ? (
                       n.pcs.map((p, idx) => (
-                        <React.Fragment key={idx}>
+                        <Fragment key={idx}>
                           {batchReportData?.theory_exam_set_id &&
                             <td>Theory</td>
                           }
@@ -830,7 +824,7 @@ const PCWiseReportTable = () => {
                           {batchReportData?.viva_exam_set_id &&
                             <td>Viva</td>
                           }
-                        </React.Fragment>
+                        </Fragment>
                       ))
                     ) : null
                   ))
@@ -844,7 +838,7 @@ const PCWiseReportTable = () => {
                   batchReportData?.nos?.map((n, index) => (
                     n?.pcs && n.pcs.length > 0 ? (
                       n.pcs.map((p, idx) => (
-                        <React.Fragment key={`${index} - ${idx}`}>
+                        <Fragment key={`${index} - ${idx}`}>
                           {batchReportData?.theory_exam_set_id &&
                             <td>{p.theory_marks.toString()}</td>
                           }
@@ -854,7 +848,7 @@ const PCWiseReportTable = () => {
                           {batchReportData?.viva_exam_set_id &&
                             <td>{p.viva_marks.toString()}</td>
                           }
-                        </React.Fragment>
+                        </Fragment>
                       ))
                     ) : null
                   ))
@@ -880,7 +874,7 @@ const PCWiseReportTable = () => {
                     <td>{student.candidate_name}</td>
                     {batchReportData.nos.map((nos) =>
                       nos.pcs.map((pc) => (
-                        <React.Fragment key={`${student.candidate_id}-${pc.pc_id}`}>
+                        <Fragment key={`${student.candidate_id}-${pc.pc_id}`}>
                           {batchReportData.theory_exam_set_id && (
                             <td>{theoryMarks[student.candidate_id]?.[pc.pc_id] ?? 0}</td>
                           )}
@@ -890,7 +884,7 @@ const PCWiseReportTable = () => {
                           {batchReportData.viva_exam_set_id && (
                             <td>--</td> // Replace with viva logic if needed
                           )}
-                        </React.Fragment>
+                        </Fragment>
                       ))
                     )}
 

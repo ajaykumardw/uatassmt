@@ -85,7 +85,7 @@ const schema = object(
       check(
         (value) => {
           const num = Number(value);
-          
+
           return Number.isInteger(num) && num > 0;
         },
         'Total Questions must be a valid whole number greater than 0.'
@@ -262,6 +262,11 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
     resetField("mode", {defaultValue: ""})
     setMode('');
 
+    // Clear previously selected questions when SSC changes
+    setSelectedQuestions([]);
+    setSelectedQuestion({});
+    setSumOfSelectedQuestionsMarks(0);
+
     setQPData([]);
 
     const sscId = Number(ssc);
@@ -281,6 +286,11 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
     resetField("mode", {defaultValue: ""})
 
     setMode('');
+
+    // Clear previously selected questions when QP changes
+    setSelectedQuestions([]);
+    setSelectedQuestion({});
+    setSumOfSelectedQuestionsMarks(0);
 
     const qpId = Number(qp);
 
@@ -601,6 +611,10 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
       }
     }
 
+    setSelectedQuestions([]);
+    setSelectedQuestion({});
+    setSumOfSelectedQuestionsMarks(0);
+
     setLoading(false)
     handleReset();
     handleClose();
@@ -611,6 +625,10 @@ const AddEditExamSetsDialog = ({ open, examSetId, handleClose, updateExamSetsLis
     resetField("qpId", {defaultValue: ""})
     reset();
     setExamSetData(initialData);
+
+    setSelectedQuestions([]);
+    setSelectedQuestion({});
+    setSumOfSelectedQuestionsMarks(0);
 
     setQPData([]);
 

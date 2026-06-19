@@ -1,9 +1,7 @@
 'use client'
 
-import React from 'react';
-
 // React Imports
-import { useEffect, useState,
+import React, { useEffect, useState,
 
    useMemo, Fragment
 
@@ -182,6 +180,7 @@ type nosWithPcs = nos & {
 // };
 
 type Question = {
+  id: number;
   question_type: string;
   marks: number;
 
@@ -275,7 +274,7 @@ const roundMark = (value:number)=>{
 const distributeMarksByPcWeight = (
   question:any,
   obtainedMarks:number,
-  markField:"practical_marks" | "viva_marks",
+  markField:"practical_marks" | "viva_marks" | "theory_marks",
   pcStore:Record<string,number>,
   nosStore:Record<string,number>
 )=>{
@@ -334,7 +333,8 @@ const distributeMarksByPcWeight = (
 
 const getTheoryMarksPerStudent = (
   students: Student[],
-  qp: QPType | null
+  qp: QPType | null,
+  examSetQuestionsMarks?: Record<number, number>
 ): FinalResult => {
 
   const theoryMarks: TheoryMarksResult = {};
@@ -376,42 +376,61 @@ const getTheoryMarksPerStudent = (
       qp?.overall_cutoff_marks ?? 0;
 
     // THEORY
-    student.exam_set_results.forEach((res)=>{
+    const theoryQuestionMap: Record<string, { isCorrect: boolean; question: any }> = {};
 
-      const isCorrect =
-        res.student_answer === res.correct_answer;
-
+    student.exam_set_results.forEach((res) => {
       const question = res.question;
 
-      if(question.question_type==="theory"){
+      if (question.question_type !== "theory") return;
 
-        question.pc_questions.forEach((pcQuestion:any)=>{
+      theoryQuestionMap[question.id] = {
+        isCorrect: res.student_answer === res.correct_answer,
+        question,
+      };
+    });
 
-          const pcId = pcQuestion.pc.id;
+    Object.values(theoryQuestionMap).forEach(({ isCorrect, question }) => {
+      const obtainedMarks = isCorrect ? (examSetQuestionsMarks?.[question.id] ?? question.marks ?? 0) : 0;
 
-          const nosId =
-            pcQuestion.pc?.nos?.nos_id;
-
-          const theoryMark =
-            Number(pcQuestion.pc.theory_marks || 0);
-
-          const earnedMark =
-            isCorrect ? theoryMark : 0;
-
-          pcMarks[pcId] =
-            roundMark((pcMarks[pcId] || 0) + earnedMark);
-
-          if(nosId){
-
-            nosMarks[nosId] =
-              roundMark((nosMarks[nosId] || 0) + earnedMark);
-
-          }
-
-        });
-
+      if (obtainedMarks > 0) {
+        distributeMarksByPcWeight(
+          question,
+          obtainedMarks,
+          "theory_marks",
+          pcMarks,
+          nosMarks
+        );
       }
 
+      question.pc_questions.forEach((pcQuestion: any) => {
+        const pcId = String(pcQuestion.pc.id);
+        const nosId = pcQuestion.pc?.nos?.nos_id;
+
+        if (pcMarks[pcId] === undefined) {
+          pcMarks[pcId] = 0;
+        }
+
+        if (nosId && nosMarks[nosId] === undefined) {
+          nosMarks[nosId] = 0;
+        }
+      });
+
+      // cap each PC at its theory_marks
+      question.pc_questions.forEach((pcQuestion: any) => {
+        const pcId = String(pcQuestion.pc.id);
+        const nosId = pcQuestion.pc?.nos?.nos_id;
+        const theoryMark = Number(pcQuestion.pc.theory_marks || 0);
+
+        if (pcMarks[pcId] !== undefined && pcMarks[pcId] > theoryMark) {
+          const excess = pcMarks[pcId] - theoryMark;
+
+          pcMarks[pcId] = theoryMark;
+
+          if (nosId && nosMarks[nosId] !== undefined) {
+            nosMarks[nosId] = Math.max(0, nosMarks[nosId] - excess);
+          }
+        }
+      });
     });
 
     // PRACTICAL + VIVA
@@ -832,7 +851,13 @@ const PCWiseReportTable = () => {
 
 
   // const studentPcTheoryMarks = getTheoryMarksPerStudent(batchReportData?.students || []);
-  const { theoryMarks, practicalMarks, vivaMarks, absentStudents } = getTheoryMarksPerStudent(batchReportData?.students || [], batchReportData?.qualification_pack || null);
+  const examSetQuestionsMarks: Record<number, number> = {};
+
+  (batchReportData as any)?.theory_exam_set?.exam_sets_questions?.forEach((esq: any) => {
+    examSetQuestionsMarks[esq.questions.id] = esq.marks ?? esq.questions.marks ?? 0;
+  });
+
+  const { theoryMarks, practicalMarks, vivaMarks, absentStudents } = getTheoryMarksPerStudent(batchReportData?.students || [], batchReportData?.qualification_pack || null, examSetQuestionsMarks);
 
   // Hooks
   const columns = useMemo<ColumnDef<StudentsTypeWithAction, any>[]>(

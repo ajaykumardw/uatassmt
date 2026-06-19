@@ -364,6 +364,7 @@ export async function GET(
         include: {
           exam_sets_questions: {
             select: {
+              marks: true,
               questions: {
                 select: {
                   id: true,
