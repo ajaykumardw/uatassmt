@@ -58,42 +58,60 @@ interface BundleScriptConfig {
 
 const sources: BundleScriptConfig = {
   json: [
-    // Iconify JSON file (@iconify/json is a package name, /json/ is directory where files are, then filename)
-    require.resolve('@iconify/json/json/tabler.json'),
-    require.resolve('@iconify/json/json/vscode-icons.json'),
-
-    // Custom file with only few icons
-    /* {
-      filename: require.resolve('@iconify/json/json/line-md.json'),
-      icons: ['home-twotone-alt', 'github', 'document-list', 'document-code', 'image-twotone']
-    } */
-
-    // Custom JSON file
-    // 'json/gg.json'
+    {
+      filename: require.resolve('@iconify/json/json/tabler.json'),
+      icons: [
+        'ad', 'adjustments', 'ai', 'alarm', 'align-box-bottom-center',
+        'align-center', 'align-left', 'align-right', 'alert-circle', 'alert-octagon',
+        'alert-triangle', 'aperture', 'arrow-down', 'arrow-left', 'arrow-right',
+        'arrow-up', 'atom', 'ban', 'bell', 'bold', 'book', 'book-2', 'bookmark',
+        'bookmarks', 'box', 'brand-android', 'brand-apple', 'brand-facebook',
+        'brand-facebook-filled', 'brand-github-filled', 'brand-google',
+        'brand-google-filled', 'brand-instagram', 'brand-linkedin', 'brand-paypal',
+        'brand-twitter', 'brand-twitter-filled', 'brand-windows', 'briefcase',
+        'browser-check', 'building', 'building-skyscraper', 'calculator', 'calendar',
+        'calendar-month', 'calendar-time', 'calendar-up', 'car', 'cards',
+        'certificate', 'certificate-2', 'chart-bar', 'chart-donut-2',
+        'chart-histogram', 'chart-pie', 'chart-pie-2', 'chart-ppf', 'chart-sankey',
+        'check', 'checkbox', 'checkup-list', 'checks', 'chevron-down', 'chevron-left',
+        'chevron-right', 'chevron-right-pipe', 'chevron-up', 'circle',
+        'circle-arrow-down', 'circle-arrow-up', 'circle-check', 'circle-dot',
+        'circle-filled', 'circle-off', 'circle-x', 'clock', 'clock-hour-3', 'coin',
+        'color-picker', 'copy', 'cpu', 'credit-card', 'credit-card-filled', 'crown',
+        'currency-dollar', 'database', 'device-computer-camera', 'device-desktop',
+        'device-desktop-analytics', 'device-imac-dollar', 'device-ipad-horizontal-plus',
+        'device-laptop', 'device-mobile', 'devices', 'diamond', 'diamond-filled',
+        'discount-check-filled', 'dots', 'dots-vertical', 'download', 'download-off',
+        'edit', 'external-link', 'eye', 'eye-off', 'file', 'file-analytics',
+        'file-description', 'file-dollar', 'file-info', 'file-invoice', 'file-pencil',
+        'file-plus', 'file-spreadsheet', 'file-text', 'file-upload', 'flag', 'fold',
+        'forms', 'gift', 'git-merge', 'globe', 'heart-handshake', 'heart-rate-monitor',
+        'help-circle', 'home', 'hourglass', 'hourglass-high', 'icons', 'id',
+        'info-circle', 'italic', 'key', 'language', 'layout', 'layout-board-split',
+        'layout-grid', 'layout-grid-add', 'layout-navbar', 'lifebuoy', 'line', 'link',
+        'list', 'list-check', 'list-details', 'list-search', 'loader', 'lock',
+        'lock-check', 'lock-open', 'login', 'login-2', 'logout', 'mail', 'mail-check',
+        'map-pin', 'menu-2', 'message', 'message-2', 'message-dots', 'messages',
+        'moon-stars', 'mouse', 'notification', 'oval-vertical', 'palette', 'pencil',
+        'percentage', 'phone', 'phone-call', 'photo', 'playlist-add', 'plus',
+        'point-filled', 'progress', 'rectangle', 'refresh', 'reload', 'school',
+        'search', 'search-off', 'send', 'send-2', 'server', 'setting', 'settings',
+        'settings-cog', 'shadow', 'share', 'shield-lock', 'ship', 'shopping-cart',
+        'shopping-cart-check', 'smart-home', 'square', 'square-plus', 'stack-2',
+        'star', 'star-filled', 'sun', 'table', 'table-plus', 'thumb-up',
+        'thumb-up-filled', 'ticket', 'timeline', 'toggle-left', 'trash', 'trending-up',
+        'truck', 'typography', 'underline', 'upload', 'user', 'user-cancel',
+        'user-check', 'user-circle', 'user-down', 'user-plus', 'user-search',
+        'user-shield', 'user-square', 'user-x', 'users', 'users-group', 'wallet'
+      ]
+    },
+    {
+      filename: require.resolve('@iconify/json/json/vscode-icons.json'),
+      icons: ['file-type-excel']
+    }
   ],
 
-  /* icons: [
-    'bx-basket',
-    'bi-airplane-engines',
-    'ri-anchor-line',
-    'uit-adobe-alt',
-
-    // 'fa6-regular-comment',
-    'twemoji-auto-rickshaw'
-  ], */
-
-  svg: [
-    /* {
-      dir: 'src/assets/iconify-icons/svg',
-      monotone: false,
-      prefix: 'custom'
-    } */
-    /* {
-      dir: 'src/assets/iconify-icons/emojis',
-      monotone: false,
-      prefix: 'emoji'
-    } */
-  ]
+  svg: []
 }
 
 // File to save bundle to
