@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 
 import { getBrowser } from "@/libs/puppeteerBrowser";
+import notoSansDevanagari from "@/fonts/noto-sans-devanagari-base64";
 
 const imageCache = new Map<string, string>();
 
@@ -60,17 +61,21 @@ export async function generateResultPdf(data: {
 
   const details = data.candidateDetails;
 
-  const logos = await Promise.all([
-    imageToDataUri(details?.agency_image),
-    imageToDataUri(details?.ssc_image),
-    imageToDataUri(details?.tp_image),
+  const [logos, agencySign, tcSign] = await Promise.all([
+    Promise.all([
+      imageToDataUri(details?.agency_image),
+      imageToDataUri(details?.ssc_image),
+      imageToDataUri(details?.tp_image),
+    ]),
+    imageToDataUri(details?.agency_sign),
+    imageToDataUri(details?.tc_sign),
   ]);
 
-  const html = buildHtml({ ...data, _logos: logos });
+  const html = buildHtml({ ...data, _logos: logos, _agencySign: agencySign, _tcSign: tcSign });
   const browser = await getBrowser();
   const page = await browser.newPage();
 
-  await page.setContent(html, { waitUntil: "networkidle0" });
+  await page.setContent(html, { waitUntil: "load" });
   const pdf = await page.pdf({ format: "A4", printBackground: true, margin: { top: "10mm", bottom: "10mm", left: "5mm", right: "5mm" } });
 
   await page.close();
@@ -79,7 +84,7 @@ export async function generateResultPdf(data: {
 }
 
 function buildHtml(data: any): string {
-  const { candidateDetails, logDetail, practicalReport, vivaReport, projectReport, tabValue, _logos } = data;
+  const { candidateDetails, logDetail, practicalReport, vivaReport, projectReport, tabValue, _logos, _agencySign, _tcSign } = data;
 
   const isResultSheet = tabValue === "result_sheet";
 
@@ -356,16 +361,18 @@ function buildHtml(data: any): string {
   ` : "";
 
   const footerHtml = isResultSheet ? `
-    <div style="display:flex;justify-content:space-between;margin-top:15px;">
-      <div>
+    <div style="display:flex;justify-content:space-between;gap:20px;margin-top:15px;">
+      <div style="text-align:start; max-width: 50%">
         <div>Assessment Agency Name - ${candidateDetails?.agency_name ?? ""}</div>
-        <div style="margin-top:2px">Assessment Agency's Head Name - ${candidateDetails?.agency_head_name ?? ""}</div>
+        <div style="margin-top:8px">Assessment Agency's Head Name - ${candidateDetails?.agency_head_name ?? ""}</div>
         <div style="margin-top:8px">Seal & Sign</div>
+        ${_agencySign ? `<img src="${_agencySign}" style="height:30mm;width:30mm;margin-top:0px;margin-left:40px;object-fit:contain;">` : ``}
       </div>
-      <div>
-        <div>TP Name - ${candidateDetails?.partner ?? ""}</div>
-        <div style="margin-top:2px">Center Manager's Name - ${candidateDetails?.center_manager_name ?? ""}</div>
+      <div style="max-width: 50%;">
+        <div style="text-align:start;">TP Name - ${candidateDetails?.partner ?? ""}</div>
+        <div style="margin-top:8px;text-align:start">Center Manager's Name - ${candidateDetails?.center_manager_name ?? ""}</div>
         <div style="margin-top:8px">Seal & Sign</div>
+        ${_tcSign ? `<img src="${_tcSign}" style="height:30mm;width:30mm;margin-top:0px;margin-left:40px;object-fit:contain;">` : ``}
       </div>
     </div>
   ` : "";
@@ -376,8 +383,13 @@ function buildHtml(data: any): string {
       <head>
       <meta charset="utf-8">
       <style>
-        @page { size: A4; margin: 10mm 5mm; }
-        body { font-family:Helvetica, sans-serif; font-size: 12px; padding: 0; margin: 0; }
+          @font-face {
+            font-family: 'Noto Sans Devanagari';
+            src: url(data:font/ttf;base64,${notoSansDevanagari}) format('truetype');
+            unicode-range: U+0900-097F, U+1CD0-1CFF, U+A8E0-A8FF, U+11B00-11B5F, U+200C-200D, U+20B9, U+25CC, U+A830-A839;
+          }
+          @page { size: A4; margin: 10mm 5mm; }
+        body { font-family:Helvetica, 'Noto Sans Devanagari', sans-serif; font-size: 12px; padding: 0; margin: 0; }
         table { page-break-inside: auto; }
         tr { page-break-inside: avoid; page-break-after: auto; }
         .styled {
