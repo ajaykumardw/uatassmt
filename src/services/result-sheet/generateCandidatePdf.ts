@@ -2,8 +2,11 @@ import fs from "fs/promises";
 import path from "path";
 
 import { jsPDF } from "jspdf";
+
 import autoTable from "jspdf-autotable"
+
 import { getBrowser } from "@/libs/puppeteerBrowser";
+
 import notoSansDevanagari from "@/fonts/noto-sans-devanagari-base64";
 
 // ===============================
@@ -1304,6 +1307,7 @@ function buildHtml(data: any, logos: (string | null)[], signDataUri: (string | n
   const tdL = `text-align:left`;
 
   const reportData = data?.report || [];
+
   const theoryRows = (isResultSheet ? reportData : []).map((item: any) => `
     <tr>
       <td>${item.sr_no}</td>
@@ -1667,11 +1671,14 @@ export const generateCandidatePdf = async (data: any, assets: any, type: string 
 
   const browser = await getBrowser();
   const page = await browser.newPage();
+
   await page.setContent(html, { waitUntil: "load" });
   const pdf = await page.pdf({ format: "A4", printBackground: true, margin: { top: "10mm", bottom: "10mm", left: "5mm", right: "5mm" } });
+
   await page.close();
 
   let fileName = "Result_Sheet.pdf";
+
   if (type === 'result_sheet') {
     fileName = `${candidateDetails?.candidate_id}_Result_Sheet.pdf`;
   } else if (type === 'question_wise_log') {
