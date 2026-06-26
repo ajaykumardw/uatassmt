@@ -41,6 +41,8 @@ const Examination = () => {
   const [captureImageInSeconds, setCaptureImageInSeconds] = useState(null);
   const [examSubmitted, setExamSubmitted] = useState(false);
   const [isActiveExam, setIsActiveExam] = useState(false);
+  const [holdTimer, setHoldTimer] = useState(0);
+  const [lockedQuestions, setLockedQuestions] = useState({}); // Questions locked on exam resume (browser close/open)
   const webcamRef = useRef(null);
 
 
@@ -164,6 +166,43 @@ const Examination = () => {
     setExamData(data.batch.theory_exam_set);
     setIsActiveExam(now >= start && now <= end);
     setCaptureImageInSeconds(data.batch.capture_image_in_seconds);
+
+    // sessionStorage flag = alive only during current browser tab session
+    // Tab close → flag gone → exam resume mode (lock previously answered questions)
+    // F5/refresh → flag persists → same session (all questions editable, but show previous answers)
+    const sessionKey = `exam_active_${data.batch.theory_exam_set?.id}`;
+    const isResumedExam = !sessionStorage.getItem(sessionKey);
+
+    if (data.batch.theory_exam_set?.exam_sets_questions) {
+      const prevAnswers = {};
+      const prevSelected = {};
+
+      // Always pre-populate answerData from previous session answers
+      data.batch.theory_exam_set.exam_sets_questions.forEach((q, idx) => {
+        if (q.status === 'answered' && q.student_answer != null) {
+          prevAnswers[idx] = q.student_answer;
+          prevSelected[idx] = q.student_answer;
+        }
+      });
+
+      // Only lock questions on resume (browser closed/reopened), NOT on F5/refresh
+      if (isResumedExam && Object.keys(prevAnswers).length > 0) {
+        const locked = {};
+
+        data.batch.theory_exam_set.exam_sets_questions.forEach((q, idx) => {
+          if (q.status === 'answered') {
+            locked[idx] = true;
+          }
+        });
+        setLockedQuestions(locked);
+      }
+
+      setAnswerData(prevAnswers);
+      setSelectedOption(prevSelected);
+    }
+
+    // Set flag so F5 won't trigger resume mode again
+    sessionStorage.setItem(sessionKey, '1');
   };
 
   useEffect(() => {
@@ -287,7 +326,26 @@ const Examination = () => {
       setStartTime(null);
       setStartTime(getFormattedTime());
     }
+
+    // Locked questions (resume mode) don't need hold timer — user can't change answer anyway
+    if (lockedQuestions[currentQuestionIndex]) {
+      setHoldTimer(0);
+    } else {
+      const randomHold = Math.floor(Math.random() * 6) + 10;
+
+      setHoldTimer(randomHold);
+    }
   }, [currentQuestionIndex]);
+
+  useEffect(() => {
+    if (holdTimer <= 0) return;
+
+    const intervalId = setInterval(() => {
+      setHoldTimer(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [holdTimer]);
 
   useEffect(() => {
     if (examData && visitedQuestions) {
@@ -296,104 +354,95 @@ const Examination = () => {
   }, [visitedQuestions, examData]);
 
   const submitQuestion = async (data) => {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student-question-attempt`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student-question-attempt`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json' // Assuming you're sending JSON data
       },
       body: JSON.stringify(data)
     });
+
+    return res;
   };
 
   const handleNextQuestion = async (type) => {
-    setActiveStep(prevActiveStep => prevActiveStep + 1);
-    setVisitedQuestions((prev) => ({ ...prev, [currentQuestionIndex]: currentQuestionIndex }));
+    if (holdTimer > 0) return;
 
-    if (!selectedOption[currentQuestionIndex] || selectedOption[currentQuestionIndex] == null) {
-      if (type === 'a') {
-        setMarkedQuestions(prev => {
-          if (!(currentQuestionIndex in prev)) {
-            // Add currentQuestionIndex to setNotAnsweredData if not marked already
-            if (!answerData.hasOwnProperty(currentQuestionIndex)) {
-              setNotAnsweredData(prevData => ({ ...prevData, [currentQuestionIndex]: currentQuestionIndex }));
-            }
-          }
+    const currentIdx = currentQuestionIndex;
+    const isLocked = lockedQuestions[currentIdx];
 
-          return { ...prev }; // Continue with the current state of setMarkedQuestions
-        });
+    if (!isLocked) {
+      // Only submit answer for unlocked questions
+      const endTime = getFormattedTime();
+      const submitData = [examData?.id, examData?.exam_sets_questions[currentIdx].question_id, selectedOption[currentIdx], [selectedOption[currentIdx] ? 1 : 0, startTime, endTime]];
+
+      if (!selectedOption[currentIdx] || selectedOption[currentIdx] == null) {
+        if (type === 'a' && !(currentIdx in markedQuestions) && !answerData.hasOwnProperty(currentIdx)) {
+          setNotAnsweredData(prevData => ({ ...prevData, [currentIdx]: currentIdx }));
+        }
       }
+
+      submitQuestion(submitData);
     }
 
-    const endTime = getFormattedTime();
-    const submitData = [examData?.id, examData?.exam_sets_questions[currentQuestionIndex].question_id, selectedOption[currentQuestionIndex], [selectedOption[currentQuestionIndex] ? 1 : 0 , startTime, endTime]];
-
-    // if (answerData.hasOwnProperty(currentQuestionIndex)) {
-
-      await submitQuestion(submitData);
-
-    // }
-
-    if (currentQuestionIndex < (examData?.exam_sets_questions.length || 0) - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    if (currentIdx < (examData?.exam_sets_questions.length || 0) - 1) {
+      setCurrentQuestionIndex(currentIdx + 1);
     }
+
+    setActiveStep(prevActiveStep => prevActiveStep + 1);
+    setVisitedQuestions((prev) => ({ ...prev, [currentIdx]: currentIdx }));
   };
 
   const handlePreviousQuestion = async () => {
-    setActiveStep(prevActiveStep => prevActiveStep - 1);
+    if (holdTimer > 0) return;
 
-    if (!selectedOption[currentQuestionIndex] || selectedOption[currentQuestionIndex] == null) {
-      // Check if currentQuestionIndex is not already in setMarkedQuestions
-      setMarkedQuestions(prev => {
-        if (!(currentQuestionIndex in prev)) {
-          if (!answerData.hasOwnProperty(currentQuestionIndex)) {
-            // Add currentQuestionIndex to setNotAnsweredData if not marked already
-            setNotAnsweredData(prevData => ({ ...prevData, [currentQuestionIndex]: currentQuestionIndex }));
-          }
-        }
+    const currentIdx = currentQuestionIndex;
+    const isLocked = lockedQuestions[currentIdx];
 
-        return { ...prev }; // Continue with the current state of setMarkedQuestions
-      });
-    }
-
-    // if (answerData.hasOwnProperty(currentQuestionIndex)) {
-
+    if (!isLocked) {
+      // Only submit answer for unlocked questions
       const endTime = getFormattedTime();
-      const submitData = [examData?.id, examData?.exam_sets_questions[currentQuestionIndex].question_id, selectedOption[currentQuestionIndex], [selectedOption[currentQuestionIndex] ? 1 : 0 , startTime, endTime]];
+      const submitData = [examData?.id, examData?.exam_sets_questions[currentIdx].question_id, selectedOption[currentIdx], [selectedOption[currentIdx] ? 1 : 0, startTime, endTime]];
 
-      await submitQuestion(submitData);
+      if (!selectedOption[currentIdx] || selectedOption[currentIdx] == null) {
+        if (!(currentIdx in markedQuestions) && !answerData.hasOwnProperty(currentIdx)) {
+          setNotAnsweredData(prevData => ({ ...prevData, [currentIdx]: currentIdx }));
+        }
+      }
 
-    // }
-
-    setVisitedQuestions((prev) => ({ ...prev, [currentQuestionIndex]: currentQuestionIndex }));
-
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
+      submitQuestion(submitData);
     }
+
+    setVisitedQuestions((prev) => ({ ...prev, [currentIdx]: currentIdx }));
+
+    if (currentIdx > 0) {
+      setCurrentQuestionIndex(currentIdx - 1);
+    }
+
+    setActiveStep(prevActiveStep => prevActiveStep - 1);
   };
 
   const handleJumpQuestion = async (index) => {
-    setVisitedQuestions((prev) => ({ ...prev, [currentQuestionIndex]: currentQuestionIndex }));
+    if (holdTimer > 0) return;
 
-    if (!selectedOption[currentQuestionIndex] || selectedOption[currentQuestionIndex] == null) {
-      setMarkedQuestions(prev => {
-        if (!(currentQuestionIndex in prev)) {
-          // Add currentQuestionIndex to setNotAnsweredData if not marked already
-          setNotAnsweredData(prevData => ({ ...prevData, [currentQuestionIndex]: currentQuestionIndex }));
+    const currentIdx = currentQuestionIndex;
+    const isLocked = lockedQuestions[currentIdx];
+
+    if (!isLocked) {
+      // Only submit answer for unlocked questions
+      const endTime = getFormattedTime();
+      const submitData = [examData?.id, examData?.exam_sets_questions[currentIdx].question_id, selectedOption[currentIdx], [selectedOption[currentIdx] ? 1 : 0, startTime, endTime]];
+
+      if (!selectedOption[currentIdx] || selectedOption[currentIdx] == null) {
+        if (!(currentIdx in markedQuestions) && !answerData.hasOwnProperty(currentIdx)) {
+          setNotAnsweredData(prevData => ({ ...prevData, [currentIdx]: currentIdx }));
         }
+      }
 
-        return { ...prev }; // Continue with the current state of setMarkedQuestions
-      });
+      submitQuestion(submitData);
     }
 
-    const endTime = getFormattedTime();
-    const submitData = [examData?.id, examData?.exam_sets_questions[currentQuestionIndex].question_id, selectedOption[currentQuestionIndex], [ selectedOption[currentQuestionIndex] ? 1 : 0 , startTime, endTime]];
-
-    // if (answerData.hasOwnProperty(currentQuestionIndex)) {
-
-      await submitQuestion(submitData);
-
-    // }
-
+    setVisitedQuestions((prev) => ({ ...prev, [currentIdx]: currentIdx }));
     setCurrentQuestionIndex(index);
     setActiveStep(index);
   };
@@ -434,8 +483,9 @@ const Examination = () => {
         variant={currentQuestionIndex === index ? 'tonal' : 'contained'}
         size="small"
         color={activeClass(index)}
-        endIcon={currentQuestionIndex === index ? <i className='tabler-point-filled text-primary' /> : null}
-        onClick={() => handleJumpQuestion(index)} // Set the index of the clicked question
+        disabled={holdTimer > 0}
+        endIcon={lockedQuestions[index] ? <i className='tabler-lock' /> : currentQuestionIndex === index ? <i className='tabler-point-filled text-primary' /> : null}
+        onClick={() => holdTimer > 0 ? null : handleJumpQuestion(index)} // Set the index of the clicked question
       >
         {index + 1}
       </Button>
@@ -458,6 +508,9 @@ const Examination = () => {
   };
 
   const selectAnswer = (value) => {
+    // Locked questions cannot be changed (exam resume mode)
+    if (lockedQuestions[currentQuestionIndex]) return;
+
     setSelectedOption((prev) => ({ ...prev, [currentQuestionIndex]: value }));
     setVisitedQuestions((prev) => ({ ...prev, [currentQuestionIndex]: currentQuestionIndex }));
 
@@ -479,6 +532,7 @@ const Examination = () => {
   };
 
   const handleMarkedQuestions = () => {
+    if (holdTimer > 0) return;
 
     // If an option is selected, mark the question as answered
     if (!selectedOption[currentQuestionIndex] || selectedOption[currentQuestionIndex] == null) {
@@ -717,6 +771,21 @@ const Examination = () => {
                               {question.marks} Mark
                             </Button>
                           </Grid>
+                          {holdTimer > 0 && (
+                            <Grid item xs={12}>
+                              <Typography color="warning.main" fontWeight={600}>
+                                Next question available in {holdTimer} seconds
+                              </Typography>
+                            </Grid>
+                          )}
+                          {/* Lock badge — shown when exam is resumed after browser close */}
+                          {lockedQuestions[currentQuestionIndex] && (
+                            <Grid item xs={12}>
+                              <Typography color="error" fontWeight={600}>
+                                🔒 This question was already answered in a previous session and cannot be changed.
+                              </Typography>
+                            </Grid>
+                          )}
                           <Grid item xs={12}>
                             {/* RadioGroup for displaying options */}
                             <RadioGroup
@@ -737,6 +806,7 @@ const Examination = () => {
                                       <FormControlLabel
                                         key={optionKey}
                                         value={index + 1} // Use index to set the value for the option
+                                        disabled={lockedQuestions[currentQuestionIndex]} // Locked = can't change answer
 
                                         // onChange={onChange}
                                         control={<Radio id={`option-${question.question_id}-${index + 1}`} />}
@@ -765,8 +835,8 @@ const Examination = () => {
               <Grid container spacing={4}>
                 <Grid item>
                   <ButtonGroup variant='contained'>
-                    <Button onClick={handlePreviousQuestion} disabled={activeStep === 0}>Previous</Button>
-                    <Button onClick={() => handleNextQuestion("a")} disabled={currentQuestionIndex === (examData?.exam_sets_questions.length || 0) - 1}>
+                    <Button onClick={handlePreviousQuestion} disabled={activeStep === 0 || holdTimer > 0}>Previous</Button>
+                    <Button onClick={() => handleNextQuestion("a")} disabled={currentQuestionIndex === (examData?.exam_sets_questions.length || 0) - 1 || holdTimer > 0}>
                       Next
                     </Button>
 
@@ -777,6 +847,7 @@ const Examination = () => {
                     <Button
                       onClick={handleMarkedQuestions}
                       color="warning"
+                      disabled={holdTimer > 0}
                     >
                       Mark for review
                     </Button>

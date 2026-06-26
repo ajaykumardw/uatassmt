@@ -1568,13 +1568,13 @@ function buildHtml(data: any, logos: (string | null)[], signDataUri: (string | n
         <div>Assessment Agency Name - ${candidateDetails?.agency_name ?? ""}</div>
         <div style="margin-top:8px">Assessment Agency's Head Name - ${candidateDetails?.agency_head_name ?? ""}</div>
         <div style="margin-top:8px">Seal & Sign</div>
-        ${signDataUri[0] ? `<img src="${signDataUri[0]}" style="height:30mm;width:30mm;margin-top:0px;margin-left:40px;object-fit:contain;">` : ``}
+        ${signDataUri[0] ? `<img src="${signDataUri[0]}" style="height:30mm;width:30mm;margin-top:-22mm;margin-left:40px;object-fit:contain;">` : ``}
       </div>
       <div style="max-width: 50%;">
         <div style="text-align:start;">TP Name - ${candidateDetails?.partner ?? ""}</div>
         <div style="margin-top:8px;text-align:start">Center Manager's Name - ${candidateDetails?.center_manager_name ?? ""}</div>
         <div style="margin-top:8px">Seal & Sign</div>
-        ${signDataUri[1] ? `<img src="${signDataUri[1]}" style="height:30mm;width:30mm;margin-top:0px;margin-left:40px;object-fit:contain;">` : ``}
+        ${signDataUri[1] ? `<img src="${signDataUri[1]}" style="height:30mm;width:30mm;margin-top:-22mm;margin-left:40px;object-fit:contain;">` : ``}
       </div>
     </div>
   ` : "";

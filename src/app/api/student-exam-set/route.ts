@@ -383,7 +383,52 @@ export async function GET(req: NextRequest) {
     exam.batch.theory_exam_set.exam_sets_questions = exam.batch.theory_exam_set.exam_sets_questions.sort(() => Math.random() - 0.5);
   }
 
-  // console.log("exam set data", exam)
+  // Build attempt status map from existing exam_set_results (for question lock support)
+  const attemptStatusMap = new Map(
+    exam?.exam_set_results?.map(result => {
+      let intervals = [];
+
+      try {
+        intervals = JSON.parse(result.attempt_time_data || "[]");
+      } catch {
+        intervals = [];
+      }
+
+      const isAnswered = intervals.some((i: any) => i[0] === 1);
+      const isVisited = intervals.length > 0;
+
+      let status = "not_visited";
+
+      if (isVisited && !isAnswered) {
+        status = "visited";
+      }
+
+      if (isAnswered) {
+        status = "answered";
+      }
+
+      return [
+        result.question_id,
+        {
+          status,
+          student_answer: result.student_answer // Actual answer given by student in previous session
+        }
+      ];
+    }) || []
+  );
+
+  // Add status & student_answer to each question for frontend lock/unlock and pre-fill
+  if (exam?.batch?.theory_exam_set?.exam_sets_questions) {
+    exam.batch.theory_exam_set.exam_sets_questions = exam.batch.theory_exam_set.exam_sets_questions.map(eq => {
+      const attemptStatus = attemptStatusMap.get(eq.question_id) || { status: "not_visited", student_answer: null };
+
+      return {
+        ...eq,
+        status: attemptStatus.status,
+        student_answer: attemptStatus.student_answer // null if not answered
+      }
+    });
+  }
 
   return NextResponse.json(exam);
 }

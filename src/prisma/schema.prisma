@@ -311,8 +311,10 @@ model exam_set_results {
   created_at         DateTime? @default(now()) @db.DateTime(0)
   updated_at         DateTime? @default(now()) @db.DateTime(0)
 
-  student students @relation(fields: [student_id], references: [id])
-  question            questions  @relation("QuestionToExamSetResults", fields: [question_id], references: [id])
+  student  students   @relation(fields: [student_id], references: [id])
+  question questions  @relation("QuestionToExamSetResults", fields: [question_id], references: [id])
+
+  @@unique([student_id, question_id])
 }
 
 model student_exam_set_results {

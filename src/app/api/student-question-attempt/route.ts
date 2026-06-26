@@ -6,6 +6,8 @@ import { getServerSession } from 'next-auth';
 
 import { authOptions } from '@/libs/auth';
 
+import { DateTime } from 'luxon';
+
 import prisma from '@/libs/prisma';
 
 export async function POST(req: Request) {
@@ -31,12 +33,28 @@ export async function POST(req: Request) {
     }
   });
 
-  if(question){
+  if (question) {
 
-    let updatedTime = JSON.parse(question.attempt_time_data)
+    // Server-side hold timer check: enforce minimum 10 seconds between attempts
+    const existingTimeData = JSON.parse(question.attempt_time_data);
+
+    if (existingTimeData.length > 0) {
+      const lastEntry = existingTimeData[existingTimeData.length - 1];
+
+      if (lastEntry && lastEntry[2]) {
+        const lastEndTime = DateTime.fromFormat(lastEntry[2], 'yyyy-LL-dd HH:mm:s', { zone: 'Asia/Kolkata' });
+        const now = DateTime.now().setZone('Asia/Kolkata');
+        const diff = now.diff(lastEndTime, 'seconds').seconds;
+
+        if (diff < 10) {
+          return NextResponse.json({ error: `Please wait ${Math.ceil(10 - diff)} seconds before proceeding` }, { status: 429 });
+        }
+      }
+    }
+
+    let updatedTime = JSON.parse(question.attempt_time_data);
 
     updatedTime = formatTimeData(updatedTime);
-
     updatedTime.push(data[3]);
 
     await prisma.exam_set_results.update({
@@ -53,18 +71,45 @@ export async function POST(req: Request) {
 
   } else {
 
-    await prisma.exam_set_results.create({
-      data: {
-        exam_set_id: data[0],
-        student_id: Number(session?.user.id),
-        question_id: Number(data[1]),
-        student_answer: Number(data[2]),
-        correct_answer: Number(questionData?.answer),
-        attempt_time_data: JSON.stringify([data[3]]),
-        created_by: createdBy,
-        updated_by: createdBy,
+    // Create with race-condition guard: unique constraint at DB level prevents duplicates
+    try {
+      await prisma.exam_set_results.create({
+        data: {
+          exam_set_id: data[0],
+          student_id: Number(session?.user.id),
+          question_id: Number(data[1]),
+          student_answer: Number(data[2]),
+          correct_answer: Number(questionData?.answer),
+          attempt_time_data: JSON.stringify([data[3]]),
+          created_by: createdBy,
+          updated_by: createdBy,
+        }
+      });
+    } catch (err: any) {
+      // P2002 = unique constraint violation → concurrent request already created this row
+      if (err?.code === 'P2002') {
+        const existingRow = await prisma.exam_set_results.findFirst({
+          where: { student_id: createdBy, question_id: Number(data[1]) }
+        });
+
+        if (existingRow) {
+          let existingData = JSON.parse(existingRow.attempt_time_data);
+
+          existingData = formatTimeData(existingData);
+          existingData.push(data[3]);
+
+          await prisma.exam_set_results.update({
+            where: { id: existingRow.id },
+            data: {
+              student_answer: Number(data[2]),
+              attempt_time_data: JSON.stringify(existingData),
+            }
+          });
+        }
+      } else {
+        throw err;
       }
-    });
+    }
   }
 
   const attemptQuestionsData = await prisma.exam_set_results.findMany({

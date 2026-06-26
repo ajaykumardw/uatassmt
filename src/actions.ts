@@ -366,13 +366,13 @@ function buildHtml(data: any): string {
         <div>Assessment Agency Name - ${candidateDetails?.agency_name ?? ""}</div>
         <div style="margin-top:8px">Assessment Agency's Head Name - ${candidateDetails?.agency_head_name ?? ""}</div>
         <div style="margin-top:8px">Seal & Sign</div>
-        ${_agencySign ? `<img src="${_agencySign}" style="height:30mm;width:30mm;margin-top:0px;margin-left:40px;object-fit:contain;">` : ``}
+        ${_agencySign ? `<img src="${_agencySign}" style="height:30mm;width:30mm;margin-top:-22mm;margin-left:40px;object-fit:contain;">` : ``}
       </div>
       <div style="max-width: 50%;">
         <div style="text-align:start;">TP Name - ${candidateDetails?.partner ?? ""}</div>
         <div style="margin-top:8px;text-align:start">Center Manager's Name - ${candidateDetails?.center_manager_name ?? ""}</div>
         <div style="margin-top:8px">Seal & Sign</div>
-        ${_tcSign ? `<img src="${_tcSign}" style="height:30mm;width:30mm;margin-top:0px;margin-left:40px;object-fit:contain;">` : ``}
+        ${_tcSign ? `<img src="${_tcSign}" style="height:30mm;width:30mm;margin-top:-22mm;margin-left:40px;object-fit:contain;">` : ``}
       </div>
     </div>
   ` : "";
