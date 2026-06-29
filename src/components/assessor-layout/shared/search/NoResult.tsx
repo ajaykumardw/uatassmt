@@ -36,7 +36,7 @@ const noResultData: NoResultData[] = [
   {
     label: 'CRM',
     href: '/dashboards/crm',
-    icon: 'tabler-3d-cube-sphere'
+    icon: 'tabler-cube-3d-sphere'
   }
 ]
 
