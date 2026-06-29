@@ -361,18 +361,18 @@ function buildHtml(data: any): string {
   ` : "";
 
   const footerHtml = isResultSheet ? `
-    <div style="display:flex;justify-content:space-between;gap:20px;margin-top:15px;">
+    <div style="display:flex;justify-content:space-between;gap:20px;margin-top:15px;break-inside:avoid;page-break-inside:avoid;">
       <div style="text-align:start; max-width: 50%">
         <div>Assessment Agency Name - ${candidateDetails?.agency_name ?? ""}</div>
         <div style="margin-top:8px">Assessment Agency's Head Name - ${candidateDetails?.agency_head_name ?? ""}</div>
         <div style="margin-top:8px">Seal & Sign</div>
-        ${_agencySign ? `<img src="${_agencySign}" style="height:30mm;width:30mm;margin-top:-22mm;margin-left:40px;object-fit:contain;">` : ``}
+        ${_agencySign ? `<img src="${_agencySign}" style="height:30mm;width:30mm;margin-top:-68px;margin-left:40px;object-fit:contain;">` : ``}
       </div>
       <div style="max-width: 50%;">
         <div style="text-align:start;">TP Name - ${candidateDetails?.partner ?? ""}</div>
         <div style="margin-top:8px;text-align:start">Center Manager's Name - ${candidateDetails?.center_manager_name ?? ""}</div>
         <div style="margin-top:8px">Seal & Sign</div>
-        ${_tcSign ? `<img src="${_tcSign}" style="height:30mm;width:30mm;margin-top:-22mm;margin-left:40px;object-fit:contain;">` : ``}
+        ${_tcSign ? `<img src="${_tcSign}" style="height:30mm;width:30mm;margin-top:-68px;margin-left:40px;object-fit:contain;">` : ``}
       </div>
     </div>
   ` : "";
