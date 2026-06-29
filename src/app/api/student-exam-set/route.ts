@@ -377,10 +377,14 @@ export async function GET(req: NextRequest) {
     }
   })
 
-  // Check if the exam_set is random and shuffle the questions
+  // Shuffle question order if question_random is enabled in the exam set
+  // Each student gets the same pool of questions but in a different sequence
   if (exam?.batch?.theory_exam_set?.question_random) {
-    // Shuffle the exam_sets_questions array
-    exam.batch.theory_exam_set.exam_sets_questions = exam.batch.theory_exam_set.exam_sets_questions.sort(() => Math.random() - 0.5);
+    for (let i = exam.batch.theory_exam_set.exam_sets_questions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+
+      [exam.batch.theory_exam_set.exam_sets_questions[i], exam.batch.theory_exam_set.exam_sets_questions[j]] = [exam.batch.theory_exam_set.exam_sets_questions[j], exam.batch.theory_exam_set.exam_sets_questions[i]];
+    }
   }
 
   // Build attempt status map from existing exam_set_results (for question lock support)
@@ -418,15 +422,45 @@ export async function GET(req: NextRequest) {
   );
 
   // Add status & student_answer to each question for frontend lock/unlock and pre-fill
+  // Also shuffle options inline if option_random is enabled — builds a shuffled
+  // {id, value}[] array so the frontend displays options in random order but
+  // submits the original option ID for correct grading.
   if (exam?.batch?.theory_exam_set?.exam_sets_questions) {
-    exam.batch.theory_exam_set.exam_sets_questions = exam.batch.theory_exam_set.exam_sets_questions.map(eq => {
+    const shouldShuffleOptions = exam?.batch?.theory_exam_set?.option_random;
+
+    exam.batch.theory_exam_set.exam_sets_questions = exam.batch.theory_exam_set.exam_sets_questions.map((eq: any) => {
       const attemptStatus = attemptStatusMap.get(eq.question_id) || { status: "not_visited", student_answer: null };
 
-      return {
+      const result: any = {
         ...eq,
         status: attemptStatus.status,
         student_answer: attemptStatus.student_answer // null if not answered
+      };
+
+      // Shuffle options for this question if option_random is enabled
+      if (shouldShuffleOptions) {
+        // Collect non-null options with their original numeric IDs
+        // Uses && filter for ALL options (1-5) to match old frontend behavior
+        // where Object.keys().filter(Boolean) skips null/empty option fields
+        const options = [
+          eq.questions.option1 && { id: 1, value: eq.questions.option1 },
+          eq.questions.option2 && { id: 2, value: eq.questions.option2 },
+          eq.questions.option3 && { id: 3, value: eq.questions.option3 },
+          eq.questions.option4 && { id: 4, value: eq.questions.option4 },
+          eq.questions.option5 && { id: 5, value: eq.questions.option5 },
+        ].filter(Boolean);
+
+        // Fisher-Yates shuffle for unbiased randomness
+        for (let i = options.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+
+          [options[i], options[j]] = [options[j], options[i]];
+        }
+
+        result.shuffled_options = options;
       }
+
+      return result;
     });
   }
 

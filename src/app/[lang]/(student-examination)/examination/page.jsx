@@ -175,13 +175,32 @@ const Examination = () => {
 
     if (data.batch.theory_exam_set?.exam_sets_questions) {
       const prevAnswers = {};
-      const prevSelected = {};
 
-      // Always pre-populate answerData from previous session answers
+      // Pre-populate answer data from previous session
       data.batch.theory_exam_set.exam_sets_questions.forEach((q, idx) => {
         if (q.status === 'answered' && q.student_answer != null) {
-          prevAnswers[idx] = q.student_answer;
-          prevSelected[idx] = q.student_answer;
+          let answer = q.student_answer;
+
+          // When options are shuffled, old student_answer may be a DISPLAY POSITION
+          // (from before this shuffle code was deployed). Convert position → original option ID
+          // so the RadioGroup matches by option ID, not display position.
+          if (q.shuffled_options) {
+            const optIds = q.shuffled_options.map(o => o.id);
+
+            if (!optIds.includes(answer)) {
+              // answer is a display position → map to original option ID
+              const optKeys = Object.keys(q.questions)
+                .filter(k => k.startsWith('option') && q.questions[k]);
+
+              const optKey = optKeys[answer - 1];
+
+              if (optKey) {
+                answer = parseInt(optKey.replace('option', ''));
+              }
+            }
+          }
+
+          prevAnswers[idx] = answer;
         }
       });
 
@@ -197,8 +216,20 @@ const Examination = () => {
         setLockedQuestions(locked);
       }
 
+      // Pre-populate not-answered data from previous session (visited but no answer)
+      const prevNotAnswered = {};
+
+      data.batch.theory_exam_set.exam_sets_questions.forEach((q, idx) => {
+        if (q.status === 'visited') {
+          prevNotAnswered[idx] = idx;
+        }
+      });
+      setNotAnsweredData(prevNotAnswered);
+
       setAnswerData(prevAnswers);
-      setSelectedOption(prevSelected);
+      setSelectedOption(prevAnswers);
+
+      // Don't pre-populate visitedQuestions — notVisited is calculated from answerData + notAnsweredData instead
     }
 
     // Set flag so F5 won't trigger resume mode again
@@ -206,7 +237,9 @@ const Examination = () => {
   };
 
   useEffect(() => {
-    // Start capturing images as soon as the component mounts
+    // If capture_image_in_seconds is not set or 0, skip image capture entirely
+    if (!captureImageInSeconds) return;
+
     const interval = setInterval(() => {
       if (webcamRef.current) {
         const imageSrc = webcamRef.current.getScreenshot();
@@ -348,10 +381,15 @@ const Examination = () => {
   }, [holdTimer]);
 
   useEffect(() => {
-    if (examData && visitedQuestions) {
-      setNotVisitedQuestions(examData.exam_sets_questions.length - Object.keys(visitedQuestions).length);
+    if (examData) {
+      const total = examData.exam_sets_questions.length;
+      const answered = Object.keys(answerData).length;
+      const notAnswered = Object.keys(notAnsweredData).filter(k => !answerData.hasOwnProperty(k)).length;
+      const notVisited = total - answered - notAnswered;
+
+      setNotVisitedQuestions(notVisited >= 0 ? notVisited : 0);
     }
-  }, [visitedQuestions, examData]);
+  }, [answerData, notAnsweredData, examData]);
 
   const submitQuestion = async (data) => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student-question-attempt`, {
@@ -519,6 +557,15 @@ const Examination = () => {
       ...prev,
       [currentQuestionIndex]: value,
     }));
+
+    // Remove currentQuestionIndex from not-answered list (if it was previously visited without answer)
+    setNotAnsweredData((prev) => {
+      const newData = { ...prev };
+
+      delete newData[currentQuestionIndex];
+
+      return newData;
+    });
 
     // Remove currentQuestionIndex from marked questions, because the answer has been selected
     setMarkedQuestions((prev) => {
@@ -730,20 +777,22 @@ const Examination = () => {
               <AlertTitle>Warning</AlertTitle>
               Do Not Press Back/Refresh Button
             </Alert>
-            <Webcam
-              audio={false}
-              ref={webcamRef}
-              screenshotFormat="image/jpeg"
-              screenshotQuality={1}
-              height={100}
-              minScreenshotHeight={500}
-              mirrored={false}
-              videoConstraints={{
-                facingMode: "user",
-              }}
-              onUserMediaError={handleUserMediaError}
-              className="rounded"
-            />
+            {captureImageInSeconds > 0 && (
+              <Webcam
+                audio={false}
+                ref={webcamRef}
+                screenshotFormat="image/jpeg"
+                screenshotQuality={1}
+                height={100}
+                minScreenshotHeight={500}
+                mirrored={false}
+                videoConstraints={{
+                  facingMode: "user",
+                }}
+                onUserMediaError={handleUserMediaError}
+                className="rounded"
+              />
+            )}
           </div>
         </Grid>
         <Grid item sm={12} md={7}>
@@ -792,35 +841,31 @@ const Examination = () => {
                               value={answerData[currentQuestionIndex] || ""}
                               onChange={(e) => selectAnswer(e.target.value)}
                             >
-                              {/* Dynamically render FormControlLabel for each option */}
-                              {Object.keys(question.questions)
-                                .filter(key => key.startsWith('option') && question.questions[key]) // Filter options that exist
-                                .map((optionKey, index) => (
+                              {/*
+                                Two rendering paths:
+                                1. shuffled_options[] — backend created this when option_random=1.
+                                   Each item has {id: originalOptionNumber, value: optionText}.
+                                   Rendered in shuffled order; submits opt.id for correct grading.
+                                2. Fallback — legacy path, renders option1-option5 in key order.
+                              */}
+                              {(question.shuffled_options || Object.keys(question.questions)
+                                .filter(key => key.startsWith('option') && question.questions[key]))
+                                .map((item, idx) => {
+                                  // Determine the display value and label
+                                  const optId = item.id != null ? item.id : idx + 1;
+                                  const optLabel = item.value != null ? item.value : question.questions[item];
 
-                                  // <Controller
-                                  //   key={optionKey}
-                                  //   name={`questionAnswer[${question.question_id}][]`}
-                                  //   control={control}
-                                  //   render={({ field: { onChange } }) => (
-
-                                      <FormControlLabel
-                                        key={optionKey}
-                                        value={index + 1} // Use index to set the value for the option
-                                        disabled={lockedQuestions[currentQuestionIndex]} // Locked = can't change answer
-
-                                        // onChange={onChange}
-                                        control={<Radio id={`option-${question.question_id}-${index + 1}`} />}
-                                        name={`questionAnswer[${question.question_id}][]`}
-                                        label={question.questions[optionKey]}
-
-                                        // {...(errors.question && { error: true, helperText: errors.question.message })}
-
-                                      />
-
-                                  //   )}
-                                  // />
-
-                                ))}
+                                  return (
+                                    <FormControlLabel
+                                      key={`opt-${question.question_id}-${optId}`}
+                                      value={optId} // Original option ID — grading compares against correct_answer
+                                      disabled={lockedQuestions[currentQuestionIndex]}
+                                      control={<Radio id={`option-${question.question_id}-${optId}`} />}
+                                      name={`questionAnswer[${question.question_id}][]`}
+                                      label={optLabel}
+                                    />
+                                  );
+                                })}
                             </RadioGroup>
 
                           </Grid>
@@ -914,6 +959,7 @@ const Examination = () => {
                         <Button color='secondary' variant='contained'>{notVisitedQuestions != null ? notVisitedQuestions : 0}</Button>
                         <Typography variant='h5'>Not Visited</Typography>
                       </div>
+
                     </Grid>
                   </Grid>
                 </CardContent>

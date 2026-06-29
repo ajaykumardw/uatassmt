@@ -122,22 +122,36 @@ export async function POST(req:NextRequest){
 
     createDirectoryIfNotExist(uploadDir);
 
-    const examResult =
-      await prisma.student_exam_set_results.findFirst({
-        where:{
-          student_id:studentId
+    // Single query: fetch student with batch info + exam result in one DB call
+    const student = await prisma.students.findUnique({
+      where: { id: studentId },
+      select: {
+        batch: {
+          select: { capture_image_in_seconds: true }
         },
-        select:{
-          id:true
+        student_exam_set_results: {
+          where: { student_id: studentId },
+          select: { id: true },
+          take: 1
         }
-      });
+      }
+    });
 
-    if(!examResult){
+    if (!student?.student_exam_set_results?.length) {
       return errorResponse(
         "Exam result not found",
         404
       );
     }
+
+    if (!student.batch?.capture_image_in_seconds) {
+      return errorResponse(
+        "Image capture is not enabled for this batch",
+        403
+      );
+    }
+
+    const examResult = student.student_exam_set_results[0];
 
     const records:any = [];
 
