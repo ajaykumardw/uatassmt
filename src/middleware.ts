@@ -89,8 +89,13 @@ const checkUserExists = async (userId: string, isSSC?: boolean, isStudent?: bool
 
 const handleUserLogout = (response: NextResponse) => {
 
-  // Clear cookies manually
-  const cookies = ['next-auth.session-token', 'next-auth.csrf-token']; // Replace these with your actual cookie names
+  // Clear cookies manually (both HTTP and HTTPS variants)
+  const cookies = [
+    'next-auth.session-token',
+    'next-auth.csrf-token',
+    '__Secure-next-auth.session-token',
+    '__Host-next-auth.csrf-token',
+  ];
 
   cookies.forEach(cookie => {
     response.cookies.set(cookie, '', { maxAge: -1, path: '/' });
