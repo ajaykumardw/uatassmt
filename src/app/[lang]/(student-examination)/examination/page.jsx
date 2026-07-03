@@ -364,7 +364,7 @@ const Examination = () => {
     if (lockedQuestions[currentQuestionIndex]) {
       setHoldTimer(0);
     } else {
-      const randomHold = Math.floor(Math.random() * 6) + 10;
+      const randomHold = Math.floor(Math.random() * 6) + 5;
 
       setHoldTimer(randomHold);
     }
