@@ -12,6 +12,7 @@ import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import TablePagination from '@mui/material/TablePagination';
 import Checkbox from '@mui/material/Checkbox';
+import Tooltip from '@mui/material/Tooltip';
 
 import type { TextFieldProps } from '@mui/material/TextField';
 
@@ -59,6 +60,7 @@ import CustomTextField from '@core/components/mui/TextField'
 import tableStyles from '@core/styles/table.module.css'
 
 import AddEditVivaQuestionsDialog from '@/components/questions/dialogs/AddEditVivaQuestionsDialog';
+import TranslateQuestionDialog from '@/components/questions/dialogs/TranslateQuestionDialog';
 
 import type { QuestionsType } from '@/types/questions/questionsType';
 import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
@@ -162,6 +164,8 @@ const VivaQuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?
   const [editQuestionOpen, setEditQuestionOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [translateQuestionOpen, setTranslateQuestionOpen] = useState(false);
+  const [translateQuestionData, setTranslateQuestionData] = useState({ id: 0, question: '', option1: '', option2: '', option3: '', option4: '', option5: '', question_explanation: '' })
 
   // const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
@@ -305,6 +309,23 @@ const VivaQuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?
             <IconButton onClick={() => handleOnEditClick(row.original.id) }>
               <i className='tabler-edit text-[22px] text-textSecondary' />
             </IconButton>
+            <Tooltip title='Translate'>
+              <IconButton onClick={() => {
+                setTranslateQuestionData({
+                  id: row.original.id,
+                  question: row.original.question,
+                  option1: row.original.option1,
+                  option2: row.original.option2,
+                  option3: row.original.option3,
+                  option4: row.original.option4,
+                  option5: row.original.option5,
+                  question_explanation: row.original.question_explanation,
+                })
+                setTranslateQuestionOpen(true)
+              }}>
+                <i className='tabler-language text-[22px] text-textSecondary' />
+              </IconButton>
+            </Tooltip>
           </div>
         ),
         enableSorting: false
@@ -520,6 +541,20 @@ const VivaQuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?
       </Card>
       <AddEditVivaQuestionsDialog open={addQuestionOpen} updateQuestionsList={updateQuestionsList} handleClose={() => setAddQuestionOpen(!addQuestionOpen)} />
       <AddEditVivaQuestionsDialog open={editQuestionOpen} questionId={questionId} updateQuestionsList={updateQuestionsList} handleClose={() => setEditQuestionOpen(!editQuestionOpen)} />
+      <TranslateQuestionDialog
+        open={translateQuestionOpen}
+        questionId={translateQuestionData.id}
+        questionData={{
+          question: translateQuestionData.question,
+          option1: translateQuestionData.option1,
+          option2: translateQuestionData.option2,
+          option3: translateQuestionData.option3,
+          option4: translateQuestionData.option4,
+          option5: translateQuestionData.option5,
+          question_explanation: translateQuestionData.question_explanation,
+        }}
+        handleClose={() => setTranslateQuestionOpen(false)}
+      />
       <ConfirmDialog
         open={confirmDeleteOpen}
         setOpen={setConfirmDeleteOpen}

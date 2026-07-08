@@ -193,22 +193,44 @@ export async function GET(req: NextRequest) {
         }) || []
       );
 
-      const questions = exam?.batch?.theory_exam_set?.exam_sets_questions.map(eq => {
+      // Resolve translations based on student's language preference
+      const jwtStudentLanguageResult = exam?.student_exam_set_results?.find(
+        (result: any) => result?.exam_set_id === exam?.batch?.theory_exam_set?.id
+      );
 
+      const jwtStudentLanguageId = jwtStudentLanguageResult?.language_id || 1;
+
+      let jwtTranslationMap = new Map<number, any>();
+
+      if (jwtStudentLanguageId !== 1 && exam?.batch?.theory_exam_set?.exam_sets_questions) {
+        const questionIds = exam.batch.theory_exam_set.exam_sets_questions.map(eq => eq.question_id);
+
+        const translations = await prisma.question_translations.findMany({
+          where: {
+            question_id: { in: questionIds },
+            language_id: jwtStudentLanguageId
+          }
+        });
+
+        jwtTranslationMap = new Map(translations.map(t => [t.question_id, t]));
+      }
+
+      const questions = exam?.batch?.theory_exam_set?.exam_sets_questions.map(eq => {
           const attemptStatus = attemptStatusMap.get(eq.question_id) || { status: "not_visited" };
           const optRandom = exam?.batch.theory_exam_set?.option_random === 1;
+          const t = jwtTranslationMap.get(eq.question_id);
 
           return {
             question_id: eq.question_id,
             marks: eq.marks,
-            question: eq.questions?.question,
+            question: t?.question ?? eq.questions?.question,
             status: attemptStatus.status,
             options: [
-              { id: 1, value: eq.questions.option1},
-              { id: 2, value: eq.questions.option2},
-              eq.questions.option3 && { id: 3, value: eq.questions.option3},
-              eq.questions.option4 && { id: 4, value: eq.questions.option4},
-              eq.questions.option5 && { id: 5, value: eq.questions.option5},
+              { id: 1, value: t?.option1 ?? eq.questions.option1},
+              { id: 2, value: t?.option2 ?? eq.questions.option2},
+              eq.questions.option3 && { id: 3, value: t?.option3 ?? eq.questions.option3},
+              eq.questions.option4 && { id: 4, value: t?.option4 ?? eq.questions.option4},
+              eq.questions.option5 && { id: 5, value: t?.option5 ?? eq.questions.option5},
             ].sort(() => optRandom ? Math.random() - 0.5 : 0) // Shuffle options if option_random is 1
           }
       });
@@ -421,6 +443,29 @@ export async function GET(req: NextRequest) {
     }) || []
   );
 
+  // Resolve translations based on student's language preference
+  const studentLanguageResult = exam?.student_exam_set_results?.find(
+    (result: any) => result?.exam_set_id === exam?.batch?.theory_exam_set?.id
+  );
+
+  const studentLanguageId = studentLanguageResult?.language_id || 1;
+
+  let translationMap = new Map<number, any>();
+
+  if (studentLanguageId !== 1 && exam?.batch?.theory_exam_set?.exam_sets_questions) {
+
+    const questionIds = exam.batch.theory_exam_set.exam_sets_questions.map((eq: any) => eq.question_id);
+
+    const translations = await prisma.question_translations.findMany({
+      where: {
+        question_id: { in: questionIds },
+        language_id: studentLanguageId
+      }
+    });
+
+    translationMap = new Map(translations.map(t => [t.question_id, t]));
+  }
+
   // Add status & student_answer to each question for frontend lock/unlock and pre-fill
   // Also shuffle options inline if option_random is enabled — builds a shuffled
   // {id, value}[] array so the frontend displays options in random order but
@@ -431,26 +476,32 @@ export async function GET(req: NextRequest) {
     exam.batch.theory_exam_set.exam_sets_questions = exam.batch.theory_exam_set.exam_sets_questions.map((eq: any) => {
       const attemptStatus = attemptStatusMap.get(eq.question_id) || { status: "not_visited", student_answer: null };
 
+      const t = translationMap.get(eq.question_id);
+
       const result: any = {
         ...eq,
         status: attemptStatus.status,
-        student_answer: attemptStatus.student_answer // null if not answered
+        student_answer: attemptStatus.student_answer, // null if not answered
+        questions: t ? {
+          question: t.question ?? eq.questions.question,
+          option1: t.option1 ?? eq.questions.option1,
+          option2: t.option2 ?? eq.questions.option2,
+          option3: t.option3 ?? eq.questions.option3,
+          option4: t.option4 ?? eq.questions.option4,
+          option5: t.option5 ?? eq.questions.option5,
+        } : eq.questions
       };
 
       // Shuffle options for this question if option_random is enabled
       if (shouldShuffleOptions) {
-        // Collect non-null options with their original numeric IDs
-        // Uses && filter for ALL options (1-5) to match old frontend behavior
-        // where Object.keys().filter(Boolean) skips null/empty option fields
         const options = [
-          eq.questions.option1 && { id: 1, value: eq.questions.option1 },
-          eq.questions.option2 && { id: 2, value: eq.questions.option2 },
-          eq.questions.option3 && { id: 3, value: eq.questions.option3 },
-          eq.questions.option4 && { id: 4, value: eq.questions.option4 },
-          eq.questions.option5 && { id: 5, value: eq.questions.option5 },
+          result.questions.option1 && { id: 1, value: result.questions.option1 },
+          result.questions.option2 && { id: 2, value: result.questions.option2 },
+          result.questions.option3 && { id: 3, value: result.questions.option3 },
+          result.questions.option4 && { id: 4, value: result.questions.option4 },
+          result.questions.option5 && { id: 5, value: result.questions.option5 },
         ].filter(Boolean);
 
-        // Fisher-Yates shuffle for unbiased randomness
         for (let i = options.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
 

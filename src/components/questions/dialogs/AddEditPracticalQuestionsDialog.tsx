@@ -23,7 +23,7 @@ import type { SubmitHandler } from 'react-hook-form'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, string, trim, minLength, check, pipe, array } from "valibot"
+import { object, string, trim, minLength, check, optional, pipe, array } from "valibot"
 
 import type { InferInput } from 'valibot'
 
@@ -68,6 +68,7 @@ const initialData: AddQPDialogData = {
   selectPC: [],
   questionName: '',
   questionMarks: '',
+  language: '1',
 }
 
 
@@ -79,6 +80,7 @@ const schema = object(
     selectPC: array(string(), 'This field is required'),
     questionName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Question name must be at least 3 characters long')),
     questionMarks: pipe(string(), trim() , minLength(1, 'This field is required') , check((value) => !value || /^[1-9]\d*(\.\d+)?$/.test(value), 'Marks must be greater then 0.') ,),
+    language: optional(string()),
   }
 )
 
@@ -92,6 +94,7 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
   const [nosData, setNOSData] = useState<NOSType[]>([]);
   const [pcData, setPCData] = useState<PCType[]>([]);
   const [totalPCMarks, setTotalPCMarks] = useState<number>(0);
+  const [languages, setLanguages] = useState<{ id: number; alias: string; full_name: string }[]>([])
 
   const getSSCData = async () => {
     // Vars
@@ -164,6 +167,7 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
 
   useEffect(() => {
     getSSCData();
+    fetchLanguages();
   }, []);
 
   useEffect(() => {
@@ -172,6 +176,20 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
       getPracticalQuestionData(questionId)
     }
   }, [open, questionId])
+
+  const fetchLanguages = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/agency-languages`)
+      const json = await res.json()
+      const result = json.data
+
+      if (result) {
+        const enabled = result.enabled_language_ids || []
+
+        setLanguages((result.all_languages || []).filter((l: any) => enabled.includes(Number(l.id))))
+      }
+    } catch {}
+  }
 
   const handleSSCChange = async (ssc: string) => {
 
@@ -280,6 +298,7 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
       selectPC: practicalData?.selectPC || [],
       questionName: practicalData?.questionName || '',
       questionMarks: practicalData?.questionMarks || '',
+      language: practicalData?.language || '1',
     }
   })
 
@@ -297,6 +316,8 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
 
     setLoading(true)
 
+    const payload = { ...data, language_id: data.language ? Number(data.language) : 1 }
+
     if (questionId) {
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions/practical/${questionId}`, {
@@ -309,7 +330,7 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
 
         },
 
-        body: JSON.stringify(data)
+        body: JSON.stringify(payload)
 
       });
 
@@ -340,7 +361,7 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
 
         },
 
-        body: JSON.stringify(data)
+        body: JSON.stringify(payload)
 
       });
 
@@ -564,6 +585,26 @@ const AddEditPracticalQuestionsDialog = ({ open, questionId, handleClose, update
                     {...(errors.questionMarks && { error: true, helperText: errors.questionMarks.message })}
                     label='Marks'
                   />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                control={control}
+                name='language'
+                render={({ field }) => (
+                  <CustomTextField
+                    fullWidth
+                    select
+                    label='Language'
+                    {...field}
+                  >
+                    {languages.map((lang) => (
+                      <MenuItem key={lang.id} value={String(lang.id)}>
+                        {lang.full_name}
+                      </MenuItem>
+                    ))}
+                  </CustomTextField>
                 )}
               />
             </Grid>

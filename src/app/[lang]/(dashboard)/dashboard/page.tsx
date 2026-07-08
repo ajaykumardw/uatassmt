@@ -209,6 +209,9 @@ const Dashboard = async () => {
         <MonthlyTrendChart data={monthlyTrend} serverMode={serverMode} />
       </Grid>
       <Grid item xs={12} md={4}>
+        <GenderDistribution male={maleCount} female={femaleCount} serverMode={serverMode} />
+      </Grid>
+      <Grid item xs={12} md={5}>
         <ResultDistribution
           enrolled={totalStudents}
           assessed={assessedStudents}
@@ -217,9 +220,6 @@ const Dashboard = async () => {
           pending={pendingStudents}
           serverMode={serverMode}
         />
-      </Grid>
-      <Grid item xs={12} md={5}>
-        <GenderDistribution male={maleCount} female={femaleCount} serverMode={serverMode} />
       </Grid>
       <Grid item xs={12} md={7}>
         <OverdueBatchesCard batches={overdueList} />

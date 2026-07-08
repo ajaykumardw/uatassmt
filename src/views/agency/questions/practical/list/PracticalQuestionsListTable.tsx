@@ -12,6 +12,7 @@ import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import TablePagination from '@mui/material/TablePagination';
 import Checkbox from '@mui/material/Checkbox';
+import Tooltip from '@mui/material/Tooltip';
 
 import type { TextFieldProps } from '@mui/material/TextField';
 
@@ -68,6 +69,7 @@ import tableStyles from '@core/styles/table.module.css'
 
 import type { QuestionsType } from '@/types/questions/questionsType';
 import AddEditPracticalQuestionsDialog from '@/components/questions/dialogs/AddEditPracticalQuestionsDialog';
+import TranslateQuestionDialog from '@/components/questions/dialogs/TranslateQuestionDialog';
 import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
 
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -192,6 +194,8 @@ const PracticalQuestionsListTable = ({ tableData, updateQuestionsList }: { table
   const [questionId, setQuestionId] = useState(0);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [translateQuestionOpen, setTranslateQuestionOpen] = useState(false);
+  const [translateQuestionData, setTranslateQuestionData] = useState({ id: 0, question: '', option1: '', option2: '', option3: '', option4: '', option5: '', question_explanation: '' })
 
   // const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
@@ -315,6 +319,23 @@ const PracticalQuestionsListTable = ({ tableData, updateQuestionsList }: { table
             <IconButton onClick={() => handleOnEditClick(row.original.id) }>
               <i className='tabler-edit text-[22px] text-textSecondary' />
             </IconButton>
+            <Tooltip title='Translate'>
+              <IconButton onClick={() => {
+                setTranslateQuestionData({
+                  id: row.original.id,
+                  question: row.original.question,
+                  option1: row.original.option1,
+                  option2: row.original.option2,
+                  option3: row.original.option3,
+                  option4: row.original.option4,
+                  option5: row.original.option5,
+                  question_explanation: row.original.question_explanation,
+                })
+                setTranslateQuestionOpen(true)
+              }}>
+                <i className='tabler-language text-[22px] text-textSecondary' />
+              </IconButton>
+            </Tooltip>
           </div>
         ),
         enableSorting: false
@@ -532,6 +553,20 @@ const PracticalQuestionsListTable = ({ tableData, updateQuestionsList }: { table
       {/* <BulkUploadQuestionsDialog open={bulkUploadQuestionsOpen} pcID={pcID} updateQuestionsList={updateQuestionsList} handleClose={() => setBulkUploadQuestionsOpen(!bulkUploadQuestionsOpen)} /> */}
 
       <AddEditPracticalQuestionsDialog open={editQuestionOpen} questionId={questionId} updateQuestionsList={updateQuestionsList} handleClose={() => setEditQuestionOpen(!editQuestionOpen)} />
+      <TranslateQuestionDialog
+        open={translateQuestionOpen}
+        questionId={translateQuestionData.id}
+        questionData={{
+          question: translateQuestionData.question,
+          option1: translateQuestionData.option1,
+          option2: translateQuestionData.option2,
+          option3: translateQuestionData.option3,
+          option4: translateQuestionData.option4,
+          option5: translateQuestionData.option5,
+          question_explanation: translateQuestionData.question_explanation,
+        }}
+        handleClose={() => setTranslateQuestionOpen(false)}
+      />
       <ConfirmDialog
         open={confirmDeleteOpen}
         setOpen={setConfirmDeleteOpen}

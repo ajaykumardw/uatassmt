@@ -698,7 +698,7 @@ export async function POST(req: Request) {
 
   // const {selectPC, sscId, qpId, pcId, questionLevel, questionName, questionExplanation, option1, option2, option, correctAnswer, questionMarks} = reqData;
 
-  const {selectPC, sscId, qpId, questionLevel, questionName, questionExplanation, option1, option2, option, correctAnswer} = reqData;
+  const {selectPC, sscId, qpId, questionLevel, questionName, questionExplanation, option1, option2, option, correctAnswer, language_id} = reqData;
   const session = await getServerSession(authOptions);
   const createdBy = Number(session?.user.id);
   const agency_id = Number(session?.user?.agency_id);
@@ -736,7 +736,7 @@ export async function POST(req: Request) {
         agency_id: agency_id,
         ssc_id: sscId,
         qp_id: qpId,
-        language_id: 1,
+        language_id: language_id || 1,
         question_type: 'theory',
         question_level: questionLevel,
         question_explanation: questionExplanation,

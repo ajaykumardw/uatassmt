@@ -9,7 +9,7 @@ import prisma from '@/libs/prisma';
 
 export async function POST(req: Request) {
 
-  const {uploadData, sscID, qpID} = await req.json();
+  const {uploadData, sscID, qpID, language_id} = await req.json();
 
   const session = await getServerSession(authOptions);
   const createdBy = Number(session?.user.id);
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       data: {
         ssc_id: Number(sscID),
         qp_id: Number(qpID),
-        language_id: 1,
+        language_id: item.Language_ID || language_id || 1,
         question_type: 'theory',
         question_level: item.Question_Level,
         question_explanation: item.Question_Explanation,

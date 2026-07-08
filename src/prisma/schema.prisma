@@ -113,6 +113,17 @@ model languages {
   updated_at DateTime? @db.Timestamp(0)
 }
 
+model agency_languages {
+  id          Int      @id @default(autoincrement())
+  agency_id   Int
+  language_id Int
+  created_by  Int?
+  created_at  DateTime @default(now()) @db.DateTime(0)
+
+  @@unique([agency_id, language_id])
+  @@index([agency_id])
+}
+
 model migrations {
   id        Int    @id @default(autoincrement()) @db.UnsignedInt
   migration String
@@ -273,6 +284,29 @@ model questions {
   exam_sets_questions exam_sets_questions[]
   exam_set_results     exam_set_results[]    @relation("QuestionToExamSetResults")
   student_question_attempts student_question_attempts[]
+  translations question_translations[]
+}
+
+model question_translations {
+  id                   Int      @id @default(autoincrement())
+  question_id          Int
+  language_id          Int
+  question             String   @db.Text
+  option1              String?  @db.Text
+  option2              String?  @db.Text
+  option3              String?  @db.Text
+  option4              String?  @db.Text
+  option5              String?  @db.Text
+  question_explanation String? @db.Text
+  created_by           Int?
+  created_at           DateTime @default(now()) @db.DateTime(0)
+  updated_at           DateTime @default(now()) @updatedAt @db.DateTime(0)
+
+  questions questions @relation(fields: [question_id], references: [id], onDelete: Cascade)
+
+  @@unique([question_id, language_id])
+  @@index([question_id])
+  @@index([language_id])
 }
 
 model pc_questions {

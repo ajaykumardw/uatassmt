@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 // MUI Imports
 import Dialog from '@mui/material/Dialog'
@@ -9,7 +9,7 @@ import Button from '@mui/material/Button'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
-import { Alert, AlertTitle, Avatar, CircularProgress, Grid, IconButton, LinearProgress, List, ListItem, TablePagination, Typography } from '@mui/material'
+import { Alert, AlertTitle, Avatar, CircularProgress, Grid, IconButton, LinearProgress, List, ListItem, MenuItem, TablePagination, Typography } from '@mui/material'
 
 // import * as XLSX from 'xlsx';
 
@@ -38,6 +38,7 @@ import tableStyles from '@core/styles/table.module.css';
 import DialogCloseButton from '@components/dialogs/DialogCloseButton'
 import AppReactDropzone from '@/libs/styles/AppReactDropzone'
 import TablePaginationComponent from '@/components/TablePaginationComponent'
+import CustomTextField from '@core/components/mui/TextField'
 
 import { ExpectedTheoryQuestionExcelHeaders } from '@/configs/customDataConfig'
 
@@ -256,6 +257,25 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
   const [data, setData] = useState<any[]>([]);
   const [uploadData, setUploadData] = useState<any[]>([]);
   const [fileInput, setFileInput] = useState<File | null>(null);
+  const [languages, setLanguages] = useState<{ id: number; alias: string; full_name: string }[]>([]);
+  const [bulkLanguageId, setBulkLanguageId] = useState<number>(1);
+
+  useEffect(() => {
+    if (open) {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/agency-languages`)
+        .then(res => res.json())
+        .then(res => {
+          const result = res.data
+
+          if (result) {
+            const enabled = result.enabled_language_ids || []
+
+            setLanguages((result.all_languages || []).filter((l: any) => enabled.includes(Number(l.id))))
+          }
+        })
+        .catch(() => {})
+    }
+  }, [open]);
 
   const handleReset = () => {
 
@@ -820,7 +840,7 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
         headers: {
           'Content-Type': 'application/json' // Assuming you're sending JSON data
         },
-        body: JSON.stringify({uploadData, sscID, qpID})
+        body: JSON.stringify({uploadData, sscID, qpID, language_id: bulkLanguageId})
       });
 
       if(res.ok){
@@ -880,7 +900,23 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
                   {missingHeadersData.join(', ')}
                 </Alert>
               }
-              <Typography>Use the same format as given below :<Button className='ml-2' variant='contained' href="/uploads/sample/bulk_theory_question_sample_file.xlsx" download>Download</Button></Typography>
+              <div className='flex gap-4 items-center'>
+                <CustomTextField
+                  select
+                  size='small'
+                  label='Language'
+                  value={bulkLanguageId}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBulkLanguageId(Number(e.target.value))}
+                  sx={{ minWidth: 200 }}
+                >
+                  {languages.map((lang) => (
+                    <MenuItem key={lang.id} value={lang.id}>
+                      {lang.full_name}
+                    </MenuItem>
+                  ))}
+                </CustomTextField>
+                <Typography>Use the same format as given below :<Button className='ml-2' variant='contained' href="/uploads/sample/bulk_theory_question_sample_file.xlsx" download>Download</Button></Typography>
+              </div>
             </div>
           </Grid>
           <Grid item xs={12}>

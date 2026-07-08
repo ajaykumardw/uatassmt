@@ -64,6 +64,7 @@ import tableStyles from '@core/styles/table.module.css'
 // import AddQPDialog from '@/components/qualification-packs/dialogs/AddQPDialog';
 
 import AddEditQuestionsDialog from '@/components/questions/dialogs/AddEditQuestionsDialog';
+import TranslateQuestionDialog from '@/components/questions/dialogs/TranslateQuestionDialog';
 
 // import AddEditPCDialog from '@/components/pc/dialogs/AddEditPCDialog';
 
@@ -178,6 +179,8 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
   const [addQuestionOpen, setAddQuestionOpen] = useState(false);
   const [bulkUploadQuestionsOpen, setBulkUploadQuestionsOpen] = useState(false);
   const [editQuestionOpen, setEditQuestionOpen] = useState(false);
+  const [translateQuestionOpen, setTranslateQuestionOpen] = useState(false);
+  const [translateQuestionData, setTranslateQuestionData] = useState({ id: 0, question: '', option1: '', option2: '', option3: '', option4: '', option5: '', question_explanation: '' })
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const [editQuestionData, setEditQuestionData] = useState({
@@ -435,12 +438,28 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
         header: 'Action',
         cell: ({ row }) => (
           <div className='flex items-center'>
-            {/* <IconButton>
-              <i className='tabler-eye text-[22px] text-textSecondary' />
-            </IconButton> */}
-            <IconButton onClick={() => handleOnEditClick(row.original.id) }>
-              <i className='tabler-edit text-[22px] text-textSecondary' />
-            </IconButton>
+            <Tooltip title='Edit'>
+              <IconButton onClick={() => handleOnEditClick(row.original.id) }>
+                <i className='tabler-edit text-[22px] text-textSecondary' />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title='Translate'>
+              <IconButton onClick={() => {
+                setTranslateQuestionData({
+                  id: row.original.id,
+                  question: row.original.question,
+                  option1: row.original.option1,
+                  option2: row.original.option2,
+                  option3: row.original.option3,
+                  option4: row.original.option4,
+                  option5: row.original.option5,
+                  question_explanation: row.original.question_explanation,
+                })
+                setTranslateQuestionOpen(true)
+              }}>
+                <i className='tabler-language text-[22px] text-textSecondary' />
+              </IconButton>
+            </Tooltip>
           </div>
         ),
         enableSorting: false
@@ -671,6 +690,20 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
       <BulkUploadQuestionsDialog open={bulkUploadQuestionsOpen} sscID={sscID} qpID={qpID} updateQuestionsList={updateQuestionsList} handleClose={() => setBulkUploadQuestionsOpen(!bulkUploadQuestionsOpen)} />
 
       <AddEditQuestionsDialog open={editQuestionOpen} sscID={sscID} qpID={qpID} allPC={allPC} questionId={questionId} updateQuestionsList={updateQuestionsList} handleClose={() => setEditQuestionOpen(!editQuestionOpen)} data={editQuestionData} />
+      <TranslateQuestionDialog
+        open={translateQuestionOpen}
+        questionId={translateQuestionData.id}
+        questionData={{
+          question: translateQuestionData.question,
+          option1: translateQuestionData.option1,
+          option2: translateQuestionData.option2,
+          option3: translateQuestionData.option3,
+          option4: translateQuestionData.option4,
+          option5: translateQuestionData.option5,
+          question_explanation: translateQuestionData.question_explanation,
+        }}
+        handleClose={() => setTranslateQuestionOpen(false)}
+      />
       <ConfirmDialog
         open={confirmDeleteOpen}
         setOpen={setConfirmDeleteOpen}

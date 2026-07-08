@@ -75,7 +75,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
 
-  const {sscId, qpId, nosId, selectPC, questionName} = await req.json();
+  const {sscId, qpId, nosId, selectPC, questionName, language_id} = await req.json();
 
   const session = await getServerSession(authOptions);
   const createdBy = Number(session?.user.id);
@@ -109,7 +109,7 @@ export async function POST(req: Request) {
 
         // connect: selectPC.map((pcId: any) => ({ id: Number(pcId)}))
       },
-      language_id: 1,
+      language_id: language_id || 1,
       question: questionName,
       marks: Number(pcsTotalMarks._sum.viva_marks),
       question_type: 'viva',

@@ -12,7 +12,7 @@ import prisma from '@/libs/prisma';
 
 export async function POST(req: Request) {
   const data = await req.json();
-  const {examSetId, examDurations, totalQuestions, ip, userAgent, deviceId} = data;
+  const {examSetId, examDurations, totalQuestions, ip, userAgent, deviceId, language_id} = data;
   const session = await getServerSession(authOptions);
   const student = Number(session?.user.id);
 
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
 
         await prisma.student_exam_set_results.create({
           data: {
-            language_id: 1,
+            language_id: language_id || 1,
             exam_set_id: examSetId,
             student_id: candidateId,
             total_questions: totalQuestions,
@@ -141,7 +141,7 @@ export async function POST(req: Request) {
 
     await prisma.student_exam_set_results.create({
       data: {
-        language_id: 1,
+        language_id: language_id || 1,
         exam_set_id: examSetId,
         student_id: student,
         total_questions: totalQuestions,
