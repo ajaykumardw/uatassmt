@@ -30,15 +30,8 @@ export async function POST(req: Request) {
       }, { status: 400 })
     }
 
-    const langCode = LANG_MAP[targetLang.toLowerCase()]
-
-    if (!langCode) {
-      return NextResponse.json({
-        status: 'Error',
-        statusCode: 400,
-        message: `Unsupported language: ${targetLang}`
-      }, { status: 400 })
-    }
+    const lower = targetLang.toLowerCase()
+    const langCode = LANG_MAP[lower] || lower
 
     const texts = Array.isArray(text) ? text : [text]
 
