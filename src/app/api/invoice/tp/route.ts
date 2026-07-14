@@ -4,6 +4,11 @@ import prisma from '@/libs/prisma'
 import { authOptions } from '@/libs/auth'
 import { generateInvoiceNumber } from '@/libs/invoiceHelper'
 
+const TP_INVOICE_MAP: Record<number, string> = { 0: 'draft', 1: 'shared' }
+const TP_PAYMENT_MAP: Record<number, string> = { 0: 'pending', 1: 'received' }
+const TP_INVOICE_REV: Record<string, number> = { draft: 0, shared: 1 }
+const TP_PAYMENT_REV: Record<string, number> = { pending: 0, received: 1 }
+
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url)
@@ -20,11 +25,11 @@ export async function GET(req: Request) {
     }
     if (invoice_status) {
       whereClause += ' AND ti.invoice_status = ?'
-      params.push(invoice_status)
+      params.push(TP_INVOICE_REV[invoice_status] ?? Number(invoice_status))
     }
     if (payment_status) {
       whereClause += ' AND ti.payment_status = ?'
-      params.push(payment_status)
+      params.push(TP_PAYMENT_REV[payment_status] ?? Number(payment_status))
     }
 
     const data = await prisma.$queryRawUnsafe(`
@@ -57,6 +62,8 @@ export async function GET(req: Request) {
 
     const formatted = (data as any[]).map(row => ({
       ...row,
+      invoice_status: TP_INVOICE_MAP[row.invoice_status as number] ?? row.invoice_status,
+      payment_status: TP_PAYMENT_MAP[row.payment_status as number] ?? row.payment_status,
       amount_per_candidate: Number(row.amount_per_candidate),
       total_amount: Number(row.total_amount),
       gst_amount: Number(row.gst_amount)

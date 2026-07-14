@@ -4,6 +4,11 @@ import prisma from '@/libs/prisma'
 import { authOptions } from '@/libs/auth'
 import { generateInvoiceNumber } from '@/libs/invoiceHelper'
 
+const INVOICE_STATUS_MAP: Record<number, string> = { 0: 'draft', 1: 'pending_approval', 2: 'approved', 3: 'rejected' }
+const AMOUNT_STATUS_MAP: Record<number, string> = { 0: 'pending', 1: 'transferred' }
+const INVOICE_STATUS_REV: Record<string, number> = { draft: 0, pending_approval: 1, approved: 2, rejected: 3 }
+const AMOUNT_STATUS_REV: Record<string, number> = { pending: 0, transferred: 1 }
+
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url)
@@ -20,11 +25,11 @@ export async function GET(req: Request) {
     }
     if (invoice_status) {
       whereClause += ' AND ai.invoice_status = ?'
-      params.push(invoice_status)
+      params.push(INVOICE_STATUS_REV[invoice_status] ?? Number(invoice_status))
     }
     if (amount_status) {
       whereClause += ' AND ai.amount_status = ?'
-      params.push(amount_status)
+      params.push(AMOUNT_STATUS_REV[amount_status] ?? Number(amount_status))
     }
 
     const data = await prisma.$queryRawUnsafe(`
@@ -64,6 +69,8 @@ export async function GET(req: Request) {
 
     const formatted = (data as any[]).map(row => ({
       ...row,
+      invoice_status: INVOICE_STATUS_MAP[row.invoice_status as number] ?? row.invoice_status,
+      amount_status: AMOUNT_STATUS_MAP[row.amount_status as number] ?? row.amount_status,
       amount_per_candidate: Number(row.amount_per_candidate),
       total_amount: Number(row.total_amount),
       advance_amount: row.advance_amount ? Number(row.advance_amount) : null,
