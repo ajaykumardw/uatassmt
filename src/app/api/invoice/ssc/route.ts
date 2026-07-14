@@ -93,12 +93,7 @@ export async function POST(req: Request) {
 
     const session = await getServerSession(authOptions)
     const created_by = Number(session?.user?.id || 1)
-
-    const user = await prisma.$queryRaw`
-      SELECT agency_id FROM users WHERE id = ${created_by} LIMIT 1
-    `
-    const userRow = (user as any[])[0]
-    const agency_id = userRow ? Number(userRow.agency_id) : 1
+    const agency_id = Number((session?.user as any)?.agency_id || 1)
 
     await prisma.$executeRaw`
       INSERT INTO ssc_invoices (batch_id, ssc_id, assessment_date, scheme, total_candidate, present_candidate, amount_per_candidate, total_amount, group_photo, attendance_sheet, notes, agency_id, created_by, created_at, updated_at)

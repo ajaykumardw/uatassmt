@@ -77,12 +77,7 @@ export async function POST(req: Request) {
 
     const session = await getServerSession(authOptions)
     const created_by = Number(session?.user?.id || 1)
-
-    const user = await prisma.$queryRaw`
-      SELECT agency_id FROM users WHERE id = ${created_by} LIMIT 1
-    `
-    const userRow = (user as any[])[0]
-    const agency_id = userRow ? Number(userRow.agency_id) : 1
+    const agency_id = Number((session?.user as any)?.agency_id || 1)
 
     await prisma.$executeRaw`
       INSERT INTO tp_invoices (batch_id, scheme_id, tp_id, total_candidate, amount_per_candidate, total_amount, gst_amount, invoice_pdf, agency_id, created_by, created_at, updated_at)
