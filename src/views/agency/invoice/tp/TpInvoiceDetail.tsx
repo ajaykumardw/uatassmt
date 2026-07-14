@@ -59,7 +59,7 @@ const TpInvoiceDetail = ({ data, updateData }: Props) => {
     setSaving(true)
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/invoice/tp/${data.id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/tp/${data.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ invoice_status: 'shared' })
@@ -91,7 +91,7 @@ const TpInvoiceDetail = ({ data, updateData }: Props) => {
         formData.append('payment_receipt', receiptRef.current.files[0])
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/invoice/tp/${data.id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/tp/${data.id}`, {
         method: 'PUT',
         body: formData
       })

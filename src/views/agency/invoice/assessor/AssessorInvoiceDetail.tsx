@@ -76,7 +76,7 @@ const AssessorInvoiceDetail = ({ data, updateData }: Props) => {
     setSaving(true)
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/invoice/assessor/${data.id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor/${data.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ invoice_status: newStatus })
@@ -111,7 +111,7 @@ const AssessorInvoiceDetail = ({ data, updateData }: Props) => {
 
       formData.append('signed_copy', signedCopyRef.current.files[0])
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/invoice/assessor/${data.id}/upload-signed-copy`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor/${data.id}/upload-signed-copy`, {
         method: 'POST',
         body: formData
       })
@@ -147,7 +147,7 @@ const AssessorInvoiceDetail = ({ data, updateData }: Props) => {
         formData.append('transaction_slip', transactionSlipRef.current.files[0])
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/invoice/assessor/${data.id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor/${data.id}`, {
         method: 'PUT',
         body: formData
       })

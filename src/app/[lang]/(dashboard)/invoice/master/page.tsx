@@ -11,7 +11,7 @@ const InvoiceMasterPage = () => {
 
   const fetchMasterData = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/invoice/master-data`)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data`)
 
       if (!res.ok) throw new Error('Failed to fetch master data')
 

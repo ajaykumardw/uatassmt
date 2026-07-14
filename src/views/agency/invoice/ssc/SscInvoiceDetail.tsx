@@ -73,7 +73,7 @@ const SscInvoiceDetail = ({ data, updateData }: Props) => {
     setSaving(true)
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/invoice/ssc/${data.id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/ssc/${data.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

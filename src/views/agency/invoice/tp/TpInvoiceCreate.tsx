@@ -86,7 +86,7 @@ const TpInvoiceCreate = () => {
       formData.append('gst_amount', gstAmount || '0')
       // TODO: Append invoice_pdf file when file upload is implemented
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/invoice/tp`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/tp`, {
         method: 'POST',
         body: formData
       })

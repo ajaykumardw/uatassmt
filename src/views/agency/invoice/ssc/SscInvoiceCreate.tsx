@@ -89,7 +89,7 @@ const SscInvoiceCreate = () => {
       formData.append('total_amount', totalAmount.toString())
       if (notes) formData.append('notes', notes)
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/invoice/ssc`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/ssc`, {
         method: 'POST',
         body: formData
       })

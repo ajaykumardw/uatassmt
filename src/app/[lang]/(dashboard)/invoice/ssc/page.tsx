@@ -11,7 +11,7 @@ const SscInvoicePage = () => {
 
   const fetchInvoices = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/invoice/ssc`)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/ssc`)
 
       if (!res.ok) throw new Error('Failed to fetch SSC invoices')
 

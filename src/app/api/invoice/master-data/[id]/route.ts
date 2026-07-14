@@ -52,17 +52,26 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ status: 'Error', statusCode: 404, message: 'Record not found' }, { status: 404 })
     }
 
-    await prisma.$executeRaw`
-      UPDATE invoice_master_data
-      SET
-        ssc_id = ${ssc_id !== undefined ? Number(ssc_id) : undefined},
-        scheme_id = ${scheme_id !== undefined ? Number(scheme_id) : undefined},
-        scheme_name = ${scheme_name !== undefined ? scheme_name : undefined},
-        amount_per_candidate = ${amount_per_candidate !== undefined ? Number(amount_per_candidate) : undefined},
-        status = ${status !== undefined ? Number(status) : undefined},
-        updated_at = NOW()
-      WHERE id = ${id}
-    `
+    const setClauses: string[] = []
+    const values: any[] = []
+
+    if (ssc_id !== undefined) { setClauses.push('ssc_id = ?'); values.push(Number(ssc_id)) }
+    if (scheme_id !== undefined) { setClauses.push('scheme_id = ?'); values.push(Number(scheme_id)) }
+    if (scheme_name !== undefined) { setClauses.push('scheme_name = ?'); values.push(scheme_name) }
+    if (amount_per_candidate !== undefined) { setClauses.push('amount_per_candidate = ?'); values.push(Number(amount_per_candidate)) }
+    if (status !== undefined) { setClauses.push('status = ?'); values.push(Number(status)) }
+
+    if (setClauses.length === 0) {
+      return NextResponse.json({ status: 'Error', statusCode: 400, message: 'No fields to update' }, { status: 400 })
+    }
+
+    setClauses.push('updated_at = NOW()')
+    values.push(id)
+
+    await prisma.$executeRawUnsafe(
+      `UPDATE invoice_master_data SET ${setClauses.join(', ')} WHERE id = ?`,
+      ...values
+    )
 
     return NextResponse.json({ status: 'Success', statusCode: 200, message: 'Record updated successfully' })
   } catch (error: any) {

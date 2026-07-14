@@ -72,7 +72,7 @@ const AssessorInvoiceCreate = () => {
       setTotalAmount(0)
 
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/invoice/assessor-amounts?batch_id=${batchId}`)
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor-amount`)
 
         if (res.ok) {
           const result = await res.json()
@@ -105,7 +105,7 @@ const AssessorInvoiceCreate = () => {
     setSaving(true)
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/invoice/assessor`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

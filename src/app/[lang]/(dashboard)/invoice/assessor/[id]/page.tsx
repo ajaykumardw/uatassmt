@@ -13,7 +13,7 @@ const AssessorInvoiceDetailPage = () => {
 
   const fetchInvoice = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/invoice/assessor/${id}`)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor/${id}`)
 
       if (!res.ok) throw new Error('Failed to fetch invoice')
 

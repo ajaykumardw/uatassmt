@@ -102,8 +102,8 @@ const MasterDataPage = ({ data, updateData }: Props) => {
 
     try {
       const url = editingItem
-        ? `${process.env.NEXT_PUBLIC_API_URL}/api/invoice/master-data/${editingItem.id}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/api/invoice/master-data`
+        ? `${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data/${editingItem.id}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data`
 
       const method = editingItem ? 'PUT' : 'POST'
 
@@ -137,7 +137,7 @@ const MasterDataPage = ({ data, updateData }: Props) => {
     if (!deleteId) return
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/invoice/master-data/${deleteId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data/${deleteId}`, {
         method: 'DELETE'
       })
 
@@ -158,7 +158,7 @@ const MasterDataPage = ({ data, updateData }: Props) => {
 
   const toggleStatus = async (item: MasterDataItem) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/invoice/master-data/${item.id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data/${item.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: item.status === 1 ? 0 : 1 })

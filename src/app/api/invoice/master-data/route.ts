@@ -54,12 +54,21 @@ export async function POST(req: Request) {
     const body = await req.json()
     const { ssc_id, scheme_id, scheme_name, amount_per_candidate } = body
 
-    if (!ssc_id || !scheme_id || !scheme_name || !amount_per_candidate) {
+    if (!ssc_id || !scheme_id || !amount_per_candidate) {
       return NextResponse.json({ status: 'Error', statusCode: 400, message: 'Missing required fields' }, { status: 400 })
     }
 
     const session = await getServerSession(authOptions)
     const created_by = Number(session?.user?.id || 1)
+
+    // Auto-fetch scheme name if not provided
+    let resolvedSchemeName = scheme_name
+    if (!resolvedSchemeName) {
+      const schemeRow = await prisma.$queryRaw<Array<{ scheme_name: string }>>`
+        SELECT scheme_name FROM schemes WHERE id = ${Number(scheme_id)} LIMIT 1
+      `
+      resolvedSchemeName = (schemeRow as any[])[0]?.scheme_name || ''
+    }
 
     const existing = await prisma.$queryRaw`
       SELECT id FROM invoice_master_data WHERE ssc_id = ${Number(ssc_id)} AND scheme_id = ${Number(scheme_id)} LIMIT 1
@@ -71,7 +80,7 @@ export async function POST(req: Request) {
 
     await prisma.$executeRaw`
       INSERT INTO invoice_master_data (ssc_id, scheme_id, scheme_name, amount_per_candidate, status, created_by, created_at, updated_at)
-      VALUES (${Number(ssc_id)}, ${Number(scheme_id)}, ${scheme_name}, ${Number(amount_per_candidate)}, 1, ${created_by}, NOW(), NOW())
+      VALUES (${Number(ssc_id)}, ${Number(scheme_id)}, ${resolvedSchemeName}, ${Number(amount_per_candidate)}, 1, ${created_by}, NOW(), NOW())
     `
 
     return NextResponse.json({ status: 'Success', statusCode: 200, message: 'Master data created successfully' })

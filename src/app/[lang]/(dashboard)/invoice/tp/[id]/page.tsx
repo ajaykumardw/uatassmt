@@ -13,7 +13,7 @@ const TpInvoiceDetailPage = () => {
 
   const fetchInvoice = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/invoice/tp/${id}`)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/tp/${id}`)
 
       if (!res.ok) throw new Error('Failed to fetch invoice')
 
