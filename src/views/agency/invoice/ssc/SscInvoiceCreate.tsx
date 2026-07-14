@@ -19,10 +19,16 @@ import { MenuProps } from '@/configs/customDataConfig'
 type BatchOption = {
   id: number
   batch_name: string
+  batch_size?: string
   ssc_name?: string
   scheme_name?: string
-  assessment_start_date?: string
-  assessment_end_date?: string
+  assessment_start_datetime?: string
+  assessment_end_datetime?: string
+  qualification_pack?: {
+    ssc?: { id: number; ssc_code: string; ssc_name: string }
+  }
+  scheme?: { id: number; scheme_name: string; scheme_code: string }
+  _count?: { students: number }
 }
 
 const SscInvoiceCreate = () => {
@@ -31,6 +37,7 @@ const SscInvoiceCreate = () => {
   const [batches, setBatches] = useState<BatchOption[]>([])
 
   const [selectedBatchId, setSelectedBatchId] = useState('')
+  const [selectedBatch, setSelectedBatch] = useState<BatchOption | null>(null)
   const [sscName, setSscName] = useState('')
   const [schemeName, setSchemeName] = useState('')
   const [assessmentDate, setAssessmentDate] = useState('')
@@ -55,13 +62,14 @@ const SscInvoiceCreate = () => {
   const handleBatchChange = (batchId: string) => {
     setSelectedBatchId(batchId)
     const batch = batches.find(b => b.id === Number(batchId))
+    setSelectedBatch(batch || null)
 
     if (batch) {
-      setSscName(batch.ssc_name || '')
-      setSchemeName(batch.scheme_name || '')
-      setAssessmentDate(batch.assessment_start_date || batch.assessment_end_date || '')
-      setTotalCandidates(0)
-      setPresentCandidates('')
+      setSscName(batch.qualification_pack?.ssc?.ssc_name || batch.ssc_name || '')
+      setSchemeName(batch.scheme?.scheme_name || batch.scheme_name || '')
+      setAssessmentDate(batch.assessment_start_datetime?.split('T')[0] || '')
+      setTotalCandidates(batch._count?.students || Number(batch.batch_size) || 0)
+      setPresentCandidates(String(batch._count?.students || Number(batch.batch_size) || 0))
     } else {
       setSscName('')
       setSchemeName('')
@@ -72,7 +80,7 @@ const SscInvoiceCreate = () => {
   }
 
   const handleSave = async () => {
-    if (!selectedBatchId || !presentCandidates || !amountPerCandidate) {
+    if (!selectedBatchId || !presentCandidates || !amountPerCandidate || !selectedBatch) {
       toast.error('Please fill all required fields')
 
       return
@@ -81,22 +89,27 @@ const SscInvoiceCreate = () => {
     setSaving(true)
 
     try {
-      const formData = new FormData()
-
-      formData.append('batch_id', selectedBatchId)
-      formData.append('present_candidates', presentCandidates)
-      formData.append('amount_per_candidate', amountPerCandidate)
-      formData.append('total_amount', totalAmount.toString())
-      if (notes) formData.append('notes', notes)
+      const body = {
+        batch_id: Number(selectedBatchId),
+        ssc_id: selectedBatch.qualification_pack?.ssc?.id || 0,
+        assessment_date: assessmentDate || null,
+        scheme: schemeName,
+        total_candidate: totalCandidates,
+        present_candidate: Number(presentCandidates),
+        amount_per_candidate: Number(amountPerCandidate),
+        total_amount: totalAmount,
+        notes: notes || null
+      }
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/ssc`, {
         method: 'POST',
-        body: formData
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
       })
 
       const result = await res.json()
 
-      if (res.ok && (result.status === 'Success' || result.status === 'success')) {
+      if (res.ok && result.status === 'Success') {
         toast.success('Invoice created successfully')
         router.push('/invoice/ssc')
       } else {

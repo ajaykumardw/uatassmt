@@ -50,7 +50,8 @@ export async function GET(req: Request) {
           ssc: {
             select: {
               id: true,
-              ssc_code: true
+              ssc_code: true,
+              ssc_name: true
             }
           }
         }
