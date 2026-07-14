@@ -59,7 +59,7 @@ const SscInvoiceCreate = () => {
       .catch(() => {})
   }, [])
 
-  const handleBatchChange = (batchId: string) => {
+  const handleBatchChange = async (batchId: string) => {
     setSelectedBatchId(batchId)
     const batch = batches.find(b => b.id === Number(batchId))
     setSelectedBatch(batch || null)
@@ -70,12 +70,37 @@ const SscInvoiceCreate = () => {
       setAssessmentDate(batch.assessment_start_datetime?.split('T')[0] || '')
       setTotalCandidates(batch._count?.students || Number(batch.batch_size) || 0)
       setPresentCandidates(String(batch._count?.students || Number(batch.batch_size) || 0))
+
+      // Auto-fetch amount per candidate from invoice master data
+      const sscId = batch.qualification_pack?.ssc?.id
+      const schemeId = batch.scheme?.id
+      if (sscId && schemeId) {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data?ssc_id=${sscId}`)
+          const result = await res.json()
+          if (result.status === 'Success' && Array.isArray(result.data)) {
+            const match = result.data.find((m: any) => Number(m.scheme_id) === Number(schemeId))
+            if (match) {
+              setAmountPerCandidate(String(Number(match.amount_per_candidate)))
+            } else {
+              setAmountPerCandidate('')
+            }
+          } else {
+            setAmountPerCandidate('')
+          }
+        } catch {
+          setAmountPerCandidate('')
+        }
+      } else {
+        setAmountPerCandidate('')
+      }
     } else {
       setSscName('')
       setSchemeName('')
       setAssessmentDate('')
       setTotalCandidates(0)
       setPresentCandidates('')
+      setAmountPerCandidate('')
     }
   }
 
