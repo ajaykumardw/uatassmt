@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/libs/prisma'
 
+const PAYMENT_MAP: Record<number, string> = { 0: 'pending', 1: 'received' }
+const PAYMENT_REV: Record<string, number> = { pending: 0, received: 1 }
+
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
     const id = Number(params.id)
@@ -44,6 +47,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     }
 
     const row = rows[0]
+    row.payment_status = PAYMENT_MAP[Number(row.payment_status)] || 'pending'
     row.amount_per_candidate = Number(row.amount_per_candidate)
     row.total_amount = Number(row.total_amount)
     row.received_amount = row.received_amount ? Number(row.received_amount) : null
@@ -61,6 +65,11 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   try {
     const id = Number(params.id)
     const body = await req.json()
+    const {
+      batch_id, ssc_id, assessment_date, scheme, total_candidate, present_candidate,
+      amount_per_candidate, total_amount, group_photo, attendance_sheet, notes,
+      payment_status, received_amount, deduction_amount, actual_received_amount, difference_amount
+    } = body
 
     const existing = await prisma.$queryRaw`
       SELECT id FROM ssc_invoices WHERE id = ${id} LIMIT 1
@@ -70,34 +79,37 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ status: 'Error', statusCode: 404, message: 'Invoice not found' }, { status: 404 })
     }
 
-    const {
-      batch_id, ssc_id, assessment_date, scheme, total_candidate, present_candidate,
-      amount_per_candidate, total_amount, group_photo, attendance_sheet, notes,
-      payment_status, received_amount, deduction_amount, actual_received_amount, difference_amount
-    } = body
+    const setClauses: string[] = []
+    const values: any[] = []
 
-    await prisma.$executeRaw`
-      UPDATE ssc_invoices
-      SET
-        batch_id = ${batch_id !== undefined ? Number(batch_id) : undefined},
-        ssc_id = ${ssc_id !== undefined ? Number(ssc_id) : undefined},
-        assessment_date = ${assessment_date !== undefined ? (assessment_date ? new Date(assessment_date) : null) : undefined},
-        scheme = ${scheme !== undefined ? scheme : undefined},
-        total_candidate = ${total_candidate !== undefined ? Number(total_candidate) : undefined},
-        present_candidate = ${present_candidate !== undefined ? Number(present_candidate) : undefined},
-        amount_per_candidate = ${amount_per_candidate !== undefined ? Number(amount_per_candidate) : undefined},
-        total_amount = ${total_amount !== undefined ? Number(total_amount) : undefined},
-        group_photo = ${group_photo !== undefined ? group_photo : undefined},
-        attendance_sheet = ${attendance_sheet !== undefined ? attendance_sheet : undefined},
-        notes = ${notes !== undefined ? notes : undefined},
-        payment_status = ${payment_status !== undefined ? payment_status : undefined},
-        received_amount = ${received_amount !== undefined ? Number(received_amount) : undefined},
-        deduction_amount = ${deduction_amount !== undefined ? Number(deduction_amount) : undefined},
-        actual_received_amount = ${actual_received_amount !== undefined ? Number(actual_received_amount) : undefined},
-        difference_amount = ${difference_amount !== undefined ? Number(difference_amount) : undefined},
-        updated_at = NOW()
-      WHERE id = ${id}
-    `
+    if (batch_id !== undefined) { setClauses.push('batch_id = ?'); values.push(Number(batch_id)) }
+    if (ssc_id !== undefined) { setClauses.push('ssc_id = ?'); values.push(Number(ssc_id)) }
+    if (assessment_date !== undefined) { setClauses.push('assessment_date = ?'); values.push(assessment_date ? new Date(assessment_date) : null) }
+    if (scheme !== undefined) { setClauses.push('scheme = ?'); values.push(scheme) }
+    if (total_candidate !== undefined) { setClauses.push('total_candidate = ?'); values.push(Number(total_candidate)) }
+    if (present_candidate !== undefined) { setClauses.push('present_candidate = ?'); values.push(Number(present_candidate)) }
+    if (amount_per_candidate !== undefined) { setClauses.push('amount_per_candidate = ?'); values.push(Number(amount_per_candidate)) }
+    if (total_amount !== undefined) { setClauses.push('total_amount = ?'); values.push(Number(total_amount)) }
+    if (group_photo !== undefined) { setClauses.push('group_photo = ?'); values.push(group_photo) }
+    if (attendance_sheet !== undefined) { setClauses.push('attendance_sheet = ?'); values.push(attendance_sheet) }
+    if (notes !== undefined) { setClauses.push('notes = ?'); values.push(notes) }
+    if (payment_status !== undefined) { setClauses.push('payment_status = ?'); values.push(PAYMENT_REV[payment_status] !== undefined ? PAYMENT_REV[payment_status] : Number(payment_status)) }
+    if (received_amount !== undefined) { setClauses.push('received_amount = ?'); values.push(Number(received_amount)) }
+    if (deduction_amount !== undefined) { setClauses.push('deduction_amount = ?'); values.push(Number(deduction_amount)) }
+    if (actual_received_amount !== undefined) { setClauses.push('actual_received_amount = ?'); values.push(Number(actual_received_amount)) }
+    if (difference_amount !== undefined) { setClauses.push('difference_amount = ?'); values.push(Number(difference_amount)) }
+
+    if (setClauses.length === 0) {
+      return NextResponse.json({ status: 'Error', statusCode: 400, message: 'No fields to update' }, { status: 400 })
+    }
+
+    setClauses.push('updated_at = NOW()')
+    values.push(id)
+
+    await prisma.$executeRawUnsafe(
+      `UPDATE ssc_invoices SET ${setClauses.join(', ')} WHERE id = ?`,
+      ...values
+    )
 
     return NextResponse.json({ status: 'Success', statusCode: 200, message: 'Invoice updated successfully' })
   } catch (error: any) {

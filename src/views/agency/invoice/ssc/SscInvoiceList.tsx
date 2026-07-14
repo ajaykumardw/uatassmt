@@ -27,6 +27,7 @@ type SscInvoice = {
   invoice_number: string
   batch_name: string
   ssc_name: string
+  scheme: string
   assessment_date: string
   total_candidate: number
   present_candidate: number
@@ -139,22 +140,23 @@ const SscInvoiceList = ({ data, updateData }: Props) => {
             <TableContainer component={Paper}>
               <Table>
                 <TableHead>
-                  <TableRow>
-                    <TableCell>Invoice #</TableCell>
-                    <TableCell>Batch</TableCell>
-                    <TableCell>SSC</TableCell>
-                    <TableCell>Assessment Date</TableCell>
-                    <TableCell>Total</TableCell>
-                    <TableCell>Present</TableCell>
-                    <TableCell>Amount/Candidate</TableCell>
-                    <TableCell>Total Amount</TableCell>
-                    <TableCell>Payment Status</TableCell>
-                  </TableRow>
+                    <TableRow>
+                      <TableCell>Invoice #</TableCell>
+                      <TableCell>Batch</TableCell>
+                      <TableCell>SSC</TableCell>
+                      <TableCell>Scheme</TableCell>
+                      <TableCell>Assessment Date</TableCell>
+                      <TableCell>Total</TableCell>
+                      <TableCell>Present</TableCell>
+                      <TableCell>Amount/Candidate</TableCell>
+                      <TableCell>Total Amount</TableCell>
+                      <TableCell>Payment Status</TableCell>
+                    </TableRow>
                 </TableHead>
                 <TableBody>
                   {filteredData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} align='center'>No invoices found</TableCell>
+                      <TableCell colSpan={10} align='center'>No invoices found</TableCell>
                     </TableRow>
                   ) : (
                     filteredData.map(row => (
@@ -169,6 +171,7 @@ const SscInvoiceList = ({ data, updateData }: Props) => {
                         </TableCell>
                         <TableCell>{row.batch_name}</TableCell>
                         <TableCell>{row.ssc_name}</TableCell>
+                        <TableCell>{row.scheme || '-'}</TableCell>
                         <TableCell>{row.assessment_date ? new Date(row.assessment_date).toLocaleDateString() : '-'}</TableCell>
                         <TableCell>{row.total_candidate}</TableCell>
                         <TableCell>{row.present_candidate}</TableCell>

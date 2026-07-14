@@ -22,7 +22,7 @@ export async function GET(req: Request) {
     }
     if (payment_status) {
       whereClause += ' AND si.payment_status = ?'
-      params.push(payment_status)
+      params.push(payment_status === 'received' || payment_status === '1' ? 1 : 0)
     }
     if (date_from) {
       whereClause += ' AND si.assessment_date >= ?'
@@ -68,8 +68,11 @@ export async function GET(req: Request) {
       ORDER BY si.id DESC
     `, ...params)
 
+    const PAYMENT_MAP: Record<number, string> = { 0: 'pending', 1: 'received' }
+
     const formatted = (data as any[]).map(row => ({
       ...row,
+      payment_status: PAYMENT_MAP[Number(row.payment_status)] || 'pending',
       amount_per_candidate: Number(row.amount_per_candidate),
       total_amount: Number(row.total_amount),
       received_amount: row.received_amount ? Number(row.received_amount) : null,
