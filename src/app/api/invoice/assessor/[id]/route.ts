@@ -8,6 +8,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const data = await prisma.$queryRaw`
       SELECT
         ai.id,
+        ai.invoice_number,
         ai.batch_id,
         b.batch_name AS batch_name,
         ai.ssc_id,

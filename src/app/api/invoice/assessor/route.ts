@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import prisma from '@/libs/prisma'
 import { authOptions } from '@/libs/auth'
+import { generateInvoiceNumber } from '@/libs/invoiceHelper'
 
 export async function GET(req: Request) {
   try {
@@ -29,6 +30,7 @@ export async function GET(req: Request) {
     const data = await prisma.$queryRawUnsafe(`
       SELECT
         ai.id,
+        ai.invoice_number,
         ai.batch_id,
         b.batch_name AS batch_name,
         ai.ssc_id,
@@ -89,9 +91,11 @@ export async function POST(req: Request) {
     const created_by = Number(session?.user?.id || 1)
     const agency_id = Number((session?.user as any)?.agency_id || 1)
 
+    const invoice_number = await generateInvoiceNumber('ASSESSOR', 'assessor_invoices')
+
     await prisma.$executeRaw`
-      INSERT INTO assessor_invoices (batch_id, ssc_id, assessor_id, assessment_date, total_candidate, present_candidate, amount_per_candidate, total_amount, invoice_pdf, agency_id, created_by, created_at, updated_at)
-      VALUES (${Number(batch_id)}, ${Number(ssc_id)}, ${Number(assessor_id)}, ${assessment_date ? new Date(assessment_date) : null}, ${Number(total_candidate)}, ${Number(present_candidate)}, ${Number(amount_per_candidate)}, ${Number(total_amount)}, ${invoice_pdf || null}, ${agency_id}, ${created_by}, NOW(), NOW())
+      INSERT INTO assessor_invoices (invoice_number, batch_id, ssc_id, assessor_id, assessment_date, total_candidate, present_candidate, amount_per_candidate, total_amount, invoice_pdf, agency_id, created_by, created_at, updated_at)
+      VALUES (${invoice_number}, ${Number(batch_id)}, ${Number(ssc_id)}, ${Number(assessor_id)}, ${assessment_date ? new Date(assessment_date) : null}, ${Number(total_candidate)}, ${Number(present_candidate)}, ${Number(amount_per_candidate)}, ${Number(total_amount)}, ${invoice_pdf || null}, ${agency_id}, ${created_by}, NOW(), NOW())
     `
 
     return NextResponse.json({ status: 'Success', statusCode: 200, message: 'Assessor invoice created successfully' })

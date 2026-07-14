@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS `tp_invoice_amounts` (
 -- -----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `ssc_invoices` (
     `id`                    INT                         NOT NULL AUTO_INCREMENT,
+    `invoice_number`        VARCHAR(50)                 NULL,
     `batch_id`              INT                         NOT NULL,
     `ssc_id`                INT                         NOT NULL,
     `assessment_date`        DATETIME                    NULL,
@@ -81,7 +82,7 @@ CREATE TABLE IF NOT EXISTS `ssc_invoices` (
     `total_amount`          DECIMAL(10,2)               NOT NULL,
     `group_photo`           VARCHAR(500)                NULL,
     `attendance_sheet`      VARCHAR(500)                NULL,
-    `payment_status`        ENUM('pending','received')  NOT NULL DEFAULT 'pending',
+    `payment_status`        TINYINT                     NOT NULL DEFAULT 0 COMMENT '0=pending, 1=received',
     `received_amount`       DECIMAL(10,2)               NULL,
     `deduction_amount`      DECIMAL(10,2)               NULL DEFAULT 0.00,
     `actual_received_amount` DECIMAL(10,2)              NULL,
@@ -93,6 +94,7 @@ CREATE TABLE IF NOT EXISTS `ssc_invoices` (
     `updated_at`            DATETIME                    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_ssc_invoice_number` (`invoice_number`),
     INDEX `idx_ssc_invoice_batch` (`batch_id`),
     INDEX `idx_ssc_invoice_ssc` (`ssc_id`),
     INDEX `idx_ssc_invoice_agency` (`agency_id`),
@@ -104,6 +106,7 @@ CREATE TABLE IF NOT EXISTS `ssc_invoices` (
 -- -----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `assessor_invoices` (
     `id`                    INT                                 NOT NULL AUTO_INCREMENT,
+    `invoice_number`        VARCHAR(50)                         NULL,
     `batch_id`              INT                                 NOT NULL,
     `ssc_id`                INT                                 NOT NULL,
     `assessor_id`           INT                                 NOT NULL,
@@ -114,8 +117,8 @@ CREATE TABLE IF NOT EXISTS `assessor_invoices` (
     `total_amount`          DECIMAL(10,2)                       NOT NULL,
     `invoice_pdf`           VARCHAR(500)                        NULL,
     `signed_copy`           VARCHAR(500)                        NULL,
-    `invoice_status`        ENUM('draft','pending_approval','approved','rejected') NOT NULL DEFAULT 'draft',
-    `amount_status`         ENUM('pending','transferred')       NOT NULL DEFAULT 'pending',
+    `invoice_status`        TINYINT                     NOT NULL DEFAULT 0 COMMENT '0=draft, 1=pending_approval, 2=approved, 3=rejected',
+    `amount_status`         TINYINT                     NOT NULL DEFAULT 0 COMMENT '0=pending, 1=transferred',
     `advance_amount`        DECIMAL(10,2)                       NULL DEFAULT 0.00,
     `tds_amount`            DECIMAL(10,2)                       NULL DEFAULT 0.00,
     `other_deduction`       DECIMAL(10,2)                       NULL DEFAULT 0.00,
@@ -129,6 +132,7 @@ CREATE TABLE IF NOT EXISTS `assessor_invoices` (
     `updated_at`            DATETIME                            NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_assessor_invoice_number` (`invoice_number`),
     INDEX `idx_assessor_invoice_batch` (`batch_id`),
     INDEX `idx_assessor_invoice_assessor` (`assessor_id`),
     INDEX `idx_assessor_invoice_agency` (`agency_id`),
@@ -140,6 +144,7 @@ CREATE TABLE IF NOT EXISTS `assessor_invoices` (
 -- -----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `tp_invoices` (
     `id`                    INT                             NOT NULL AUTO_INCREMENT,
+    `invoice_number`        VARCHAR(50)                     NULL,
     `batch_id`              INT                             NOT NULL,
     `scheme_id`             INT                             NOT NULL,
     `tp_id`                 INT                             NOT NULL,
@@ -148,8 +153,8 @@ CREATE TABLE IF NOT EXISTS `tp_invoices` (
     `total_amount`          DECIMAL(10,2)                   NOT NULL,
     `gst_amount`            DECIMAL(10,2)                   NOT NULL DEFAULT 0.00,
     `invoice_pdf`           VARCHAR(500)                    NULL,
-    `invoice_status`        ENUM('draft','shared')           NOT NULL DEFAULT 'draft',
-    `payment_status`        ENUM('pending','received')      NOT NULL DEFAULT 'pending',
+    `invoice_status`        TINYINT                     NOT NULL DEFAULT 0 COMMENT '0=draft, 1=shared',
+    `payment_status`        TINYINT                     NOT NULL DEFAULT 0 COMMENT '0=pending, 1=received',
     `payment_receipt`       VARCHAR(500)                    NULL,
     `notes`                 TEXT                            NULL,
     `agency_id`             INT                             NOT NULL,
@@ -158,8 +163,27 @@ CREATE TABLE IF NOT EXISTS `tp_invoices` (
     `updated_at`            DATETIME                        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_tp_invoice_number` (`invoice_number`),
     INDEX `idx_tp_invoice_batch` (`batch_id`),
     INDEX `idx_tp_invoice_tp` (`tp_id`),
     INDEX `idx_tp_invoice_agency` (`agency_id`),
     INDEX `idx_tp_invoice_status` (`invoice_status`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------
+-- ALTER existing tables (run if tables already exist without invoice_number)
+-- Also converts ENUM to TINYINT for better performance
+-- -----------------------------------------------------------
+ALTER TABLE `ssc_invoices` ADD COLUMN `invoice_number` VARCHAR(50) NULL AFTER `id`;
+ALTER TABLE `ssc_invoices` ADD UNIQUE KEY `uq_ssc_invoice_number` (`invoice_number`);
+ALTER TABLE `ssc_invoices` MODIFY `payment_status` TINYINT NOT NULL DEFAULT 0 COMMENT '0=pending, 1=received';
+
+ALTER TABLE `assessor_invoices` ADD COLUMN `invoice_number` VARCHAR(50) NULL AFTER `id`;
+ALTER TABLE `assessor_invoices` ADD UNIQUE KEY `uq_assessor_invoice_number` (`invoice_number`);
+ALTER TABLE `assessor_invoices` MODIFY `invoice_status` TINYINT NOT NULL DEFAULT 0 COMMENT '0=draft, 1=pending_approval, 2=approved, 3=rejected';
+ALTER TABLE `assessor_invoices` MODIFY `amount_status` TINYINT NOT NULL DEFAULT 0 COMMENT '0=pending, 1=transferred';
+
+ALTER TABLE `tp_invoices` ADD COLUMN `invoice_number` VARCHAR(50) NULL AFTER `id`;
+ALTER TABLE `tp_invoices` ADD UNIQUE KEY `uq_tp_invoice_number` (`invoice_number`);
+ALTER TABLE `tp_invoices` MODIFY `invoice_status` TINYINT NOT NULL DEFAULT 0 COMMENT '0=draft, 1=shared';
+ALTER TABLE `tp_invoices` MODIFY `payment_status` TINYINT NOT NULL DEFAULT 0 COMMENT '0=pending, 1=received';

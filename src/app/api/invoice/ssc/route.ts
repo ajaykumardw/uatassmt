@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import prisma from '@/libs/prisma'
 import { authOptions } from '@/libs/auth'
+import { generateInvoiceNumber } from '@/libs/invoiceHelper'
 
 export async function GET(req: Request) {
   try {
@@ -40,6 +41,7 @@ export async function GET(req: Request) {
     const data = await prisma.$queryRawUnsafe(`
       SELECT
         si.id,
+        si.invoice_number,
         si.batch_id,
         b.batch_name AS batch_name,
         si.ssc_id,
@@ -95,9 +97,11 @@ export async function POST(req: Request) {
     const created_by = Number(session?.user?.id || 1)
     const agency_id = Number((session?.user as any)?.agency_id || 1)
 
+    const invoice_number = await generateInvoiceNumber('SSC', 'ssc_invoices')
+
     await prisma.$executeRaw`
-      INSERT INTO ssc_invoices (batch_id, ssc_id, assessment_date, scheme, total_candidate, present_candidate, amount_per_candidate, total_amount, group_photo, attendance_sheet, notes, agency_id, created_by, created_at, updated_at)
-      VALUES (${Number(batch_id)}, ${Number(ssc_id)}, ${assessment_date ? new Date(assessment_date) : null}, ${scheme || null}, ${Number(total_candidate)}, ${Number(present_candidate)}, ${Number(amount_per_candidate)}, ${Number(total_amount)}, ${group_photo || null}, ${attendance_sheet || null}, ${notes || null}, ${agency_id}, ${created_by}, NOW(), NOW())
+      INSERT INTO ssc_invoices (invoice_number, batch_id, ssc_id, assessment_date, scheme, total_candidate, present_candidate, amount_per_candidate, total_amount, group_photo, attendance_sheet, notes, agency_id, created_by, created_at, updated_at)
+      VALUES (${invoice_number}, ${Number(batch_id)}, ${Number(ssc_id)}, ${assessment_date ? new Date(assessment_date) : null}, ${scheme || null}, ${Number(total_candidate)}, ${Number(present_candidate)}, ${Number(amount_per_candidate)}, ${Number(total_amount)}, ${group_photo || null}, ${attendance_sheet || null}, ${notes || null}, ${agency_id}, ${created_by}, NOW(), NOW())
     `
 
     return NextResponse.json({ status: 'Success', statusCode: 200, message: 'SSC invoice created successfully' })

@@ -28,8 +28,8 @@ type SscInvoice = {
   batch_name: string
   ssc_name: string
   assessment_date: string
-  total_candidates: number
-  present_candidates: number
+  total_candidate: number
+  present_candidate: number
   amount_per_candidate: number
   total_amount: number
   payment_status: string
@@ -113,8 +113,6 @@ const SscInvoiceList = ({ data, updateData }: Props) => {
                   <MenuItem value='-1'>All Status</MenuItem>
                   <MenuItem value='pending'>Pending</MenuItem>
                   <MenuItem value='received'>Received</MenuItem>
-                  <MenuItem value='partial'>Partial</MenuItem>
-                  <MenuItem value='cancelled'>Cancelled</MenuItem>
                 </CustomTextField>
               </Grid>
               <Grid item xs={12} sm={3}>
@@ -167,13 +165,13 @@ const SscInvoiceList = ({ data, updateData }: Props) => {
                         onClick={() => router.push(`/invoice/ssc/${row.id}`)}
                       >
                         <TableCell>
-                          <Typography variant='body2' className='font-medium'>{row.invoice_number}</Typography>
+                          <Typography variant='body2' className='font-medium'>{row.invoice_number || `SSC-INV-${row.id}`}</Typography>
                         </TableCell>
                         <TableCell>{row.batch_name}</TableCell>
                         <TableCell>{row.ssc_name}</TableCell>
                         <TableCell>{row.assessment_date ? new Date(row.assessment_date).toLocaleDateString() : '-'}</TableCell>
-                        <TableCell>{row.total_candidates}</TableCell>
-                        <TableCell>{row.present_candidates}</TableCell>
+                        <TableCell>{row.total_candidate}</TableCell>
+                        <TableCell>{row.present_candidate}</TableCell>
                         <TableCell>{Number(row.amount_per_candidate).toFixed(2)}</TableCell>
                         <TableCell>{Number(row.total_amount).toFixed(2)}</TableCell>
                         <TableCell>

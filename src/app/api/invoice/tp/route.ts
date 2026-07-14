@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import prisma from '@/libs/prisma'
 import { authOptions } from '@/libs/auth'
+import { generateInvoiceNumber } from '@/libs/invoiceHelper'
 
 export async function GET(req: Request) {
   try {
@@ -29,6 +30,7 @@ export async function GET(req: Request) {
     const data = await prisma.$queryRawUnsafe(`
       SELECT
         ti.id,
+        ti.invoice_number,
         ti.batch_id,
         b.batch_name AS batch_name,
         ti.scheme_id,
@@ -79,9 +81,11 @@ export async function POST(req: Request) {
     const created_by = Number(session?.user?.id || 1)
     const agency_id = Number((session?.user as any)?.agency_id || 1)
 
+    const invoice_number = await generateInvoiceNumber('TP', 'tp_invoices')
+
     await prisma.$executeRaw`
-      INSERT INTO tp_invoices (batch_id, scheme_id, tp_id, total_candidate, amount_per_candidate, total_amount, gst_amount, invoice_pdf, agency_id, created_by, created_at, updated_at)
-      VALUES (${Number(batch_id)}, ${Number(scheme_id)}, ${Number(tp_id)}, ${Number(total_candidate)}, ${Number(amount_per_candidate)}, ${Number(total_amount)}, ${gst_amount ? Number(gst_amount) : 0}, ${invoice_pdf || null}, ${agency_id}, ${created_by}, NOW(), NOW())
+      INSERT INTO tp_invoices (invoice_number, batch_id, scheme_id, tp_id, total_candidate, amount_per_candidate, total_amount, gst_amount, invoice_pdf, agency_id, created_by, created_at, updated_at)
+      VALUES (${invoice_number}, ${Number(batch_id)}, ${Number(scheme_id)}, ${Number(tp_id)}, ${Number(total_candidate)}, ${Number(amount_per_candidate)}, ${Number(total_amount)}, ${gst_amount ? Number(gst_amount) : 0}, ${invoice_pdf || null}, ${agency_id}, ${created_by}, NOW(), NOW())
     `
 
     return NextResponse.json({ status: 'Success', statusCode: 200, message: 'TP invoice created successfully' })

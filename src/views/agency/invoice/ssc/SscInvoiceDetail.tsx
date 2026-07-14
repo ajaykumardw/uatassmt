@@ -23,10 +23,10 @@ type SscInvoice = {
   invoice_number: string
   batch_name: string
   ssc_name: string
-  scheme_name: string
+  scheme: string
   assessment_date: string
-  total_candidates: number
-  present_candidates: number
+  total_candidate: number
+  present_candidate: number
   amount_per_candidate: number
   total_amount: number
   payment_status: string
@@ -34,8 +34,8 @@ type SscInvoice = {
   deduction_amount: number
   actual_received_amount: number
   difference_amount: number
-  group_photo_path: string
-  attendance_sheet_path: string
+  group_photo: string
+  attendance_sheet: string
   notes: string
 }
 
@@ -109,7 +109,7 @@ const SscInvoiceDetail = ({ data, updateData }: Props) => {
       </Grid>
       <Grid item xs={12} md={8}>
         <Card>
-          <CardHeader title={`Invoice #${data.invoice_number}`} />
+          <CardHeader title={`Invoice #${data.invoice_number || `SSC-INV-${data.id}`}`} />
           <CardContent>
             <Grid container spacing={4}>
               <Grid item xs={6}>
@@ -122,7 +122,7 @@ const SscInvoiceDetail = ({ data, updateData }: Props) => {
               </Grid>
               <Grid item xs={6}>
                 <Typography variant='caption' color='text.secondary'>Scheme</Typography>
-                <Typography variant='body2' className='font-medium'>{data.scheme_name}</Typography>
+                <Typography variant='body2' className='font-medium'>{data.scheme}</Typography>
               </Grid>
               <Grid item xs={6}>
                 <Typography variant='caption' color='text.secondary'>Assessment Date</Typography>
@@ -132,11 +132,11 @@ const SscInvoiceDetail = ({ data, updateData }: Props) => {
               </Grid>
               <Grid item xs={6}>
                 <Typography variant='caption' color='text.secondary'>Total Candidates</Typography>
-                <Typography variant='body2' className='font-medium'>{data.total_candidates}</Typography>
+                <Typography variant='body2' className='font-medium'>{data.total_candidate}</Typography>
               </Grid>
               <Grid item xs={6}>
                 <Typography variant='caption' color='text.secondary'>Present Candidates</Typography>
-                <Typography variant='body2' className='font-medium'>{data.present_candidates}</Typography>
+                <Typography variant='body2' className='font-medium'>{data.present_candidate}</Typography>
               </Grid>
               <Grid item xs={6}>
                 <Typography variant='caption' color='text.secondary'>Amount Per Candidate</Typography>
@@ -152,20 +152,20 @@ const SscInvoiceDetail = ({ data, updateData }: Props) => {
                   <Typography variant='body2'>{data.notes}</Typography>
                 </Grid>
               )}
-              {data.group_photo_path && (
+              {data.group_photo && (
                 <Grid item xs={6}>
                   <Typography variant='caption' color='text.secondary'>Group Photo</Typography>
                   <br />
-                  <Button variant='text' size='small' component='a' href={data.group_photo_path} target='_blank'>
+                  <Button variant='text' size='small' component='a' href={data.group_photo} target='_blank'>
                     View Photo
                   </Button>
                 </Grid>
               )}
-              {data.attendance_sheet_path && (
+              {data.attendance_sheet && (
                 <Grid item xs={6}>
                   <Typography variant='caption' color='text.secondary'>Attendance Sheet</Typography>
                   <br />
-                  <Button variant='text' size='small' component='a' href={data.attendance_sheet_path} target='_blank'>
+                  <Button variant='text' size='small' component='a' href={data.attendance_sheet} target='_blank'>
                     View Sheet
                   </Button>
                 </Grid>
@@ -203,8 +203,6 @@ const SscInvoiceDetail = ({ data, updateData }: Props) => {
                 >
                   <MenuItem value='pending'>Pending</MenuItem>
                   <MenuItem value='received'>Received</MenuItem>
-                  <MenuItem value='partial'>Partial</MenuItem>
-                  <MenuItem value='cancelled'>Cancelled</MenuItem>
                 </CustomTextField>
               </Grid>
               <Grid item xs={12}>

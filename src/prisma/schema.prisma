@@ -1085,6 +1085,7 @@ enum ssc_invoice_payment_status {
 /// SSC assessment invoice
 model ssc_invoices {
   id                    Int                         @id @default(autoincrement())
+  invoice_number        String?                     @unique @db.VarChar(50)
   batch_id              Int
   ssc_id                Int
   assessment_date       DateTime?                   @db.DateTime(0)
@@ -1128,6 +1129,7 @@ enum assessor_payment_status {
 /// Assessor/proctor invoice
 model assessor_invoices {
   id                    Int                        @id @default(autoincrement())
+  invoice_number        String?                    @unique @db.VarChar(50)
   batch_id              Int
   ssc_id                Int
   assessor_id           Int
@@ -1172,6 +1174,7 @@ enum tp_payment_status {
 /// Training partner invoice
 model tp_invoices {
   id                    Int                   @id @default(autoincrement())
+  invoice_number        String?               @unique @db.VarChar(50)
   batch_id              Int
   scheme_id             Int
   tp_id                 Int
