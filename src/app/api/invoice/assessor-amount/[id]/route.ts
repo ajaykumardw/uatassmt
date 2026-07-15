@@ -49,16 +49,26 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ status: 'Error', statusCode: 404, message: 'Record not found' }, { status: 404 })
     }
 
-    await prisma.$executeRaw`
+    const setClauses: string[] = []
+    const values: any[] = []
+
+    if (assessor_id !== undefined) { setClauses.push('assessor_id = ?'); values.push(Number(assessor_id)) }
+    if (per_candidate_amount !== undefined) { setClauses.push('per_candidate_amount = ?'); values.push(Number(per_candidate_amount)) }
+    if (effective_from !== undefined) { setClauses.push('effective_from = ?'); values.push(effective_from ? new Date(effective_from) : null) }
+    if (status !== undefined) { setClauses.push('status = ?'); values.push(Number(status)) }
+
+    if (setClauses.length === 0) {
+      return NextResponse.json({ status: 'Error', statusCode: 400, message: 'No fields to update' }, { status: 400 })
+    }
+
+    setClauses.push('updated_at = NOW()')
+    values.push(id)
+
+    await prisma.$executeRawUnsafe(`
       UPDATE assessor_invoice_amounts
-      SET
-        assessor_id = ${assessor_id !== undefined ? Number(assessor_id) : undefined},
-        per_candidate_amount = ${per_candidate_amount !== undefined ? Number(per_candidate_amount) : undefined},
-        effective_from = ${effective_from !== undefined ? (effective_from ? new Date(effective_from) : null) : undefined},
-        status = ${status !== undefined ? Number(status) : undefined},
-        updated_at = NOW()
-      WHERE id = ${id}
-    `
+      SET ${setClauses.join(', ')}
+      WHERE id = ?
+    `, ...values)
 
     return NextResponse.json({ status: 'Success', statusCode: 200, message: 'Record updated successfully' })
   } catch (error: any) {

@@ -6,32 +6,50 @@ import SkeletonTable from '@/components/skeleton/SkeletonTable'
 import MasterDataPage from '@/views/agency/invoice/master'
 
 const InvoiceMasterPage = () => {
-  const [data, setData] = useState<any[]>([])
+  const [sscData, setSscData] = useState<any[]>([])
+  const [assessorData, setAssessorData] = useState<any[]>([])
+  const [tpData, setTpData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  const fetchMasterData = async () => {
+  const fetchAll = async () => {
+    setLoading(true)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data`)
+      const [sscRes, assessorRes, tpRes] = await Promise.all([
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data`),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor-amount`),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/tp-amount`)
+      ])
 
-      if (!res.ok) throw new Error('Failed to fetch master data')
+      const sscResult = await sscRes.json()
+      const assessorResult = await assessorRes.json()
+      const tpResult = await tpRes.json()
 
-      const result = await res.json()
-
-      setData(result.data || [])
+      setSscData(sscResult.data || [])
+      setAssessorData(assessorResult.data || [])
+      setTpData(tpResult.data || [])
     } catch {
-      setData([])
+      setSscData([])
+      setAssessorData([])
+      setTpData([])
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchMasterData()
+    fetchAll()
   }, [])
 
   if (loading) return <SkeletonTable />
 
-  return <MasterDataPage data={data} updateData={fetchMasterData} />
+  return (
+    <MasterDataPage
+      sscData={sscData}
+      assessorData={assessorData}
+      tpData={tpData}
+      updateData={fetchAll}
+    />
+  )
 }
 
 export default InvoiceMasterPage

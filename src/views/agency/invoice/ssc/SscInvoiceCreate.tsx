@@ -37,7 +37,8 @@ const SscInvoiceCreate = () => {
   const [batches, setBatches] = useState<BatchOption[]>([])
 
   const [selectedBatchId, setSelectedBatchId] = useState('')
-  const [selectedBatch, setSelectedBatch] = useState<BatchOption | null>(null)
+  const [batchSscId, setBatchSscId] = useState<number>(0)
+  const [batchSchemeId, setBatchSchemeId] = useState<number>(0)
   const [sscName, setSscName] = useState('')
   const [schemeName, setSchemeName] = useState('')
   const [assessmentDate, setAssessmentDate] = useState('')
@@ -62,9 +63,9 @@ const SscInvoiceCreate = () => {
   const handleBatchChange = async (batchId: string) => {
     setSelectedBatchId(batchId)
     const batch = batches.find(b => b.id === Number(batchId))
-    setSelectedBatch(batch || null)
-
     if (batch) {
+      setBatchSscId(batch.qualification_pack?.ssc?.id || 0)
+      setBatchSchemeId(batch.scheme?.id || 0)
       setSscName(batch.qualification_pack?.ssc?.ssc_name || batch.ssc_name || '')
       setSchemeName(batch.scheme?.scheme_name || batch.scheme_name || '')
       setAssessmentDate(batch.assessment_start_datetime?.split('T')[0] || '')
@@ -95,6 +96,8 @@ const SscInvoiceCreate = () => {
         setAmountPerCandidate('')
       }
     } else {
+      setBatchSscId(0)
+      setBatchSchemeId(0)
       setSscName('')
       setSchemeName('')
       setAssessmentDate('')
@@ -105,7 +108,7 @@ const SscInvoiceCreate = () => {
   }
 
   const handleSave = async () => {
-    if (!selectedBatchId || !presentCandidates || !amountPerCandidate || !selectedBatch) {
+    if (!selectedBatchId || !presentCandidates || !amountPerCandidate) {
       toast.error('Please fill all required fields')
 
       return
@@ -116,7 +119,7 @@ const SscInvoiceCreate = () => {
     try {
       const body = {
         batch_id: Number(selectedBatchId),
-        ssc_id: selectedBatch.qualification_pack?.ssc?.id || 0,
+        ssc_id: batchSscId,
         assessment_date: assessmentDate || null,
         scheme: schemeName,
         total_candidate: totalCandidates,

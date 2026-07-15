@@ -153,9 +153,9 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
         </MenuItem>
         <SubMenu label="Invoice" icon={<i className='tabler-file-invoice' />}>
           <MenuItem href={`/${locale}/invoice/master`}>Invoice Master</MenuItem>
-          <MenuItem href={`/${locale}/invoice/ssc`}>SSC Invoice</MenuItem>
-          <MenuItem href={`/${locale}/invoice/assessor`}>Assessor Invoice</MenuItem>
-          <MenuItem href={`/${locale}/invoice/tp`}>TP Invoice</MenuItem>
+          <MenuItem href={`/${locale}/invoice/ssc`} disabled>SSC Invoice</MenuItem>
+          <MenuItem href={`/${locale}/invoice/assessor`} disabled>Assessor Invoice</MenuItem>
+          <MenuItem href={`/${locale}/invoice/tp`} disabled>TP Invoice</MenuItem>
         </SubMenu>
         <SubMenu label={dictionary['navigation'].reports} icon={<i className='tabler-report' />}>
           <MenuItem href={`/${locale}/reports/nos`}>{dictionary['navigation'].nosWise}</MenuItem>

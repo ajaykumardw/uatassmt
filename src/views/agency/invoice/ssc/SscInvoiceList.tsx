@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 
 import Card from '@mui/material/Card'
@@ -17,10 +16,12 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Paper from '@mui/material/Paper'
 import Chip from '@mui/material/Chip'
+import Pagination from '@mui/material/Pagination'
 import MenuItem from '@mui/material/MenuItem'
 
 import CustomTextField from '@core/components/mui/TextField'
 import { MenuProps } from '@/configs/customDataConfig'
+import type { TextFieldProps } from '@mui/material/TextField'
 
 type SscInvoice = {
   id: number
@@ -33,12 +34,32 @@ type SscInvoice = {
   present_candidate: number
   amount_per_candidate: number
   total_amount: number
+  received_amount: number | null
+  deduction_amount: number | null
+  actual_received_amount: number | null
+  difference_amount: number | null
   payment_status: string
 }
 
 type Props = {
   data: SscInvoice[]
   updateData: () => void
+  total: number
+  page: number
+  limit: number
+  onPageChange: (page: number) => void
+  search: string
+  onSearchChange: (v: string) => void
+  sscId: string
+  onSscIdChange: (v: string) => void
+  sscOptions: { id: number; ssc_name: string }[]
+  paymentStatus: string
+  onPaymentStatusChange: (v: string) => void
+  dateFrom: string
+  onDateFromChange: (v: string) => void
+  dateTo: string
+  onDateToChange: (v: string) => void
+  onFilter: () => void
 }
 
 const paymentStatusColors: Record<string, 'success' | 'warning' | 'info' | 'error'> = {
@@ -48,29 +69,18 @@ const paymentStatusColors: Record<string, 'success' | 'warning' | 'info' | 'erro
   cancelled: 'error'
 }
 
-const SscInvoiceList = ({ data, updateData }: Props) => {
+const SscInvoiceList = ({
+  data, updateData, total, page, limit, onPageChange,
+  search, onSearchChange, sscId, onSscIdChange, sscOptions,
+  paymentStatus, onPaymentStatusChange,
+  dateFrom, onDateFromChange, dateTo, onDateToChange, onFilter
+}: Props) => {
   const router = useRouter()
-  const [sscFilter, setSscFilter] = useState('-1')
-  const [paymentFilter, setPaymentFilter] = useState('-1')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
+  const totalPages = Math.ceil(total / limit)
 
-  const sscNames = useMemo(() => {
-    const names = new Set(data.map(d => d.ssc_name).filter(Boolean))
-
-    return Array.from(names)
-  }, [data])
-
-  const filteredData = useMemo(() => {
-    return data.filter(item => {
-      if (sscFilter !== '-1' && item.ssc_name !== sscFilter) return false
-      if (paymentFilter !== '-1' && item.payment_status !== paymentFilter) return false
-      if (dateFrom && item.assessment_date && new Date(item.assessment_date) < new Date(dateFrom)) return false
-      if (dateTo && item.assessment_date && new Date(item.assessment_date) > new Date(dateTo)) return false
-
-      return true
-    })
-  }, [data, sscFilter, paymentFilter, dateFrom, dateTo])
+  const handleKeyDown: TextFieldProps['onKeyDown'] = (e) => {
+    if (e.key === 'Enter') onFilter()
+  }
 
   return (
     <Grid container spacing={6}>
@@ -92,26 +102,35 @@ const SscInvoiceList = ({ data, updateData }: Props) => {
                   select
                   fullWidth
                   label='SSC'
-                  value={sscFilter}
-                  onChange={e => setSscFilter(e.target.value)}
+                  value={sscId}
+                  onChange={e => { onSscIdChange(e.target.value); onFilter() }}
                   SelectProps={{ MenuProps, displayEmpty: true }}
                 >
-                  <MenuItem value='-1'>All SSC</MenuItem>
-                  {sscNames.map(name => (
-                    <MenuItem key={name} value={name}>{name}</MenuItem>
+                  <MenuItem value=''>All SSC</MenuItem>
+                  {sscOptions.map(s => (
+                    <MenuItem key={s.id} value={String(s.id)}>{s.ssc_name}</MenuItem>
                   ))}
                 </CustomTextField>
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <CustomTextField
+                  fullWidth
+                  label='Search (Batch / SSC)'
+                  value={search}
+                  onChange={e => onSearchChange(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                />
               </Grid>
               <Grid item xs={12} sm={3}>
                 <CustomTextField
                   select
                   fullWidth
                   label='Payment Status'
-                  value={paymentFilter}
-                  onChange={e => setPaymentFilter(e.target.value)}
+                  value={paymentStatus}
+                  onChange={e => { onPaymentStatusChange(e.target.value); onFilter() }}
                   SelectProps={{ MenuProps, displayEmpty: true }}
                 >
-                  <MenuItem value='-1'>All Status</MenuItem>
+                  <MenuItem value=''>All</MenuItem>
                   <MenuItem value='pending'>Pending</MenuItem>
                   <MenuItem value='received'>Received</MenuItem>
                 </CustomTextField>
@@ -122,7 +141,7 @@ const SscInvoiceList = ({ data, updateData }: Props) => {
                   label='From Date'
                   type='date'
                   value={dateFrom}
-                  onChange={e => setDateFrom(e.target.value)}
+                  onChange={e => onDateFromChange(e.target.value)}
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
@@ -132,9 +151,13 @@ const SscInvoiceList = ({ data, updateData }: Props) => {
                   label='To Date'
                   type='date'
                   value={dateTo}
-                  onChange={e => setDateTo(e.target.value)}
+                  onChange={e => onDateToChange(e.target.value)}
                   InputLabelProps={{ shrink: true }}
                 />
+              </Grid>
+              <Grid item xs={12} className='flex gap-2'>
+                <Button variant='contained' onClick={onFilter}>Apply Filters</Button>
+                <Button variant='tonal' onClick={() => { onSearchChange(''); onSscIdChange(''); onPaymentStatusChange(''); onDateFromChange(''); onDateToChange(''); setTimeout(onFilter, 0) }}>Reset</Button>
               </Grid>
             </Grid>
             <TableContainer component={Paper}>
@@ -150,16 +173,20 @@ const SscInvoiceList = ({ data, updateData }: Props) => {
                       <TableCell>Present</TableCell>
                       <TableCell>Amount/Candidate</TableCell>
                       <TableCell>Total Amount</TableCell>
+                      <TableCell>Received</TableCell>
+                      <TableCell>Deduction</TableCell>
+                      <TableCell>Actual Received</TableCell>
+                      <TableCell>Difference</TableCell>
                       <TableCell>Payment Status</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                  {filteredData.length === 0 ? (
+                  {data.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={10} align='center'>No invoices found</TableCell>
+                      <TableCell colSpan={14} align='center'>No invoices found</TableCell>
                     </TableRow>
                   ) : (
-                    filteredData.map(row => (
+                    data.map(row => (
                       <TableRow
                         key={row.id}
                         hover
@@ -177,6 +204,10 @@ const SscInvoiceList = ({ data, updateData }: Props) => {
                         <TableCell>{row.present_candidate}</TableCell>
                         <TableCell>{Number(row.amount_per_candidate).toFixed(2)}</TableCell>
                         <TableCell>{Number(row.total_amount).toFixed(2)}</TableCell>
+                        <TableCell>{row.received_amount ? Number(row.received_amount).toFixed(2) : '-'}</TableCell>
+                        <TableCell>{row.deduction_amount ? Number(row.deduction_amount).toFixed(2) : '-'}</TableCell>
+                        <TableCell>{row.actual_received_amount ? Number(row.actual_received_amount).toFixed(2) : '-'}</TableCell>
+                        <TableCell>{row.difference_amount !== null && row.difference_amount !== undefined ? Number(row.difference_amount).toFixed(2) : '-'}</TableCell>
                         <TableCell>
                           <Chip
                             variant='tonal'
@@ -191,6 +222,20 @@ const SscInvoiceList = ({ data, updateData }: Props) => {
                 </TableBody>
               </Table>
             </TableContainer>
+            {totalPages > 1 && (
+              <div className='flex justify-center mt-4'>
+                <Pagination
+                  shape='rounded'
+                  color='primary'
+                  variant='tonal'
+                  count={totalPages}
+                  page={page}
+                  onChange={(_, newPage) => onPageChange(newPage)}
+                  showFirstButton
+                  showLastButton
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
       </Grid>

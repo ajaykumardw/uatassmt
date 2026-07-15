@@ -31,7 +31,7 @@ import { MenuProps } from '@/configs/customDataConfig'
 import type { SSCType } from '@/types/sectorskills/sscType'
 import type { SchemesType } from '@/types/schemes/schemesType'
 
-type MasterDataItem = {
+type SscItem = {
   id: number
   ssc_id: number
   ssc_name: string
@@ -41,28 +41,69 @@ type MasterDataItem = {
   status: number
 }
 
+type AssessorItem = {
+  id: number
+  assessor_id: number
+  assessor_name: string
+  per_candidate_amount: number
+  effective_from: string | null
+  status: number
+}
+
+type TpItem = {
+  id: number
+  scheme_id: number
+  scheme_name: string
+  amount_per_candidate: number
+  status: number
+}
+
 type Props = {
-  data: MasterDataItem[]
+  sscData: SscItem[]
+  assessorData: AssessorItem[]
+  tpData: TpItem[]
   updateData: () => void
 }
 
-const initialFormData = {
-  ssc_id: '',
-  scheme_id: '',
-  amount_per_candidate: ''
-}
+// ── SSC (existing) ──────────────────────────────────
+const initialSscForm = { ssc_id: '', scheme_id: '', amount_per_candidate: '' }
 
-const MasterDataPage = ({ data, updateData }: Props) => {
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [editingItem, setEditingItem] = useState<MasterDataItem | null>(null)
-  const [saving, setSaving] = useState(false)
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  const [deleteId, setDeleteId] = useState<number | null>(null)
+// ── Assessor ────────────────────────────────────────
+const initialAssessorForm = { assessor_id: '', per_candidate_amount: '', effective_from: '' }
 
+// ── TP ──────────────────────────────────────────────
+const initialTpForm = { scheme_id: '', amount_per_candidate: '' }
+
+const MasterDataPage = ({ sscData, assessorData, tpData, updateData }: Props) => {
+  // ── SSC state ──
+  const [sscDialogOpen, setSscDialogOpen] = useState(false)
+  const [sscEditItem, setSscEditItem] = useState<SscItem | null>(null)
+  const [sscSaving, setSscSaving] = useState(false)
+  const [sscDeleteId, setSscDeleteId] = useState<number | null>(null)
+  const [sscDeleteOpen, setSscDeleteOpen] = useState(false)
   const [sscList, setSscList] = useState<SSCType[]>([])
   const [schemeList, setSchemeList] = useState<SchemesType[]>([])
-  const [formData, setFormData] = useState(initialFormData)
+  const [sscForm, setSscForm] = useState(initialSscForm)
 
+  // ── Assessor state ──
+  const [assDialogOpen, setAssDialogOpen] = useState(false)
+  const [assEditItem, setAssEditItem] = useState<AssessorItem | null>(null)
+  const [assSaving, setAssSaving] = useState(false)
+  const [assDeleteId, setAssDeleteId] = useState<number | null>(null)
+  const [assDeleteOpen, setAssDeleteOpen] = useState(false)
+  const [assessors, setAssessors] = useState<{ id: number; first_name: string; last_name: string }[]>([])
+  const [assForm, setAssForm] = useState(initialAssessorForm)
+
+  // ── TP state ──
+  const [tpDialogOpen, setTpDialogOpen] = useState(false)
+  const [tpEditItem, setTpEditItem] = useState<TpItem | null>(null)
+  const [tpSaving, setTpSaving] = useState(false)
+  const [tpDeleteId, setTpDeleteId] = useState<number | null>(null)
+  const [tpDeleteOpen, setTpDeleteOpen] = useState(false)
+  const [tpSchemeList, setTpSchemeList] = useState<SchemesType[]>([])
+  const [tpForm, setTpForm] = useState(initialTpForm)
+
+  // ── Fetch common data ──
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/sectorskills`)
       .then(res => res.json())
@@ -71,125 +112,133 @@ const MasterDataPage = ({ data, updateData }: Props) => {
 
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/schemes`)
       .then(res => res.json())
-      .then(res => setSchemeList(Array.isArray(res) ? res : []))
+      .then(res => { setSchemeList(Array.isArray(res) ? res : []); setTpSchemeList(Array.isArray(res) ? res : []) })
+      .catch(() => {})
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/assessors`)
+      .then(res => res.json())
+      .then(res => setAssessors(Array.isArray(res) ? res : []))
       .catch(() => {})
   }, [])
 
-  const openAddDialog = () => {
-    setEditingItem(null)
-    setFormData(initialFormData)
-    setDialogOpen(true)
+  // ══════════════════════════════════════════════════
+  //  SSC HANDLERS
+  // ══════════════════════════════════════════════════
+  const openSscAdd = () => { setSscEditItem(null); setSscForm(initialSscForm); setSscDialogOpen(true) }
+  const openSscEdit = (item: SscItem) => {
+    setSscEditItem(item)
+    setSscForm({ ssc_id: item.ssc_id.toString(), scheme_id: item.scheme_id.toString(), amount_per_candidate: item.amount_per_candidate.toString() })
+    setSscDialogOpen(true)
   }
-
-  const openEditDialog = (item: MasterDataItem) => {
-    setEditingItem(item)
-    setFormData({
-      ssc_id: item.ssc_id.toString(),
-      scheme_id: item.scheme_id.toString(),
-      amount_per_candidate: item.amount_per_candidate.toString()
-    })
-    setDialogOpen(true)
-  }
-
-  const handleSave = async () => {
-    if (!formData.ssc_id || !formData.scheme_id || !formData.amount_per_candidate) {
-      toast.error('All fields are required')
-
-      return
-    }
-
-    setSaving(true)
-
+  const saveSsc = async () => {
+    if (!sscForm.ssc_id || !sscForm.scheme_id || !sscForm.amount_per_candidate) { toast.error('All fields required'); return }
+    setSscSaving(true)
     try {
-      const url = editingItem
-        ? `${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data/${editingItem.id}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data`
-
-      const method = editingItem ? 'PUT' : 'POST'
-
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ssc_id: Number(formData.ssc_id),
-          scheme_id: Number(formData.scheme_id),
-          amount_per_candidate: Number(formData.amount_per_candidate)
-        })
-      })
-
+      const url = sscEditItem ? `${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data/${sscEditItem.id}` : `${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data`
+      const method = sscEditItem ? 'PUT' : 'POST'
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ssc_id: Number(sscForm.ssc_id), scheme_id: Number(sscForm.scheme_id), amount_per_candidate: Number(sscForm.amount_per_candidate) }) })
       const result = await res.json()
-
-      if (res.ok && result.status === 'Success') {
-        toast.success(editingItem ? 'Master data updated successfully' : 'Master data created successfully')
-        setDialogOpen(false)
-        updateData()
-      } else {
-        toast.error(result.message || 'Failed to save master data')
-      }
-    } catch {
-      toast.error('Failed to save master data')
-    } finally {
-      setSaving(false)
-    }
+      if (res.ok && result.status === 'Success') { toast.success(sscEditItem ? 'Updated' : 'Created'); setSscDialogOpen(false); updateData() } else toast.error(result.message || 'Failed')
+    } catch { toast.error('Failed') } finally { setSscSaving(false) }
   }
-
-  const handleDelete = async () => {
-    if (!deleteId) return
-
+  const deleteSsc = async () => {
+    if (!sscDeleteId) return
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data/${deleteId}`, {
-        method: 'DELETE'
-      })
-
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data/${sscDeleteId}`, { method: 'DELETE' })
       const result = await res.json()
-
-      if (res.ok && result.status === 'Success') {
-        toast.success('Master data deleted successfully')
-        setDeleteConfirmOpen(false)
-        setDeleteId(null)
-        updateData()
-      } else {
-        toast.error(result.message || 'Failed to delete master data')
-      }
-    } catch {
-      toast.error('Failed to delete master data')
-    }
+      if (res.ok && result.status === 'Success') { toast.success('Deleted'); setSscDeleteOpen(false); setSscDeleteId(null); updateData() } else toast.error(result.message || 'Failed')
+    } catch { toast.error('Failed') }
   }
-
-  const toggleStatus = async (item: MasterDataItem) => {
+  const toggleSscStatus = async (item: SscItem) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data/${item.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: item.status === 1 ? 0 : 1 })
-      })
-
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: item.status === 1 ? 0 : 1 }) })
       const result = await res.json()
-
-      if (res.ok && result.status === 'Success') {
-        toast.success('Status updated successfully')
-        updateData()
-      } else {
-        toast.error(result.message || 'Failed to update status')
-      }
-    } catch {
-      toast.error('Failed to update status')
-    }
+      if (res.ok && result.status === 'Success') { toast.success('Status updated'); updateData() } else toast.error(result.message || 'Failed')
+    } catch { toast.error('Failed') }
   }
+
+  // ══════════════════════════════════════════════════
+  //  ASSESSOR HANDLERS
+  // ══════════════════════════════════════════════════
+  const openAssAdd = () => { setAssEditItem(null); setAssForm(initialAssessorForm); setAssDialogOpen(true) }
+  const openAssEdit = (item: AssessorItem) => {
+    setAssEditItem(item)
+    setAssForm({ assessor_id: item.assessor_id.toString(), per_candidate_amount: item.per_candidate_amount.toString(), effective_from: item.effective_from ? item.effective_from.split('T')[0] : '' })
+    setAssDialogOpen(true)
+  }
+  const saveAss = async () => {
+    if (!assForm.assessor_id || !assForm.per_candidate_amount) { toast.error('Assessor and amount required'); return }
+    setAssSaving(true)
+    try {
+      const url = assEditItem ? `${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor-amount/${assEditItem.id}` : `${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor-amount`
+      const method = assEditItem ? 'PUT' : 'POST'
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ assessor_id: Number(assForm.assessor_id), per_candidate_amount: Number(assForm.per_candidate_amount), effective_from: assForm.effective_from || null }) })
+      const result = await res.json()
+      if (res.ok && result.status === 'Success') { toast.success(assEditItem ? 'Updated' : 'Created'); setAssDialogOpen(false); updateData() } else toast.error(result.message || 'Failed')
+    } catch { toast.error('Failed') } finally { setAssSaving(false) }
+  }
+  const deleteAss = async () => {
+    if (!assDeleteId) return
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor-amount/${assDeleteId}`, { method: 'DELETE' })
+      const result = await res.json()
+      if (res.ok && result.status === 'Success') { toast.success('Deleted'); setAssDeleteOpen(false); setAssDeleteId(null); updateData() } else toast.error(result.message || 'Failed')
+    } catch { toast.error('Failed') }
+  }
+  const toggleAssStatus = async (item: AssessorItem) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor-amount/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: item.status === 1 ? 0 : 1 }) })
+      const result = await res.json()
+      if (res.ok && result.status === 'Success') { toast.success('Status updated'); updateData() } else toast.error(result.message || 'Failed')
+    } catch { toast.error('Failed') }
+  }
+
+  // ══════════════════════════════════════════════════
+  //  TP HANDLERS
+  // ══════════════════════════════════════════════════
+  const openTpAdd = () => { setTpEditItem(null); setTpForm(initialTpForm); setTpDialogOpen(true) }
+  const openTpEdit = (item: TpItem) => {
+    setTpEditItem(item)
+    setTpForm({ scheme_id: item.scheme_id.toString(), amount_per_candidate: item.amount_per_candidate.toString() })
+    setTpDialogOpen(true)
+  }
+  const saveTp = async () => {
+    if (!tpForm.scheme_id || !tpForm.amount_per_candidate) { toast.error('Scheme and amount required'); return }
+    setTpSaving(true)
+    try {
+      const url = tpEditItem ? `${process.env.NEXT_PUBLIC_API_URL}/invoice/tp-amount/${tpEditItem.id}` : `${process.env.NEXT_PUBLIC_API_URL}/invoice/tp-amount`
+      const method = tpEditItem ? 'PUT' : 'POST'
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scheme_id: Number(tpForm.scheme_id), amount_per_candidate: Number(tpForm.amount_per_candidate) }) })
+      const result = await res.json()
+      if (res.ok && result.status === 'Success') { toast.success(tpEditItem ? 'Updated' : 'Created'); setTpDialogOpen(false); updateData() } else toast.error(result.message || 'Failed')
+    } catch { toast.error('Failed') } finally { setTpSaving(false) }
+  }
+  const deleteTp = async () => {
+    if (!tpDeleteId) return
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/tp-amount/${tpDeleteId}`, { method: 'DELETE' })
+      const result = await res.json()
+      if (res.ok && result.status === 'Success') { toast.success('Deleted'); setTpDeleteOpen(false); setTpDeleteId(null); updateData() } else toast.error(result.message || 'Failed')
+    } catch { toast.error('Failed') }
+  }
+  const toggleTpStatus = async (item: TpItem) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/tp-amount/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: item.status === 1 ? 0 : 1 }) })
+      const result = await res.json()
+      if (res.ok && result.status === 'Success') { toast.success('Status updated'); updateData() } else toast.error(result.message || 'Failed')
+    } catch { toast.error('Failed') }
+  }
+
+  // ══════════════════════════════════════════════════
+  //  SHARED DELETE DIALOG
+  // ══════════════════════════════════════════════════
 
   return (
     <Grid container spacing={6}>
+      {/* ── SSC SECTION ── */}
       <Grid item xs={12}>
         <Card>
-          <CardHeader
-            title='Invoice Master Data'
-            subheader='Manage SSC-wise scheme amounts'
-            action={
-              <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={openAddDialog}>
-                Add New
-              </Button>
-            }
-          />
+          <CardHeader title='SSC Wise Scheme and Invoice Amount' subheader='Manage SSC-wise scheme rates' action={<Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={openSscAdd}>Add New</Button>} />
           <CardContent>
             <TableContainer component={Paper}>
               <Table>
@@ -203,41 +252,21 @@ const MasterDataPage = ({ data, updateData }: Props) => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {data.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} align='center'>No data available</TableCell>
-                    </TableRow>
-                  ) : (
-                    data.map((item) => (
+                  {sscData.length === 0 ? <TableRow><TableCell colSpan={5} align='center'>No data</TableCell></TableRow>
+                    : sscData.map(item => (
                       <TableRow key={item.id}>
                         <TableCell>{item.ssc_name}</TableCell>
                         <TableCell>{item.scheme_name}</TableCell>
                         <TableCell>{Number(item.amount_per_candidate).toFixed(2)}</TableCell>
                         <TableCell>
-                          <Chip
-                            variant='tonal'
-                            size='small'
-                            label={item.status === 1 ? 'Active' : 'Inactive'}
-                            color={item.status === 1 ? 'success' : 'secondary'}
-                          />
+                          <Button size='small' variant={item.status === 1 ? 'contained' : 'outlined'} color={item.status === 1 ? 'success' : 'secondary'} onClick={() => toggleSscStatus(item)} sx={{ minWidth: 70, textTransform: 'none', borderRadius: 4 }}>{item.status === 1 ? 'Active' : 'Inactive'}</Button>
                         </TableCell>
                         <TableCell>
-                          <IconButton onClick={() => openEditDialog(item)} size='small'>
-                            <i className='tabler-edit text-[22px] text-textSecondary' />
-                          </IconButton>
-                          <IconButton
-                            onClick={() => { setDeleteId(item.id); setDeleteConfirmOpen(true) }}
-                            size='small'
-                          >
-                            <i className='tabler-trash text-[22px] text-textSecondary' />
-                          </IconButton>
-                          <IconButton onClick={() => toggleStatus(item)} size='small'>
-                            <i className={`tabler-${item.status === 1 ? 'pause-circle' : 'play-circle'} text-[22px] text-textSecondary`} />
-                          </IconButton>
+                          <IconButton onClick={() => openSscEdit(item)} size='small'><i className='tabler-edit text-[22px] text-textSecondary' /></IconButton>
+                          <IconButton onClick={() => { setSscDeleteId(item.id); setSscDeleteOpen(true) }} size='small'><i className='tabler-trash text-[22px] text-textSecondary' /></IconButton>
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
+                    ))}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -245,67 +274,184 @@ const MasterDataPage = ({ data, updateData }: Props) => {
         </Card>
       </Grid>
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth='sm' fullWidth>
-        <DialogTitle>{editingItem ? 'Edit Master Data' : 'Add Master Data'}</DialogTitle>
+      {/* ── ASSESSOR SECTION ── */}
+      <Grid item xs={12}>
+        <Card>
+          <CardHeader title='Assessor Wise Invoice Amount' subheader='Manage per-candidate rates for assessors' action={<Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={openAssAdd}>Add New</Button>} />
+          <CardContent>
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Assessor Name</TableCell>
+                    <TableCell>Per Candidate Amount</TableCell>
+                    <TableCell>Effective From</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {assessorData.length === 0 ? <TableRow><TableCell colSpan={5} align='center'>No data</TableCell></TableRow>
+                    : assessorData.map(item => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.assessor_name}</TableCell>
+                        <TableCell>{Number(item.per_candidate_amount).toFixed(2)}</TableCell>
+                        <TableCell>{item.effective_from ? new Date(item.effective_from).toLocaleDateString() : '-'}</TableCell>
+                        <TableCell>
+                          <Button size='small' variant={item.status === 1 ? 'contained' : 'outlined'} color={item.status === 1 ? 'success' : 'secondary'} onClick={() => toggleAssStatus(item)} sx={{ minWidth: 70, textTransform: 'none', borderRadius: 4 }}>{item.status === 1 ? 'Active' : 'Inactive'}</Button>
+                        </TableCell>
+                        <TableCell>
+                          <IconButton onClick={() => openAssEdit(item)} size='small'><i className='tabler-edit text-[22px] text-textSecondary' /></IconButton>
+                          <IconButton onClick={() => { setAssDeleteId(item.id); setAssDeleteOpen(true) }} size='small'><i className='tabler-trash text-[22px] text-textSecondary' /></IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      {/* ── TP SECTION ── */}
+      <Grid item xs={12}>
+        <Card>
+          <CardHeader title='Training Partner Invoice Amount' subheader='Manage per-candidate rates for training partners' action={<Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={openTpAdd}>Add New</Button>} />
+          <CardContent>
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Scheme</TableCell>
+                    <TableCell>Amount Per Candidate</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {tpData.length === 0 ? <TableRow><TableCell colSpan={4} align='center'>No data</TableCell></TableRow>
+                    : tpData.map(item => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.scheme_name}</TableCell>
+                        <TableCell>{Number(item.amount_per_candidate).toFixed(2)}</TableCell>
+                        <TableCell>
+                          <Button size='small' variant={item.status === 1 ? 'contained' : 'outlined'} color={item.status === 1 ? 'success' : 'secondary'} onClick={() => toggleTpStatus(item)} sx={{ minWidth: 70, textTransform: 'none', borderRadius: 4 }}>{item.status === 1 ? 'Active' : 'Inactive'}</Button>
+                        </TableCell>
+                        <TableCell>
+                          <IconButton onClick={() => openTpEdit(item)} size='small'><i className='tabler-edit text-[22px] text-textSecondary' /></IconButton>
+                          <IconButton onClick={() => { setTpDeleteId(item.id); setTpDeleteOpen(true) }} size='small'><i className='tabler-trash text-[22px] text-textSecondary' /></IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      {/* ════════════════════════════════════════════ */}
+      {/*  DIALOGS                                     */}
+      {/* ════════════════════════════════════════════ */}
+
+      {/* SSC Dialog */}
+      <Dialog open={sscDialogOpen} onClose={() => setSscDialogOpen(false)} maxWidth='sm' fullWidth>
+        <DialogTitle>{sscEditItem ? 'Edit SSC Amount' : 'Add SSC Amount'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={4} className='mt-2'>
             <Grid item xs={12}>
-              <CustomTextField
-                select
-                fullWidth
-                label='Select SSC'
-                value={formData.ssc_id}
-                onChange={e => setFormData({ ...formData, ssc_id: e.target.value })}
-                SelectProps={{ MenuProps }}
-              >
+              <CustomTextField select fullWidth label='Select SSC' value={sscForm.ssc_id} onChange={e => setSscForm({ ...sscForm, ssc_id: e.target.value })} SelectProps={{ MenuProps }}>
                 <MenuItem value=''>Select SSC</MenuItem>
-                {sscList.map(ssc => (
-                  <MenuItem key={ssc.id} value={ssc.id.toString()}>{ssc.ssc_name}</MenuItem>
-                ))}
+                {sscList.map(s => <MenuItem key={s.id} value={s.id.toString()}>{s.ssc_name}</MenuItem>)}
               </CustomTextField>
             </Grid>
             <Grid item xs={12}>
-              <CustomTextField
-                select
-                fullWidth
-                label='Select Scheme'
-                value={formData.scheme_id}
-                onChange={e => setFormData({ ...formData, scheme_id: e.target.value })}
-                SelectProps={{ MenuProps }}
-              >
+              <CustomTextField select fullWidth label='Select Scheme' value={sscForm.scheme_id} onChange={e => setSscForm({ ...sscForm, scheme_id: e.target.value })} SelectProps={{ MenuProps }}>
                 <MenuItem value=''>Select Scheme</MenuItem>
-                {schemeList.map(scheme => (
-                  <MenuItem key={scheme.id} value={scheme.id.toString()}>{scheme.scheme_name}</MenuItem>
-                ))}
+                {schemeList.map(s => <MenuItem key={s.id} value={s.id.toString()}>{s.scheme_name}</MenuItem>)}
               </CustomTextField>
             </Grid>
             <Grid item xs={12}>
-              <CustomTextField
-                fullWidth
-                label='Amount Per Candidate'
-                type='number'
-                value={formData.amount_per_candidate}
-                onChange={e => setFormData({ ...formData, amount_per_candidate: e.target.value })}
-              />
+              <CustomTextField fullWidth label='Amount Per Candidate' type='number' value={sscForm.amount_per_candidate} onChange={e => setSscForm({ ...sscForm, amount_per_candidate: e.target.value })} />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)} color='secondary'>Cancel</Button>
-          <Button variant='contained' onClick={handleSave} disabled={saving} startIcon={saving ? <CircularProgress size={16} /> : <i className='tabler-device-floppy' />}>
-            {editingItem ? 'Update' : 'Save'}
-          </Button>
+          <Button onClick={() => setSscDialogOpen(false)} color='secondary'>Cancel</Button>
+          <Button variant='contained' onClick={saveSsc} disabled={sscSaving} startIcon={sscSaving ? <CircularProgress size={16} /> : <i className='tabler-device-floppy' />}>{sscEditItem ? 'Update' : 'Save'}</Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} maxWidth='xs' fullWidth>
-        <DialogTitle>Confirm Delete</DialogTitle>
+      {/* Assessor Dialog */}
+      <Dialog open={assDialogOpen} onClose={() => setAssDialogOpen(false)} maxWidth='sm' fullWidth>
+        <DialogTitle>{assEditItem ? 'Edit Assessor Amount' : 'Add Assessor Amount'}</DialogTitle>
         <DialogContent>
-          <Typography>Are you sure you want to delete this master data entry?</Typography>
+          <Grid container spacing={4} className='mt-2'>
+            <Grid item xs={12}>
+              <CustomTextField select fullWidth label='Select Assessor' value={assForm.assessor_id} onChange={e => setAssForm({ ...assForm, assessor_id: e.target.value })} SelectProps={{ MenuProps }}>
+                <MenuItem value=''>Select Assessor</MenuItem>
+                {assessors.map(a => <MenuItem key={a.id} value={a.id.toString()}>{a.first_name} {a.last_name}</MenuItem>)}
+              </CustomTextField>
+            </Grid>
+            <Grid item xs={12}>
+              <CustomTextField fullWidth label='Per Candidate Amount' type='number' value={assForm.per_candidate_amount} onChange={e => setAssForm({ ...assForm, per_candidate_amount: e.target.value })} />
+            </Grid>
+            <Grid item xs={12}>
+              <CustomTextField fullWidth label='Effective From' type='date' value={assForm.effective_from} onChange={e => setAssForm({ ...assForm, effective_from: e.target.value })} InputLabelProps={{ shrink: true }} />
+            </Grid>
+          </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteConfirmOpen(false)} color='secondary'>Cancel</Button>
-          <Button variant='contained' color='error' onClick={handleDelete}>Delete</Button>
+          <Button onClick={() => setAssDialogOpen(false)} color='secondary'>Cancel</Button>
+          <Button variant='contained' onClick={saveAss} disabled={assSaving} startIcon={assSaving ? <CircularProgress size={16} /> : <i className='tabler-device-floppy' />}>{assEditItem ? 'Update' : 'Save'}</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* TP Dialog */}
+      <Dialog open={tpDialogOpen} onClose={() => setTpDialogOpen(false)} maxWidth='sm' fullWidth>
+        <DialogTitle>{tpEditItem ? 'Edit TP Amount' : 'Add TP Amount'}</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={4} className='mt-2'>
+            <Grid item xs={12}>
+              <CustomTextField select fullWidth label='Select Scheme' value={tpForm.scheme_id} onChange={e => setTpForm({ ...tpForm, scheme_id: e.target.value })} SelectProps={{ MenuProps }}>
+                <MenuItem value=''>Select Scheme</MenuItem>
+                {tpSchemeList.map(s => <MenuItem key={s.id} value={s.id.toString()}>{s.scheme_name}</MenuItem>)}
+              </CustomTextField>
+            </Grid>
+            <Grid item xs={12}>
+              <CustomTextField fullWidth label='Amount Per Candidate' type='number' value={tpForm.amount_per_candidate} onChange={e => setTpForm({ ...tpForm, amount_per_candidate: e.target.value })} />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTpDialogOpen(false)} color='secondary'>Cancel</Button>
+          <Button variant='contained' onClick={saveTp} disabled={tpSaving} startIcon={tpSaving ? <CircularProgress size={16} /> : <i className='tabler-device-floppy' />}>{tpEditItem ? 'Update' : 'Save'}</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirm (shared by all) */}
+      <Dialog open={sscDeleteOpen} onClose={() => setSscDeleteOpen(false)} maxWidth='xs' fullWidth>
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent><Typography>Delete this SSC amount record?</Typography></DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSscDeleteOpen(false)} color='secondary'>Cancel</Button>
+          <Button variant='contained' color='error' onClick={deleteSsc}>Delete</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={assDeleteOpen} onClose={() => setAssDeleteOpen(false)} maxWidth='xs' fullWidth>
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent><Typography>Delete this assessor amount record?</Typography></DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAssDeleteOpen(false)} color='secondary'>Cancel</Button>
+          <Button variant='contained' color='error' onClick={deleteAss}>Delete</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={tpDeleteOpen} onClose={() => setTpDeleteOpen(false)} maxWidth='xs' fullWidth>
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent><Typography>Delete this TP amount record?</Typography></DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTpDeleteOpen(false)} color='secondary'>Cancel</Button>
+          <Button variant='contained' color='error' onClick={deleteTp}>Delete</Button>
         </DialogActions>
       </Dialog>
     </Grid>

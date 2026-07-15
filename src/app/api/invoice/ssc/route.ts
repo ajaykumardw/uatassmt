@@ -12,6 +12,9 @@ export async function GET(req: Request) {
     const date_from = url.searchParams.get('date_from')
     const date_to = url.searchParams.get('date_to')
     const search = url.searchParams.get('search')
+    const page = Math.max(1, Number(url.searchParams.get('page')) || 1)
+    const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit')) || 10))
+    const skip = (page - 1) * limit
 
     let whereClause = 'WHERE 1=1'
     const params: any[] = []
@@ -38,6 +41,20 @@ export async function GET(req: Request) {
       params.push(like, like)
     }
 
+    const fromClause = `
+      FROM ssc_invoices si
+      LEFT JOIN batches b ON b.id = si.batch_id
+      LEFT JOIN sector_skill_councils ssc ON ssc.id = si.ssc_id
+    `
+
+    const countResult = await prisma.$queryRawUnsafe(`
+      SELECT COUNT(*) as total ${fromClause} ${whereClause}
+    `, ...params)
+
+    const total = Number((countResult as any[])[0].total)
+
+    const selectParams = [...params, limit, skip]
+
     const data = await prisma.$queryRawUnsafe(`
       SELECT
         si.id,
@@ -61,12 +78,10 @@ export async function GET(req: Request) {
         si.difference_amount,
         si.notes,
         si.created_at
-      FROM ssc_invoices si
-      LEFT JOIN batches b ON b.id = si.batch_id
-      LEFT JOIN sector_skill_councils ssc ON ssc.id = si.ssc_id
-      ${whereClause}
+      ${fromClause} ${whereClause}
       ORDER BY si.id DESC
-    `, ...params)
+      LIMIT ? OFFSET ?
+    `, ...selectParams)
 
     const PAYMENT_MAP: Record<number, string> = { 0: 'pending', 1: 'received' }
 
@@ -81,7 +96,17 @@ export async function GET(req: Request) {
       difference_amount: (row.total_amount ? Number(row.total_amount) : 0) - (row.actual_received_amount ? Number(row.actual_received_amount) : 0)
     }))
 
-    return NextResponse.json({ status: 'Success', statusCode: 200, data: formatted })
+    return NextResponse.json({
+      status: 'Success',
+      statusCode: 200,
+      data: formatted,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    })
   } catch (error: any) {
     return NextResponse.json({ status: 'Error', statusCode: 500, message: error.message }, { status: 500 })
   }
