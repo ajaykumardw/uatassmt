@@ -47,7 +47,7 @@ const paymentStatusColors: Record<string, 'warning' | 'success' | 'info'> = {
   partial: 'info'
 }
 
-const TpInvoiceList = ({ data, updateData }: Props) => {
+const TpInvoiceList = ({ data }: Props) => {
   const router = useRouter()
 
   return (

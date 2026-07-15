@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+
 import prisma from '@/libs/prisma'
 
 const INVOICE_STATUS_MAP: Record<number, string> = { 0: 'draft', 1: 'pending_approval', 2: 'approved', 3: 'rejected' }
@@ -49,11 +50,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     `
 
     const rows = data as any[]
+
     if (rows.length === 0) {
       return NextResponse.json({ status: 'Error', statusCode: 404, message: 'Invoice not found' }, { status: 404 })
     }
 
     const row = rows[0]
+
     row.invoice_status = INVOICE_STATUS_MAP[row.invoice_status as number] ?? row.invoice_status
     row.amount_status = AMOUNT_STATUS_MAP[row.amount_status as number] ?? row.amount_status
     row.amount_per_candidate = Number(row.amount_per_candidate)
@@ -104,9 +107,11 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     if (signed_copy !== undefined) { setClauses.push('signed_copy = ?'); values.push(signed_copy) }
 
     const invStatusVal = invoice_status !== undefined ? INVOICE_STATUS_REV[invoice_status] ?? Number(invoice_status) : undefined
+
     if (invStatusVal !== undefined) { setClauses.push('invoice_status = ?'); values.push(invStatusVal) }
 
     const amtStatusVal = amount_status !== undefined ? AMOUNT_STATUS_REV[amount_status] ?? Number(amount_status) : undefined
+
     if (amtStatusVal !== undefined) { setClauses.push('amount_status = ?'); values.push(amtStatusVal) }
 
     if (advance_amount !== undefined) { setClauses.push('advance_amount = ?'); values.push(Number(advance_amount)) }

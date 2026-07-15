@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
+
 import { getServerSession } from 'next-auth'
+
 import prisma from '@/libs/prisma'
 import { authOptions } from '@/libs/auth'
 import { generateInvoiceNumber } from '@/libs/invoiceHelper'
@@ -23,10 +25,12 @@ export async function GET(req: Request) {
       whereClause += ' AND ti.tp_id = ?'
       params.push(Number(tp_id))
     }
+
     if (invoice_status) {
       whereClause += ' AND ti.invoice_status = ?'
       params.push(TP_INVOICE_REV[invoice_status] ?? Number(invoice_status))
     }
+
     if (payment_status) {
       whereClause += ' AND ti.payment_status = ?'
       params.push(TP_PAYMENT_REV[payment_status] ?? Number(payment_status))

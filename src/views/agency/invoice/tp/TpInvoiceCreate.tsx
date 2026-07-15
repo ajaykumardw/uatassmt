@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+
 import { useRouter } from 'next/navigation'
 
 import Card from '@mui/material/Card'
@@ -11,9 +12,10 @@ import Typography from '@mui/material/Typography'
 import Grid from '@mui/material/Grid'
 import CircularProgress from '@mui/material/CircularProgress'
 import MenuItem from '@mui/material/MenuItem'
+import { toast } from 'react-toastify'
 
 import CustomTextField from '@core/components/mui/TextField'
-import { toast } from 'react-toastify'
+
 import { MenuProps } from '@/configs/customDataConfig'
 
 type BatchOption = {
@@ -84,6 +86,7 @@ const TpInvoiceCreate = () => {
       formData.append('amount_per_candidate', amountPerCandidate)
       formData.append('total_amount', totalAmount.toString())
       formData.append('gst_amount', gstAmount || '0')
+
       // TODO: Append invoice_pdf file when file upload is implemented
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/tp`, {

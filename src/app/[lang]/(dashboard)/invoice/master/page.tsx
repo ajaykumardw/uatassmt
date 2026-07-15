@@ -13,6 +13,7 @@ const InvoiceMasterPage = () => {
 
   const fetchAll = async () => {
     setLoading(true)
+
     try {
       const [sscRes, assessorRes, tpRes] = await Promise.all([
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data`),

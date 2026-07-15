@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
+
 import { getServerSession } from 'next-auth'
+
 import prisma from '@/libs/prisma'
 import { authOptions } from '@/libs/auth'
 
@@ -16,6 +18,7 @@ export async function GET(req: Request) {
       whereClause += ' AND imd.ssc_id = ?'
       params.push(Number(ssc_id))
     }
+
     if (status) {
       whereClause += ' AND imd.status = ?'
       params.push(Number(status))
@@ -62,11 +65,14 @@ export async function POST(req: Request) {
     const created_by = Number(session?.user?.id || 1)
 
     // Auto-fetch scheme name if not provided
+
     let resolvedSchemeName = scheme_name
+
     if (!resolvedSchemeName) {
       const schemeRow = await prisma.$queryRaw<Array<{ scheme_name: string }>>`
         SELECT scheme_name FROM schemes WHERE id = ${Number(scheme_id)} LIMIT 1
       `
+
       resolvedSchemeName = (schemeRow as any[])[0]?.scheme_name || ''
     }
 

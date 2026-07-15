@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+
 import { useRouter } from 'next/navigation'
 
 import Card from '@mui/material/Card'
@@ -11,9 +12,10 @@ import Typography from '@mui/material/Typography'
 import Grid from '@mui/material/Grid'
 import CircularProgress from '@mui/material/CircularProgress'
 import MenuItem from '@mui/material/MenuItem'
+import { toast } from 'react-toastify'
 
 import CustomTextField from '@core/components/mui/TextField'
-import { toast } from 'react-toastify'
+
 import { MenuProps } from '@/configs/customDataConfig'
 
 type BatchOption = {
@@ -38,7 +40,6 @@ const SscInvoiceCreate = () => {
 
   const [selectedBatchId, setSelectedBatchId] = useState('')
   const [batchSscId, setBatchSscId] = useState<number>(0)
-  const [batchSchemeId, setBatchSchemeId] = useState<number>(0)
   const [sscName, setSscName] = useState('')
   const [schemeName, setSchemeName] = useState('')
   const [assessmentDate, setAssessmentDate] = useState('')
@@ -63,9 +64,9 @@ const SscInvoiceCreate = () => {
   const handleBatchChange = async (batchId: string) => {
     setSelectedBatchId(batchId)
     const batch = batches.find(b => b.id === Number(batchId))
+
     if (batch) {
       setBatchSscId(batch.qualification_pack?.ssc?.id || 0)
-      setBatchSchemeId(batch.scheme?.id || 0)
       setSscName(batch.qualification_pack?.ssc?.ssc_name || batch.ssc_name || '')
       setSchemeName(batch.scheme?.scheme_name || batch.scheme_name || '')
       setAssessmentDate(batch.assessment_start_datetime?.split('T')[0] || '')
@@ -73,14 +74,20 @@ const SscInvoiceCreate = () => {
       setPresentCandidates(String(batch._count?.students || Number(batch.batch_size) || 0))
 
       // Auto-fetch amount per candidate from invoice master data
+
       const sscId = batch.qualification_pack?.ssc?.id
       const schemeId = batch.scheme?.id
+
       if (sscId && schemeId) {
         try {
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data?ssc_id=${sscId}`)
+
           const result = await res.json()
+
           if (result.status === 'Success' && Array.isArray(result.data)) {
+
             const match = result.data.find((m: any) => Number(m.scheme_id) === Number(schemeId))
+
             if (match) {
               setAmountPerCandidate(String(Number(match.amount_per_candidate)))
             } else {
@@ -97,7 +104,6 @@ const SscInvoiceCreate = () => {
       }
     } else {
       setBatchSscId(0)
-      setBatchSchemeId(0)
       setSscName('')
       setSchemeName('')
       setAssessmentDate('')

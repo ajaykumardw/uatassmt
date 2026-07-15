@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+
 import prisma from '@/libs/prisma'
 
 const TP_INVOICE_MAP: Record<number, string> = { 0: 'draft', 1: 'shared' }
@@ -42,11 +43,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     `
 
     const rows = data as any[]
+
     if (rows.length === 0) {
       return NextResponse.json({ status: 'Error', statusCode: 404, message: 'Invoice not found' }, { status: 404 })
     }
 
     const row = rows[0]
+
     row.invoice_status = TP_INVOICE_MAP[row.invoice_status as number] ?? row.invoice_status
     row.payment_status = TP_PAYMENT_MAP[row.payment_status as number] ?? row.payment_status
     row.amount_per_candidate = Number(row.amount_per_candidate)
@@ -91,9 +94,11 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     if (invoice_pdf !== undefined) { setClauses.push('invoice_pdf = ?'); values.push(invoice_pdf) }
 
     const invStatusVal = invoice_status !== undefined ? TP_INVOICE_REV[invoice_status] ?? Number(invoice_status) : undefined
+
     if (invStatusVal !== undefined) { setClauses.push('invoice_status = ?'); values.push(invStatusVal) }
 
     const payStatusVal = payment_status !== undefined ? TP_PAYMENT_REV[payment_status] ?? Number(payment_status) : undefined
+
     if (payStatusVal !== undefined) { setClauses.push('payment_status = ?'); values.push(payStatusVal) }
 
     if (payment_receipt !== undefined) { setClauses.push('payment_receipt = ?'); values.push(payment_receipt) }

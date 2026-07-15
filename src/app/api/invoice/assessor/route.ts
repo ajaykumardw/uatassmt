@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
+
 import { getServerSession } from 'next-auth'
+
 import prisma from '@/libs/prisma'
 import { authOptions } from '@/libs/auth'
 import { generateInvoiceNumber } from '@/libs/invoiceHelper'
@@ -23,10 +25,12 @@ export async function GET(req: Request) {
       whereClause += ' AND ai.assessor_id = ?'
       params.push(Number(assessor_id))
     }
+
     if (invoice_status) {
       whereClause += ' AND ai.invoice_status = ?'
       params.push(INVOICE_STATUS_REV[invoice_status] ?? Number(invoice_status))
     }
+
     if (amount_status) {
       whereClause += ' AND ai.amount_status = ?'
       params.push(AMOUNT_STATUS_REV[amount_status] ?? Number(amount_status))

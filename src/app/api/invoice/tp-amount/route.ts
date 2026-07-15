@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
+
 import { getServerSession } from 'next-auth'
+
 import prisma from '@/libs/prisma'
 import { authOptions } from '@/libs/auth'
 
@@ -16,6 +18,7 @@ export async function GET(req: Request) {
       whereClause += ' AND tia.scheme_id = ?'
       params.push(Number(scheme_id))
     }
+
     if (status) {
       whereClause += ' AND tia.status = ?'
       params.push(Number(status))

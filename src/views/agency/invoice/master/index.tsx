@@ -20,12 +20,12 @@ import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
-import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
 import MenuItem from '@mui/material/MenuItem'
+import { toast } from 'react-toastify'
 
 import CustomTextField from '@core/components/mui/TextField'
-import { toast } from 'react-toastify'
+
 import { MenuProps } from '@/configs/customDataConfig'
 
 import type { SSCType } from '@/types/sectorskills/sscType'
@@ -124,109 +124,232 @@ const MasterDataPage = ({ sscData, assessorData, tpData, updateData }: Props) =>
   // ══════════════════════════════════════════════════
   //  SSC HANDLERS
   // ══════════════════════════════════════════════════
+
   const openSscAdd = () => { setSscEditItem(null); setSscForm(initialSscForm); setSscDialogOpen(true) }
+
   const openSscEdit = (item: SscItem) => {
     setSscEditItem(item)
     setSscForm({ ssc_id: item.ssc_id.toString(), scheme_id: item.scheme_id.toString(), amount_per_candidate: item.amount_per_candidate.toString() })
     setSscDialogOpen(true)
   }
+
   const saveSsc = async () => {
-    if (!sscForm.ssc_id || !sscForm.scheme_id || !sscForm.amount_per_candidate) { toast.error('All fields required'); return }
+    if (!sscForm.ssc_id || !sscForm.scheme_id || !sscForm.amount_per_candidate) {
+      toast.error('All fields required')
+
+      return
+    }
+
     setSscSaving(true)
+
     try {
       const url = sscEditItem ? `${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data/${sscEditItem.id}` : `${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data`
       const method = sscEditItem ? 'PUT' : 'POST'
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ssc_id: Number(sscForm.ssc_id), scheme_id: Number(sscForm.scheme_id), amount_per_candidate: Number(sscForm.amount_per_candidate) }) })
       const result = await res.json()
-      if (res.ok && result.status === 'Success') { toast.success(sscEditItem ? 'Updated' : 'Created'); setSscDialogOpen(false); updateData() } else toast.error(result.message || 'Failed')
-    } catch { toast.error('Failed') } finally { setSscSaving(false) }
+
+      if (res.ok && result.status === 'Success') {
+        toast.success(sscEditItem ? 'Updated' : 'Created')
+        setSscDialogOpen(false)
+        updateData()
+      } else {
+        toast.error(result.message || 'Failed')
+      }
+    } catch {
+      toast.error('Failed')
+    } finally {
+      setSscSaving(false)
+    }
   }
+
   const deleteSsc = async () => {
     if (!sscDeleteId) return
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data/${sscDeleteId}`, { method: 'DELETE' })
       const result = await res.json()
-      if (res.ok && result.status === 'Success') { toast.success('Deleted'); setSscDeleteOpen(false); setSscDeleteId(null); updateData() } else toast.error(result.message || 'Failed')
-    } catch { toast.error('Failed') }
+
+      if (res.ok && result.status === 'Success') {
+        toast.success('Deleted')
+        setSscDeleteOpen(false)
+        setSscDeleteId(null)
+        updateData()
+      } else {
+        toast.error(result.message || 'Failed')
+      }
+    } catch {
+      toast.error('Failed')
+    }
   }
+
   const toggleSscStatus = async (item: SscItem) => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: item.status === 1 ? 0 : 1 }) })
       const result = await res.json()
-      if (res.ok && result.status === 'Success') { toast.success('Status updated'); updateData() } else toast.error(result.message || 'Failed')
-    } catch { toast.error('Failed') }
+
+      if (res.ok && result.status === 'Success') {
+        toast.success('Status updated')
+        updateData()
+      } else {
+        toast.error(result.message || 'Failed')
+      }
+    } catch {
+      toast.error('Failed')
+    }
   }
 
   // ══════════════════════════════════════════════════
   //  ASSESSOR HANDLERS
   // ══════════════════════════════════════════════════
+
   const openAssAdd = () => { setAssEditItem(null); setAssForm(initialAssessorForm); setAssDialogOpen(true) }
+
   const openAssEdit = (item: AssessorItem) => {
     setAssEditItem(item)
     setAssForm({ assessor_id: item.assessor_id.toString(), per_candidate_amount: item.per_candidate_amount.toString(), effective_from: item.effective_from ? item.effective_from.split('T')[0] : '' })
     setAssDialogOpen(true)
   }
+
   const saveAss = async () => {
-    if (!assForm.assessor_id || !assForm.per_candidate_amount) { toast.error('Assessor and amount required'); return }
+    if (!assForm.assessor_id || !assForm.per_candidate_amount) {
+      toast.error('Assessor and amount required')
+
+      return
+    }
+
     setAssSaving(true)
+
     try {
       const url = assEditItem ? `${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor-amount/${assEditItem.id}` : `${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor-amount`
       const method = assEditItem ? 'PUT' : 'POST'
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ assessor_id: Number(assForm.assessor_id), per_candidate_amount: Number(assForm.per_candidate_amount), effective_from: assForm.effective_from || null }) })
       const result = await res.json()
-      if (res.ok && result.status === 'Success') { toast.success(assEditItem ? 'Updated' : 'Created'); setAssDialogOpen(false); updateData() } else toast.error(result.message || 'Failed')
-    } catch { toast.error('Failed') } finally { setAssSaving(false) }
+
+      if (res.ok && result.status === 'Success') {
+        toast.success(assEditItem ? 'Updated' : 'Created')
+        setAssDialogOpen(false)
+        updateData()
+      } else {
+        toast.error(result.message || 'Failed')
+      }
+    } catch {
+      toast.error('Failed')
+    } finally {
+      setAssSaving(false)
+    }
   }
+
   const deleteAss = async () => {
     if (!assDeleteId) return
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor-amount/${assDeleteId}`, { method: 'DELETE' })
       const result = await res.json()
-      if (res.ok && result.status === 'Success') { toast.success('Deleted'); setAssDeleteOpen(false); setAssDeleteId(null); updateData() } else toast.error(result.message || 'Failed')
-    } catch { toast.error('Failed') }
+
+      if (res.ok && result.status === 'Success') {
+        toast.success('Deleted')
+        setAssDeleteOpen(false)
+        setAssDeleteId(null)
+        updateData()
+      } else {
+        toast.error(result.message || 'Failed')
+      }
+    } catch {
+      toast.error('Failed')
+    }
   }
+
   const toggleAssStatus = async (item: AssessorItem) => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor-amount/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: item.status === 1 ? 0 : 1 }) })
       const result = await res.json()
-      if (res.ok && result.status === 'Success') { toast.success('Status updated'); updateData() } else toast.error(result.message || 'Failed')
-    } catch { toast.error('Failed') }
+
+      if (res.ok && result.status === 'Success') {
+        toast.success('Status updated')
+        updateData()
+      } else {
+        toast.error(result.message || 'Failed')
+      }
+    } catch {
+      toast.error('Failed')
+    }
   }
 
   // ══════════════════════════════════════════════════
   //  TP HANDLERS
   // ══════════════════════════════════════════════════
+
   const openTpAdd = () => { setTpEditItem(null); setTpForm(initialTpForm); setTpDialogOpen(true) }
+
   const openTpEdit = (item: TpItem) => {
     setTpEditItem(item)
     setTpForm({ scheme_id: item.scheme_id.toString(), amount_per_candidate: item.amount_per_candidate.toString() })
     setTpDialogOpen(true)
   }
+
   const saveTp = async () => {
-    if (!tpForm.scheme_id || !tpForm.amount_per_candidate) { toast.error('Scheme and amount required'); return }
+    if (!tpForm.scheme_id || !tpForm.amount_per_candidate) {
+      toast.error('Scheme and amount required')
+
+      return
+    }
+
     setTpSaving(true)
+
     try {
       const url = tpEditItem ? `${process.env.NEXT_PUBLIC_API_URL}/invoice/tp-amount/${tpEditItem.id}` : `${process.env.NEXT_PUBLIC_API_URL}/invoice/tp-amount`
       const method = tpEditItem ? 'PUT' : 'POST'
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scheme_id: Number(tpForm.scheme_id), amount_per_candidate: Number(tpForm.amount_per_candidate) }) })
       const result = await res.json()
-      if (res.ok && result.status === 'Success') { toast.success(tpEditItem ? 'Updated' : 'Created'); setTpDialogOpen(false); updateData() } else toast.error(result.message || 'Failed')
-    } catch { toast.error('Failed') } finally { setTpSaving(false) }
+
+      if (res.ok && result.status === 'Success') {
+        toast.success(tpEditItem ? 'Updated' : 'Created')
+        setTpDialogOpen(false)
+        updateData()
+      } else {
+        toast.error(result.message || 'Failed')
+      }
+    } catch {
+      toast.error('Failed')
+    } finally {
+      setTpSaving(false)
+    }
   }
+
   const deleteTp = async () => {
     if (!tpDeleteId) return
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/tp-amount/${tpDeleteId}`, { method: 'DELETE' })
       const result = await res.json()
-      if (res.ok && result.status === 'Success') { toast.success('Deleted'); setTpDeleteOpen(false); setTpDeleteId(null); updateData() } else toast.error(result.message || 'Failed')
-    } catch { toast.error('Failed') }
+
+      if (res.ok && result.status === 'Success') {
+        toast.success('Deleted')
+        setTpDeleteOpen(false)
+        setTpDeleteId(null)
+        updateData()
+      } else {
+        toast.error(result.message || 'Failed')
+      }
+    } catch {
+      toast.error('Failed')
+    }
   }
+
   const toggleTpStatus = async (item: TpItem) => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/tp-amount/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: item.status === 1 ? 0 : 1 }) })
       const result = await res.json()
-      if (res.ok && result.status === 'Success') { toast.success('Status updated'); updateData() } else toast.error(result.message || 'Failed')
-    } catch { toast.error('Failed') }
+
+      if (res.ok && result.status === 'Success') {
+        toast.success('Status updated')
+        updateData()
+      } else {
+        toast.error(result.message || 'Failed')
+      }
+    } catch {
+      toast.error('Failed')
+    }
   }
 
   // ══════════════════════════════════════════════════

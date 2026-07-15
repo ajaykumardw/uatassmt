@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
+
 import { getServerSession } from 'next-auth'
+
 import prisma from '@/libs/prisma'
 import { authOptions } from '@/libs/auth'
 import { generateInvoiceNumber } from '@/libs/invoiceHelper'
@@ -23,21 +25,27 @@ export async function GET(req: Request) {
       whereClause += ' AND si.ssc_id = ?'
       params.push(Number(ssc_id))
     }
+
     if (payment_status) {
       whereClause += ' AND si.payment_status = ?'
       params.push(payment_status === 'received' || payment_status === '1' ? 1 : 0)
     }
+
     if (date_from) {
       whereClause += ' AND si.assessment_date >= ?'
       params.push(new Date(date_from))
     }
+
     if (date_to) {
       whereClause += ' AND si.assessment_date <= ?'
       params.push(new Date(date_to))
     }
+
     if (search) {
       whereClause += ' AND (b.batch_name LIKE ? OR ssc.ssc_name LIKE ?)'
+
       const like = `%${search}%`
+
       params.push(like, like)
     }
 

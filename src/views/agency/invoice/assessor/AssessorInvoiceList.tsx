@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+
 import { useRouter } from 'next/navigation'
 
 import Card from '@mui/material/Card'
@@ -20,6 +21,7 @@ import Chip from '@mui/material/Chip'
 import MenuItem from '@mui/material/MenuItem'
 
 import CustomTextField from '@core/components/mui/TextField'
+
 import { MenuProps } from '@/configs/customDataConfig'
 
 type AssessorInvoice = {
@@ -54,7 +56,7 @@ const amountStatusColors: Record<string, 'default' | 'success' | 'warning'> = {
   partial: 'warning'
 }
 
-const AssessorInvoiceList = ({ data, updateData }: Props) => {
+const AssessorInvoiceList = ({ data }: Props) => {
   const router = useRouter()
   const [assessorFilter, setAssessorFilter] = useState('-1')
   const [statusFilter, setStatusFilter] = useState('-1')

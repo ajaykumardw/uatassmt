@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+
 import prisma from '@/libs/prisma'
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
@@ -19,11 +20,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     `
 
     const rows = data as any[]
+
     if (rows.length === 0) {
       return NextResponse.json({ status: 'Error', statusCode: 404, message: 'Record not found' }, { status: 404 })
     }
 
     const row = rows[0]
+
     row.amount_per_candidate = Number(row.amount_per_candidate)
 
     return NextResponse.json({ status: 'Success', statusCode: 200, data: row })

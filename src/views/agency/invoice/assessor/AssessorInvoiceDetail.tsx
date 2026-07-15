@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+
 import { useRouter } from 'next/navigation'
 
 import Card from '@mui/material/Card'
@@ -12,9 +13,9 @@ import Grid from '@mui/material/Grid'
 import CircularProgress from '@mui/material/CircularProgress'
 import Chip from '@mui/material/Chip'
 import Divider from '@mui/material/Divider'
+import { toast } from 'react-toastify'
 
 import CustomTextField from '@core/components/mui/TextField'
-import { toast } from 'react-toastify'
 
 type AssessorInvoice = {
   id: number
@@ -143,6 +144,7 @@ const AssessorInvoiceDetail = ({ data, updateData }: Props) => {
       formData.append('net_amount', netAmount.toString())
       formData.append('transaction_no', transactionNo || '')
       formData.append('amount_status', 'paid')
+
       if (transactionSlipRef.current?.files?.[0]) {
         formData.append('transaction_slip', transactionSlipRef.current.files[0])
       }

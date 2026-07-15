@@ -18,10 +18,11 @@ import Paper from '@mui/material/Paper'
 import Chip from '@mui/material/Chip'
 import Pagination from '@mui/material/Pagination'
 import MenuItem from '@mui/material/MenuItem'
+import type { TextFieldProps } from '@mui/material/TextField'
 
 import CustomTextField from '@core/components/mui/TextField'
+
 import { MenuProps } from '@/configs/customDataConfig'
-import type { TextFieldProps } from '@mui/material/TextField'
 
 type SscInvoice = {
   id: number
@@ -70,7 +71,7 @@ const paymentStatusColors: Record<string, 'success' | 'warning' | 'info' | 'erro
 }
 
 const SscInvoiceList = ({
-  data, updateData, total, page, limit, onPageChange,
+  data, total, page, limit, onPageChange,
   search, onSearchChange, sscId, onSscIdChange, sscOptions,
   paymentStatus, onPaymentStatusChange,
   dateFrom, onDateFromChange, dateTo, onDateToChange, onFilter

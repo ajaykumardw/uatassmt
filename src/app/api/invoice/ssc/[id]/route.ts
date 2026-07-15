@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+
 import prisma from '@/libs/prisma'
 
 const PAYMENT_MAP: Record<number, string> = { 0: 'pending', 1: 'received' }
@@ -42,11 +43,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     `
 
     const rows = data as any[]
+
     if (rows.length === 0) {
       return NextResponse.json({ status: 'Error', statusCode: 404, message: 'Invoice not found' }, { status: 404 })
     }
 
     const row = rows[0]
+
     row.payment_status = PAYMENT_MAP[Number(row.payment_status)] || 'pending'
     row.amount_per_candidate = Number(row.amount_per_candidate)
     row.total_amount = Number(row.total_amount)
@@ -65,6 +68,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   try {
     const id = Number(params.id)
     const body = await req.json()
+
     const {
       batch_id, ssc_id, assessment_date, scheme, total_candidate, present_candidate,
       amount_per_candidate, total_amount, group_photo, attendance_sheet, notes,
@@ -104,6 +108,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 
     setClauses.push('updated_at = NOW()')
+
     values.push(id)
 
     await prisma.$executeRawUnsafe(

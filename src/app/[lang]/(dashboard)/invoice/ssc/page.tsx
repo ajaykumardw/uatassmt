@@ -34,8 +34,10 @@ const SscInvoicePage = () => {
 
   const fetchInvoices = useCallback(async (targetPage: number) => {
     setLoading(true)
+
     try {
       const params = new URLSearchParams()
+
       params.set('page', String(targetPage))
       params.set('limit', String(limit))
       if (search) params.set('search', search)
@@ -49,6 +51,7 @@ const SscInvoicePage = () => {
       if (!res.ok) throw new Error('Failed to fetch SSC invoices')
 
       const result = await res.json()
+
       setData(result.data || [])
       setTotal(result.pagination?.total || 0)
       setPage(targetPage)

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+
 import { useRouter } from 'next/navigation'
 
 import Card from '@mui/material/Card'
@@ -87,6 +88,7 @@ const TpInvoiceDetail = ({ data, updateData }: Props) => {
       const formData = new FormData()
 
       formData.append('payment_status', 'received')
+
       if (receiptRef.current?.files?.[0]) {
         formData.append('payment_receipt', receiptRef.current.files[0])
       }
