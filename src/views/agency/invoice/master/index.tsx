@@ -208,6 +208,14 @@ const MasterDataPage = ({ sscData, assessorData, tpData, updateData }: Props) =>
     setAssEditItem(item)
     setAssForm({ assessor_id: item.assessor_id.toString(), per_candidate_amount: item.per_candidate_amount.toString(), effective_from: item.effective_from ? item.effective_from.split('T')[0] : '' })
     setAssDialogOpen(true)
+
+    // Ensure the editing assessor is in the dropdown list
+    setAssessors(prev => {
+      if (prev.some(a => a.id === item.assessor_id)) return prev
+      const parts = (item.assessor_name || '').split(' ')
+
+      return [...prev, { id: item.assessor_id, first_name: parts[0] || 'Unknown', last_name: parts.slice(1).join(' ') }]
+    })
   }
 
   const saveAss = async () => {
@@ -511,7 +519,7 @@ const MasterDataPage = ({ sscData, assessorData, tpData, updateData }: Props) =>
         <DialogContent>
           <Grid container spacing={4} className='mt-2'>
             <Grid item xs={12}>
-              <CustomTextField select fullWidth label='Select Assessor' value={assForm.assessor_id} onChange={e => setAssForm({ ...assForm, assessor_id: e.target.value })} SelectProps={{ MenuProps }}>
+              <CustomTextField select fullWidth label='Select Assessor' value={assForm.assessor_id} onChange={e => setAssForm({ ...assForm, assessor_id: e.target.value })} SelectProps={{ MenuProps }} disabled={!!assEditItem}>
                 <MenuItem value=''>Select Assessor</MenuItem>
                 {assessors.map(a => <MenuItem key={a.id} value={a.id.toString()}>{a.first_name} {a.last_name}</MenuItem>)}
               </CustomTextField>
