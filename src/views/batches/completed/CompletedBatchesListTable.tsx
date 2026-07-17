@@ -53,6 +53,7 @@ import { format } from 'date-fns'
 import { Chip, CircularProgress, Tooltip } from '@mui/material'
 
 import OptionMenu from '@/@core/components/option-menu'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
 import type { Locale } from '@configs/i18n'
 
@@ -204,6 +205,8 @@ const CompletedBatchesListTable = ({ tableData, updateBatchList }: { tableData?:
   const [singleBatch, setSingleBatch] = useState<BatchesTypeWithAction | null>(null);
   const [assessorData, setAssessorsData] = useState<UsersType[]>([]);
   const [loadingId, setLoadingId] = useState<number | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmBatchId, setConfirmBatchId] = useState<number | null>(null);
 
   // Hooks
   const { lang: locale } = useParams()
@@ -294,30 +297,27 @@ const CompletedBatchesListTable = ({ tableData, updateBatchList }: { tableData?:
 
   }
 
-  const handleHardCopyStatus = async (
-    batchId: number,
-    status: number | null
-  ) => {
+  const handleHardCopyStatus = (batchId: number) => {
+    setConfirmBatchId(batchId)
+    setConfirmOpen(true)
+  }
 
-    const finalStatus = status ?? 0;
+  const handleConfirmHardCopy = async () => {
+    if (!confirmBatchId) return
 
-    const res = await changeHardCopyStatus(
-      batchId,
-      finalStatus
-    );
+    const res = await changeHardCopyStatus(confirmBatchId, 1)
 
     if (res.success) {
-
       setData(prev =>
         (prev || []).map(batch =>
-          batch.id === batchId
-            ? {
-                ...batch,
-                hard_copy_received: finalStatus
-              }
+          batch.id === confirmBatchId
+            ? { ...batch, hard_copy_received: 1 }
             : batch
         )
-      );
+      )
+      toast.success(res.message || 'Hard Copy marked as received')
+    } else {
+      toast.error(res.message || 'Failed to update')
     }
   }
 
@@ -535,11 +535,15 @@ const CompletedBatchesListTable = ({ tableData, updateBatchList }: { tableData?:
               iconClassName='text-[22px] text-textSecondary'
               options={[
                 {
-                  text: 'Hard Copy Received',
+                  text: row.original.hard_copy_received === 1 ? 'Hard Copy Received' : 'Mark Hard Copy Received',
                   icon: row.original.hard_copy_received === 1
                     ? 'tabler-checkbox text-green-600 text-[22px]'
                     : 'tabler-square text-textSecondary text-[22px]',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary', onClick:async() => handleHardCopyStatus(row.original.id, row.original.hard_copy_received === 1 ? 0 : 1) }
+                  menuItemProps: {
+                    className: 'flex items-center gap-2 text-textSecondary',
+                    disabled: row.original.hard_copy_received === 1,
+                    onClick: () => handleHardCopyStatus(row.original.id)
+                  }
                 },
 
                 // {
@@ -724,6 +728,19 @@ const CompletedBatchesListTable = ({ tableData, updateBatchList }: { tableData?:
         />
       </Card>
       <AssignAssessorDialog batch={singleBatch} open={assignAssessorOpen} handleClose={() => {setAssignAssessorOpen(!assignAssessorOpen); setSingleBatch(null)}} updateBatchList={updateBatchList} data={assessorData}/>
+      <ConfirmDialog
+        open={confirmOpen}
+        setOpen={setConfirmOpen}
+        title='Mark Hard Copy Received'
+        message='This will generate an assessor invoice for this batch. Once marked, it cannot be undone. Are you sure?'
+        confirmText='Yes, Mark'
+        cancelText='Cancel'
+        icon='tabler-file-invoice'
+        successMessage='Assessor invoice has been generated successfully!'
+        cancelMessage='Action cancelled'
+        onConfirm={handleConfirmHardCopy}
+        onCancel={() => {}}
+      />
       {/* <AddUserDrawer open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} /> */}
       {/* <AddUsersDialog open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} /> */}
     </>

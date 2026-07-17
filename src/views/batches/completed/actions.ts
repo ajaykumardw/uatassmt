@@ -7,6 +7,7 @@ import { authOptions } from '@/libs/auth';
 import prisma from '@/libs/prisma'
 
 import { folders } from "@/configs/customDataConfig";
+import { generateInvoiceNumber } from '@/libs/invoiceHelper'
 
 type FileCount = {
   id: string;
@@ -35,22 +36,98 @@ export async function changeHardCopyStatus(
     }
   }
 
-  const result = await prisma.batches.update({
-    where: {
-      id: batchId,
-    },
-    data: {
-      hard_copy_received: hardCopyReceived,
-    },
+  // Prevent unchecking once marked
+  if (hardCopyReceived === 0) {
+    return {
+      success: false,
+      message: 'Cannot uncheck. Once marked as received, it cannot be changed.'
+    }
+  }
+
+  const created_by = Number(session?.user?.id)
+  const agency_id = Number((session?.user as any)?.agency_id)
+
+  // Check if invoice already exists for this batch (type=2)
+  const existingInvoice = await prisma.$queryRaw<Array<{ id: number }>>`
+    SELECT id FROM invoices WHERE batch_id = ${batchId} AND type = 2 LIMIT 1
+  `
+
+  if ((existingInvoice as any[]).length > 0) {
+    // Already has invoice, just mark hard_copy_received
+    await prisma.batches.update({
+      where: { id: batchId },
+      data: { hard_copy_received: 1 },
+    })
+
+    return { success: true, message: 'Invoice already exists for this batch' }
+  }
+
+  // Fetch batch details for invoice creation
+  const batch = await prisma.batches.findUnique({
+    where: { id: batchId },
+    select: {
+      id: true,
+      assessor_id: true,
+      batch_size: true,
+      assessment_end_datetime: true,
+      qualification_pack: {
+        select: {
+          ssc: { select: { id: true } }
+        }
+      },
+      scheme: {
+        select: { scheme_name: true }
+      },
+      _count: {
+        select: { students: true }
+      }
+    }
   })
 
-  if(result){
+  if (!batch || !batch.assessor_id) {
+    return {
+      success: false,
+      message: 'Batch not found or no assessor assigned'
+    }
+  }
 
-    return { success: true }
+  const sscId = batch.qualification_pack?.ssc?.id
+  if (!sscId) {
+    return {
+      success: false,
+      message: 'SSC not found for this batch'
+    }
+  }
 
-  } else {
+  const totalCandidates = batch._count.students || Number(batch.batch_size) || 0
 
-    return { success: false }
+  try {
+    const invoiceNumber = await generateInvoiceNumber(2)
+
+    await prisma.$executeRaw`
+      INSERT INTO invoices (
+        invoice_number, type, batch_id, ssc_id, scheme, assessor_id,
+        assessment_date, total_candidate, present_candidate, amount_per_candidate,
+        total_amount, advance_amount, tds_amount, other_deduction, gst_amount,
+        status, notes, agency_id, created_by, created_at, updated_at
+      ) VALUES (
+        ${invoiceNumber}, 2, ${batchId}, ${sscId},
+        ${batch.scheme?.scheme_name || null}, ${batch.assessor_id},
+        ${batch.assessment_end_datetime || null}, ${totalCandidates},
+        ${totalCandidates}, 0, 0, 0, 0, 0, 0,
+        1, 'Auto-generated from Hard Copy Received', ${agency_id}, ${created_by}, NOW(), NOW()
+      )
+    `
+
+    // Update hard_copy_received to 1
+    await prisma.batches.update({
+      where: { id: batchId },
+      data: { hard_copy_received: 1 },
+    })
+
+    return { success: true, message: 'Assessor invoice created successfully' }
+  } catch (error: any) {
+    return { success: false, message: error.message || 'Failed to create invoice' }
   }
 
 }

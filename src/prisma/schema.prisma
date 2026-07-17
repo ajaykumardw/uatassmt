@@ -1077,124 +1077,66 @@ model tp_invoice_amounts {
   @@map("tp_invoice_amounts")
 }
 
-enum ssc_invoice_payment_status {
-  pending
-  received
-}
-
-/// SSC assessment invoice
-model ssc_invoices {
-  id                    Int                         @id @default(autoincrement())
-  invoice_number        String?                     @unique @db.VarChar(50)
+/// Unified invoice — SSC (type=1), Assessor (type=2), or TP (type=3)
+/// Status: 0=draft, 1=pending, 2=approved, 3=rejected, 4=paid
+model invoices {
+  id                    Int       @id @default(autoincrement())
+  invoice_number        String?   @unique @db.VarChar(50)
+  type                  Int                    @default(1) /// 1=SSC, 2=Assessor, 3=TP
   batch_id              Int
-  ssc_id                Int
-  assessment_date       DateTime?                   @db.DateTime(0)
-  scheme                String?                     @db.VarChar(255)
+  ssc_id                Int?
+  scheme                String?                @db.VarChar(255)
+  assessor_id           Int?
+  tp_id                 Int?
+  assessment_date       DateTime?              @db.DateTime(0)
   total_candidate       Int
   present_candidate     Int
-  amount_per_candidate  Decimal                     @db.Decimal(10, 2)
-  total_amount          Decimal                     @db.Decimal(10, 2)
-  group_photo           String?                     @db.VarChar(500)
-  attendance_sheet      String?                     @db.VarChar(500)
-  payment_status        ssc_invoice_payment_status  @default(pending)
-  received_amount       Decimal?                    @db.Decimal(10, 2)
-  deduction_amount      Decimal?                    @db.Decimal(10, 2) @default(0)
-  actual_received_amount Decimal?                   @db.Decimal(10, 2)
-  difference_amount     Decimal?                    @db.Decimal(10, 2)
-  notes                 String?                     @db.Text
+  amount_per_candidate  Decimal                @db.Decimal(10, 2)
+  total_amount          Decimal                @db.Decimal(10, 2)
+  advance_amount        Decimal?               @db.Decimal(10, 2) @default(0)
+  tds_amount            Decimal?               @db.Decimal(10, 2) @default(0)
+  other_deduction       Decimal?               @db.Decimal(10, 2) @default(0)
+  net_amount            Decimal?               @db.Decimal(10, 2)
+  gst_amount            Decimal?               @db.Decimal(10, 2) @default(0)
+  group_photo           String?                @db.VarChar(500)
+  attendance_sheet      String?                @db.VarChar(500)
+  invoice_pdf           String?                @db.VarChar(500)
+  signed_copy           String?                @db.VarChar(500)
+  status                Int                    @default(0) /// 0=draft,1=pending,2=approved,3=rejected,4=paid
+  is_payment_complete   Int                    @default(0) /// 0=no, 1=yes
+  notes                 String?                @db.Text
   agency_id             Int
   created_by            Int
-  created_at            DateTime                    @default(now()) @db.DateTime(0)
-  updated_at            DateTime                    @default(now()) @updatedAt @db.DateTime(0)
+  created_at            DateTime               @default(now()) @db.DateTime(0)
+  updated_at            DateTime               @default(now()) @updatedAt @db.DateTime(0)
 
+  @@index([type])
   @@index([batch_id])
   @@index([ssc_id])
-  @@index([agency_id])
-  @@index([payment_status])
-  @@map("ssc_invoices")
-}
-
-enum assessor_invoice_status {
-  draft
-  pending_approval
-  approved
-  rejected
-}
-
-enum assessor_payment_status {
-  pending
-  transferred
-}
-
-/// Assessor/proctor invoice
-model assessor_invoices {
-  id                    Int                        @id @default(autoincrement())
-  invoice_number        String?                    @unique @db.VarChar(50)
-  batch_id              Int
-  ssc_id                Int
-  assessor_id           Int
-  assessment_date       DateTime?                  @db.DateTime(0)
-  total_candidate       Int
-  present_candidate     Int
-  amount_per_candidate  Decimal                    @db.Decimal(10, 2)
-  total_amount          Decimal                    @db.Decimal(10, 2)
-  invoice_pdf           String?                    @db.VarChar(500)
-  signed_copy           String?                    @db.VarChar(500)
-  invoice_status        assessor_invoice_status    @default(draft)
-  amount_status         assessor_payment_status    @default(pending)
-  advance_amount        Decimal?                   @db.Decimal(10, 2) @default(0)
-  tds_amount            Decimal?                   @db.Decimal(10, 2) @default(0)
-  other_deduction       Decimal?                   @db.Decimal(10, 2) @default(0)
-  net_amount            Decimal?                   @db.Decimal(10, 2)
-  transaction_no        String?                    @db.VarChar(100)
-  transaction_slip      String?                    @db.VarChar(500)
-  notes                 String?                    @db.Text
-  agency_id             Int
-  created_by            Int
-  created_at            DateTime                   @default(now()) @db.DateTime(0)
-  updated_at            DateTime                   @default(now()) @updatedAt @db.DateTime(0)
-
-  @@index([batch_id])
   @@index([assessor_id])
-  @@index([agency_id])
-  @@index([invoice_status])
-  @@map("assessor_invoices")
-}
-
-enum tp_invoice_status {
-  draft
-  shared
-}
-
-enum tp_payment_status {
-  pending
-  received
-}
-
-/// Training partner invoice
-model tp_invoices {
-  id                    Int                   @id @default(autoincrement())
-  invoice_number        String?               @unique @db.VarChar(50)
-  batch_id              Int
-  scheme_id             Int
-  tp_id                 Int
-  total_candidate       Int
-  amount_per_candidate  Decimal               @db.Decimal(10, 2)
-  total_amount          Decimal               @db.Decimal(10, 2)
-  gst_amount            Decimal               @db.Decimal(10, 2) @default(0)
-  invoice_pdf           String?               @db.VarChar(500)
-  invoice_status        tp_invoice_status     @default(draft)
-  payment_status        tp_payment_status     @default(pending)
-  payment_receipt       String?               @db.VarChar(500)
-  notes                 String?               @db.Text
-  agency_id             Int
-  created_by            Int
-  created_at            DateTime              @default(now()) @db.DateTime(0)
-  updated_at            DateTime              @default(now()) @updatedAt @db.DateTime(0)
-
-  @@index([batch_id])
   @@index([tp_id])
   @@index([agency_id])
-  @@index([invoice_status])
-  @@map("tp_invoices")
+  @@index([status])
+  @@index([is_payment_complete])
+  @@map("invoices")
+}
+
+/// Payment records against an invoice
+model payments {
+  id                Int       @id @default(autoincrement())
+  invoice_id        Int
+  amount            Decimal   @db.Decimal(10, 2)
+  payment_date      DateTime  @db.Date
+  payment_mode      String?   @db.VarChar(50)
+  transaction_no    String?   @db.VarChar(100)
+  cheque_date       DateTime? @db.Date
+  bank_name         String?   @db.VarChar(100)
+  transaction_slip  String?   @db.VarChar(500)
+  remarks           String?   @db.Text
+  created_by        Int       @default(0)
+  created_at        DateTime  @default(now()) @db.DateTime(0)
+
+  @@index([invoice_id])
+  @@index([payment_date])
+  @@map("payments")
 }

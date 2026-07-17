@@ -42,6 +42,7 @@ export async function GET(req: Request) {
       assessor_id: true,
       question_paper: true,
       omr_sheet: true,
+      hard_copy_received: true,
       qualification_pack: {
         select: {
           id: true,

@@ -1,0 +1,713 @@
+'use client'
+
+import { useState } from 'react'
+
+import { useRouter } from 'next/navigation'
+
+import Card from '@mui/material/Card'
+import CardHeader from '@mui/material/CardHeader'
+import CardContent from '@mui/material/CardContent'
+import Button from '@mui/material/Button'
+import Typography from '@mui/material/Typography'
+import Grid from '@mui/material/Grid'
+import CircularProgress from '@mui/material/CircularProgress'
+import Chip from '@mui/material/Chip'
+import Divider from '@mui/material/Divider'
+import Table from '@mui/material/Table'
+import TableBody from '@mui/material/TableBody'
+import TableCell from '@mui/material/TableCell'
+import TableContainer from '@mui/material/TableContainer'
+import TableHead from '@mui/material/TableHead'
+import TableRow from '@mui/material/TableRow'
+import Paper from '@mui/material/Paper'
+import MenuItem from '@mui/material/MenuItem'
+import { toast } from 'react-toastify'
+
+import CustomTextField from '@core/components/mui/TextField'
+
+import { MenuProps } from '@/configs/customDataConfig'
+
+type InvoiceData = {
+  id: number
+  invoice_number: string
+  type: number
+  batch_name: string
+  ssc_name?: string
+  assessor_name?: string
+  tp_name?: string
+  scheme?: string
+  assessment_date?: string
+  total_candidate?: number
+  present_candidate?: number
+  amount_per_candidate?: number
+  total_amount: number
+  status: number
+  is_payment_complete: number
+  notes?: string
+  group_photo?: string
+  attendance_sheet?: string
+  advance_amount?: number
+  tds_amount?: number
+  other_deduction?: number
+  net_amount?: number
+  gst_amount?: number
+  invoice_pdf?: string
+  signed_copy?: string
+}
+
+type Payment = {
+  id: number
+  amount: number
+  payment_date: string
+  payment_mode: string
+  transaction_no: string
+  cheque_date?: string
+  bank_name?: string
+  transaction_slip?: string
+  remarks: string
+}
+
+type Props = {
+  data: InvoiceData | null
+  updateData: () => void
+  payments: Payment[]
+  onRefreshPayments: () => void
+}
+
+const typeLabels: Record<number, string> = {
+  1: 'SSC',
+  2: 'Assessor',
+  3: 'TP'
+}
+
+const statusLabels: Record<number, string> = {
+  0: 'Draft',
+  1: 'Pending',
+  2: 'Approved',
+  3: 'Rejected',
+  4: 'Paid'
+}
+
+const statusColors: Record<number, 'default' | 'warning' | 'info' | 'error' | 'success'> = {
+  0: 'default',
+  1: 'warning',
+  2: 'info',
+  3: 'error',
+  4: 'success'
+}
+
+const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments }: Props) => {
+  const router = useRouter()
+
+  const [savingPayment, setSavingPayment] = useState(false)
+  const [deletingPaymentId, setDeletingPaymentId] = useState<number | null>(null)
+
+  const [payAmount, setPayAmount] = useState('')
+  const [payDate, setPayDate] = useState(new Date().toISOString().split('T')[0])
+  const [payMode, setPayMode] = useState('')
+  const [payTransactionNo, setPayTransactionNo] = useState('')
+  const [payChequeDate, setPayChequeDate] = useState('')
+  const [payBankName, setPayBankName] = useState('')
+  const [paySlipFile, setPaySlipFile] = useState<File | null>(null)
+  const [payRemarks, setPayRemarks] = useState('')
+  const [payAmountError, setPayAmountError] = useState('')
+
+  if (!data) {
+    return (
+      <Grid container spacing={6}>
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography>Invoice not found</Typography>
+              <Button variant='contained' onClick={() => router.back()} className='mt-4'>Go Back</Button>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    )
+  }
+
+  const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0)
+  const netAmount = Number(data.total_amount) - (Number(data.tds_amount) || 0) - (Number(data.other_deduction) || 0)
+  const remainingAmount = netAmount - totalPaid
+
+  const handleAddPayment = async () => {
+    if (!payAmount || !payDate || !payMode) {
+      toast.error('Please enter amount, date and payment mode')
+
+      return
+    }
+
+    if (payMode === 'cheque' && (!payTransactionNo || !payChequeDate || !payBankName)) {
+      toast.error('Please fill all cheque details (cheque no, date, bank name)')
+
+      return
+    }
+
+    if ((payMode === 'bank_transfer' || payMode === 'online') && !payTransactionNo) {
+      toast.error('Please enter transaction number')
+
+      return
+    }
+
+    if (Number(payAmount) > remainingAmount) {
+      setPayAmountError(`Amount exceeds remaining balance of ${remainingAmount.toFixed(2)}`)
+
+      return
+    }
+
+    setSavingPayment(true)
+
+    try {
+      let res: Response
+
+      if (paySlipFile) {
+        const formData = new FormData()
+        formData.append('invoice_id', String(data.id))
+        formData.append('amount', String(Number(payAmount)))
+        formData.append('payment_date', payDate)
+        formData.append('payment_mode', payMode)
+        formData.append('transaction_no', payTransactionNo || '')
+        formData.append('cheque_date', payChequeDate || '')
+        formData.append('bank_name', payBankName || '')
+        formData.append('remarks', payRemarks || '')
+        formData.append('file', paySlipFile)
+
+        res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments`, {
+          method: 'POST',
+          body: formData
+        })
+      } else {
+        const body: Record<string, any> = {
+          invoice_id: data.id,
+          amount: Number(payAmount),
+          payment_date: payDate,
+          payment_mode: payMode || null,
+          transaction_no: payTransactionNo || null,
+          cheque_date: payChequeDate || null,
+          bank_name: payBankName || null,
+          remarks: payRemarks || null
+        }
+
+        res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        })
+      }
+
+      const result = await res.json()
+
+      if (res.ok && (result.status === 'Success' || result.status === 'success')) {
+        toast.success('Payment added')
+        setPayAmount('')
+        setPayAmountError('')
+        setPayDate(new Date().toISOString().split('T')[0])
+        setPayMode('')
+        setPayTransactionNo('')
+        setPayChequeDate('')
+        setPayBankName('')
+        setPaySlipFile(null)
+        setPayRemarks('')
+        onRefreshPayments()
+        updateData()
+      } else {
+        toast.error(result.message || 'Failed to add payment')
+      }
+    } catch {
+      toast.error('Failed to add payment')
+    } finally {
+      setSavingPayment(false)
+    }
+  }
+
+  const handleDeletePayment = async (paymentId: number) => {
+    setDeletingPaymentId(paymentId)
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/${paymentId}`, {
+        method: 'DELETE'
+      })
+
+      const result = await res.json()
+
+      if (res.ok && (result.status === 'Success' || result.status === 'success')) {
+        toast.success('Payment deleted')
+        onRefreshPayments()
+        updateData()
+      } else {
+        toast.error(result.message || 'Failed to delete payment')
+      }
+    } catch {
+      toast.error('Failed to delete payment')
+    } finally {
+      setDeletingPaymentId(null)
+    }
+  }
+
+  const handleDeleteInvoice = async () => {
+    if (!confirm('Are you sure you want to delete this invoice?')) return
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoices/${data.id}`, {
+        method: 'DELETE'
+      })
+
+      const result = await res.json()
+
+      if (res.ok && (result.status === 'Success' || result.status === 'success')) {
+        toast.success('Invoice deleted')
+        router.push('/invoice/invoices')
+      } else {
+        toast.error(result.message || 'Failed to delete invoice')
+      }
+    } catch {
+      toast.error('Failed to delete invoice')
+    }
+  }
+
+  const entityName = data.type === 1
+    ? data.ssc_name
+    : data.type === 2
+      ? data.assessor_name
+      : data.tp_name
+
+  return (
+    <Grid container spacing={6}>
+      <Grid item xs={12}>
+        <Button variant='tonal' startIcon={<i className='tabler-arrow-left' />} onClick={() => router.back()} className='mb-4'>
+          Back
+        </Button>
+      </Grid>
+      <Grid item xs={12} md={7}>
+        <Card>
+          <CardHeader
+            title={`Invoice #${data.invoice_number || `INV-${data.id}`}`}
+            subheader={`Type: ${typeLabels[data.type] || 'Unknown'}`}
+            action={
+              <div className='flex gap-2'>
+                <Chip
+                  variant='tonal'
+                  label={statusLabels[data.status] || 'Unknown'}
+                  color={statusColors[data.status] || 'default'}
+                />
+                <Chip
+                  variant='tonal'
+                  size='small'
+                  label={data.is_payment_complete ? 'Payment Complete' : 'Payment Pending'}
+                  color={data.is_payment_complete ? 'success' : 'warning'}
+                />
+              </div>
+            }
+          />
+          <CardContent>
+            {data.is_payment_complete === 1 && (
+              <Typography variant='body2' color='success.main' className='mb-4 p-2' sx={{ bgcolor: 'success.light', borderRadius: 1 }}>
+                Payment Complete - Invoice is now read-only
+              </Typography>
+            )}
+            <Grid container spacing={4}>
+              <Grid item xs={6}>
+                <Typography variant='caption' color='text.secondary'>Batch</Typography>
+                <Typography variant='body2' className='font-medium'>{data.batch_name}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant='caption' color='text.secondary'>
+                  {data.type === 1 ? 'SSC' : data.type === 2 ? 'Assessor' : 'Training Partner'}
+                </Typography>
+                <Typography variant='body2' className='font-medium'>{entityName || '-'}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant='caption' color='text.secondary'>Scheme</Typography>
+                <Typography variant='body2' className='font-medium'>{data.scheme || '-'}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant='caption' color='text.secondary'>Assessment Date</Typography>
+                <Typography variant='body2' className='font-medium'>
+                  {data.assessment_date ? new Date(data.assessment_date).toLocaleDateString() : '-'}
+                </Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant='caption' color='text.secondary'>Total Candidates</Typography>
+                <Typography variant='body2' className='font-medium'>{data.total_candidate ?? '-'}</Typography>
+              </Grid>
+              {(data.type === 1 || data.type === 2) && (
+                <Grid item xs={6}>
+                  <Typography variant='caption' color='text.secondary'>Present Candidates</Typography>
+                  <Typography variant='body2' className='font-medium'>{data.present_candidate ?? '-'}</Typography>
+                </Grid>
+              )}
+              <Grid item xs={6}>
+                <Typography variant='caption' color='text.secondary'>Amount Per Candidate</Typography>
+                <Typography variant='body2' className='font-medium'>{data.amount_per_candidate ? Number(data.amount_per_candidate).toFixed(2) : '-'}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant='caption' color='text.secondary'>Total Amount</Typography>
+                <Typography variant='body2' className='font-medium'>{Number(data.total_amount).toFixed(2)}</Typography>
+              </Grid>
+              {data.type === 3 && data.gst_amount != null && (
+                <Grid item xs={6}>
+                  <Typography variant='caption' color='text.secondary'>GST Amount</Typography>
+                  <Typography variant='body2' className='font-medium'>{Number(data.gst_amount).toFixed(2)}</Typography>
+                </Grid>
+              )}
+              {data.type === 2 && data.advance_amount != null && (
+                <Grid item xs={6}>
+                  <Typography variant='caption' color='text.secondary'>Advance Amount</Typography>
+                  <Typography variant='body2' className='font-medium'>{Number(data.advance_amount).toFixed(2)}</Typography>
+                </Grid>
+              )}
+              {data.type === 2 && data.tds_amount != null && (
+                <Grid item xs={6}>
+                  <Typography variant='caption' color='text.secondary'>TDS Amount</Typography>
+                  <Typography variant='body2' className='font-medium'>{Number(data.tds_amount).toFixed(2)}</Typography>
+                </Grid>
+              )}
+              {data.type === 2 && data.other_deduction != null && (
+                <Grid item xs={6}>
+                  <Typography variant='caption' color='text.secondary'>Other Deduction</Typography>
+                  <Typography variant='body2' className='font-medium'>{Number(data.other_deduction).toFixed(2)}</Typography>
+                </Grid>
+              )}
+              {data.type === 2 && data.net_amount != null && (
+                <Grid item xs={6}>
+                  <Typography variant='caption' color='text.secondary'>Net Amount</Typography>
+                  <Typography variant='body2' className='font-medium'>{Number(data.net_amount).toFixed(2)}</Typography>
+                </Grid>
+              )}
+              {data.notes && (
+                <Grid item xs={12}>
+                  <Typography variant='caption' color='text.secondary'>Notes</Typography>
+                  <Typography variant='body2'>{data.notes}</Typography>
+                </Grid>
+              )}
+              {data.type === 1 && data.group_photo && (
+                <Grid item xs={6}>
+                  <Typography variant='caption' color='text.secondary'>Group Photo</Typography>
+                  <br />
+                  <Button variant='text' size='small' component='a' href={'/' + data.group_photo} target='_blank'>
+                    View Photo
+                  </Button>
+                </Grid>
+              )}
+              {data.type === 1 && data.attendance_sheet && (
+                <Grid item xs={6}>
+                  <Typography variant='caption' color='text.secondary'>Attendance Sheet</Typography>
+                  <br />
+                  <Button variant='text' size='small' component='a' href={'/' + data.attendance_sheet} target='_blank'>
+                    View Sheet
+                  </Button>
+                </Grid>
+              )}
+              {data.type === 2 && data.invoice_pdf && (
+                <Grid item xs={6}>
+                  <Typography variant='caption' color='text.secondary'>Invoice PDF</Typography>
+                  <br />
+                  <Button variant='text' size='small' component='a' href={'/' + data.invoice_pdf} target='_blank'>
+                    View Invoice
+                  </Button>
+                </Grid>
+              )}
+              {data.type === 2 && data.signed_copy && (
+                <Grid item xs={6}>
+                  <Typography variant='caption' color='text.secondary'>Signed Copy</Typography>
+                  <br />
+                  <Button variant='text' size='small' component='a' href={'/' + data.signed_copy} target='_blank'>
+                    View Signed Copy
+                  </Button>
+                </Grid>
+              )}
+              {data.type === 3 && data.invoice_pdf && (
+                <Grid item xs={6}>
+                  <Typography variant='caption' color='text.secondary'>Invoice PDF</Typography>
+                  <br />
+                  <Button variant='text' size='small' component='a' href={'/' + data.invoice_pdf} target='_blank'>
+                    View Invoice
+                  </Button>
+                </Grid>
+              )}
+            </Grid>
+            <Grid item xs={12}>
+              <Button variant='outlined' size='small' component='a' href={`/api/invoices/${data.id}/pdf`} target='_blank' startIcon={<i className='tabler-download' />}>
+                Download Invoice PDF
+              </Button>
+            </Grid>
+            {data.is_payment_complete === 0 && (
+              <Divider className='my-4' />
+            )}
+            {data.is_payment_complete === 0 && (
+              <div className='flex gap-4 flex-wrap'>
+                <Button
+                  variant='contained'
+                  color='primary'
+                  startIcon={<i className='tabler-edit' />}
+                  onClick={() => router.push(`/invoice/invoices/${data.id}/edit`)}
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant='tonal'
+                  color='error'
+                  startIcon={<i className='tabler-trash' />}
+                  onClick={handleDeleteInvoice}
+                >
+                  Delete
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </Grid>
+      <Grid item xs={12} md={5}>
+        <Card>
+          <CardHeader title='Payment History' />
+          <CardContent>
+            {data.is_payment_complete === 1 && (
+              <Typography variant='body2' color='success.main' className='mb-4 p-2' sx={{ bgcolor: 'success.light', borderRadius: 1 }}>
+                Payment Complete - Invoice is now read-only
+              </Typography>
+            )}
+
+            <>
+              <Grid container spacing={2} className='mb-4'>
+                <Grid item xs={6}>
+                  <Typography variant='caption' color='text.secondary'>Invoice Total</Typography>
+                  <Typography variant='body2' className='font-medium'>{Number(data.total_amount).toFixed(2)}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant='caption' color='text.secondary'>TDS Amount</Typography>
+                  <Typography variant='body2' className='font-medium'>{Number(data.tds_amount || 0).toFixed(2)}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant='caption' color='text.secondary'>Other Deduction</Typography>
+                  <Typography variant='body2' className='font-medium'>{Number(data.other_deduction || 0).toFixed(2)}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant='caption' color='text.secondary'>Advance Amount</Typography>
+                  <Typography variant='body2' className='font-medium'>{Number(data.advance_amount || 0).toFixed(2)}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant='caption' color='text.secondary'>Net Invoice Amount</Typography>
+                  <Typography variant='body2' className='font-medium'>{netAmount.toFixed(2)}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant='caption' color='text.secondary'>Received Amount</Typography>
+                  <Typography variant='body2' className='font-medium' color='success.main'>{totalPaid.toFixed(2)}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant='caption' color='text.secondary'>Balance Due</Typography>
+                  <Typography variant='body2' className='font-medium' color={remainingAmount > 0 ? 'error' : 'success'}>
+                    {remainingAmount.toFixed(2)}
+                  </Typography>
+                </Grid>
+              </Grid>
+              <Divider className='my-3' />
+            </>
+
+            <TableContainer component={Paper}>
+              <Table size='small'>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Date</TableCell>
+                    <TableCell>Amount</TableCell>
+                    <TableCell>Mode</TableCell>
+                    <TableCell>Ref No</TableCell>
+                    <TableCell>Bank</TableCell>
+                    <TableCell>Slip</TableCell>
+                    <TableCell>Remarks</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {payments.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} align='center'>No payments recorded</TableCell>
+                    </TableRow>
+                  ) : (
+                    payments.map(p => (
+                      <TableRow key={p.id}>
+                        <TableCell>{p.payment_date ? new Date(p.payment_date).toLocaleDateString() : '-'}</TableCell>
+                        <TableCell>{Number(p.amount).toFixed(2)}</TableCell>
+                        <TableCell>{p.payment_mode || '-'}</TableCell>
+                        <TableCell>
+                          {p.payment_mode === 'cheque'
+                            ? (p.transaction_no ? `Cheque #${p.transaction_no}` : '-')
+                            : p.transaction_no || '-'}
+                        </TableCell>
+                        <TableCell>{p.bank_name || '-'}</TableCell>
+                        <TableCell>
+                          {p.transaction_slip ? (
+                            <Button variant='text' size='small' component='a' href={'/' + p.transaction_slip} target='_blank'>
+                              View
+                            </Button>
+                          ) : '-'}
+                        </TableCell>
+                        <TableCell>{p.remarks || '-'}</TableCell>
+                        <TableCell>
+                          <Button
+                            size='small'
+                            color='error'
+                            variant='text'
+                            disabled={deletingPaymentId === p.id}
+                            startIcon={deletingPaymentId === p.id ? <CircularProgress size={14} color='inherit' /> : <i className='tabler-trash' />}
+                            onClick={() => handleDeletePayment(p.id)}
+                          >
+                            Delete
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            {data.is_payment_complete === 0 && (
+              <>
+                <Divider className='my-4' />
+                <Typography variant='subtitle2' className='mb-3'>Add Payment</Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={6}>
+                    <CustomTextField
+                      fullWidth
+                      label='Amount *'
+                      type='number'
+                      size='small'
+                      value={payAmount}
+                      error={!!payAmountError}
+                      helperText={payAmountError || ' '}
+                      onChange={e => {
+                        setPayAmount(e.target.value)
+                        setPayAmountError('')
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <CustomTextField
+                      fullWidth
+                      label='Date *'
+                      type='date'
+                      size='small'
+                      value={payDate}
+                      onChange={e => setPayDate(e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <CustomTextField
+                      select
+                      fullWidth
+                      label='Payment Mode'
+                      size='small'
+                      value={payMode}
+                      onChange={e => {
+                        setPayMode(e.target.value)
+                        setPayTransactionNo('')
+                        setPayChequeDate('')
+                        setPayBankName('')
+                      }}
+                      SelectProps={{ MenuProps, displayEmpty: true }}
+                    >
+                      <MenuItem value=''>Select</MenuItem>
+                      <MenuItem value='cash'>Cash</MenuItem>
+                      <MenuItem value='cheque'>Cheque</MenuItem>
+                      <MenuItem value='bank_transfer'>Bank Transfer</MenuItem>
+                      <MenuItem value='online'>Online</MenuItem>
+                    </CustomTextField>
+                  </Grid>
+                  {payMode === 'cheque' && (
+                    <Grid item xs={6}>
+                      <CustomTextField
+                        fullWidth
+                        label='Cheque No. *'
+                        size='small'
+                        value={payTransactionNo}
+                        onChange={e => setPayTransactionNo(e.target.value)}
+                      />
+                    </Grid>
+                  )}
+                  {payMode === 'cheque' && (
+                    <Grid item xs={6}>
+                      <CustomTextField
+                        fullWidth
+                        label='Cheque Date *'
+                        type='date'
+                        size='small'
+                        value={payChequeDate}
+                        onChange={e => setPayChequeDate(e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </Grid>
+                  )}
+                  {payMode === 'cheque' && (
+                    <Grid item xs={6}>
+                      <CustomTextField
+                        fullWidth
+                        label='Bank Name *'
+                        size='small'
+                        value={payBankName}
+                        onChange={e => setPayBankName(e.target.value)}
+                      />
+                    </Grid>
+                  )}
+                  {(payMode === 'bank_transfer' || payMode === 'online') && (
+                    <Grid item xs={6}>
+                      <CustomTextField
+                        fullWidth
+                        label='Transaction No. *'
+                        size='small'
+                        value={payTransactionNo}
+                        onChange={e => setPayTransactionNo(e.target.value)}
+                      />
+                    </Grid>
+                  )}
+                  {payMode === 'bank_transfer' && (
+                    <Grid item xs={6}>
+                      <CustomTextField
+                        fullWidth
+                        label='Bank Name'
+                        size='small'
+                        value={payBankName}
+                        onChange={e => setPayBankName(e.target.value)}
+                      />
+                    </Grid>
+                  )}
+                  {(payMode === 'bank_transfer' || payMode === 'online') && (
+                    <Grid item xs={12}>
+                      <Typography variant='body2' color='text.secondary' className='mb-1'>
+                        Transaction Slip (image/pdf)
+                      </Typography>
+                      <input type='file' accept='image/*,application/pdf' onChange={e => setPaySlipFile(e.target.files?.[0] || null)} />
+                      {paySlipFile && <Typography variant='caption'>{paySlipFile.name}</Typography>}
+                    </Grid>
+                  )}
+                  <Grid item xs={12}>
+                    <CustomTextField
+                      fullWidth
+                      label='Remarks'
+                      size='small'
+                      value={payRemarks}
+                      onChange={e => setPayRemarks(e.target.value)}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Button
+                      fullWidth
+                      variant='contained'
+                      onClick={handleAddPayment}
+                      disabled={savingPayment}
+                      startIcon={savingPayment ? <CircularProgress size={16} color='inherit' /> : <i className='tabler-plus' />}
+                    >
+                      Add Payment
+                    </Button>
+                  </Grid>
+                </Grid>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
+  )
+}
+
+export default InvoiceDetail
