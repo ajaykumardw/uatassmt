@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `invoices` (
     `attendance_sheet`      VARCHAR(500)    NULL,
     `invoice_pdf`           VARCHAR(500)    NULL,
     `signed_copy`           VARCHAR(500)    NULL,
-    `status`                TINYINT         NOT NULL DEFAULT 1 COMMENT '0=draft,1=pending,2=approved,3=rejected,4=paid',
+    `status`                TINYINT         NOT NULL DEFAULT 1 COMMENT '0=draft,1=pending,2=approved,3=rejected,4=paid,5=partial_paid',
     `is_payment_complete`   TINYINT         NOT NULL DEFAULT 0 COMMENT '0=no,1=yes (manually set by agency)',
     `notes`                 TEXT            NULL,
     `agency_id`             INT             NOT NULL,

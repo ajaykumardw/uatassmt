@@ -15,6 +15,7 @@ async function checkAndUpdatePaymentComplete(invoiceId: number) {
   `
 
   const inv = (rows as any[])[0]
+
   if (!inv) return
 
   const netAmount = Number(inv.total_amount) - (Number(inv.tds_amount) || 0) - (Number(inv.other_deduction) || 0)
@@ -23,6 +24,10 @@ async function checkAndUpdatePaymentComplete(invoiceId: number) {
   if (totalPaid >= netAmount && netAmount > 0) {
     await prisma.$executeRaw`
       UPDATE invoices SET status = 4, updated_at = NOW() WHERE id = ${invoiceId}
+    `
+  } else if (totalPaid > 0) {
+    await prisma.$executeRaw`
+      UPDATE invoices SET status = 5, updated_at = NOW() WHERE id = ${invoiceId}
     `
   } else {
     await prisma.$executeRaw`

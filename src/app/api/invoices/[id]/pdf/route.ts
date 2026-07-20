@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
+
+import { NextResponse } from 'next/server'
 
 import prisma from '@/libs/prisma'
 import { getBrowser } from '@/libs/puppeteerBrowser'
@@ -9,10 +10,13 @@ import { getAgencyImagePath } from '@/configs/customDataConfig'
 function imageToBase64(relativePath: string): string {
   try {
     const absPath = path.resolve(relativePath)
+
     if (!fs.existsSync(absPath)) return ''
     const buffer = fs.readFileSync(absPath)
     const ext = path.extname(absPath).replace('.', '')
-    return `data:image/${ext === 'jpg' ? 'jpeg' : ext};base64,${buffer.toString('base64')}`
+
+    
+return `data:image/${ext === 'jpg' ? 'jpeg' : ext};base64,${buffer.toString('base64')}`
   } catch {
     return ''
   }
@@ -20,7 +24,8 @@ function imageToBase64(relativePath: string): string {
 
 function formatDate(d: string | null) {
   if (!d) return '-'
-  return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+  
+return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 const TYPE_LABEL: Record<number, string> = { 1: 'SSC Assessment Invoice', 2: 'Assessor/Proctor Invoice', 3: 'Training Partner Invoice' }
@@ -34,31 +39,40 @@ function numberToWords(n: number): string {
   function convertBelow1000(num: number): string {
     if (num === 0) return ''
     let res = ''
+
     if (num >= 100) { res += ones[Math.floor(num / 100)] + ' Hundred '; num %= 100 }
     if (num >= 20) { res += tens[Math.floor(num / 10)] + ' '; num %= 10 }
     if (num > 0) res += ones[num] + ' '
-    return res.trim()
+    
+return res.trim()
   }
 
-  let parts: string[] = []
+  const parts: string[] = []
   let scaleIdx = 0
+
   if (n >= 100) { parts.push(convertBelow1000(n % 1000)); n = Math.floor(n / 1000); scaleIdx = 1 }
+
   while (n > 0) {
     const chunk = n % 100
+
     if (chunk > 0) parts.push(ones[chunk] + ' ' + scales[scaleIdx])
     n = Math.floor(n / 100)
     scaleIdx++
   }
+
   parts.reverse()
-  return parts.join(' ') || ''
+  
+return parts.join(' ') || ''
 }
 
 function amountInWords(amount: number): string {
   const whole = Math.floor(amount)
   const decimal = Math.round((amount - whole) * 100)
   let words = numberToWords(whole) + ' Rupees'
+
   if (decimal > 0) words += ' And ' + numberToWords(decimal) + ' Paise'
-  return words + ' Only'
+  
+return words + ' Only'
 }
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
@@ -107,15 +121,15 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const logoUrl = logoPath ? imageToBase64(logoPath) : ''
     const stampUrl = stampPath ? imageToBase64(stampPath) : ''
 
-    const agencyAddressParts = [invoice.agency_address, invoice.agency_city, invoice.agency_state, invoice.agency_pincode].filter(Boolean)
+    // const agencyAddressParts = [invoice.agency_address, invoice.agency_city, invoice.agency_state, invoice.agency_pincode].filter(Boolean)
+    const agencyAddressParts = [invoice.agency_address].filter(Boolean)
     const agencyAddress = agencyAddressParts.join(', ')
 
-    const netAmount = Number(invoice.total_amount) - Number(invoice.tds_amount || 0) - Number(invoice.other_deduction || 0)
-    const invoiceDate = formatDate(invoice.created_at)
+    const netAmount = invoice.type === 3
+      ? Number(invoice.total_amount) + Number(invoice.gst_amount || 0) - Number(invoice.tds_amount || 0) - Number(invoice.other_deduction || 0)
+      : Number(invoice.total_amount) - Number(invoice.tds_amount || 0) - Number(invoice.other_deduction || 0)
 
-    const dueDate = new Date(invoice.created_at)
-    dueDate.setDate(dueDate.getDate() + 30)
-    const dueDateStr = formatDate(dueDate.toISOString())
+    const invoiceDate = formatDate(invoice.created_at)
 
     const html = `<!DOCTYPE html>
 <html>
@@ -158,7 +172,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   <div class="top-section">
     <div class="agency-info">
       <div class="agency-name">${invoice.agency_name || 'Agency'}</div>
-      ${agencyAddress ? `<div class="agency-details"><div>${agencyAddress.replace(/,/g, ',<br>')}</div></div>` : ''}
+      ${agencyAddress ? `<div class="agency-details"><div>${agencyAddress.replace(/,/g, ', ')}</div></div>` : ''}
       <div class="agency-details" style="margin-top:6px">
         ${invoice.agency_gst ? `<div><strong>GST No.:</strong> ${invoice.agency_gst}</div>` : ''}
         ${invoice.agency_pan ? `<div><strong>PAN No.:</strong> ${invoice.agency_pan}</div>` : ''}
@@ -178,7 +192,6 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     <div class="section-title">Invoice Details</div>
     <table class="details">
       <tr><td class="label">Invoice Date</td><td>${invoiceDate}</td></tr>
-      <tr><td class="label">Due Date</td><td>${dueDateStr}</td></tr>
       <tr><td class="label">Batch</td><td>${invoice.batch_name || '-'}</td></tr>
       <tr><td class="label">${invoice.type === 1 ? 'SSC' : invoice.type === 2 ? 'Assessor' : 'Training Partner'}</td><td>${entityName || '-'}</td></tr>
       <tr><td class="label">Scheme</td><td>${invoice.scheme || '-'}</td></tr>
@@ -187,6 +200,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       ${invoice.type !== 3 ? `<tr><td class="label">Present Candidates</td><td>${invoice.present_candidate || '-'}</td></tr>` : ''}
       <tr><td class="label">Amount Per Candidate</td><td class="amount">₹ ${Number(invoice.amount_per_candidate).toFixed(2)}</td></tr>
       <tr class="total-row"><td class="label">Total Amount</td><td class="amount">₹ ${Number(invoice.total_amount).toFixed(2)}</td></tr>
+      ${invoice.type === 3 && Number(invoice.gst_amount || 0) > 0 ? `<tr><td class="label">GST Amount</td><td class="amount">₹ ${Number(invoice.gst_amount).toFixed(2)}</td></tr>` : ''}
+      ${invoice.type === 3 && Number(invoice.gst_amount || 0) > 0 ? `<tr class="total-row"><td class="label">Total Including GST</td><td class="amount">₹ ${(Number(invoice.total_amount) + Number(invoice.gst_amount)).toFixed(2)}</td></tr>` : ''}
     </table>
   </div>
 

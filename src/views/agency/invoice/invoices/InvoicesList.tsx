@@ -60,6 +60,7 @@ type Props = {
   dateTo: string
   onDateToChange: (v: string) => void
   onFilter: () => void
+  hideCreate?: boolean
 }
 
 const typeLabels: Record<number, string> = {
@@ -73,7 +74,8 @@ const statusLabels: Record<number, string> = {
   1: 'Pending',
   2: 'Approved',
   3: 'Rejected',
-  4: 'Paid'
+  4: 'Paid',
+  5: 'Partial Paid'
 }
 
 const statusColors: Record<number, 'default' | 'warning' | 'info' | 'error' | 'success'> = {
@@ -81,14 +83,16 @@ const statusColors: Record<number, 'default' | 'warning' | 'info' | 'error' | 's
   1: 'warning',
   2: 'info',
   3: 'error',
-  4: 'success'
+  4: 'success',
+  5: 'info'
 }
 
 const InvoicesList = ({
   data, total, page, limit, onPageChange,
   search, onSearchChange, type, onTypeChange,
   status, onStatusChange,
-  dateFrom, onDateFromChange, dateTo, onDateToChange, onFilter
+  dateFrom, onDateFromChange, dateTo, onDateToChange, onFilter,
+  hideCreate = false
 }: Props) => {
   const router = useRouter()
   const totalPages = Math.ceil(total / limit)
@@ -104,11 +108,11 @@ const InvoicesList = ({
           <CardHeader
             title='Invoices'
             subheader='Manage all invoices'
-            action={
+            action={!hideCreate && (
               <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={() => router.push('/invoice/invoices/create')}>
                 New Invoice
               </Button>
-            }
+            )}
           />
           <CardContent>
             <Grid container spacing={4} className='mb-4'>

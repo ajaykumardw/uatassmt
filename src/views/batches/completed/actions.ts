@@ -47,22 +47,7 @@ export async function changeHardCopyStatus(
   const created_by = Number(session?.user?.id)
   const agency_id = Number((session?.user as any)?.agency_id)
 
-  // Check if invoice already exists for this batch (type=2)
-  const existingInvoice = await prisma.$queryRaw<Array<{ id: number }>>`
-    SELECT id FROM invoices WHERE batch_id = ${batchId} AND type = 2 LIMIT 1
-  `
-
-  if ((existingInvoice as any[]).length > 0) {
-    // Already has invoice, just mark hard_copy_received
-    await prisma.batches.update({
-      where: { id: batchId },
-      data: { hard_copy_received: 1 },
-    })
-
-    return { success: true, message: 'Invoice already exists for this batch' }
-  }
-
-  // Fetch batch details for invoice creation
+  // Fetch batch details first (needed in both paths)
   const batch = await prisma.batches.findUnique({
     where: { id: batchId },
     select: {
@@ -92,6 +77,7 @@ export async function changeHardCopyStatus(
   }
 
   const sscId = batch.qualification_pack?.ssc?.id
+
   if (!sscId) {
     return {
       success: false,
@@ -100,6 +86,46 @@ export async function changeHardCopyStatus(
   }
 
   const totalCandidates = batch._count.students || Number(batch.batch_size) || 0
+
+  // Fetch latest amount_per_candidate from invoice_master_data for this assessor
+  const masterData = await prisma.$queryRaw<Array<{ amount_per_candidate: number }>>`
+    SELECT amount_per_candidate FROM invoice_master_data
+    WHERE type = 2 AND assessor_id = ${batch.assessor_id}
+    ORDER BY id DESC LIMIT 1
+  `
+
+  const amountPerCandidate = (masterData as any[]).length > 0
+    ? Number((masterData as any[])[0].amount_per_candidate)
+    : 0
+
+  const totalAmount = amountPerCandidate * totalCandidates
+
+  // Check if invoice already exists for this batch (type=2)
+  const existingInvoice = await prisma.$queryRaw<Array<{ id: number }>>`
+    SELECT id FROM invoices WHERE batch_id = ${batchId} AND type = 2 LIMIT 1
+  `
+
+  if ((existingInvoice as any[]).length > 0) {
+    const existingId = (existingInvoice as any[])[0].id
+
+    // Update existing invoice with correct amounts from master data
+    await prisma.$executeRaw`
+      UPDATE invoices SET
+        amount_per_candidate = ${amountPerCandidate},
+        total_amount = ${totalAmount},
+        updated_at = NOW()
+      WHERE id = ${existingId}
+    `
+
+    if (hardCopyReceived) {
+      await prisma.batches.update({
+        where: { id: batchId },
+        data: { hard_copy_received: 1 },
+      })
+    }
+
+    return { success: true, message: 'Invoice amounts updated from master data' }
+  }
 
   try {
     const invoiceNumber = await generateInvoiceNumber(2)
@@ -114,8 +140,8 @@ export async function changeHardCopyStatus(
         ${invoiceNumber}, 2, ${batchId}, ${sscId},
         ${batch.scheme?.scheme_name || null}, ${batch.assessor_id},
         ${batch.assessment_end_datetime || null}, ${totalCandidates},
-        ${totalCandidates}, 0, 0, 0, 0, 0, 0,
-        1, 'Auto-generated from Hard Copy Received', ${agency_id}, ${created_by}, NOW(), NOW()
+        ${totalCandidates}, ${amountPerCandidate}, ${totalAmount}, 0, 0, 0, 0,
+        0, 'Auto-generated from Hard Copy Received', ${agency_id}, ${created_by}, NOW(), NOW()
       )
     `
 
@@ -125,7 +151,7 @@ export async function changeHardCopyStatus(
       data: { hard_copy_received: 1 },
     })
 
-    return { success: true, message: 'Assessor invoice created successfully' }
+    return { success: true, message: 'Assessor invoice created successfully with amount ' + amountPerCandidate }
   } catch (error: any) {
     return { success: false, message: error.message || 'Failed to create invoice' }
   }

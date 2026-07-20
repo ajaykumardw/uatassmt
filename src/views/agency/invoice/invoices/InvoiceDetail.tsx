@@ -52,6 +52,7 @@ type InvoiceData = {
   gst_amount?: number
   invoice_pdf?: string
   signed_copy?: string
+  payment_receipt?: string
 }
 
 type Payment = {
@@ -71,6 +72,7 @@ type Props = {
   updateData: () => void
   payments: Payment[]
   onRefreshPayments: () => void
+  userRole?: string
 }
 
 const typeLabels: Record<number, string> = {
@@ -84,7 +86,8 @@ const statusLabels: Record<number, string> = {
   1: 'Pending',
   2: 'Approved',
   3: 'Rejected',
-  4: 'Paid'
+  4: 'Paid',
+  5: 'Partial Paid'
 }
 
 const statusColors: Record<number, 'default' | 'warning' | 'info' | 'error' | 'success'> = {
@@ -92,14 +95,22 @@ const statusColors: Record<number, 'default' | 'warning' | 'info' | 'error' | 's
   1: 'warning',
   2: 'info',
   3: 'error',
-  4: 'success'
+  4: 'success',
+  5: 'info'
 }
 
-const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments }: Props) => {
+const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments, userRole = 'agency' }: Props) => {
   const router = useRouter()
 
   const [savingPayment, setSavingPayment] = useState(false)
   const [deletingPaymentId, setDeletingPaymentId] = useState<number | null>(null)
+
+  const [signedCopyFile, setSignedCopyFile] = useState<File | null>(null)
+  const [uploadingSignedCopy, setUploadingSignedCopy] = useState(false)
+  const [approving, setApproving] = useState(false)
+
+  const [paymentReceiptFile, setPaymentReceiptFile] = useState<File | null>(null)
+  const [uploadingPaymentReceipt, setUploadingPaymentReceipt] = useState(false)
 
   const [payAmount, setPayAmount] = useState('')
   const [payDate, setPayDate] = useState(new Date().toISOString().split('T')[0])
@@ -127,8 +138,49 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments }: Props)
   }
 
   const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0)
-  const netAmount = Number(data.total_amount) - (Number(data.tds_amount) || 0) - (Number(data.other_deduction) || 0)
+
+  const netAmount = data.type === 3
+    ? Number(data.total_amount) + (Number(data.gst_amount) || 0) - (Number(data.tds_amount) || 0) - (Number(data.other_deduction) || 0)
+    : Number(data.total_amount) - (Number(data.tds_amount) || 0) - (Number(data.other_deduction) || 0)
+
   const remainingAmount = netAmount - totalPaid
+
+  const handleUploadSignedCopy = async () => {
+    if (!signedCopyFile) {
+      toast.error('Please select a file')
+
+      return
+    }
+
+    setUploadingSignedCopy(true)
+
+    try {
+      const formData = new FormData()
+
+      formData.append('invoice_id', String(data.id))
+      formData.append('file_type', 'signed_copy')
+      formData.append('file', signedCopyFile)
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoices/upload`, {
+        method: 'POST',
+        body: formData
+      })
+
+      const result = await res.json()
+
+      if (res.ok && (result.status === 'Success' || result.status === 'success')) {
+        toast.success('Signed copy uploaded')
+        setSignedCopyFile(null)
+        updateData()
+      } else {
+        toast.error(result.message || 'Failed to upload signed copy')
+      }
+    } catch {
+      toast.error('Failed to upload signed copy')
+    } finally {
+      setUploadingSignedCopy(false)
+    }
+  }
 
   const handleAddPayment = async () => {
     if (!payAmount || !payDate || !payMode) {
@@ -162,6 +214,7 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments }: Props)
 
       if (paySlipFile) {
         const formData = new FormData()
+
         formData.append('invoice_id', String(data.id))
         formData.append('amount', String(Number(payAmount)))
         formData.append('payment_date', payDate)
@@ -265,6 +318,68 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments }: Props)
     }
   }
 
+  const handleApproveReject = async (newStatus: number) => {
+    setApproving(true)
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoices/${data.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      })
+
+      const result = await res.json()
+
+      if (res.ok && (result.status === 'Success' || result.status === 'success')) {
+        toast.success(newStatus === 2 ? 'Invoice approved' : 'Invoice rejected')
+        updateData()
+      } else {
+        toast.error(result.message || 'Failed to update status')
+      }
+    } catch {
+      toast.error('Failed to update status')
+    } finally {
+      setApproving(false)
+    }
+  }
+
+  const handleUploadPaymentReceipt = async () => {
+    if (!paymentReceiptFile) {
+      toast.error('Please select a file')
+      
+return
+    }
+
+    setUploadingPaymentReceipt(true)
+
+    try {
+      const formData = new FormData()
+
+      formData.append('invoice_id', String(data.id))
+      formData.append('file_type', 'payment_receipt')
+      formData.append('file', paymentReceiptFile)
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoices/upload`, {
+        method: 'POST',
+        body: formData
+      })
+
+      const result = await res.json()
+
+      if (res.ok && (result.status === 'Success' || result.status === 'success')) {
+        toast.success('Payment receipt uploaded')
+        setPaymentReceiptFile(null)
+        updateData()
+      } else {
+        toast.error(result.message || 'Failed to upload payment receipt')
+      }
+    } catch {
+      toast.error('Failed to upload payment receipt')
+    } finally {
+      setUploadingPaymentReceipt(false)
+    }
+  }
+
   const entityName = data.type === 1
     ? data.ssc_name
     : data.type === 2
@@ -284,25 +399,17 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments }: Props)
             title={`Invoice #${data.invoice_number || `INV-${data.id}`}`}
             subheader={`Type: ${typeLabels[data.type] || 'Unknown'}`}
             action={
-              <div className='flex gap-2'>
-                <Chip
-                  variant='tonal'
-                  label={statusLabels[data.status] || 'Unknown'}
-                  color={statusColors[data.status] || 'default'}
-                />
-                <Chip
-                  variant='tonal'
-                  size='small'
-                  label={data.status === 4 ? 'Payment Complete' : 'Payment Pending'}
-                  color={data.status === 4 ? 'success' : 'warning'}
-                />
-              </div>
+              <Chip
+                variant='tonal'
+                label={statusLabels[data.status] || 'Unknown'}
+                color={statusColors[data.status] || 'default'}
+              />
             }
           />
           <CardContent>
             {data.status === 4 && (
               <Typography variant='body2' color='success.main' className='mb-4 p-2' sx={{ bgcolor: 'success.light', borderRadius: 1 }}>
-                Payment Complete - Invoice is now read-only
+                Invoice is Paid — now read-only
               </Typography>
             )}
             <Grid container spacing={4}>
@@ -341,13 +448,19 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments }: Props)
                 <Typography variant='body2' className='font-medium'>{data.amount_per_candidate ? Number(data.amount_per_candidate).toFixed(2) : '-'}</Typography>
               </Grid>
               <Grid item xs={6}>
-                <Typography variant='caption' color='text.secondary'>Total Amount</Typography>
+                <Typography variant='caption' color='text.secondary'>Total Amount (Base)</Typography>
                 <Typography variant='body2' className='font-medium'>{Number(data.total_amount).toFixed(2)}</Typography>
               </Grid>
               {data.type === 3 && data.gst_amount != null && (
                 <Grid item xs={6}>
                   <Typography variant='caption' color='text.secondary'>GST Amount</Typography>
                   <Typography variant='body2' className='font-medium'>{Number(data.gst_amount).toFixed(2)}</Typography>
+                </Grid>
+              )}
+              {data.type === 3 && data.gst_amount != null && (
+                <Grid item xs={6}>
+                  <Typography variant='caption' color='text.secondary'>Actual Total (+GST)</Typography>
+                  <Typography variant='body2' className='font-medium'>{(Number(data.total_amount) + Number(data.gst_amount)).toFixed(2)}</Typography>
                 </Grid>
               )}
               {data.type === 2 && data.advance_amount != null && (
@@ -407,13 +520,28 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments }: Props)
                   </Button>
                 </Grid>
               )}
-              {data.type === 2 && data.signed_copy && (
-                <Grid item xs={6}>
+              {data.type === 2 && (
+                <Grid item xs={12}>
                   <Typography variant='caption' color='text.secondary'>Signed Copy</Typography>
                   <br />
-                  <Button variant='text' size='small' component='a' href={'/' + data.signed_copy} target='_blank'>
-                    View Signed Copy
-                  </Button>
+                  {data.signed_copy && (
+                    <Button variant='text' size='small' component='a' href={'/' + data.signed_copy} target='_blank' className='mr-2'>
+                      View Signed Copy
+                    </Button>
+                  )}
+                  <div className='flex items-center gap-2 mt-2'>
+                    <input type='file' accept='.pdf,image/*' onChange={e => setSignedCopyFile(e.target.files?.[0] || null)} />
+                    <Button
+                      variant='contained'
+                      size='small'
+                      onClick={handleUploadSignedCopy}
+                      disabled={!signedCopyFile || uploadingSignedCopy}
+                      startIcon={uploadingSignedCopy ? <CircularProgress size={14} color='inherit' /> : <i className='tabler-upload' />}
+                    >
+                      Upload
+                    </Button>
+                  </div>
+                  {signedCopyFile && <Typography variant='caption'>{signedCopyFile.name}</Typography>}
                 </Grid>
               )}
               {data.type === 3 && data.invoice_pdf && (
@@ -423,6 +551,32 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments }: Props)
                   <Button variant='text' size='small' component='a' href={'/' + data.invoice_pdf} target='_blank'>
                     View Invoice
                   </Button>
+                </Grid>
+              )}
+              {data.type === 3 && (
+                <Grid item xs={12}>
+                  <Typography variant='caption' color='text.secondary'>Payment Receipt</Typography>
+                  <br />
+                  {data.payment_receipt && (
+                    <Button variant='text' size='small' component='a' href={'/' + data.payment_receipt} target='_blank' className='mr-2'>
+                      View Receipt
+                    </Button>
+                  )}
+                  {userRole === 'tp' && (
+                    <div className='flex items-center gap-2 mt-2'>
+                      <input type='file' accept='.pdf,image/*' onChange={e => setPaymentReceiptFile(e.target.files?.[0] || null)} />
+                      <Button
+                        variant='contained'
+                        size='small'
+                        onClick={handleUploadPaymentReceipt}
+                        disabled={!paymentReceiptFile || uploadingPaymentReceipt}
+                        startIcon={uploadingPaymentReceipt ? <CircularProgress size={14} color='inherit' /> : <i className='tabler-upload' />}
+                      >
+                        Upload
+                      </Button>
+                    </div>
+                  )}
+                  {paymentReceiptFile && <Typography variant='caption'>{paymentReceiptFile.name}</Typography>}
                 </Grid>
               )}
             </Grid>
@@ -454,6 +608,27 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments }: Props)
                 </Button>
               </div>
             )}
+            {userRole === 'agency' && data.type === 2 && (data.status === 1 || data.status === 5) && (
+              <div className='flex gap-4 mt-4'>
+                <Button
+                  variant='contained'
+                  color='success'
+                  onClick={() => handleApproveReject(2)}
+                  disabled={approving}
+                  startIcon={approving ? <CircularProgress size={16} color='inherit' /> : <i className='tabler-check' />}
+                >
+                  Approve
+                </Button>
+                <Button
+                  variant='tonal'
+                  color='error'
+                  onClick={() => handleApproveReject(3)}
+                  disabled={approving}
+                >
+                  Reject
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </Grid>
@@ -461,17 +636,15 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments }: Props)
         <Card>
           <CardHeader title='Payment History' />
           <CardContent>
-            {data.status === 4 && (
-              <Typography variant='body2' color='success.main' className='mb-4 p-2' sx={{ bgcolor: 'success.light', borderRadius: 1 }}>
-                Payment Complete - Invoice is now read-only
-              </Typography>
-            )}
-
             <>
               <Grid container spacing={2} className='mb-4'>
                 <Grid item xs={6}>
                   <Typography variant='caption' color='text.secondary'>Invoice Total</Typography>
-                  <Typography variant='body2' className='font-medium'>{Number(data.total_amount).toFixed(2)}</Typography>
+                  <Typography variant='body2' className='font-medium'>
+                    {data.type === 3
+                      ? (Number(data.total_amount) + (Number(data.gst_amount) || 0)).toFixed(2)
+                      : Number(data.total_amount).toFixed(2)}
+                  </Typography>
                 </Grid>
                 <Grid item xs={6}>
                   <Typography variant='caption' color='text.secondary'>TDS Amount</Typography>
@@ -481,10 +654,18 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments }: Props)
                   <Typography variant='caption' color='text.secondary'>Other Deduction</Typography>
                   <Typography variant='body2' className='font-medium'>{Number(data.other_deduction || 0).toFixed(2)}</Typography>
                 </Grid>
-                <Grid item xs={6}>
-                  <Typography variant='caption' color='text.secondary'>Advance Amount</Typography>
-                  <Typography variant='body2' className='font-medium'>{Number(data.advance_amount || 0).toFixed(2)}</Typography>
-                </Grid>
+                {data.type === 3 && data.gst_amount != null && (
+                  <Grid item xs={6}>
+                    <Typography variant='caption' color='text.secondary'>GST Amount</Typography>
+                    <Typography variant='body2' className='font-medium'>{Number(data.gst_amount).toFixed(2)}</Typography>
+                  </Grid>
+                )}
+                {data.type === 2 && (
+                  <Grid item xs={6}>
+                    <Typography variant='caption' color='text.secondary'>Advance Amount</Typography>
+                    <Typography variant='body2' className='font-medium'>{Number(data.advance_amount || 0).toFixed(2)}</Typography>
+                  </Grid>
+                )}
                 <Grid item xs={6}>
                   <Typography variant='caption' color='text.secondary'>Net Invoice Amount</Typography>
                   <Typography variant='body2' className='font-medium'>{netAmount.toFixed(2)}</Typography>
@@ -525,7 +706,7 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments }: Props)
                   ) : (
                     payments.map(p => (
                       <TableRow key={p.id}>
-                        <TableCell>{p.payment_date ? new Date(p.payment_date).toLocaleDateString() : '-'}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{p.payment_date ? new Date(p.payment_date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</TableCell>
                         <TableCell>{Number(p.amount).toFixed(2)}</TableCell>
                         <TableCell>{p.payment_mode || '-'}</TableCell>
                         <TableCell>
@@ -589,6 +770,7 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments }: Props)
                       value={payDate}
                       onChange={e => setPayDate(e.target.value)}
                       InputLabelProps={{ shrink: true }}
+                      inputProps={{ max: new Date().toISOString().split('T')[0] }}
                     />
                   </Grid>
                   <Grid item xs={6}>

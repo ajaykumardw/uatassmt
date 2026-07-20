@@ -48,6 +48,31 @@ export async function GET(req: Request) {
       params.push(like, like)
     }
 
+    const session = await getServerSession(authOptions)
+    const user = session?.user as any
+
+    if (user?.is_ssc) {
+      const userRow = await prisma.$queryRaw<Array<{ ssc_id: number }>>`
+        SELECT ssc_id FROM users WHERE id = ${Number(user.id)} LIMIT 1
+      `
+
+      const sscId = (userRow as any[])[0]?.ssc_id
+
+      if (sscId) {
+        whereClause += ' AND i.ssc_id = ?'
+        params.push(Number(sscId))
+      }
+    } else if (user?.user_type === 'U' && user?.role_id === '1') {
+      whereClause += ' AND i.assessor_id = ?'
+      params.push(Number(user.id))
+    } else if (user?.user_type === 'U' && user?.role_id === '2') {
+      whereClause += ' AND i.tp_id = ?'
+      params.push(Number(user.id))
+    } else if (user?.user_type === 'AG') {
+      whereClause += ' AND i.agency_id = ?'
+      params.push(Number(user.agency_id))
+    }
+
     const fromClause = `
       FROM invoices i
       LEFT JOIN batches b ON b.id = i.batch_id
@@ -88,6 +113,7 @@ export async function GET(req: Request) {
         i.attendance_sheet,
         i.invoice_pdf,
         i.signed_copy,
+        i.payment_receipt,
         i.status,
         i.notes,
         i.created_at
@@ -131,21 +157,21 @@ export async function POST(req: Request) {
 
     const {
       type, batch_id, ssc_id, scheme, assessor_id, tp_id, assessment_date,
-      total_candidate, present_candidate, amount_per_candidate, total_amount,
+      amount_per_candidate, total_amount,
       advance_amount, tds_amount, other_deduction, net_amount, gst_amount,
-      group_photo, attendance_sheet, invoice_pdf, signed_copy, notes
+      group_photo, attendance_sheet, invoice_pdf, signed_copy, payment_receipt, notes
     } = body
 
-    if (!type || !batch_id || !total_candidate || !amount_per_candidate || !total_amount) {
+    if (!type || !batch_id || !amount_per_candidate || !total_amount) {
       return NextResponse.json({ status: 'Error', statusCode: 400, message: 'Missing required fields' }, { status: 400 })
     }
 
     if (Number(type) === 1) {
-      if (!ssc_id || !present_candidate) {
+      if (!ssc_id) {
         return NextResponse.json({ status: 'Error', statusCode: 400, message: 'Missing required fields for SSC invoice' }, { status: 400 })
       }
     } else if (Number(type) === 2) {
-      if (!ssc_id || !assessor_id || !present_candidate) {
+      if (!ssc_id || !assessor_id) {
         return NextResponse.json({ status: 'Error', statusCode: 400, message: 'Missing required fields for Assessor invoice' }, { status: 400 })
       }
     } else if (Number(type) === 3) {
@@ -155,6 +181,19 @@ export async function POST(req: Request) {
     } else {
       return NextResponse.json({ status: 'Error', statusCode: 400, message: 'Invalid invoice type' }, { status: 400 })
     }
+
+    const batchRows = await prisma.$queryRaw`
+      SELECT id, batch_size FROM batches WHERE id = ${Number(batch_id)} LIMIT 1
+    `
+
+    const batch = (batchRows as any[])[0]
+
+    if (!batch) {
+      return NextResponse.json({ status: 'Error', statusCode: 400, message: 'Batch not found' }, { status: 400 })
+    }
+
+    const total_candidate = body.total_candidate ? Number(body.total_candidate) : Number(batch.batch_size) || 0
+    const present_candidate = body.present_candidate !== undefined ? Number(body.present_candidate) : total_candidate
 
     const session = await getServerSession(authOptions)
     const created_by = Number(session?.user?.id || 1)
@@ -167,7 +206,7 @@ export async function POST(req: Request) {
         invoice_number, type, batch_id, ssc_id, scheme, assessor_id, tp_id,
         assessment_date, total_candidate, present_candidate, amount_per_candidate,
         total_amount, advance_amount, tds_amount, other_deduction, net_amount,
-        gst_amount, group_photo, attendance_sheet, invoice_pdf, signed_copy,
+        gst_amount, group_photo, attendance_sheet, invoice_pdf, signed_copy, payment_receipt,
         status, notes, agency_id, created_by, created_at, updated_at
       ) VALUES (
         ${invoice_number}, ${Number(type)}, ${Number(batch_id)}, ${ssc_id ? Number(ssc_id) : null},
@@ -178,7 +217,7 @@ export async function POST(req: Request) {
         ${tds_amount ? Number(tds_amount) : 0}, ${other_deduction ? Number(other_deduction) : 0},
         ${net_amount ? Number(net_amount) : null}, ${gst_amount ? Number(gst_amount) : 0},
         ${group_photo || null}, ${attendance_sheet || null}, ${invoice_pdf || null},
-        ${signed_copy || null}, 1, ${notes || null}, ${agency_id}, ${created_by}, NOW(), NOW()
+        ${signed_copy || null}, ${payment_receipt || null}, 1, ${notes || null}, ${agency_id}, ${created_by}, NOW(), NOW()
       )
     `
 

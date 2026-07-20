@@ -49,9 +49,11 @@ const InvoiceCreate = () => {
   const [selectedType, setSelectedType] = useState<number>(0)
   const [batches, setBatches] = useState<BatchOption[]>([])
   const [sscOptions, setSscOptions] = useState<{ id: number; ssc_name: string }[]>([])
+  const [schemeOptions, setSchemeOptions] = useState<{ id: number; scheme_name: string }[]>([])
   const [tpList, setTpList] = useState<TpOption[]>([])
 
   const [selectedSscId, setSelectedSscId] = useState('')
+  const [selectedSchemeId, setSelectedSchemeId] = useState('')
   const [selectedBatchId, setSelectedBatchId] = useState('')
   const [batchSscId, setBatchSscId] = useState<number>(0)
   const [sscName, setSscName] = useState('')
@@ -69,10 +71,14 @@ const InvoiceCreate = () => {
 
   const [groupPhotoFile, setGroupPhotoFile] = useState<File | null>(null)
   const [attendanceSheetFile, setAttendanceSheetFile] = useState<File | null>(null)
-  const [invoicePdfTpFile, setInvoicePdfTpFile] = useState<File | null>(null)
-  const [paymentReceiptFile, setPaymentReceiptFile] = useState<File | null>(null)
 
   const filteredBatches = batches.filter(b => {
+    if (selectedType === 3) {
+      if (selectedSchemeId && b.scheme?.id !== Number(selectedSchemeId)) return false
+
+      return true
+    }
+
     if (!selectedSscId) return true
 
     return b.qualification_pack?.ssc?.id === Number(selectedSscId)
@@ -95,6 +101,15 @@ const InvoiceCreate = () => {
       .then(list => {
         if (Array.isArray(list)) {
           setSscOptions(list.map((s: any) => ({ id: s.id, ssc_name: s.ssc_name })))
+        }
+      })
+      .catch(() => {})
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/schemes`)
+      .then(res => res.json())
+      .then(list => {
+        if (Array.isArray(list)) {
+          setSchemeOptions(list.map((s: any) => ({ id: s.id, scheme_name: s.scheme_name })))
         }
       })
       .catch(() => {})
@@ -146,6 +161,23 @@ const InvoiceCreate = () => {
 
               if (match) {
                 setAmountPerCandidate(String(Number(match.amount_per_candidate)))
+              }
+            }
+          } catch {
+            // silently fail
+          }
+        }
+      } else if (selectedType === 3) {
+        const schemeId = batch.scheme?.id
+
+        if (schemeId) {
+          try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data?type=3&scheme_id=${schemeId}`)
+            const result = await res.json()
+
+            if (result.status === 'Success' && Array.isArray(result.data)) {
+              if (result.data.length > 0) {
+                setAmountPerCandidate(String(Number(result.data[0].amount_per_candidate)))
               }
             }
           } catch {
@@ -223,9 +255,6 @@ const InvoiceCreate = () => {
         if (selectedType === 1) {
           if (groupPhotoFile) filesToUpload.push({ file: groupPhotoFile, fileType: 'group_photo' })
           if (attendanceSheetFile) filesToUpload.push({ file: attendanceSheetFile, fileType: 'attendance_sheet' })
-        } else if (selectedType === 3) {
-          if (invoicePdfTpFile) filesToUpload.push({ file: invoicePdfTpFile, fileType: 'invoice_pdf' })
-          if (paymentReceiptFile) filesToUpload.push({ file: paymentReceiptFile, fileType: 'payment_receipt' })
         }
 
         for (const item of filesToUpload) {
@@ -285,6 +314,8 @@ const InvoiceCreate = () => {
                       onClick={() => {
                         setSelectedType(t.value)
                         setSelectedSscId('')
+                        setSelectedSchemeId('')
+                        setSelectedTpId('')
                         setSelectedBatchId('')
                         handleBatchChange('')
                       }}
@@ -295,25 +326,48 @@ const InvoiceCreate = () => {
               </Grid>
               {selectedType > 0 && (
                 <>
-                  <Grid item xs={12} sm={6}>
-                    <CustomTextField
-                      select
-                      fullWidth
-                      label='Select SSC'
-                      value={selectedSscId}
-                      onChange={e => {
-                        setSelectedSscId(e.target.value)
-                        setSelectedBatchId('')
-                        handleBatchChange('')
-                      }}
-                      SelectProps={{ MenuProps, displayEmpty: true }}
-                    >
-                      <MenuItem value=''>All SSC</MenuItem>
-                      {sscOptions.map(s => (
-                        <MenuItem key={s.id} value={s.id.toString()}>{s.ssc_name}</MenuItem>
-                      ))}
-                    </CustomTextField>
-                  </Grid>
+                  {selectedType === 3 && (
+                    <Grid item xs={12} sm={6}>
+                      <CustomTextField
+                        select
+                        fullWidth
+                        label='Select Scheme'
+                        value={selectedSchemeId}
+                        onChange={e => {
+                          setSelectedSchemeId(e.target.value)
+                          setSelectedBatchId('')
+                          handleBatchChange('')
+                        }}
+                        SelectProps={{ MenuProps, displayEmpty: true }}
+                      >
+                        <MenuItem value=''>All Schemes</MenuItem>
+                        {schemeOptions.map(s => (
+                          <MenuItem key={s.id} value={s.id.toString()}>{s.scheme_name}</MenuItem>
+                        ))}
+                      </CustomTextField>
+                    </Grid>
+                  )}
+                  {selectedType === 1 && (
+                    <Grid item xs={12} sm={6}>
+                      <CustomTextField
+                        select
+                        fullWidth
+                        label='Select SSC'
+                        value={selectedSscId}
+                        onChange={e => {
+                          setSelectedSscId(e.target.value)
+                          setSelectedBatchId('')
+                          handleBatchChange('')
+                        }}
+                        SelectProps={{ MenuProps, displayEmpty: true }}
+                      >
+                        <MenuItem value=''>All SSC</MenuItem>
+                        {sscOptions.map(s => (
+                          <MenuItem key={s.id} value={s.id.toString()}>{s.ssc_name}</MenuItem>
+                        ))}
+                      </CustomTextField>
+                    </Grid>
+                  )}
                   <Grid item xs={12} sm={6}>
                     <CustomTextField
                       select
@@ -370,10 +424,10 @@ const InvoiceCreate = () => {
                     <Grid item xs={12} sm={6}>
                       <CustomTextField
                         fullWidth
-                        label='Present Candidates *'
+                        label='Present Candidates'
                         type='number'
                         value={presentCandidates}
-                        onChange={e => setPresentCandidates(e.target.value)}
+                        InputProps={{ readOnly: true }}
                       />
                     </Grid>
                   )}
@@ -453,22 +507,11 @@ const InvoiceCreate = () => {
                     </>
                   )}
                   {selectedType === 3 && (
-                    <>
-                      <Grid item xs={12}>
-                        <Typography variant='body2' color='text.secondary' className='mb-2'>
-                          Invoice PDF (Stamped)
-                        </Typography>
-                        <input type='file' accept='.pdf' onChange={e => setInvoicePdfTpFile(e.target.files?.[0] || null)} />
-                        {invoicePdfTpFile && <Typography variant='caption'>{invoicePdfTpFile.name}</Typography>}
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant='body2' color='text.secondary' className='mb-2'>
-                          Payment Receipt
-                        </Typography>
-                        <input type='file' accept='.pdf,image/*' onChange={e => setPaymentReceiptFile(e.target.files?.[0] || null)} />
-                        {paymentReceiptFile && <Typography variant='caption'>{paymentReceiptFile.name}</Typography>}
-                      </Grid>
-                    </>
+                    <Grid item xs={12}>
+                      <Typography variant='body2' color='text.secondary'>
+                        No file uploads required for TP invoices
+                      </Typography>
+                    </Grid>
                   )}
                   <Grid item xs={12} className='flex gap-4'>
                     <Button variant='contained' onClick={handleSave} disabled={saving} startIcon={saving ? <CircularProgress size={16} color='inherit' /> : <i className='tabler-device-floppy' />}>

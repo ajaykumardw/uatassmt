@@ -1028,53 +1028,26 @@ enum file_type_enum {
   video
 }
 
-/// Invoice master data — SSC wise scheme amount per candidate
+/// Invoice master data — SSC / Assessor / TP configuration
 model invoice_master_data {
-  id                   Int      @id @default(autoincrement())
-  ssc_id               Int
-  scheme_id            Int
-  scheme_name          String   @db.VarChar(255)
-  amount_per_candidate Decimal  @db.Decimal(10, 2)
-  status               Int      @default(1) @db.TinyInt
-  created_by           Int
-  created_at           DateTime @default(now()) @db.DateTime(0)
-  updated_at           DateTime @default(now()) @updatedAt @db.DateTime(0)
+  id                    Int      @id @default(autoincrement())
+  type                  Int      @default(1) @db.TinyInt /// 1=SSC, 2=Assessor, 3=TP
+  ssc_id                Int?
+  scheme_id             Int?
+  scheme_name           String?  @db.VarChar(255)
+  amount_per_candidate  Decimal? @db.Decimal(10, 2)
+  effective_from        DateTime? @db.Date
+  assessor_id           Int?
+  status                Int      @default(1) @db.TinyInt
+  created_by            Int
+  created_at            DateTime @default(now()) @db.DateTime(0)
+  updated_at            DateTime @default(now()) @updatedAt @db.DateTime(0)
 
-  @@unique([ssc_id, scheme_id], map: "uq_invoice_master_ssc_scheme")
+  @@index([type])
   @@index([ssc_id])
   @@index([scheme_id])
-  @@map("invoice_master_data")
-}
-
-/// Assessor per-candidate invoice amount configuration
-model assessor_invoice_amounts {
-  id                   Int      @id @default(autoincrement())
-  assessor_id          Int
-  per_candidate_amount Decimal  @db.Decimal(10, 2)
-  effective_from       DateTime? @db.Date
-  status               Int      @default(1) @db.TinyInt
-  created_by           Int
-  created_at           DateTime @default(now()) @db.DateTime(0)
-  updated_at           DateTime @default(now()) @updatedAt @db.DateTime(0)
-
-  @@unique([assessor_id], map: "uq_assessor_invoice_amount")
   @@index([assessor_id])
-  @@map("assessor_invoice_amounts")
-}
-
-/// Training partner per-candidate invoice amount configuration
-model tp_invoice_amounts {
-  id                   Int      @id @default(autoincrement())
-  scheme_id            Int
-  amount_per_candidate Decimal  @db.Decimal(10, 2)
-  status               Int      @default(1) @db.TinyInt
-  created_by           Int
-  created_at           DateTime @default(now()) @db.DateTime(0)
-  updated_at           DateTime @default(now()) @updatedAt @db.DateTime(0)
-
-  @@unique([scheme_id], map: "uq_tp_invoice_amount")
-  @@index([scheme_id])
-  @@map("tp_invoice_amounts")
+  @@map("invoice_master_data")
 }
 
 /// Unified invoice — SSC (type=1), Assessor (type=2), or TP (type=3)
@@ -1102,7 +1075,8 @@ model invoices {
   attendance_sheet      String?                @db.VarChar(500)
   invoice_pdf           String?                @db.VarChar(500)
   signed_copy           String?                @db.VarChar(500)
-  status                Int                    @default(1) /// 1=pending,2=approved,3=rejected,4=paid
+  payment_receipt       String?                @db.VarChar(500)
+  status                Int                    @default(1) /// 0=draft,1=pending,2=approved,3=rejected,4=paid,5=partial_paid
   notes                 String?                @db.Text
   agency_id             Int
   created_by            Int

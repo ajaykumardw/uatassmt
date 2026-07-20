@@ -30,9 +30,9 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   type ColumnDef
-} from '@tanstack/react-table'
+, type FilterFn } from '@tanstack/react-table'
 
-import { type FilterFn } from '@tanstack/react-table'
+
 
 
 import { CircularProgress, IconButton, InputAdornment } from '@mui/material'

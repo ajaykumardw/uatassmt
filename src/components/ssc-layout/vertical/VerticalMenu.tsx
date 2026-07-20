@@ -90,6 +90,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
         menuSectionStyles={menuSectionStyles(verticalNavOptions, theme)}
       >
         <MenuItem href={`/${locale}/ssc-dashboard`} icon={<i className='tabler-smart-home' />}>{dictionary['navigation'].dashboard}</MenuItem>
+        <MenuItem href={`/${locale}/ssc-dashboard/invoices`} icon={<i className='tabler-file-description' />}>Invoices</MenuItem>
       </Menu>
     </ScrollWrapper>
   )

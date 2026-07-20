@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server'
 
+import { getServerSession } from 'next-auth'
+
 import prisma from '@/libs/prisma'
+import { authOptions } from '@/libs/auth'
 
 const STATUS_REV: Record<string, number> = { draft: 0, pending: 1, approved: 2, rejected: 3, paid: 4 }
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
     const id = Number(params.id)
+
+    const session = await getServerSession(authOptions)
+    const user = session?.user as any
 
     const data = await prisma.$queryRaw`
       SELECT
@@ -36,6 +42,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         i.attendance_sheet,
         i.invoice_pdf,
         i.signed_copy,
+        i.payment_receipt,
         i.status,
         i.notes,
         i.agency_id,
@@ -58,6 +65,28 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     }
 
     const row = rows[0]
+
+    let allowed = false
+
+    if (user?.is_ssc) {
+      const userRow = await prisma.$queryRaw<Array<{ ssc_id: number }>>`
+        SELECT ssc_id FROM users WHERE id = ${Number(user.id)} LIMIT 1
+      `
+
+      const sscId = (userRow as any[])[0]?.ssc_id
+
+      if (sscId && Number(sscId) === Number(row.ssc_id)) allowed = true
+    } else if (user?.user_type === 'U' && user?.role_id === '1') {
+      if (Number(user.id) === Number(row.assessor_id)) allowed = true
+    } else if (user?.user_type === 'U' && user?.role_id === '2') {
+      if (Number(user.id) === Number(row.tp_id)) allowed = true
+    } else if (user?.user_type === 'AG') {
+      if (Number(user.agency_id) === Number(row.agency_id)) allowed = true
+    }
+
+    if (!allowed) {
+      return NextResponse.json({ status: 'Error', statusCode: 403, message: 'Access denied' }, { status: 403 })
+    }
 
     row.type = Number(row.type)
     row.status = Number(row.status)
@@ -96,9 +125,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
     const {
       type, batch_id, ssc_id, scheme, assessor_id, tp_id, assessment_date,
-      total_candidate, present_candidate, amount_per_candidate, total_amount,
+      amount_per_candidate, total_amount,
       advance_amount, tds_amount, other_deduction, net_amount, gst_amount,
-      group_photo, attendance_sheet, invoice_pdf, signed_copy,
+      group_photo, attendance_sheet, invoice_pdf, signed_copy, payment_receipt,
       status, notes
     } = body
 
@@ -112,8 +141,6 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     if (assessor_id !== undefined) { setClauses.push('assessor_id = ?'); values.push(assessor_id ? Number(assessor_id) : null) }
     if (tp_id !== undefined) { setClauses.push('tp_id = ?'); values.push(tp_id ? Number(tp_id) : null) }
     if (assessment_date !== undefined) { setClauses.push('assessment_date = ?'); values.push(assessment_date ? new Date(assessment_date) : null) }
-    if (total_candidate !== undefined) { setClauses.push('total_candidate = ?'); values.push(Number(total_candidate)) }
-    if (present_candidate !== undefined) { setClauses.push('present_candidate = ?'); values.push(Number(present_candidate)) }
     if (amount_per_candidate !== undefined) { setClauses.push('amount_per_candidate = ?'); values.push(Number(amount_per_candidate)) }
     if (total_amount !== undefined) { setClauses.push('total_amount = ?'); values.push(Number(total_amount)) }
     if (advance_amount !== undefined) { setClauses.push('advance_amount = ?'); values.push(Number(advance_amount)) }
@@ -125,6 +152,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     if (attendance_sheet !== undefined) { setClauses.push('attendance_sheet = ?'); values.push(attendance_sheet) }
     if (invoice_pdf !== undefined) { setClauses.push('invoice_pdf = ?'); values.push(invoice_pdf) }
     if (signed_copy !== undefined) { setClauses.push('signed_copy = ?'); values.push(signed_copy) }
+    if (payment_receipt !== undefined) { setClauses.push('payment_receipt = ?'); values.push(payment_receipt) }
     if (status !== undefined) { setClauses.push('status = ?'); values.push(STATUS_REV[status] !== undefined ? STATUS_REV[status] : Number(status)) }
     if (notes !== undefined) { setClauses.push('notes = ?'); values.push(notes) }
 

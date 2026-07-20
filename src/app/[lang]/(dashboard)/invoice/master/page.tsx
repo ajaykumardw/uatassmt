@@ -16,9 +16,9 @@ const InvoiceMasterPage = () => {
 
     try {
       const [sscRes, assessorRes, tpRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data`),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor-amount`),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/tp-amount`)
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data?type=1`),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data?type=2`),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data?type=3`)
       ])
 
       const sscResult = await sscRes.json()

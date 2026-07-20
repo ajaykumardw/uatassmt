@@ -52,7 +52,6 @@ export async function GET(req: Request) {
 }
 
 async function checkAndUpdatePaymentComplete(invoiceId: number) {
-  // Fetch invoice + sum of payments
   const rows = await prisma.$queryRaw<Array<{ total_amount: number; tds_amount: number; other_deduction: number; paid: number }>>`
     SELECT
       i.total_amount, i.tds_amount, i.other_deduction,
@@ -65,6 +64,7 @@ async function checkAndUpdatePaymentComplete(invoiceId: number) {
   `
 
   const inv = (rows as any[])[0]
+
   if (!inv) return
 
   const netAmount = Number(inv.total_amount) - (Number(inv.tds_amount) || 0) - (Number(inv.other_deduction) || 0)
@@ -73,6 +73,10 @@ async function checkAndUpdatePaymentComplete(invoiceId: number) {
   if (totalPaid >= netAmount && netAmount > 0) {
     await prisma.$executeRaw`
       UPDATE invoices SET status = 4, updated_at = NOW() WHERE id = ${invoiceId}
+    `
+  } else if (totalPaid > 0) {
+    await prisma.$executeRaw`
+      UPDATE invoices SET status = 5, updated_at = NOW() WHERE id = ${invoiceId}
     `
   } else {
     await prisma.$executeRaw`
@@ -94,6 +98,7 @@ export async function POST(req: Request) {
 
     if (contentType.includes('multipart/form-data')) {
       const formData = await req.formData()
+
       invoice_id = Number(formData.get('invoice_id'))
       amount = Number(formData.get('amount'))
       payment_date = formData.get('payment_date') as string
@@ -108,6 +113,7 @@ export async function POST(req: Request) {
         if (!ALLOWED_FILE_TYPES.includes(file.type)) {
           return NextResponse.json({ status: 'Error', statusCode: 400, message: 'Invalid file format. Allowed: JPEG, PNG, WebP, PDF' }, { status: 400 })
         }
+
         if (file.size > MAX_FILE_SIZE) {
           return NextResponse.json({ status: 'Error', statusCode: 400, message: 'File size exceeds 5MB limit' }, { status: 400 })
         }
@@ -119,12 +125,14 @@ export async function POST(req: Request) {
         if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true })
 
         const filePath = path.join(uploadDir, fileName)
+
         await pipeline(file.stream() as any, fs.createWriteStream(filePath))
 
         transaction_slip = `storage/uploads/agency/${agency_id}/payments/${fileName}`
       }
     } else {
       const body = await req.json()
+
       invoice_id = body.invoice_id
       amount = body.amount
       payment_date = body.payment_date
@@ -138,6 +146,10 @@ export async function POST(req: Request) {
 
     if (!invoice_id || !amount || !payment_date) {
       return NextResponse.json({ status: 'Error', statusCode: 400, message: 'Missing required fields: invoice_id, amount, payment_date' }, { status: 400 })
+    }
+
+    if (new Date(payment_date) > new Date()) {
+      return NextResponse.json({ status: 'Error', statusCode: 400, message: 'Payment date cannot be in the future' }, { status: 400 })
     }
 
     await prisma.$executeRaw`

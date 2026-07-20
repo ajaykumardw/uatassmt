@@ -45,7 +45,7 @@ type AssessorItem = {
   id: number
   assessor_id: number
   assessor_name: string
-  per_candidate_amount: number
+  amount_per_candidate: number
   effective_from: string | null
   status: number
 }
@@ -69,7 +69,7 @@ type Props = {
 const initialSscForm = { ssc_id: '', scheme_id: '', amount_per_candidate: '' }
 
 // ── Assessor ────────────────────────────────────────
-const initialAssessorForm = { assessor_id: '', per_candidate_amount: '', effective_from: '' }
+const initialAssessorForm = { assessor_id: '', amount_per_candidate: '', effective_from: '' }
 
 // ── TP ──────────────────────────────────────────────
 const initialTpForm = { scheme_id: '', amount_per_candidate: '' }
@@ -145,7 +145,8 @@ const MasterDataPage = ({ sscData, assessorData, tpData, updateData }: Props) =>
     try {
       const url = sscEditItem ? `${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data/${sscEditItem.id}` : `${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data`
       const method = sscEditItem ? 'PUT' : 'POST'
-      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ssc_id: Number(sscForm.ssc_id), scheme_id: Number(sscForm.scheme_id), amount_per_candidate: Number(sscForm.amount_per_candidate) }) })
+      const body: Record<string, any> = { type: 1, ssc_id: Number(sscForm.ssc_id), scheme_id: Number(sscForm.scheme_id), amount_per_candidate: Number(sscForm.amount_per_candidate) }
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       const result = await res.json()
 
       if (res.ok && result.status === 'Success') {
@@ -206,7 +207,7 @@ const MasterDataPage = ({ sscData, assessorData, tpData, updateData }: Props) =>
 
   const openAssEdit = (item: AssessorItem) => {
     setAssEditItem(item)
-    setAssForm({ assessor_id: item.assessor_id.toString(), per_candidate_amount: item.per_candidate_amount.toString(), effective_from: item.effective_from ? item.effective_from.split('T')[0] : '' })
+    setAssForm({ assessor_id: item.assessor_id.toString(), amount_per_candidate: item.amount_per_candidate.toString(), effective_from: item.effective_from ? item.effective_from.split('T')[0] : '' })
     setAssDialogOpen(true)
 
     // Ensure the editing assessor is in the dropdown list
@@ -219,7 +220,7 @@ const MasterDataPage = ({ sscData, assessorData, tpData, updateData }: Props) =>
   }
 
   const saveAss = async () => {
-    if (!assForm.assessor_id || !assForm.per_candidate_amount) {
+    if (!assForm.assessor_id || !assForm.amount_per_candidate) {
       toast.error('Assessor and amount required')
 
       return
@@ -228,9 +229,10 @@ const MasterDataPage = ({ sscData, assessorData, tpData, updateData }: Props) =>
     setAssSaving(true)
 
     try {
-      const url = assEditItem ? `${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor-amount/${assEditItem.id}` : `${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor-amount`
+      const url = assEditItem ? `${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data/${assEditItem.id}` : `${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data`
       const method = assEditItem ? 'PUT' : 'POST'
-      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ assessor_id: Number(assForm.assessor_id), per_candidate_amount: Number(assForm.per_candidate_amount), effective_from: assForm.effective_from || null }) })
+      const body: Record<string, any> = { type: 2, assessor_id: Number(assForm.assessor_id), amount_per_candidate: Number(assForm.amount_per_candidate), effective_from: assForm.effective_from || null }
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       const result = await res.json()
 
       if (res.ok && result.status === 'Success') {
@@ -251,7 +253,7 @@ const MasterDataPage = ({ sscData, assessorData, tpData, updateData }: Props) =>
     if (!assDeleteId) return
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor-amount/${assDeleteId}`, { method: 'DELETE' })
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data/${assDeleteId}`, { method: 'DELETE' })
       const result = await res.json()
 
       if (res.ok && result.status === 'Success') {
@@ -269,7 +271,7 @@ const MasterDataPage = ({ sscData, assessorData, tpData, updateData }: Props) =>
 
   const toggleAssStatus = async (item: AssessorItem) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/assessor-amount/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: item.status === 1 ? 0 : 1 }) })
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: item.status === 1 ? 0 : 1 }) })
       const result = await res.json()
 
       if (res.ok && result.status === 'Success') {
@@ -305,9 +307,10 @@ const MasterDataPage = ({ sscData, assessorData, tpData, updateData }: Props) =>
     setTpSaving(true)
 
     try {
-      const url = tpEditItem ? `${process.env.NEXT_PUBLIC_API_URL}/invoice/tp-amount/${tpEditItem.id}` : `${process.env.NEXT_PUBLIC_API_URL}/invoice/tp-amount`
+      const url = tpEditItem ? `${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data/${tpEditItem.id}` : `${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data`
       const method = tpEditItem ? 'PUT' : 'POST'
-      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scheme_id: Number(tpForm.scheme_id), amount_per_candidate: Number(tpForm.amount_per_candidate) }) })
+      const body: Record<string, any> = { type: 3, scheme_id: Number(tpForm.scheme_id), amount_per_candidate: Number(tpForm.amount_per_candidate) }
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       const result = await res.json()
 
       if (res.ok && result.status === 'Success') {
@@ -328,7 +331,7 @@ const MasterDataPage = ({ sscData, assessorData, tpData, updateData }: Props) =>
     if (!tpDeleteId) return
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/tp-amount/${tpDeleteId}`, { method: 'DELETE' })
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data/${tpDeleteId}`, { method: 'DELETE' })
       const result = await res.json()
 
       if (res.ok && result.status === 'Success') {
@@ -346,7 +349,7 @@ const MasterDataPage = ({ sscData, assessorData, tpData, updateData }: Props) =>
 
   const toggleTpStatus = async (item: TpItem) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/tp-amount/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: item.status === 1 ? 0 : 1 }) })
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoice/master-data/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: item.status === 1 ? 0 : 1 }) })
       const result = await res.json()
 
       if (res.ok && result.status === 'Success') {
@@ -426,7 +429,7 @@ const MasterDataPage = ({ sscData, assessorData, tpData, updateData }: Props) =>
                     : assessorData.map(item => (
                       <TableRow key={item.id}>
                         <TableCell>{item.assessor_name}</TableCell>
-                        <TableCell>{Number(item.per_candidate_amount).toFixed(2)}</TableCell>
+                        <TableCell>{Number(item.amount_per_candidate).toFixed(2)}</TableCell>
                         <TableCell>{item.effective_from ? new Date(item.effective_from).toLocaleDateString() : '-'}</TableCell>
                         <TableCell>
                           <Button size='small' variant={item.status === 1 ? 'contained' : 'outlined'} color={item.status === 1 ? 'success' : 'secondary'} onClick={() => toggleAssStatus(item)} sx={{ minWidth: 70, textTransform: 'none', borderRadius: 4 }}>{item.status === 1 ? 'Active' : 'Inactive'}</Button>
@@ -525,7 +528,7 @@ const MasterDataPage = ({ sscData, assessorData, tpData, updateData }: Props) =>
               </CustomTextField>
             </Grid>
             <Grid item xs={12}>
-              <CustomTextField fullWidth label='Per Candidate Amount' type='number' value={assForm.per_candidate_amount} onChange={e => setAssForm({ ...assForm, per_candidate_amount: e.target.value })} />
+              <CustomTextField fullWidth label='Per Candidate Amount' type='number' value={assForm.amount_per_candidate} onChange={e => setAssForm({ ...assForm, amount_per_candidate: e.target.value })} />
             </Grid>
             <Grid item xs={12}>
               <CustomTextField fullWidth label='Effective From' type='date' value={assForm.effective_from} onChange={e => setAssForm({ ...assForm, effective_from: e.target.value })} InputLabelProps={{ shrink: true }} />

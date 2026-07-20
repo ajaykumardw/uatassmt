@@ -9,6 +9,7 @@ import CardHeader from '@mui/material/CardHeader'
 import CardContent from '@mui/material/CardContent'
 import Button from '@mui/material/Button'
 import Grid from '@mui/material/Grid'
+import Typography from '@mui/material/Typography'
 import CircularProgress from '@mui/material/CircularProgress'
 import { toast } from 'react-toastify'
 
@@ -36,6 +37,7 @@ const InvoiceEdit = ({ invoiceId }: Props) => {
   const [otherDeduction, setOtherDeduction] = useState('')
   const [advanceAmount, setAdvanceAmount] = useState('')
   const [gstAmount, setGstAmount] = useState('')
+  const [currentStatus, setCurrentStatus] = useState(0)
   const [notes, setNotes] = useState('')
 
   useEffect(() => {
@@ -62,6 +64,7 @@ const InvoiceEdit = ({ invoiceId }: Props) => {
           setOtherDeduction(String(d.other_deduction || ''))
           setAdvanceAmount(String(d.advance_amount || ''))
           setGstAmount(String(d.gst_amount || ''))
+          setCurrentStatus(d.status)
           setNotes(d.notes || '')
         } else {
           toast.error('Invoice not found')
@@ -76,6 +79,22 @@ const InvoiceEdit = ({ invoiceId }: Props) => {
   }, [invoiceId, router])
 
   const handleSave = async () => {
+    if (currentStatus === 0 && invoiceType === 2) {
+      if (!amountPerCandidate || Number(amountPerCandidate) <= 0) {
+        toast.error('Amount Per Candidate is required to submit the invoice')
+        setSaving(false)
+        
+return
+      }
+
+      if (totalAmount <= 0) {
+        toast.error('Total Amount must be greater than 0 to submit the invoice')
+        setSaving(false)
+        
+return
+      }
+    }
+
     setSaving(true)
 
     try {
@@ -86,6 +105,10 @@ const InvoiceEdit = ({ invoiceId }: Props) => {
         tds_amount: Number(tdsAmount) || 0,
         other_deduction: Number(otherDeduction) || 0,
         notes: notes || null
+      }
+
+      if (currentStatus === 0 && invoiceType === 2) {
+        body.status = 1
       }
 
       if (invoiceType === 2) {
@@ -140,6 +163,11 @@ const InvoiceEdit = ({ invoiceId }: Props) => {
         <Card>
           <CardHeader title='Edit Invoice' subheader={`Invoice #${invoiceId} — ${invoiceType === 1 ? 'SSC' : invoiceType === 2 ? 'Assessor' : 'TP'}`} />
           <CardContent>
+            {currentStatus === 0 && invoiceType === 2 && (
+              <Typography variant='body2' color='warning.main' className='mb-4 p-2' sx={{ bgcolor: 'warning.light', borderRadius: 1 }}>
+                This is a Draft invoice. Enter Amount Per Candidate and verify Total Amount, then save to submit.
+              </Typography>
+            )}
             <Grid container spacing={4}>
               <Grid item xs={12} sm={6}>
                 <CustomTextField fullWidth label='Batch' value={batchName} InputProps={{ readOnly: true }} />
@@ -165,13 +193,7 @@ const InvoiceEdit = ({ invoiceId }: Props) => {
                     label='Present Candidates'
                     type='number'
                     value={presentCandidates}
-                    onChange={e => {
-                      setPresentCandidates(e.target.value)
-                      const amt = Number(amountPerCandidate) || 0
-                      const count = Number(e.target.value) || 0
-
-                      setTotalAmount(count * amt)
-                    }}
+                    InputProps={{ readOnly: true }}
                   />
                 </Grid>
               )}

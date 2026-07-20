@@ -11,15 +11,15 @@ import { compare } from 'bcrypt'
 
 import { Workbook } from "exceljs";
 
-import type { Prisma } from "@prisma/client";
-
-import type {
+import type { Prisma ,
   batches,
   student_exam_set_results,
   exam_set_results,
   feedback_responses,
   feedback_response_answers
 } from "@prisma/client";
+
+
 
 import { getServerSession } from "next-auth";
 

@@ -56,10 +56,10 @@ import { generateRandomPassword } from '@/utils/passwordGenerator'
 
 import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
 
-import { MenuProps } from '@/configs/customDataConfig'
+import { MenuProps , agencyUsersFilePath } from '@/configs/customDataConfig'
 
 import type { UsersType } from '@/types/users/usersType'
-import { agencyUsersFilePath } from '@/configs/customDataConfig'
+
 
 // import type { UsersType } from '@/types/users/usersType'
 
