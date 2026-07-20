@@ -1102,8 +1102,7 @@ model invoices {
   attendance_sheet      String?                @db.VarChar(500)
   invoice_pdf           String?                @db.VarChar(500)
   signed_copy           String?                @db.VarChar(500)
-  status                Int                    @default(0) /// 0=draft,1=pending,2=approved,3=rejected,4=paid
-  is_payment_complete   Int                    @default(0) /// 0=no, 1=yes
+  status                Int                    @default(1) /// 1=pending,2=approved,3=rejected,4=paid
   notes                 String?                @db.Text
   agency_id             Int
   created_by            Int
@@ -1117,7 +1116,6 @@ model invoices {
   @@index([tp_id])
   @@index([agency_id])
   @@index([status])
-  @@index([is_payment_complete])
   @@map("invoices")
 }
 

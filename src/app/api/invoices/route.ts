@@ -89,7 +89,6 @@ export async function GET(req: Request) {
         i.invoice_pdf,
         i.signed_copy,
         i.status,
-        i.is_payment_complete,
         i.notes,
         i.created_at
       ${fromClause} ${whereClause}
@@ -101,7 +100,6 @@ export async function GET(req: Request) {
       ...row,
       type: Number(row.type),
       status: Number(row.status),
-      is_payment_complete: Number(row.is_payment_complete),
       amount_per_candidate: Number(row.amount_per_candidate),
       total_amount: Number(row.total_amount),
       advance_amount: row.advance_amount ? Number(row.advance_amount) : null,

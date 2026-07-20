@@ -74,7 +74,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         i.assessment_date, i.total_candidate, i.present_candidate,
         i.amount_per_candidate, i.total_amount,
         i.advance_amount, i.tds_amount, i.other_deduction, i.net_amount, i.gst_amount,
-        i.status, i.is_payment_complete, i.notes,
+        i.status, i.notes,
         i.created_at, i.agency_id,
         ag.company_name AS agency_name, ag.address AS agency_address,
         ag.avatar AS agency_logo, ag.sign_image AS agency_stamp,
@@ -215,7 +215,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     <div class="section-title">Payment Summary</div>
     <table class="details">
       <tr><td class="label">Net Invoice Amount</td><td class="amount">₹ ${netAmount.toFixed(2)}</td></tr>
-      <tr><td class="label">Payment Status</td><td>${Number(invoice.is_payment_complete) === 1 ? 'Paid' : 'Unpaid'}</td></tr>
+      <tr><td class="label">Payment Status</td><td>${Number(invoice.status) === 4 ? 'Paid' : 'Unpaid'}</td></tr>
     </table>
   </div>
 

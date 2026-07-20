@@ -39,7 +39,7 @@ type InvoiceRow = {
   amount_per_candidate?: number
   total_amount: number
   status: number
-  is_payment_complete: number
+
 }
 
 type Props = {
@@ -234,8 +234,8 @@ const InvoicesList = ({
                           <Chip
                             variant='tonal'
                             size='small'
-                            label={row.is_payment_complete ? 'Yes' : 'No'}
-                            color={row.is_payment_complete ? 'success' : 'default'}
+                            label={row.status === 4 ? 'Yes' : 'No'}
+                            color={row.status === 4 ? 'success' : 'default'}
                           />
                         </TableCell>
                         <TableCell>

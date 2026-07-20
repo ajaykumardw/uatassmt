@@ -37,7 +37,6 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         i.invoice_pdf,
         i.signed_copy,
         i.status,
-        i.is_payment_complete,
         i.notes,
         i.agency_id,
         i.created_by,
@@ -62,7 +61,6 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
     row.type = Number(row.type)
     row.status = Number(row.status)
-    row.is_payment_complete = Number(row.is_payment_complete)
     row.amount_per_candidate = Number(row.amount_per_candidate)
     row.total_amount = Number(row.total_amount)
     row.advance_amount = row.advance_amount ? Number(row.advance_amount) : null
@@ -83,7 +81,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const body = await req.json()
 
     const existing = await prisma.$queryRaw`
-      SELECT id, is_payment_complete FROM invoices WHERE id = ${id} LIMIT 1
+      SELECT id, status FROM invoices WHERE id = ${id} LIMIT 1
     `
 
     const rows = existing as any[]
@@ -92,8 +90,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ status: 'Error', statusCode: 404, message: 'Invoice not found' }, { status: 404 })
     }
 
-    if (Number(rows[0].is_payment_complete) === 1) {
-      return NextResponse.json({ status: 'Error', statusCode: 400, message: 'Invoice is payment complete and cannot be edited' }, { status: 400 })
+    if (Number(rows[0].status) === 4) {
+      return NextResponse.json({ status: 'Error', statusCode: 400, message: 'Invoice is paid and cannot be edited' }, { status: 400 })
     }
 
     const {
@@ -101,7 +99,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       total_candidate, present_candidate, amount_per_candidate, total_amount,
       advance_amount, tds_amount, other_deduction, net_amount, gst_amount,
       group_photo, attendance_sheet, invoice_pdf, signed_copy,
-      status, is_payment_complete, notes
+      status, notes
     } = body
 
     const setClauses: string[] = []
@@ -128,7 +126,6 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     if (invoice_pdf !== undefined) { setClauses.push('invoice_pdf = ?'); values.push(invoice_pdf) }
     if (signed_copy !== undefined) { setClauses.push('signed_copy = ?'); values.push(signed_copy) }
     if (status !== undefined) { setClauses.push('status = ?'); values.push(STATUS_REV[status] !== undefined ? STATUS_REV[status] : Number(status)) }
-    if (is_payment_complete !== undefined) { setClauses.push('is_payment_complete = ?'); values.push(Number(is_payment_complete)) }
     if (notes !== undefined) { setClauses.push('notes = ?'); values.push(notes) }
 
     if (setClauses.length === 0) {

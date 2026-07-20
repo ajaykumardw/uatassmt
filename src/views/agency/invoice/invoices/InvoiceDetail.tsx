@@ -42,7 +42,6 @@ type InvoiceData = {
   amount_per_candidate?: number
   total_amount: number
   status: number
-  is_payment_complete: number
   notes?: string
   group_photo?: string
   attendance_sheet?: string
@@ -294,14 +293,14 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments }: Props)
                 <Chip
                   variant='tonal'
                   size='small'
-                  label={data.is_payment_complete ? 'Payment Complete' : 'Payment Pending'}
-                  color={data.is_payment_complete ? 'success' : 'warning'}
+                  label={data.status === 4 ? 'Payment Complete' : 'Payment Pending'}
+                  color={data.status === 4 ? 'success' : 'warning'}
                 />
               </div>
             }
           />
           <CardContent>
-            {data.is_payment_complete === 1 && (
+            {data.status === 4 && (
               <Typography variant='body2' color='success.main' className='mb-4 p-2' sx={{ bgcolor: 'success.light', borderRadius: 1 }}>
                 Payment Complete - Invoice is now read-only
               </Typography>
@@ -432,10 +431,10 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments }: Props)
                 Download Invoice PDF
               </Button>
             </Grid>
-            {data.is_payment_complete === 0 && (
+            {data.status !== 4 && (
               <Divider className='my-4' />
             )}
-            {data.is_payment_complete === 0 && (
+            {data.status !== 4 && (
               <div className='flex gap-4 flex-wrap'>
                 <Button
                   variant='contained'
@@ -462,7 +461,7 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments }: Props)
         <Card>
           <CardHeader title='Payment History' />
           <CardContent>
-            {data.is_payment_complete === 1 && (
+            {data.status === 4 && (
               <Typography variant='body2' color='success.main' className='mb-4 p-2' sx={{ bgcolor: 'success.light', borderRadius: 1 }}>
                 Payment Complete - Invoice is now read-only
               </Typography>
@@ -561,7 +560,7 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments }: Props)
                 </TableBody>
               </Table>
             </TableContainer>
-            {data.is_payment_complete === 0 && (
+            {data.status !== 4 && (
               <>
                 <Divider className='my-4' />
                 <Typography variant='subtitle2' className='mb-3'>Add Payment</Typography>

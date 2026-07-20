@@ -22,11 +22,11 @@ async function checkAndUpdatePaymentComplete(invoiceId: number) {
 
   if (totalPaid >= netAmount && netAmount > 0) {
     await prisma.$executeRaw`
-      UPDATE invoices SET is_payment_complete = 1, status = 4, updated_at = NOW() WHERE id = ${invoiceId}
+      UPDATE invoices SET status = 4, updated_at = NOW() WHERE id = ${invoiceId}
     `
   } else {
     await prisma.$executeRaw`
-      UPDATE invoices SET is_payment_complete = 0, updated_at = NOW() WHERE id = ${invoiceId}
+      UPDATE invoices SET status = 1, updated_at = NOW() WHERE id = ${invoiceId}
     `
   }
 }
