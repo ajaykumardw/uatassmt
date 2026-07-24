@@ -45,11 +45,8 @@ type InvoiceData = {
   notes?: string
   group_photo?: string
   attendance_sheet?: string
-  advance_amount?: number
-  tds_amount?: number
-  other_deduction?: number
-  net_amount?: number
   gst_amount?: number
+  gst_percentage?: number
   invoice_pdf?: string
   signed_copy?: string
   payment_receipt?: string
@@ -58,6 +55,9 @@ type InvoiceData = {
 type Payment = {
   id: number
   amount: number
+  tds_amount?: number
+  advance_amount?: number
+  other_deduction?: number
   payment_date: string
   payment_mode: string
   transaction_no: string
@@ -120,6 +120,9 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments, userRole
   const [payBankName, setPayBankName] = useState('')
   const [paySlipFile, setPaySlipFile] = useState<File | null>(null)
   const [payRemarks, setPayRemarks] = useState('')
+  const [payTdsAmount, setPayTdsAmount] = useState('')
+  const [payAdvanceAmount, setPayAdvanceAmount] = useState('')
+  const [payOtherDeduction, setPayOtherDeduction] = useState('')
   const [payAmountError, setPayAmountError] = useState('')
 
   if (!data) {
@@ -139,9 +142,13 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments, userRole
 
   const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0)
 
+  const gstAmt = data.gst_percentage
+    ? Number(data.total_amount) * Number(data.gst_percentage) / 100
+    : (data.gst_amount ? Number(data.gst_amount) : 0)
+
   const netAmount = data.type === 3
-    ? Number(data.total_amount) + (Number(data.gst_amount) || 0) - (Number(data.tds_amount) || 0) - (Number(data.other_deduction) || 0)
-    : Number(data.total_amount) - (Number(data.tds_amount) || 0) - (Number(data.other_deduction) || 0)
+    ? Number(data.total_amount) + gstAmt
+    : Number(data.total_amount)
 
   const remainingAmount = netAmount - totalPaid
 
@@ -212,17 +219,28 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments, userRole
     try {
       let res: Response
 
+      const commonData: Record<string, any> = {
+        invoice_id: data.id,
+        amount: Number(payAmount),
+        payment_date: payDate,
+        payment_mode: payMode || null,
+        transaction_no: payTransactionNo || null,
+        cheque_date: payChequeDate || null,
+        bank_name: payBankName || null,
+        remarks: payRemarks || null
+      }
+
+      commonData.tds_amount = Number(payTdsAmount) || 0
+      commonData.other_deduction = Number(payOtherDeduction) || 0
+
+      if (data.type === 2) {
+        commonData.advance_amount = Number(payAdvanceAmount) || 0
+      }
+
       if (paySlipFile) {
         const formData = new FormData()
 
-        formData.append('invoice_id', String(data.id))
-        formData.append('amount', String(Number(payAmount)))
-        formData.append('payment_date', payDate)
-        formData.append('payment_mode', payMode)
-        formData.append('transaction_no', payTransactionNo || '')
-        formData.append('cheque_date', payChequeDate || '')
-        formData.append('bank_name', payBankName || '')
-        formData.append('remarks', payRemarks || '')
+        Object.entries(commonData).forEach(([key, val]) => formData.append(key, String(val)))
         formData.append('file', paySlipFile)
 
         res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments`, {
@@ -230,21 +248,10 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments, userRole
           body: formData
         })
       } else {
-        const body: Record<string, any> = {
-          invoice_id: data.id,
-          amount: Number(payAmount),
-          payment_date: payDate,
-          payment_mode: payMode || null,
-          transaction_no: payTransactionNo || null,
-          cheque_date: payChequeDate || null,
-          bank_name: payBankName || null,
-          remarks: payRemarks || null
-        }
-
         res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
+          body: JSON.stringify(commonData)
         })
       }
 
@@ -261,6 +268,9 @@ const InvoiceDetail = ({ data, updateData, payments, onRefreshPayments, userRole
         setPayBankName('')
         setPaySlipFile(null)
         setPayRemarks('')
+        setPayTdsAmount('')
+        setPayAdvanceAmount('')
+        setPayOtherDeduction('')
         onRefreshPayments()
         updateData()
       } else {
@@ -451,40 +461,22 @@ return
                 <Typography variant='caption' color='text.secondary'>Total Amount (Base)</Typography>
                 <Typography variant='body2' className='font-medium'>{Number(data.total_amount).toFixed(2)}</Typography>
               </Grid>
-              {data.type === 3 && data.gst_amount != null && (
+              {data.type === 3 && gstAmt > 0 && (
                 <Grid item xs={6}>
-                  <Typography variant='caption' color='text.secondary'>GST Amount</Typography>
-                  <Typography variant='body2' className='font-medium'>{Number(data.gst_amount).toFixed(2)}</Typography>
+                  <Typography variant='caption' color='text.secondary'>GST ({data.gst_percentage || 0}%)</Typography>
+                  <Typography variant='body2' className='font-medium'>{gstAmt.toFixed(2)}</Typography>
                 </Grid>
               )}
-              {data.type === 3 && data.gst_amount != null && (
+              {data.type === 3 && gstAmt > 0 && (
                 <Grid item xs={6}>
                   <Typography variant='caption' color='text.secondary'>Actual Total (+GST)</Typography>
-                  <Typography variant='body2' className='font-medium'>{(Number(data.total_amount) + Number(data.gst_amount)).toFixed(2)}</Typography>
+                  <Typography variant='body2' className='font-medium'>{(Number(data.total_amount) + gstAmt).toFixed(2)}</Typography>
                 </Grid>
               )}
-              {data.type === 2 && data.advance_amount != null && (
+              {data.type === 3 && (
                 <Grid item xs={6}>
-                  <Typography variant='caption' color='text.secondary'>Advance Amount</Typography>
-                  <Typography variant='body2' className='font-medium'>{Number(data.advance_amount).toFixed(2)}</Typography>
-                </Grid>
-              )}
-              {data.type === 2 && data.tds_amount != null && (
-                <Grid item xs={6}>
-                  <Typography variant='caption' color='text.secondary'>TDS Amount</Typography>
-                  <Typography variant='body2' className='font-medium'>{Number(data.tds_amount).toFixed(2)}</Typography>
-                </Grid>
-              )}
-              {data.type === 2 && data.other_deduction != null && (
-                <Grid item xs={6}>
-                  <Typography variant='caption' color='text.secondary'>Other Deduction</Typography>
-                  <Typography variant='body2' className='font-medium'>{Number(data.other_deduction).toFixed(2)}</Typography>
-                </Grid>
-              )}
-              {data.type === 2 && data.net_amount != null && (
-                <Grid item xs={6}>
-                  <Typography variant='caption' color='text.secondary'>Net Amount</Typography>
-                  <Typography variant='body2' className='font-medium'>{Number(data.net_amount).toFixed(2)}</Typography>
+                  <Typography variant='caption' color='text.secondary'>Net Invoice Amount</Typography>
+                  <Typography variant='body2' className='font-medium'>{(Number(data.total_amount) + gstAmt).toFixed(2)}</Typography>
                 </Grid>
               )}
               {data.notes && (
@@ -529,18 +521,20 @@ return
                       View Signed Copy
                     </Button>
                   )}
-                  <div className='flex items-center gap-2 mt-2'>
-                    <input type='file' accept='.pdf,image/*' onChange={e => setSignedCopyFile(e.target.files?.[0] || null)} />
-                    <Button
-                      variant='contained'
-                      size='small'
-                      onClick={handleUploadSignedCopy}
-                      disabled={!signedCopyFile || uploadingSignedCopy}
-                      startIcon={uploadingSignedCopy ? <CircularProgress size={14} color='inherit' /> : <i className='tabler-upload' />}
-                    >
-                      Upload
-                    </Button>
-                  </div>
+                  {userRole === 'assessor' && (
+                    <div className='flex items-center gap-2 mt-2'>
+                      <input type='file' accept='.pdf,image/*' onChange={e => setSignedCopyFile(e.target.files?.[0] || null)} />
+                      <Button
+                        variant='contained'
+                        size='small'
+                        onClick={handleUploadSignedCopy}
+                        disabled={!signedCopyFile || uploadingSignedCopy}
+                        startIcon={uploadingSignedCopy ? <CircularProgress size={14} color='inherit' /> : <i className='tabler-upload' />}
+                      >
+                        Upload
+                      </Button>
+                    </div>
+                  )}
                   {signedCopyFile && <Typography variant='caption'>{signedCopyFile.name}</Typography>}
                 </Grid>
               )}
@@ -580,15 +574,16 @@ return
                 </Grid>
               )}
             </Grid>
-            <Grid item xs={12}>
-              <Button variant='outlined' size='small' component='a' href={`/api/invoices/${data.id}/pdf`} target='_blank' startIcon={<i className='tabler-download' />}>
-                Download Invoice PDF
-              </Button>
-            </Grid>
-            {data.status !== 4 && (
+            <Divider className='my-4' />
+            <Typography variant='caption' color='text.secondary'>System Generated Invoice</Typography>
+            <br />
+            <Button variant='outlined' size='small' component='a' href={`/api/invoices/${data.id}/pdf`} target='_blank' startIcon={<i className='tabler-download' />}>
+              Download Invoice PDF
+            </Button>
+            {data.status !== 4 && userRole !== 'assessor' && (
               <Divider className='my-4' />
             )}
-            {data.status !== 4 && (
+            {data.status !== 4 && userRole !== 'assessor' && (
               <div className='flex gap-4 flex-wrap'>
                 <Button
                   variant='contained'
@@ -642,28 +637,14 @@ return
                   <Typography variant='caption' color='text.secondary'>Invoice Total</Typography>
                   <Typography variant='body2' className='font-medium'>
                     {data.type === 3
-                      ? (Number(data.total_amount) + (Number(data.gst_amount) || 0)).toFixed(2)
+                      ? (Number(data.total_amount) + gstAmt).toFixed(2)
                       : Number(data.total_amount).toFixed(2)}
                   </Typography>
                 </Grid>
-                <Grid item xs={6}>
-                  <Typography variant='caption' color='text.secondary'>TDS Amount</Typography>
-                  <Typography variant='body2' className='font-medium'>{Number(data.tds_amount || 0).toFixed(2)}</Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant='caption' color='text.secondary'>Other Deduction</Typography>
-                  <Typography variant='body2' className='font-medium'>{Number(data.other_deduction || 0).toFixed(2)}</Typography>
-                </Grid>
-                {data.type === 3 && data.gst_amount != null && (
+                {data.type === 3 && gstAmt > 0 && (
                   <Grid item xs={6}>
-                    <Typography variant='caption' color='text.secondary'>GST Amount</Typography>
-                    <Typography variant='body2' className='font-medium'>{Number(data.gst_amount).toFixed(2)}</Typography>
-                  </Grid>
-                )}
-                {data.type === 2 && (
-                  <Grid item xs={6}>
-                    <Typography variant='caption' color='text.secondary'>Advance Amount</Typography>
-                    <Typography variant='body2' className='font-medium'>{Number(data.advance_amount || 0).toFixed(2)}</Typography>
+                    <Typography variant='caption' color='text.secondary'>GST ({data.gst_percentage || 0}%)</Typography>
+                    <Typography variant='body2' className='font-medium'>{gstAmt.toFixed(2)}</Typography>
                   </Grid>
                 )}
                 <Grid item xs={6}>
@@ -690,6 +671,10 @@ return
                   <TableRow>
                     <TableCell>Date</TableCell>
                     <TableCell>Amount</TableCell>
+                    <TableCell>TDS</TableCell>
+                    {data.type === 2 && <TableCell>Advance</TableCell>}
+                    <TableCell>Other Ded.</TableCell>
+                    <TableCell>Net Paid</TableCell>
                     <TableCell>Mode</TableCell>
                     <TableCell>Ref No</TableCell>
                     <TableCell>Bank</TableCell>
@@ -701,13 +686,17 @@ return
                 <TableBody>
                   {payments.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} align='center'>No payments recorded</TableCell>
+                      <TableCell colSpan={11 + (data.type === 2 ? 1 : 0)} align='center'>No payments recorded</TableCell>
                     </TableRow>
                   ) : (
                     payments.map(p => (
                       <TableRow key={p.id}>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>{p.payment_date ? new Date(p.payment_date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</TableCell>
                         <TableCell>{Number(p.amount).toFixed(2)}</TableCell>
+                        <TableCell>{Number(p.tds_amount || 0).toFixed(2)}</TableCell>
+                        {data.type === 2 && <TableCell>{Number(p.advance_amount || 0).toFixed(2)}</TableCell>}
+                        <TableCell>{Number(p.other_deduction || 0).toFixed(2)}</TableCell>
+                        <TableCell>{Number(Number(p.amount) - Number(p.tds_amount || 0) - (data.type === 2 ? Number(p.advance_amount || 0) : 0) - Number(p.other_deduction || 0)).toFixed(2)}</TableCell>
                         <TableCell>{p.payment_mode || '-'}</TableCell>
                         <TableCell>
                           {p.payment_mode === 'cheque'
@@ -741,7 +730,7 @@ return
                 </TableBody>
               </Table>
             </TableContainer>
-            {data.status !== 4 && (
+            {data.status !== 4 && userRole !== 'assessor' && (
               <>
                 <Divider className='my-4' />
                 <Typography variant='subtitle2' className='mb-3'>Add Payment</Typography>
@@ -859,6 +848,38 @@ return
                       </Typography>
                       <input type='file' accept='image/*,application/pdf' onChange={e => setPaySlipFile(e.target.files?.[0] || null)} />
                       {paySlipFile && <Typography variant='caption'>{paySlipFile.name}</Typography>}
+                    </Grid>
+                  )}
+                  <Grid item xs={4}>
+                    <CustomTextField
+                      fullWidth
+                      label='TDS Amount'
+                      type='number'
+                      size='small'
+                      value={payTdsAmount}
+                      onChange={e => setPayTdsAmount(e.target.value)}
+                    />
+                  </Grid>
+                  <Grid item xs={4}>
+                    <CustomTextField
+                      fullWidth
+                      label='Other Deduction'
+                      type='number'
+                      size='small'
+                      value={payOtherDeduction}
+                      onChange={e => setPayOtherDeduction(e.target.value)}
+                    />
+                  </Grid>
+                  {data.type === 2 && (
+                    <Grid item xs={4}>
+                      <CustomTextField
+                        fullWidth
+                        label='Advance Amount'
+                        type='number'
+                        size='small'
+                        value={payAdvanceAmount}
+                        onChange={e => setPayAdvanceAmount(e.target.value)}
+                      />
                     </Grid>
                   )}
                   <Grid item xs={12}>

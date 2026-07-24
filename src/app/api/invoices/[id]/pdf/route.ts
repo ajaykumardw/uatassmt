@@ -87,7 +87,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         i.tp_id, CONCAT(tu.first_name, ' ', tu.last_name) AS tp_name,
         i.assessment_date, i.total_candidate, i.present_candidate,
         i.amount_per_candidate, i.total_amount,
-        i.advance_amount, i.tds_amount, i.other_deduction, i.net_amount, i.gst_amount,
+        i.gst_amount, i.gst_percentage,
         i.status, i.notes,
         i.created_at, i.agency_id,
         ag.company_name AS agency_name, ag.address AS agency_address,
@@ -125,9 +125,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const agencyAddressParts = [invoice.agency_address].filter(Boolean)
     const agencyAddress = agencyAddressParts.join(', ')
 
+    const gstAmt = invoice.gst_percentage
+      ? Number(invoice.total_amount) * Number(invoice.gst_percentage) / 100
+      : (invoice.gst_amount ? Number(invoice.gst_amount) : 0)
+
     const netAmount = invoice.type === 3
-      ? Number(invoice.total_amount) + Number(invoice.gst_amount || 0) - Number(invoice.tds_amount || 0) - Number(invoice.other_deduction || 0)
-      : Number(invoice.total_amount) - Number(invoice.tds_amount || 0) - Number(invoice.other_deduction || 0)
+      ? Number(invoice.total_amount) + gstAmt
+      : Number(invoice.total_amount)
 
     const invoiceDate = formatDate(invoice.created_at)
 
@@ -200,18 +204,15 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       ${invoice.type !== 3 ? `<tr><td class="label">Present Candidates</td><td>${invoice.present_candidate || '-'}</td></tr>` : ''}
       <tr><td class="label">Amount Per Candidate</td><td class="amount">₹ ${Number(invoice.amount_per_candidate).toFixed(2)}</td></tr>
       <tr class="total-row"><td class="label">Total Amount</td><td class="amount">₹ ${Number(invoice.total_amount).toFixed(2)}</td></tr>
-      ${invoice.type === 3 && Number(invoice.gst_amount || 0) > 0 ? `<tr><td class="label">GST Amount</td><td class="amount">₹ ${Number(invoice.gst_amount).toFixed(2)}</td></tr>` : ''}
-      ${invoice.type === 3 && Number(invoice.gst_amount || 0) > 0 ? `<tr class="total-row"><td class="label">Total Including GST</td><td class="amount">₹ ${(Number(invoice.total_amount) + Number(invoice.gst_amount)).toFixed(2)}</td></tr>` : ''}
+      ${invoice.type === 3 && gstAmt > 0 ? `<tr><td class="label">GST (${invoice.gst_percentage || 0}%)</td><td class="amount">₹ ${gstAmt.toFixed(2)}</td></tr>` : ''}
+      ${invoice.type === 3 && gstAmt > 0 ? `<tr class="total-row"><td class="label">Total Including GST</td><td class="amount">₹ ${(Number(invoice.total_amount) + gstAmt).toFixed(2)}</td></tr>` : ''}
     </table>
   </div>
 
+  ${invoice.type === 3 && gstAmt > 0 ? '' : ''}
   <div class="section">
-    <div class="section-title">Deductions</div>
+    <div class="section-title">Invoice Summary</div>
     <table class="details">
-      <tr><td class="label">TDS Amount</td><td class="amount">₹ ${Number(invoice.tds_amount || 0).toFixed(2)}</td></tr>
-      <tr><td class="label">Other Deduction</td><td class="amount">₹ ${Number(invoice.other_deduction || 0).toFixed(2)}</td></tr>
-      ${invoice.type === 2 ? `<tr><td class="label">Advance Amount</td><td class="amount">₹ ${Number(invoice.advance_amount || 0).toFixed(2)}</td></tr>` : ''}
-      ${invoice.type === 3 ? `<tr><td class="label">GST Amount</td><td class="amount">₹ ${Number(invoice.gst_amount || 0).toFixed(2)}</td></tr>` : ''}
       <tr class="total-row-bg"><td class="label">Net Invoice Amount</td><td class="amount">₹ ${netAmount.toFixed(2)}</td></tr>
     </table>
   </div>

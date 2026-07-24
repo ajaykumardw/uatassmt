@@ -62,10 +62,10 @@ export async function GET(req: Request) {
         whereClause += ' AND i.ssc_id = ?'
         params.push(Number(sscId))
       }
-    } else if (user?.user_type === 'U' && user?.role_id === '1') {
+    } else if (user?.user_type === 'U' && Number(user?.role_id) === 1) {
       whereClause += ' AND i.assessor_id = ?'
       params.push(Number(user.id))
-    } else if (user?.user_type === 'U' && user?.role_id === '2') {
+    } else if (user?.user_type === 'U' && Number(user?.role_id) === 2) {
       whereClause += ' AND i.tp_id = ?'
       params.push(Number(user.id))
     } else if (user?.user_type === 'AG') {
@@ -104,11 +104,7 @@ export async function GET(req: Request) {
         i.present_candidate,
         i.amount_per_candidate,
         i.total_amount,
-        i.advance_amount,
-        i.tds_amount,
-        i.other_deduction,
-        i.net_amount,
-        i.gst_amount,
+        i.gst_amount, i.gst_percentage,
         i.group_photo,
         i.attendance_sheet,
         i.invoice_pdf,
@@ -128,11 +124,8 @@ export async function GET(req: Request) {
       status: Number(row.status),
       amount_per_candidate: Number(row.amount_per_candidate),
       total_amount: Number(row.total_amount),
-      advance_amount: row.advance_amount ? Number(row.advance_amount) : null,
-      tds_amount: row.tds_amount ? Number(row.tds_amount) : null,
-      other_deduction: row.other_deduction ? Number(row.other_deduction) : null,
-      net_amount: row.net_amount ? Number(row.net_amount) : null,
-      gst_amount: row.gst_amount ? Number(row.gst_amount) : null
+      gst_percentage: row.gst_percentage ? Number(row.gst_percentage) : null,
+      gst_amount: row.gst_percentage ? Number(row.total_amount) * Number(row.gst_percentage) / 100 : (row.gst_amount ? Number(row.gst_amount) : null)
     }))
 
     return NextResponse.json({
@@ -158,7 +151,7 @@ export async function POST(req: Request) {
     const {
       type, batch_id, ssc_id, scheme, assessor_id, tp_id, assessment_date,
       amount_per_candidate, total_amount,
-      advance_amount, tds_amount, other_deduction, net_amount, gst_amount,
+      gst_percentage,
       group_photo, attendance_sheet, invoice_pdf, signed_copy, payment_receipt, notes
     } = body
 
@@ -201,27 +194,31 @@ export async function POST(req: Request) {
 
     const invoice_number = await generateInvoiceNumber(Number(type))
 
+    const computedGstAmount = gst_percentage ? Number(total_amount) * Number(gst_percentage) / 100 : 0
+
     await prisma.$executeRaw`
       INSERT INTO invoices (
         invoice_number, type, batch_id, ssc_id, scheme, assessor_id, tp_id,
         assessment_date, total_candidate, present_candidate, amount_per_candidate,
-        total_amount, advance_amount, tds_amount, other_deduction, net_amount,
-        gst_amount, group_photo, attendance_sheet, invoice_pdf, signed_copy, payment_receipt,
+        total_amount,
+        gst_amount, gst_percentage, group_photo, attendance_sheet, invoice_pdf, signed_copy, payment_receipt,
         status, notes, agency_id, created_by, created_at, updated_at
       ) VALUES (
         ${invoice_number}, ${Number(type)}, ${Number(batch_id)}, ${ssc_id ? Number(ssc_id) : null},
         ${scheme || null}, ${assessor_id ? Number(assessor_id) : null}, ${tp_id ? Number(tp_id) : null},
         ${assessment_date ? new Date(assessment_date) : null}, ${Number(total_candidate)},
         ${present_candidate ? Number(present_candidate) : 0}, ${Number(amount_per_candidate)},
-        ${Number(total_amount)}, ${advance_amount ? Number(advance_amount) : 0},
-        ${tds_amount ? Number(tds_amount) : 0}, ${other_deduction ? Number(other_deduction) : 0},
-        ${net_amount ? Number(net_amount) : null}, ${gst_amount ? Number(gst_amount) : 0},
+        ${Number(total_amount)},
+        ${computedGstAmount}, ${gst_percentage ? Number(gst_percentage) : null},
         ${group_photo || null}, ${attendance_sheet || null}, ${invoice_pdf || null},
         ${signed_copy || null}, ${payment_receipt || null}, 1, ${notes || null}, ${agency_id}, ${created_by}, NOW(), NOW()
       )
     `
 
-    return NextResponse.json({ status: 'Success', statusCode: 200, message: 'Invoice created successfully' })
+    const insertedId = await prisma.$queryRaw`SELECT LAST_INSERT_ID() as id`
+    const newId = Number((insertedId as any[])[0]?.id || 0)
+
+    return NextResponse.json({ status: 'Success', statusCode: 200, data: { id: newId }, message: 'Invoice created successfully' })
   } catch (error: any) {
     return NextResponse.json({ status: 'Error', statusCode: 500, message: error.message }, { status: 500 })
   }

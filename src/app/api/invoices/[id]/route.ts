@@ -33,11 +33,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         i.present_candidate,
         i.amount_per_candidate,
         i.total_amount,
-        i.advance_amount,
-        i.tds_amount,
-        i.other_deduction,
-        i.net_amount,
-        i.gst_amount,
+        i.gst_amount, i.gst_percentage,
         i.group_photo,
         i.attendance_sheet,
         i.invoice_pdf,
@@ -76,9 +72,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       const sscId = (userRow as any[])[0]?.ssc_id
 
       if (sscId && Number(sscId) === Number(row.ssc_id)) allowed = true
-    } else if (user?.user_type === 'U' && user?.role_id === '1') {
+    } else if (user?.user_type === 'U' && Number(user?.role_id) === 1) {
       if (Number(user.id) === Number(row.assessor_id)) allowed = true
-    } else if (user?.user_type === 'U' && user?.role_id === '2') {
+    } else if (user?.user_type === 'U' && Number(user?.role_id) === 2) {
       if (Number(user.id) === Number(row.tp_id)) allowed = true
     } else if (user?.user_type === 'AG') {
       if (Number(user.agency_id) === Number(row.agency_id)) allowed = true
@@ -92,11 +88,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     row.status = Number(row.status)
     row.amount_per_candidate = Number(row.amount_per_candidate)
     row.total_amount = Number(row.total_amount)
-    row.advance_amount = row.advance_amount ? Number(row.advance_amount) : null
-    row.tds_amount = row.tds_amount ? Number(row.tds_amount) : null
-    row.other_deduction = row.other_deduction ? Number(row.other_deduction) : null
-    row.net_amount = row.net_amount ? Number(row.net_amount) : null
-    row.gst_amount = row.gst_amount ? Number(row.gst_amount) : null
+    row.gst_percentage = row.gst_percentage ? Number(row.gst_percentage) : null
+    row.gst_amount = row.gst_percentage ? Number(row.total_amount) * Number(row.gst_percentage) / 100 : (row.gst_amount ? Number(row.gst_amount) : null)
 
     return NextResponse.json({ status: 'Success', statusCode: 200, data: row })
   } catch (error: any) {
@@ -126,7 +119,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const {
       type, batch_id, ssc_id, scheme, assessor_id, tp_id, assessment_date,
       amount_per_candidate, total_amount,
-      advance_amount, tds_amount, other_deduction, net_amount, gst_amount,
+      gst_percentage,
       group_photo, attendance_sheet, invoice_pdf, signed_copy, payment_receipt,
       status, notes
     } = body
@@ -143,11 +136,16 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     if (assessment_date !== undefined) { setClauses.push('assessment_date = ?'); values.push(assessment_date ? new Date(assessment_date) : null) }
     if (amount_per_candidate !== undefined) { setClauses.push('amount_per_candidate = ?'); values.push(Number(amount_per_candidate)) }
     if (total_amount !== undefined) { setClauses.push('total_amount = ?'); values.push(Number(total_amount)) }
-    if (advance_amount !== undefined) { setClauses.push('advance_amount = ?'); values.push(Number(advance_amount)) }
-    if (tds_amount !== undefined) { setClauses.push('tds_amount = ?'); values.push(Number(tds_amount)) }
-    if (other_deduction !== undefined) { setClauses.push('other_deduction = ?'); values.push(Number(other_deduction)) }
-    if (net_amount !== undefined) { setClauses.push('net_amount = ?'); values.push(net_amount ? Number(net_amount) : null) }
-    if (gst_amount !== undefined) { setClauses.push('gst_amount = ?'); values.push(Number(gst_amount)) }
+
+    if (gst_percentage !== undefined) {
+      const pct = Number(gst_percentage)
+
+      setClauses.push('gst_percentage = ?'); values.push(pct)
+      const amt = total_amount !== undefined ? Number(total_amount) : Number(rows[0].total_amount)
+
+      setClauses.push('gst_amount = ?'); values.push(amt * pct / 100)
+    }
+
     if (group_photo !== undefined) { setClauses.push('group_photo = ?'); values.push(group_photo) }
     if (attendance_sheet !== undefined) { setClauses.push('attendance_sheet = ?'); values.push(attendance_sheet) }
     if (invoice_pdf !== undefined) { setClauses.push('invoice_pdf = ?'); values.push(invoice_pdf) }

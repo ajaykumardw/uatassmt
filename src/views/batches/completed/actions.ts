@@ -134,14 +134,14 @@ export async function changeHardCopyStatus(
       INSERT INTO invoices (
         invoice_number, type, batch_id, ssc_id, scheme, assessor_id,
         assessment_date, total_candidate, present_candidate, amount_per_candidate,
-        total_amount, advance_amount, tds_amount, other_deduction, gst_amount,
+        total_amount, advance_amount, tds_amount, other_deduction, gst_amount, gst_percentage,
         status, notes, agency_id, created_by, created_at, updated_at
       ) VALUES (
         ${invoiceNumber}, 2, ${batchId}, ${sscId},
         ${batch.scheme?.scheme_name || null}, ${batch.assessor_id},
         ${batch.assessment_end_datetime || null}, ${totalCandidates},
-        ${totalCandidates}, ${amountPerCandidate}, ${totalAmount}, 0, 0, 0, 0,
-        0, 'Auto-generated from Hard Copy Received', ${agency_id}, ${created_by}, NOW(), NOW()
+        ${totalCandidates}, ${amountPerCandidate}, ${totalAmount}, 0, 0, 0, 0, null,
+        1, 'Auto-generated from Hard Copy Received', ${agency_id}, ${created_by}, NOW(), NOW()
       )
     `
 

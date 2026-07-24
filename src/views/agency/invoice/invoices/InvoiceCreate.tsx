@@ -13,6 +13,7 @@ import Grid from '@mui/material/Grid'
 import CircularProgress from '@mui/material/CircularProgress'
 import MenuItem from '@mui/material/MenuItem'
 import Chip from '@mui/material/Chip'
+import Checkbox from '@mui/material/Checkbox'
 import { toast } from 'react-toastify'
 
 import CustomTextField from '@core/components/mui/TextField'
@@ -32,15 +33,16 @@ type BatchOption = {
   qualification_pack?: {
     ssc?: { id: number; ssc_code: string; ssc_name: string }
   }
+  training_partner?: {
+    id: number
+    first_name?: string
+    last_name?: string
+    company_name?: string
+  }
   _count?: { students: number }
   total_candidates?: number
   total_assigned?: number
   present_candidates?: number
-}
-
-type TpOption = {
-  id: number
-  tp_name: string
 }
 
 const InvoiceCreate = () => {
@@ -50,7 +52,6 @@ const InvoiceCreate = () => {
   const [batches, setBatches] = useState<BatchOption[]>([])
   const [sscOptions, setSscOptions] = useState<{ id: number; ssc_name: string }[]>([])
   const [schemeOptions, setSchemeOptions] = useState<{ id: number; scheme_name: string }[]>([])
-  const [tpList, setTpList] = useState<TpOption[]>([])
 
   const [selectedSscId, setSelectedSscId] = useState('')
   const [selectedSchemeId, setSelectedSchemeId] = useState('')
@@ -64,13 +65,17 @@ const InvoiceCreate = () => {
   const [presentCandidates, setPresentCandidates] = useState('')
   const [amountPerCandidate, setAmountPerCandidate] = useState('')
   const [notes, setNotes] = useState('')
-  const [tdsAmount, setTdsAmount] = useState('')
-  const [otherDeduction, setOtherDeduction] = useState('')
-  const [gstAmount, setGstAmount] = useState('')
+  const [gstPercentage, setGstPercentage] = useState('')
   const [selectedTpId, setSelectedTpId] = useState('')
 
   const [groupPhotoFile, setGroupPhotoFile] = useState<File | null>(null)
   const [attendanceSheetFile, setAttendanceSheetFile] = useState<File | null>(null)
+
+  const [existingMedia, setExistingMedia] = useState<Record<string, { id: number; fileName: string; path: string }[]>>({})
+  const [useExistingGroupPhoto, setUseExistingGroupPhoto] = useState(false)
+  const [useExistingAttendanceSheet, setUseExistingAttendanceSheet] = useState(false)
+  const [selectedGroupPhotoPath, setSelectedGroupPhotoPath] = useState('')
+  const [selectedAttendanceSheetPath, setSelectedAttendanceSheetPath] = useState('')
 
   const filteredBatches = batches.filter(b => {
     if (selectedType === 3) {
@@ -85,6 +90,8 @@ const InvoiceCreate = () => {
   })
 
   const totalAmount = Number(presentCandidates) * Number(amountPerCandidate) || 0
+  const hasGroupPhotoInMedia = 'group_photo_before_batch_start' in existingMedia && existingMedia.group_photo_before_batch_start.length > 0
+  const hasAttendanceSheetInMedia = 'manual_attendance_register' in existingMedia && existingMedia.manual_attendance_register.length > 0
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches`)
@@ -115,19 +122,6 @@ const InvoiceCreate = () => {
       .catch(() => {})
   }, [])
 
-  useEffect(() => {
-    if (selectedType === 3) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/training-partner`)
-        .then(res => res.json())
-        .then(res => {
-          const raw = Array.isArray(res) ? res : res.data || []
-
-          setTpList(raw.map((t: any) => ({ id: t.id, tp_name: t.company_name || [t.first_name, t.last_name].filter(Boolean).join(' ') })))
-        })
-        .catch(() => {})
-    }
-  }, [selectedType])
-
   const handleBatchChange = async (batchId: string) => {
     setSelectedBatchId(batchId)
     const batch = batches.find(b => b.id === Number(batchId))
@@ -135,7 +129,15 @@ const InvoiceCreate = () => {
     if (batch) {
       setBatchSscId(batch.qualification_pack?.ssc?.id || 0)
       setSscName(batch.qualification_pack?.ssc?.ssc_name || batch.ssc_name || '')
-      setTpName(batch.tp_name || '')
+
+      const tp = batch.training_partner
+
+      setTpName(tp?.company_name || [tp?.first_name, tp?.last_name].filter(Boolean).join(' ') || batch.tp_name || '')
+
+      if (selectedType === 3 && tp?.id) {
+        setSelectedTpId(String(tp.id))
+      }
+
       setSchemeName(batch.scheme?.scheme_name || batch.scheme_name || '')
       setAssessmentDate((batch.assessment_start_datetime || batch.assessment_end_datetime || '').split('T')[0])
       const tc = batch._count?.students || Number(batch.batch_size) || batch.total_candidates || batch.total_assigned || 0
@@ -143,9 +145,7 @@ const InvoiceCreate = () => {
       setTotalCandidates(tc)
       setPresentCandidates(String(batch.present_candidates || tc))
       setAmountPerCandidate('')
-      setTdsAmount('')
-      setOtherDeduction('')
-      setGstAmount('')
+      setGstPercentage('')
 
       if (selectedType === 1) {
         const sscId = batch.qualification_pack?.ssc?.id
@@ -162,6 +162,25 @@ const InvoiceCreate = () => {
               if (match) {
                 setAmountPerCandidate(String(Number(match.amount_per_candidate)))
               }
+            }
+          } catch {
+            // silently fail
+          }
+        }
+
+        if (batchId) {
+          try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoices/batch-media?batchId=${batchId}`)
+            const result = await res.json()
+
+            if (result.status === 'Success' && result.data) {
+              setExistingMedia(result.data)
+              setUseExistingGroupPhoto(false)
+              setUseExistingAttendanceSheet(false)
+              setSelectedGroupPhotoPath('')
+              setSelectedAttendanceSheetPath('')
+              setGroupPhotoFile(null)
+              setAttendanceSheetFile(null)
             }
           } catch {
             // silently fail
@@ -194,9 +213,14 @@ const InvoiceCreate = () => {
       setTotalCandidates(0)
       setPresentCandidates('')
       setAmountPerCandidate('')
-      setTdsAmount('')
-      setOtherDeduction('')
-      setGstAmount('')
+      setGstPercentage('')
+      setExistingMedia({})
+      setUseExistingGroupPhoto(false)
+      setUseExistingAttendanceSheet(false)
+      setSelectedGroupPhotoPath('')
+      setSelectedAttendanceSheetPath('')
+      setGroupPhotoFile(null)
+      setAttendanceSheetFile(null)
     }
   }
 
@@ -215,6 +239,17 @@ const InvoiceCreate = () => {
       return
     }
 
+    if (selectedType === 1) {
+      const hasGroupPhoto = useExistingGroupPhoto ? !!selectedGroupPhotoPath : !!groupPhotoFile
+      const hasAttendanceSheet = useExistingAttendanceSheet ? !!selectedAttendanceSheetPath : !!attendanceSheetFile
+
+      if (!hasGroupPhoto || !hasAttendanceSheet) {
+        toast.error('Please provide Group Photo and Attendance Sheet')
+
+        return
+      }
+    }
+
     setSaving(true)
 
     try {
@@ -227,16 +262,22 @@ const InvoiceCreate = () => {
         assessment_date: assessmentDate || null,
         scheme: schemeName,
         total_candidate: totalCandidates,
-        notes: notes || null,
-        tds_amount: Number(tdsAmount) || 0,
-        other_deduction: Number(otherDeduction) || 0
+        notes: notes || null
       }
 
       if (selectedType === 1) {
         body.present_candidate = Number(presentCandidates)
+
+        if (useExistingGroupPhoto && selectedGroupPhotoPath) {
+          body.group_photo = selectedGroupPhotoPath
+        }
+
+        if (useExistingAttendanceSheet && selectedAttendanceSheetPath) {
+          body.attendance_sheet = selectedAttendanceSheetPath
+        }
       } else if (selectedType === 3) {
         body.tp_id = Number(selectedTpId)
-        body.gst_amount = Number(gstAmount) || 0
+        body.gst_percentage = Number(gstPercentage) || 0
       }
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoices`, {
@@ -253,8 +294,8 @@ const InvoiceCreate = () => {
         const filesToUpload: { file: File; fileType: string }[] = []
 
         if (selectedType === 1) {
-          if (groupPhotoFile) filesToUpload.push({ file: groupPhotoFile, fileType: 'group_photo' })
-          if (attendanceSheetFile) filesToUpload.push({ file: attendanceSheetFile, fileType: 'attendance_sheet' })
+          if (!useExistingGroupPhoto && groupPhotoFile) filesToUpload.push({ file: groupPhotoFile, fileType: 'group_photo' })
+          if (!useExistingAttendanceSheet && attendanceSheetFile) filesToUpload.push({ file: attendanceSheetFile, fileType: 'attendance_sheet' })
         }
 
         for (const item of filesToUpload) {
@@ -383,26 +424,14 @@ const InvoiceCreate = () => {
                       ))}
                     </CustomTextField>
                   </Grid>
-                  {entityName && (
+                  {selectedType === 1 && entityName && (
                     <Grid item xs={12} sm={6}>
-                      <CustomTextField fullWidth label={selectedType === 1 ? 'SSC Name' : 'Training Partner'} value={entityName} InputProps={{ readOnly: true }} />
+                      <CustomTextField fullWidth label='SSC Name' value={entityName} InputProps={{ readOnly: true }} />
                     </Grid>
                   )}
                   {selectedType === 3 && selectedBatchId && (
                     <Grid item xs={12} sm={6}>
-                      <CustomTextField
-                        select
-                        fullWidth
-                        label='Select TP *'
-                        value={selectedTpId}
-                        onChange={e => setSelectedTpId(e.target.value)}
-                        SelectProps={{ MenuProps }}
-                      >
-                        <MenuItem value=''>Select TP</MenuItem>
-                        {tpList.map(t => (
-                          <MenuItem key={t.id} value={t.id.toString()}>{t.tp_name}</MenuItem>
-                        ))}
-                      </CustomTextField>
+                      <CustomTextField fullWidth label='Training Partner' value={tpName} InputProps={{ readOnly: true }} />
                     </Grid>
                   )}
                   {schemeName && (
@@ -449,34 +478,43 @@ const InvoiceCreate = () => {
                       InputProps={{ readOnly: true }}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <CustomTextField
-                      fullWidth
-                      label='TDS Amount'
-                      type='number'
-                      value={tdsAmount}
-                      onChange={e => setTdsAmount(e.target.value)}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <CustomTextField
-                      fullWidth
-                      label='Other Deduction'
-                      type='number'
-                      value={otherDeduction}
-                      onChange={e => setOtherDeduction(e.target.value)}
-                    />
-                  </Grid>
+
                   {selectedType === 3 && (
-                    <Grid item xs={12} sm={6}>
-                      <CustomTextField
-                        fullWidth
-                        label='GST Amount'
-                        type='number'
-                        value={gstAmount}
-                        onChange={e => setGstAmount(e.target.value)}
-                      />
-                    </Grid>
+                    <>
+                      <Grid item xs={12} sm={3}>
+                        <CustomTextField
+                          select
+                          fullWidth
+                          label='GST %'
+                          value={gstPercentage}
+                          onChange={e => setGstPercentage(e.target.value)}
+                          SelectProps={{ MenuProps }}
+                        >
+                          <MenuItem value=''>Select</MenuItem>
+                          <MenuItem value='0'>0%</MenuItem>
+                          <MenuItem value='5'>5%</MenuItem>
+                          <MenuItem value='12'>12%</MenuItem>
+                          <MenuItem value='18'>18%</MenuItem>
+                          <MenuItem value='28'>28%</MenuItem>
+                        </CustomTextField>
+                      </Grid>
+                      <Grid item xs={12} sm={3}>
+                        <CustomTextField
+                          fullWidth
+                          label='GST Amount'
+                          value={gstPercentage && totalAmount ? (totalAmount * Number(gstPercentage) / 100).toFixed(2) : '0.00'}
+                          InputProps={{ readOnly: true }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={3}>
+                        <CustomTextField
+                          fullWidth
+                          label='Grand Total (incl. GST)'
+                          value={gstPercentage && totalAmount ? (totalAmount + totalAmount * Number(gstPercentage) / 100).toFixed(2) : totalAmount.toFixed(2)}
+                          InputProps={{ readOnly: true }}
+                        />
+                      </Grid>
+                    </>
                   )}
                   <Grid item xs={12}>
                     <CustomTextField
@@ -490,20 +528,92 @@ const InvoiceCreate = () => {
                   </Grid>
                   {selectedType === 1 && (
                     <>
-                      <Grid item xs={12}>
-                        <Typography variant='body2' color='text.secondary' className='mb-2'>
-                          Group Photo *
+                      <Grid item xs={12} sm={6}>
+                        <Checkbox
+                          checked={useExistingGroupPhoto}
+                          disabled={!hasGroupPhotoInMedia}
+                          onChange={(e) => {
+                            const checked = e.target.checked
+
+                            setUseExistingGroupPhoto(checked)
+
+                            if (checked) {
+                              const firstPath = existingMedia.group_photo_before_batch_start?.[0]?.path || ''
+
+                              setSelectedGroupPhotoPath(firstPath)
+                              setGroupPhotoFile(null)
+                            } else {
+                              setSelectedGroupPhotoPath('')
+                            }
+                          }}
+                        />
+                        <Typography variant='body2' component='span'>
+                          Use existing group photo from inspection media
+                          {!hasGroupPhotoInMedia && ' (not available)'}
                         </Typography>
-                        <input type='file' accept='image/*' onChange={e => setGroupPhotoFile(e.target.files?.[0] || null)} />
-                        {groupPhotoFile && <Typography variant='caption'>{groupPhotoFile.name}</Typography>}
                       </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant='body2' color='text.secondary' className='mb-2'>
-                          Attendance Sheet *
+                      {useExistingGroupPhoto && hasGroupPhotoInMedia && (
+                        <Grid item xs={12} sm={6}>
+                          <CustomTextField
+                            fullWidth
+                            label='Selected Group Photo'
+                            value={selectedGroupPhotoPath.split('/').pop() || ''}
+                            InputProps={{ readOnly: true }}
+                          />
+                        </Grid>
+                      )}
+                      {!useExistingGroupPhoto && (
+                        <Grid item xs={12}>
+                          <Typography variant='body2' color='text.secondary' className='mb-2'>
+                            Group Photo *
+                          </Typography>
+                          <input type='file' accept='image/*' onChange={e => setGroupPhotoFile(e.target.files?.[0] || null)} />
+                          {groupPhotoFile && <Typography variant='caption'>{groupPhotoFile.name}</Typography>}
+                        </Grid>
+                      )}
+                      <Grid item xs={12} sm={6}>
+                        <Checkbox
+                          checked={useExistingAttendanceSheet}
+                          disabled={!hasAttendanceSheetInMedia}
+                          onChange={(e) => {
+                            const checked = e.target.checked
+
+                            setUseExistingAttendanceSheet(checked)
+
+                            if (checked) {
+                              const firstPath = (existingMedia.manual_attendance_register?.[0]?.path) || ''
+
+                              setSelectedAttendanceSheetPath(firstPath)
+                              setAttendanceSheetFile(null)
+                            } else {
+                              setSelectedAttendanceSheetPath('')
+                            }
+                          }}
+                        />
+                        <Typography variant='body2' component='span'>
+                          Use existing attendance sheet from inspection media
+                          {!hasAttendanceSheetInMedia && ' (not available)'}
                         </Typography>
-                        <input type='file' accept='image/*,.pdf' onChange={e => setAttendanceSheetFile(e.target.files?.[0] || null)} />
-                        {attendanceSheetFile && <Typography variant='caption'>{attendanceSheetFile.name}</Typography>}
                       </Grid>
+                      {useExistingAttendanceSheet && hasAttendanceSheetInMedia && (
+                        <Grid item xs={12} sm={6}>
+                          <CustomTextField
+                            fullWidth
+                            label='Selected Attendance Sheet'
+                            value={selectedAttendanceSheetPath.split('/').pop() || ''}
+                            InputProps={{ readOnly: true }}
+                          />
+                        </Grid>
+                      )}
+                      {!useExistingAttendanceSheet && (
+                        <Grid item xs={12}>
+                          <Typography variant='body2' color='text.secondary' className='mb-2'>
+                            Attendance Sheet *
+                          </Typography>
+                          <input type='file' accept='image/*,.pdf' onChange={e => setAttendanceSheetFile(e.target.files?.[0] || null)} />
+                          {attendanceSheetFile && <Typography variant='caption'>{attendanceSheetFile.name}</Typography>}
+                        </Grid>
+                      )}
                     </>
                   )}
                   {selectedType === 3 && (

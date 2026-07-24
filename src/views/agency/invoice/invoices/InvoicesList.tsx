@@ -1,6 +1,8 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+
+import { useRouter, useParams } from 'next/navigation'
 
 import Card from '@mui/material/Card'
 import CardHeader from '@mui/material/CardHeader'
@@ -17,8 +19,15 @@ import TableRow from '@mui/material/TableRow'
 import Paper from '@mui/material/Paper'
 import Chip from '@mui/material/Chip'
 import Pagination from '@mui/material/Pagination'
+import Dialog from '@mui/material/Dialog'
+import DialogTitle from '@mui/material/DialogTitle'
+import DialogContent from '@mui/material/DialogContent'
+import DialogActions from '@mui/material/DialogActions'
+import IconButton from '@mui/material/IconButton'
+import CircularProgress from '@mui/material/CircularProgress'
 import MenuItem from '@mui/material/MenuItem'
 import type { TextFieldProps } from '@mui/material/TextField'
+import { toast } from 'react-toastify'
 
 import CustomTextField from '@core/components/mui/TextField'
 
@@ -61,6 +70,8 @@ type Props = {
   onDateToChange: (v: string) => void
   onFilter: () => void
   hideCreate?: boolean
+  detailPath?: string
+  userRole?: string
 }
 
 const typeLabels: Record<number, string> = {
@@ -87,15 +98,108 @@ const statusColors: Record<number, 'default' | 'warning' | 'info' | 'error' | 's
   5: 'info'
 }
 
+type PaymentRecord = {
+  id: number
+  amount: number
+  tds_amount?: number
+  advance_amount?: number
+  other_deduction?: number
+  payment_date: string
+  payment_mode: string
+  transaction_no: string
+  cheque_date?: string
+  bank_name?: string
+  transaction_slip?: string
+  remarks: string
+}
+
 const InvoicesList = ({
   data, total, page, limit, onPageChange,
   search, onSearchChange, type, onTypeChange,
   status, onStatusChange,
   dateFrom, onDateFromChange, dateTo, onDateToChange, onFilter,
-  hideCreate = false
+  hideCreate = false,
+  detailPath = '/invoice/invoices/',
+  userRole
 }: Props) => {
   const router = useRouter()
+  const { lang: locale } = useParams()
   const totalPages = Math.ceil(total / limit)
+
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
+  const [selectedInvoiceForPayments, setSelectedInvoiceForPayments] = useState<InvoiceRow | null>(null)
+  const [paymentsData, setPaymentsData] = useState<PaymentRecord[]>([])
+  const [loadingPayments, setLoadingPayments] = useState(false)
+
+  const openPaymentDialog = async (row: InvoiceRow) => {
+    setSelectedInvoiceForPayments(row)
+    setPaymentDialogOpen(true)
+    setLoadingPayments(true)
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments?invoice_id=${row.id}`)
+      const result = await res.json()
+
+      if (result.status === 'Success') {
+        setPaymentsData(result.data || [])
+      } else {
+        setPaymentsData([])
+      }
+    } catch {
+      setPaymentsData([])
+    } finally {
+      setLoadingPayments(false)
+    }
+  }
+
+  const [signedUploadDialogOpen, setSignedUploadDialogOpen] = useState(false)
+  const [selectedRowForUpload, setSelectedRowForUpload] = useState<InvoiceRow | null>(null)
+  const [signedUploadFile, setSignedUploadFile] = useState<File | null>(null)
+  const [signedUploadLoading, setSignedUploadLoading] = useState(false)
+
+  const openSignedUploadDialog = (row: InvoiceRow) => {
+    setSelectedRowForUpload(row)
+    setSignedUploadFile(null)
+    setSignedUploadDialogOpen(true)
+  }
+
+  const handleSignedUpload = async () => {
+    if (!signedUploadFile || !selectedRowForUpload) {
+      toast.error('Please select a file')
+
+      return
+    }
+
+    setSignedUploadLoading(true)
+
+    try {
+      const formData = new FormData()
+
+      formData.append('invoice_id', String(selectedRowForUpload.id))
+      formData.append('file_type', 'signed_copy')
+      formData.append('file', signedUploadFile)
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoices/upload`, {
+        method: 'POST',
+        body: formData
+      })
+
+      const result = await res.json()
+
+      if (res.ok && (result.status === 'Success' || result.status === 'success')) {
+        toast.success('Signed copy uploaded')
+        setSignedUploadDialogOpen(false)
+        setSignedUploadFile(null)
+        updateData()
+      } else {
+        toast.error(result.message || 'Failed to upload signed copy')
+      }
+    } catch {
+      toast.error('Failed to upload signed copy')
+    } finally {
+      setSignedUploadLoading(false)
+    }
+  }
 
   const handleKeyDown: TextFieldProps['onKeyDown'] = (e) => {
     if (e.key === 'Enter') onFilter()
@@ -116,22 +220,24 @@ const InvoicesList = ({
           />
           <CardContent>
             <Grid container spacing={4} className='mb-4'>
-              <Grid item xs={12} sm={2}>
-                <CustomTextField
-                  select
-                  fullWidth
-                  label='Type'
-                  value={type}
-                  onChange={e => onTypeChange(e.target.value)}
-                  SelectProps={{ MenuProps, displayEmpty: true }}
-                >
-                  <MenuItem value=''>All</MenuItem>
-                  <MenuItem value='1'>SSC</MenuItem>
-                  <MenuItem value='2'>Assessor</MenuItem>
-                  <MenuItem value='3'>TP</MenuItem>
-                </CustomTextField>
-              </Grid>
-              <Grid item xs={12} sm={3}>
+              {userRole !== 'assessor' && (
+                <Grid item xs={12} sm={2}>
+                  <CustomTextField
+                    select
+                    fullWidth
+                    label='Type'
+                    value={type}
+                    onChange={e => onTypeChange(e.target.value)}
+                    SelectProps={{ MenuProps, displayEmpty: true }}
+                  >
+                    <MenuItem value=''>All</MenuItem>
+                    <MenuItem value='1'>SSC</MenuItem>
+                    <MenuItem value='2'>Assessor</MenuItem>
+                    <MenuItem value='3'>TP</MenuItem>
+                  </CustomTextField>
+                </Grid>
+              )}
+              <Grid item xs={12} sm={userRole === 'assessor' ? 4 : 3}>
                 <CustomTextField
                   fullWidth
                   label='Search (Invoice # / Batch)'
@@ -207,12 +313,7 @@ const InvoicesList = ({
                     </TableRow>
                   ) : (
                     data.map(row => (
-                      <TableRow
-                        key={row.id}
-                        hover
-                        sx={{ cursor: 'pointer' }}
-                        onClick={() => router.push(`/invoice/invoices/${row.id}`)}
-                      >
+                      <TableRow key={row.id} hover sx={{ cursor: userRole === 'assessor' ? 'default' : 'pointer' }}>
                         <TableCell>
                           <Typography variant='body2' className='font-medium'>{row.invoice_number || `INV-${row.id}`}</Typography>
                         </TableCell>
@@ -243,13 +344,57 @@ const InvoicesList = ({
                           />
                         </TableCell>
                         <TableCell>
-                          <Button
-                            size='small'
-                            variant='outlined'
-                            onClick={e => { e.stopPropagation(); router.push(`/invoice/invoices/${row.id}`) }}
-                          >
-                            View
-                          </Button>
+                          {userRole === 'assessor' ? (
+                            <div className='flex gap-2'>
+                              <Button
+                                size='small'
+                                variant='outlined'
+                                component='a'
+                                href={`/api/invoices/${row.id}/pdf`}
+                                target='_blank'
+                                startIcon={<i className='tabler-download' />}
+                              >
+                                Download
+                              </Button>
+                              <Button
+                                size='small'
+                                variant='tonal'
+                                color='warning'
+                                onClick={() => openSignedUploadDialog(row)}
+                                startIcon={<i className='tabler-upload' />}
+                              >
+                                Upload Signed
+                              </Button>
+                              <Button
+                                size='small'
+                                variant='tonal'
+                                color='info'
+                                onClick={() => openPaymentDialog(row)}
+                                startIcon={<i className='tabler-coin' />}
+                              >
+                                Payments
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className='flex gap-2'>
+                              <Button
+                                size='small'
+                                variant='outlined'
+                                onClick={e => { e.stopPropagation(); router.push(`/${locale}${detailPath}${row.id}`) }}
+                              >
+                                View
+                              </Button>
+                              <Button
+                                size='small'
+                                variant='tonal'
+                                color='info'
+                                onClick={e => { e.stopPropagation(); openPaymentDialog(row) }}
+                                startIcon={<i className='tabler-coin' />}
+                              >
+                                Payments
+                              </Button>
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))
@@ -257,8 +402,11 @@ const InvoicesList = ({
                 </TableBody>
               </Table>
             </TableContainer>
-            {totalPages > 1 && (
-              <div className='flex justify-center mt-4'>
+            {total > 0 && (
+              <div className='flex justify-between items-center flex-wrap pli-6 border-bs bs-auto plb-[12.5px] gap-2'>
+                <Typography color='text.disabled'>
+                  Showing {data.length === 0 ? 0 : (page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} entries
+                </Typography>
                 <Pagination
                   shape='rounded'
                   color='primary'
@@ -274,6 +422,89 @@ const InvoicesList = ({
           </CardContent>
         </Card>
       </Grid>
+
+      <Dialog open={signedUploadDialogOpen} onClose={() => setSignedUploadDialogOpen(false)} maxWidth='sm' fullWidth>
+        <DialogTitle>
+          Upload Signed Copy — {selectedRowForUpload?.invoice_number || `INV-${selectedRowForUpload?.id}`}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant='body2' color='text.secondary' className='mb-3'>
+            Upload a signed copy of this invoice (PDF or image).
+          </Typography>
+          <input type='file' accept='.pdf,image/*' onChange={e => setSignedUploadFile(e.target.files?.[0] || null)} />
+          {signedUploadFile && <Typography variant='caption' className='ml-2'>{signedUploadFile.name}</Typography>}
+        </DialogContent>
+        <DialogActions>
+          <Button variant='tonal' onClick={() => setSignedUploadDialogOpen(false)}>Cancel</Button>
+          <Button
+            variant='contained'
+            onClick={handleSignedUpload}
+            disabled={!signedUploadFile || signedUploadLoading}
+            startIcon={signedUploadLoading ? <CircularProgress size={16} color='inherit' /> : <i className='tabler-upload' />}
+          >
+            Upload
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={paymentDialogOpen} onClose={() => setPaymentDialogOpen(false)} maxWidth='md' fullWidth>
+        <DialogTitle className='flex items-center justify-between'>
+          <span>Payments — {selectedInvoiceForPayments?.invoice_number || `INV-${selectedInvoiceForPayments?.id}`}</span>
+          <IconButton onClick={() => setPaymentDialogOpen(false)} size='small'><i className='tabler-x' /></IconButton>
+        </DialogTitle>
+        <DialogContent>
+          {loadingPayments ? (
+            <div className='flex justify-center py-8'><CircularProgress /></div>
+          ) : paymentsData.length === 0 ? (
+            <Typography color='text.secondary' className='py-4 text-center'>No payments recorded</Typography>
+          ) : (
+            <TableContainer component={Paper}>
+              <Table size='small'>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Date</TableCell>
+                    <TableCell>Amount</TableCell>
+                    <TableCell>TDS</TableCell>
+                    {selectedInvoiceForPayments?.type === 2 && <TableCell>Advance</TableCell>}
+                    <TableCell>Other Ded.</TableCell>
+                    <TableCell>Net Paid</TableCell>
+                    <TableCell>Mode</TableCell>
+                    <TableCell>Ref No</TableCell>
+                    <TableCell>Bank</TableCell>
+                    <TableCell>Slip</TableCell>
+                    <TableCell>Remarks</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paymentsData.map(p => (
+                    <TableRow key={p.id}>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{p.payment_date ? new Date(p.payment_date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</TableCell>
+                      <TableCell>{Number(p.amount).toFixed(2)}</TableCell>
+                      <TableCell>{Number(p.tds_amount || 0).toFixed(2)}</TableCell>
+                      {selectedInvoiceForPayments?.type === 2 && <TableCell>{Number(p.advance_amount || 0).toFixed(2)}</TableCell>}
+                      <TableCell>{Number(p.other_deduction || 0).toFixed(2)}</TableCell>
+                      <TableCell>{Number(Number(p.amount) - Number(p.tds_amount || 0) - (selectedInvoiceForPayments?.type === 2 ? Number(p.advance_amount || 0) : 0) - Number(p.other_deduction || 0)).toFixed(2)}</TableCell>
+                      <TableCell>{p.payment_mode || '-'}</TableCell>
+                      <TableCell>
+                        {p.payment_mode === 'cheque'
+                          ? (p.transaction_no ? `Cheque #${p.transaction_no}` : '-')
+                          : p.transaction_no || '-'}
+                      </TableCell>
+                      <TableCell>{p.bank_name || '-'}</TableCell>
+                      <TableCell>
+                        {p.transaction_slip ? (
+                          <Button variant='text' size='small' component='a' href={'/' + p.transaction_slip} target='_blank'>View</Button>
+                        ) : '-'}
+                      </TableCell>
+                      <TableCell>{p.remarks || '-'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </DialogContent>
+      </Dialog>
     </Grid>
   )
 }

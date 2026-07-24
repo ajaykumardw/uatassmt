@@ -9,11 +9,13 @@ import CardHeader from '@mui/material/CardHeader'
 import CardContent from '@mui/material/CardContent'
 import Button from '@mui/material/Button'
 import Grid from '@mui/material/Grid'
-import Typography from '@mui/material/Typography'
 import CircularProgress from '@mui/material/CircularProgress'
+import MenuItem from '@mui/material/MenuItem'
 import { toast } from 'react-toastify'
 
 import CustomTextField from '@core/components/mui/TextField'
+
+import { MenuProps } from '@/configs/customDataConfig'
 
 type Props = {
   invoiceId: number
@@ -33,10 +35,7 @@ const InvoiceEdit = ({ invoiceId }: Props) => {
   const [presentCandidates, setPresentCandidates] = useState('')
   const [amountPerCandidate, setAmountPerCandidate] = useState('')
   const [totalAmount, setTotalAmount] = useState(0)
-  const [tdsAmount, setTdsAmount] = useState('')
-  const [otherDeduction, setOtherDeduction] = useState('')
-  const [advanceAmount, setAdvanceAmount] = useState('')
-  const [gstAmount, setGstAmount] = useState('')
+  const [gstPercentage, setGstPercentage] = useState('')
   const [currentStatus, setCurrentStatus] = useState(0)
   const [notes, setNotes] = useState('')
 
@@ -60,10 +59,7 @@ const InvoiceEdit = ({ invoiceId }: Props) => {
           setPresentCandidates(String(d.present_candidate || ''))
           setAmountPerCandidate(String(d.amount_per_candidate || ''))
           setTotalAmount(Number(d.total_amount) || 0)
-          setTdsAmount(String(d.tds_amount || ''))
-          setOtherDeduction(String(d.other_deduction || ''))
-          setAdvanceAmount(String(d.advance_amount || ''))
-          setGstAmount(String(d.gst_amount || ''))
+          setGstPercentage(String(d.gst_percentage || ''))
           setCurrentStatus(d.status)
           setNotes(d.notes || '')
         } else {
@@ -102,19 +98,11 @@ return
         present_candidate: Number(presentCandidates) || 0,
         amount_per_candidate: Number(amountPerCandidate) || 0,
         total_amount: totalAmount,
-        tds_amount: Number(tdsAmount) || 0,
-        other_deduction: Number(otherDeduction) || 0,
         notes: notes || null
       }
 
-      if (currentStatus === 0 && invoiceType === 2) {
-        body.status = 1
-      }
-
-      if (invoiceType === 2) {
-        body.advance_amount = Number(advanceAmount) || 0
-      } else if (invoiceType === 3) {
-        body.gst_amount = Number(gstAmount) || 0
+      if (invoiceType === 3) {
+        body.gst_percentage = Number(gstPercentage) || 0
       }
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoices/${invoiceId}`, {
@@ -163,11 +151,7 @@ return
         <Card>
           <CardHeader title='Edit Invoice' subheader={`Invoice #${invoiceId} — ${invoiceType === 1 ? 'SSC' : invoiceType === 2 ? 'Assessor' : 'TP'}`} />
           <CardContent>
-            {currentStatus === 0 && invoiceType === 2 && (
-              <Typography variant='body2' color='warning.main' className='mb-4 p-2' sx={{ bgcolor: 'warning.light', borderRadius: 1 }}>
-                This is a Draft invoice. Enter Amount Per Candidate and verify Total Amount, then save to submit.
-              </Typography>
-            )}
+
             <Grid container spacing={4}>
               <Grid item xs={12} sm={6}>
                 <CustomTextField fullWidth label='Batch' value={batchName} InputProps={{ readOnly: true }} />
@@ -220,45 +204,43 @@ return
                   InputProps={{ readOnly: true }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <CustomTextField
-                  fullWidth
-                  label='TDS Amount'
-                  type='number'
-                  value={tdsAmount}
-                  onChange={e => setTdsAmount(e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <CustomTextField
-                  fullWidth
-                  label='Other Deduction'
-                  type='number'
-                  value={otherDeduction}
-                  onChange={e => setOtherDeduction(e.target.value)}
-                />
-              </Grid>
-              {invoiceType === 2 && (
-                <Grid item xs={12} sm={6}>
-                  <CustomTextField
-                    fullWidth
-                    label='Advance Amount'
-                    type='number'
-                    value={advanceAmount}
-                    onChange={e => setAdvanceAmount(e.target.value)}
-                  />
-                </Grid>
-              )}
+
               {invoiceType === 3 && (
-                <Grid item xs={12} sm={6}>
-                  <CustomTextField
-                    fullWidth
-                    label='GST Amount'
-                    type='number'
-                    value={gstAmount}
-                    onChange={e => setGstAmount(e.target.value)}
-                  />
-                </Grid>
+                <>
+                  <Grid item xs={12} sm={2}>
+                    <CustomTextField
+                      select
+                      fullWidth
+                      label='GST %'
+                      value={gstPercentage}
+                      onChange={e => setGstPercentage(e.target.value)}
+                      SelectProps={{ MenuProps }}
+                    >
+                      <MenuItem value=''>Select</MenuItem>
+                      <MenuItem value='0'>0%</MenuItem>
+                      <MenuItem value='5'>5%</MenuItem>
+                      <MenuItem value='12'>12%</MenuItem>
+                      <MenuItem value='18'>18%</MenuItem>
+                      <MenuItem value='28'>28%</MenuItem>
+                    </CustomTextField>
+                  </Grid>
+                  <Grid item xs={12} sm={2}>
+                    <CustomTextField
+                      fullWidth
+                      label='GST Amount'
+                      value={gstPercentage && totalAmount ? (totalAmount * Number(gstPercentage) / 100).toFixed(2) : '0.00'}
+                      InputProps={{ readOnly: true }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={2}>
+                    <CustomTextField
+                      fullWidth
+                      label='Grand Total (incl. GST)'
+                      value={gstPercentage && totalAmount ? (totalAmount + totalAmount * Number(gstPercentage) / 100).toFixed(2) : totalAmount.toFixed(2)}
+                      InputProps={{ readOnly: true }}
+                    />
+                  </Grid>
+                </>
               )}
               <Grid item xs={12}>
                 <CustomTextField

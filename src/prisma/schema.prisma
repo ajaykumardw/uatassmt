@@ -1066,11 +1066,8 @@ model invoices {
   present_candidate     Int
   amount_per_candidate  Decimal                @db.Decimal(10, 2)
   total_amount          Decimal                @db.Decimal(10, 2)
-  advance_amount        Decimal?               @db.Decimal(10, 2) @default(0)
-  tds_amount            Decimal?               @db.Decimal(10, 2) @default(0)
-  other_deduction       Decimal?               @db.Decimal(10, 2) @default(0)
-  net_amount            Decimal?               @db.Decimal(10, 2)
   gst_amount            Decimal?               @db.Decimal(10, 2) @default(0)
+  gst_percentage        Decimal?               @db.Decimal(5, 2)
   group_photo           String?                @db.VarChar(500)
   attendance_sheet      String?                @db.VarChar(500)
   invoice_pdf           String?                @db.VarChar(500)
@@ -1098,6 +1095,9 @@ model payments {
   id                Int       @id @default(autoincrement())
   invoice_id        Int
   amount            Decimal   @db.Decimal(10, 2)
+  tds_amount        Decimal?  @db.Decimal(10, 2) @default(0)
+  advance_amount    Decimal?  @db.Decimal(10, 2) @default(0)
+  other_deduction   Decimal?  @db.Decimal(10, 2) @default(0)
   payment_date      DateTime  @db.Date
   payment_mode      String?   @db.VarChar(50)
   transaction_no    String?   @db.VarChar(100)

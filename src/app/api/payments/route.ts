@@ -26,6 +26,9 @@ export async function GET(req: Request) {
         id,
         invoice_id,
         amount,
+        tds_amount,
+        advance_amount,
+        other_deduction,
         payment_date,
         payment_mode,
         transaction_no,
@@ -42,7 +45,10 @@ export async function GET(req: Request) {
 
     const formatted = (data as any[]).map(row => ({
       ...row,
-      amount: Number(row.amount)
+      amount: Number(row.amount),
+      tds_amount: row.tds_amount ? Number(row.tds_amount) : 0,
+      advance_amount: row.advance_amount ? Number(row.advance_amount) : 0,
+      other_deduction: row.other_deduction ? Number(row.other_deduction) : 0
     }))
 
     return NextResponse.json({ status: 'Success', statusCode: 200, data: formatted })
@@ -52,9 +58,11 @@ export async function GET(req: Request) {
 }
 
 async function checkAndUpdatePaymentComplete(invoiceId: number) {
-  const rows = await prisma.$queryRaw<Array<{ total_amount: number; tds_amount: number; other_deduction: number; paid: number }>>`
+  const rows = await prisma.$queryRaw<Array<{ total_amount: number; gst_amount: number | null; gst_percentage: number | null; paid: number }>>`
     SELECT
-      i.total_amount, i.tds_amount, i.other_deduction,
+      i.total_amount,
+      i.gst_amount,
+      i.gst_percentage,
       COALESCE(SUM(p.amount), 0) AS paid
     FROM invoices i
     LEFT JOIN payments p ON p.invoice_id = i.id
@@ -67,7 +75,14 @@ async function checkAndUpdatePaymentComplete(invoiceId: number) {
 
   if (!inv) return
 
-  const netAmount = Number(inv.total_amount) - (Number(inv.tds_amount) || 0) - (Number(inv.other_deduction) || 0)
+  const gstAmt = inv.gst_percentage
+    ? Number(inv.total_amount) * Number(inv.gst_percentage) / 100
+    : (inv.gst_amount ? Number(inv.gst_amount) : 0)
+
+  const netAmount = gstAmt > 0
+    ? Number(inv.total_amount) + gstAmt
+    : Number(inv.total_amount)
+
   const totalPaid = Number(inv.paid)
 
   if (totalPaid >= netAmount && netAmount > 0) {
@@ -95,6 +110,7 @@ export async function POST(req: Request) {
 
     let invoice_id: number, amount: number, payment_date: string
     let payment_mode = '', transaction_no = '', cheque_date = '', bank_name = '', transaction_slip: string | null = null, remarks = ''
+    let tds_amount = 0, advance_amount = 0, other_deduction = 0
 
     if (contentType.includes('multipart/form-data')) {
       const formData = await req.formData()
@@ -107,6 +123,9 @@ export async function POST(req: Request) {
       cheque_date = (formData.get('cheque_date') as string) || ''
       bank_name = (formData.get('bank_name') as string) || ''
       remarks = (formData.get('remarks') as string) || ''
+      tds_amount = Number(formData.get('tds_amount')) || 0
+      advance_amount = Number(formData.get('advance_amount')) || 0
+      other_deduction = Number(formData.get('other_deduction')) || 0
       const file = formData.get('file') as File | null
 
       if (file && file.size > 0) {
@@ -142,6 +161,9 @@ export async function POST(req: Request) {
       bank_name = body.bank_name || ''
       transaction_slip = body.transaction_slip || null
       remarks = body.remarks || ''
+      tds_amount = Number(body.tds_amount) || 0
+      advance_amount = Number(body.advance_amount) || 0
+      other_deduction = Number(body.other_deduction) || 0
     }
 
     if (!invoice_id || !amount || !payment_date) {
@@ -153,8 +175,8 @@ export async function POST(req: Request) {
     }
 
     await prisma.$executeRaw`
-      INSERT INTO payments (invoice_id, amount, payment_date, payment_mode, transaction_no, cheque_date, bank_name, transaction_slip, remarks, created_by, created_at)
-      VALUES (${Number(invoice_id)}, ${Number(amount)}, ${new Date(payment_date)}, ${payment_mode || null}, ${transaction_no || null}, ${cheque_date ? new Date(cheque_date) : null}, ${bank_name || null}, ${transaction_slip}, ${remarks || null}, ${created_by}, NOW())
+      INSERT INTO payments (invoice_id, amount, tds_amount, advance_amount, other_deduction, payment_date, payment_mode, transaction_no, cheque_date, bank_name, transaction_slip, remarks, created_by, created_at)
+      VALUES (${Number(invoice_id)}, ${Number(amount)}, ${tds_amount}, ${advance_amount}, ${other_deduction}, ${new Date(payment_date)}, ${payment_mode || null}, ${transaction_no || null}, ${cheque_date ? new Date(cheque_date) : null}, ${bank_name || null}, ${transaction_slip}, ${remarks || null}, ${created_by}, NOW())
     `
 
     // Auto-check if payment complete

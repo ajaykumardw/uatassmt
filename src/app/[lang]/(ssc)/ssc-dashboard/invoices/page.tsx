@@ -77,6 +77,7 @@ const Page = () => {
       onDateToChange={setDateTo}
       onFilter={handleFilterChange}
       hideCreate
+      detailPath='/ssc-dashboard/invoices/'
     />
   )
 }

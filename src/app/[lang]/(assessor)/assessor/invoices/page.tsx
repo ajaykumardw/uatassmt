@@ -77,6 +77,8 @@ const Page = () => {
       onDateToChange={setDateTo}
       onFilter={handleFilterChange}
       hideCreate
+      detailPath='/assessor/invoices/'
+      userRole='assessor'
     />
   )
 }
