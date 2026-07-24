@@ -118,6 +118,7 @@ const InvoicesList = ({
   search, onSearchChange, type, onTypeChange,
   status, onStatusChange,
   dateFrom, onDateFromChange, dateTo, onDateToChange, onFilter,
+  updateData,
   hideCreate = false,
   detailPath = '/invoice/invoices/',
   userRole
