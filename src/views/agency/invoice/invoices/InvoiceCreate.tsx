@@ -616,13 +616,13 @@ const InvoiceCreate = () => {
                       )}
                     </>
                   )}
-                  {selectedType === 3 && (
+                  {/* {selectedType === 3 && (
                     <Grid item xs={12}>
                       <Typography variant='body2' color='text.secondary'>
                         No file uploads required for TP invoices
                       </Typography>
                     </Grid>
-                  )}
+                  )} */}
                   <Grid item xs={12} className='flex gap-4'>
                     <Button variant='contained' onClick={handleSave} disabled={saving} startIcon={saving ? <CircularProgress size={16} color='inherit' /> : <i className='tabler-device-floppy' />}>
                       Save Invoice
