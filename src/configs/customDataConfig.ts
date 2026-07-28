@@ -210,6 +210,12 @@ export const getBatchIndividualCandidateTheoryCapturedFilePath = (batchId: numbe
   return fileName ? `${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.agency}/${storageFolders.batches}/${batchId}/student/${candidateId}/captured/${fileName}` : "";
 }
 
+export const GST_OPTIONS = [
+  { value: '', label: 'None' },
+  { value: '5', label: '5%' },
+  { value: '18', label: '18%' }
+]
+
 export const folders = [
   {
     id: "annexure_m1_m2",

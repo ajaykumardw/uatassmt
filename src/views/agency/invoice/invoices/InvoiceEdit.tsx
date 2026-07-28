@@ -15,7 +15,7 @@ import { toast } from 'react-toastify'
 
 import CustomTextField from '@core/components/mui/TextField'
 
-import { MenuProps } from '@/configs/customDataConfig'
+import { MenuProps, GST_OPTIONS } from '@/configs/customDataConfig'
 
 type Props = {
   invoiceId: number
@@ -216,9 +216,9 @@ return
                       onChange={e => setGstPercentage(e.target.value)}
                       SelectProps={{ MenuProps }}
                     >
-                      <MenuItem value=''>None</MenuItem>
-                      <MenuItem value='5'>5%</MenuItem>
-                      <MenuItem value='18'>18%</MenuItem>
+                      {GST_OPTIONS.map(o => (
+                        <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
+                      ))}
                     </CustomTextField>
                   </Grid>
                   <Grid item xs={12} sm={2}>
