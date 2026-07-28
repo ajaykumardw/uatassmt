@@ -277,7 +277,10 @@ const InvoiceCreate = () => {
         }
       } else if (selectedType === 3) {
         body.tp_id = Number(selectedTpId)
-        body.gst_percentage = Number(gstPercentage) || 0
+
+        if (gstPercentage) {
+          body.gst_percentage = Number(gstPercentage)
+        }
       }
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invoices`, {
@@ -490,12 +493,9 @@ const InvoiceCreate = () => {
                           onChange={e => setGstPercentage(e.target.value)}
                           SelectProps={{ MenuProps }}
                         >
-                          <MenuItem value=''>Select</MenuItem>
-                          <MenuItem value='0'>0%</MenuItem>
+                          <MenuItem value=''>None</MenuItem>
                           <MenuItem value='5'>5%</MenuItem>
-                          <MenuItem value='12'>12%</MenuItem>
                           <MenuItem value='18'>18%</MenuItem>
-                          <MenuItem value='28'>28%</MenuItem>
                         </CustomTextField>
                       </Grid>
                       <Grid item xs={12} sm={3}>
