@@ -19,6 +19,8 @@ export type SSCType = {
   deleted_at: string,
   created_at: string
   updated_at: string,
+  sector?: string,
+  sub_sector?: string,
   qualification_packs: QPType[]
   nos: NOSType[]
   agency: UsersType

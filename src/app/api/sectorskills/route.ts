@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
   const formData = await req.formData();
 
   const body = Object.fromEntries(formData);
-  const { sscName, sscCode, username, password, status, profileImage } = body;
+  const { sscName, sscCode, username, password, status, sector, subSector, profileImage } = body;
 
   const duplicates = await prisma.sector_skill_councils.findMany({
     where: {
@@ -153,6 +153,8 @@ export async function POST(req: NextRequest) {
       ssc_username: username.toString(),
       ssc_pwd: hashPassword,
       status: Number(status),
+      sector: sector ? sector.toString() : null,
+      sub_sector: subSector ? subSector.toString() : null,
       agency_id: agencyId,
       created_by: createdBy
     }

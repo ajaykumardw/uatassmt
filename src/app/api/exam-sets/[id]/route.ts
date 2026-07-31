@@ -59,6 +59,7 @@ export async function POST(
 
     questionRandom,
     optionRandom,
+    qbConsultation,
     selectedQuestions
   } = await req.json();
 
@@ -125,6 +126,7 @@ export async function POST(
           exam_duration: Number(examDuration),
           question_random: questionRandom ? 1 : 0,
           option_random: optionRandom ? 1 : 0,
+          qb_consultation: qbConsultation || 'None',
         }
       });
 

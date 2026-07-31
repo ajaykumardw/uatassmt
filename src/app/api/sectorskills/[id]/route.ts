@@ -82,7 +82,7 @@ export async function POST(
   const formData = await req.formData();
 
   const body = Object.fromEntries(formData);
-  const { sscName, sscCode, username, status, profileImage } = body;
+  const { sscName, sscCode, username, status, sector, subSector, profileImage } = body;
 
   const profileBlob = profileImage as Blob;
   const profileName = profileImage ? getTime(new Date()) + "_" + (profileImage as File).name : "";
@@ -134,7 +134,9 @@ export async function POST(
         ssc_code: sscCode.toString(),
         ssc_username: username.toString(),
         status: Number(status),
-        ssc_image: profileName ? profileName : sscExist.ssc_image
+        ssc_image: profileName ? profileName : sscExist.ssc_image,
+        sector: sector ? sector.toString() : sscExist.sector,
+        sub_sector: subSector ? subSector.toString() : sscExist.sub_sector
       }
     });
 

@@ -52,6 +52,15 @@ model batches {
   hard_copy_received        Int? @default(0) @db.TinyInt
   question_paper            String? @db.VarChar(255)
   omr_sheet                 String? @db.VarChar(255)
+  batch_allocated_date      DateTime? @db.DateTime(0)
+  batch_acceptance          String? @db.VarChar(20)
+  batch_type                String? @db.VarChar(50)
+  is_sidh_batch             String? @db.VarChar(10)
+  is_nsqf_aligned           String? @db.VarChar(20)
+  funding_type              String? @db.VarChar(50)
+  training_type             String? @db.VarChar(50)
+  batch_start_date          DateTime? @db.DateTime(0)
+  batch_end_date            DateTime? @db.DateTime(0)
 
   students                  students[]
   center_inspections         inspection_media[]
@@ -176,6 +185,7 @@ model qualification_packs {
   qualification_pack_name  String                   @db.VarChar(100)
   nqr_code                 String?                  @db.VarChar(100)
   nsqf_level               String                   @db.VarChar(6)
+  qualification_type       String?                  @db.VarChar(50)
   version                  version                  @relation(fields: [version_id], references: [id])
   version_id               Int
   total_marks              Decimal                  @db.Decimal(10, 2)
@@ -430,6 +440,8 @@ model sector_skill_councils {
   ssc_username String?   @db.VarChar(100)
   ssc_pwd      String?   @db.VarChar(100)
   ssc_image    String?
+  sector       String?   @db.VarChar(100)
+  sub_sector   String?   @db.VarChar(100)
   status       Int       @default(1) @db.TinyInt
   created_by   Int?
   deleted_at   DateTime? @db.DateTime(0)
@@ -714,6 +726,7 @@ model exam_sets {
   total_questions Int
   exam_duration   Int           @default(30)
   instruction     String?
+  qb_consultation String?       @db.VarChar(50)
   question_levels Json?
   status          Int           @default(0) @db.TinyInt
   created_by      Int

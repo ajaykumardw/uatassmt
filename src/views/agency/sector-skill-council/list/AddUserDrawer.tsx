@@ -22,7 +22,7 @@ import type { SubmitHandler } from 'react-hook-form';
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, minLength, string, forward, check, trim, pipe } from "valibot"
+import { object, minLength, string, forward, check, trim, pipe, optional } from "valibot"
 
 import type { InferInput } from 'valibot'
 
@@ -66,7 +66,9 @@ const schema = pipe(
       username: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Last Name must be at least 3 characters long')),
       password: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(8, 'Password must be at least 8 characters long')),
       confirmPassword: pipe(string(), trim() , minLength(1, 'This field is required')),
-      status: pipe(string(), trim() , minLength(1, 'This field is required'))
+      status: pipe(string(), trim() , minLength(1, 'This field is required')),
+      sector: optional(pipe(string(), trim())),
+      subSector: optional(pipe(string(), trim()))
     }
   ),
   forward(
@@ -102,6 +104,8 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
       password: '',
       confirmPassword: '',
       status: '1',
+      sector: '',
+      subSector: '',
       profileImage: ''
     }
   })
@@ -124,6 +128,8 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
     formData.append('password', data.password);
     formData.append('confirmPassword', data.confirmPassword);
     formData.append('status', data.status);
+    formData.append('sector', data.sector || '');
+    formData.append('subSector', data.subSector || '');
     formData.append('profileImage', data.profileImage);
 
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sectorskills`, {
@@ -283,6 +289,34 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
                 label='SSC Code'
                 placeholder='Sector Skills Council Code'
                 {...(errors.sscCode && { error: true, helperText: errors.sscCode.message })}
+              />
+            )}
+          />
+          <Controller
+            name='sector'
+            control={control}
+            rules={{ required: true }}
+            render={({ field }) => (
+              <CustomTextField
+                {...field}
+                fullWidth
+                label='Sector'
+                placeholder='Sector'
+                {...(errors.sector && { error: true, helperText: errors.sector.message })}
+              />
+            )}
+          />
+          <Controller
+            name='subSector'
+            control={control}
+            rules={{ required: true }}
+            render={({ field }) => (
+              <CustomTextField
+                {...field}
+                fullWidth
+                label='Sub Sector'
+                placeholder='Sub Sector'
+                {...(errors.subSector && { error: true, helperText: errors.subSector.message })}
               />
             )}
           />

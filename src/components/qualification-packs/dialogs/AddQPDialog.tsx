@@ -37,6 +37,8 @@ import type { SSCType } from '@/types/sectorskills/sscType'
 import DialogCloseButton from '@components/dialogs/DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
 
+import { TypeOfQualificationOptions } from '@/configs/customDataConfig'
+
 // import { NSQFLevelLength } from '@/configs/customDataConfig';
 
 type AddQPDialogData = InferInput<typeof schema>
@@ -57,6 +59,7 @@ const initialData: AddQPDialogData = {
   qualificationPackId: '',
   qualificationPackName: '',
   nSQFLevel: '',
+  qualificationType: '',
   version: '',
   nQRCode: '',
   totalTheoryMarks: '',
@@ -82,6 +85,7 @@ const schema = object(
     qualificationPackId: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Qualification pack Id must be at least 3 characters long')),
     qualificationPackName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Qualification pack name must be at least 3 characters long')),
     nSQFLevel: pipe(string(), trim() , minLength(1, 'This field is required'), maxLength(6, 'Max length is 6 characters')),
+    qualificationType: optional(pipe(string(), trim() ,)),
     nQRCode: optional(pipe(string(), trim() ,)),
     version: pipe(string(), trim() , minLength(1, 'This field is required')),
     totalTheoryMarks: pipe(string(), trim() , minLength(1, 'Total theory marks is required') , regex(/^[0-9]+(?:\.[0-9]+)?$/, 'Total theory marks must contain only numbers') , maxLength(10, 'Max length is 10 digits')),
@@ -561,6 +565,27 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
                   //   ))}
                   // </CustomTextField>
 
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                control={control}
+                name='qualificationType'
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <CustomTextField
+                    select
+                    fullWidth
+                    label='Type of Qualification'
+                    {...field}
+                    {...(errors.qualificationType && { error: true, helperText: errors.qualificationType.message })}
+                  >
+                    <MenuItem value=''>Select Type of Qualification</MenuItem>
+                    {TypeOfQualificationOptions.map((option) => (
+                      <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>
+                    ))}
+                  </CustomTextField>
                 )}
               />
             </Grid>

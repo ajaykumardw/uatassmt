@@ -146,7 +146,7 @@ export async function POST(req: Request) {
 
   const data = await req.json();
 
-  const {qpId, theoryExamSetId, practicalExamSetId, vivaExamSetId, batchName, batchSize, scheme, subScheme, trainingPartner, trainingCenter, assessmentStartDate, assessmentEndDate, loginRestrictCount, modeOfAssessment, captureImage, captureImageInSeconds} = data;
+  const {qpId, theoryExamSetId, practicalExamSetId, vivaExamSetId, batchName, batchSize, scheme, subScheme, trainingPartner, trainingCenter, assessmentStartDate, assessmentEndDate, loginRestrictCount, modeOfAssessment, captureImage, captureImageInSeconds, batchAllocatedDate, batchAcceptance, batchType, isSidhBatch, isNsqfAligned, fundingType, trainingType, batchStartDate, batchEndDate} = data;
 
   const session = await getServerSession(authOptions);
   const createdBy = Number(session?.user.id);
@@ -169,6 +169,15 @@ export async function POST(req: Request) {
       login_restrict: Number(loginRestrictCount),
       assessment_mode: Number(modeOfAssessment),
       capture_image_in_seconds: captureImage ? Number(captureImageInSeconds) : null,
+      batch_allocated_date: batchAllocatedDate || null,
+      batch_acceptance: batchAcceptance || null,
+      batch_type: batchType || null,
+      is_sidh_batch: isSidhBatch || null,
+      is_nsqf_aligned: isNsqfAligned || null,
+      funding_type: fundingType || null,
+      training_type: trainingType || null,
+      batch_start_date: batchStartDate || null,
+      batch_end_date: batchEndDate || null,
       agency_id: agencyId,
       created_by: createdBy,
     }

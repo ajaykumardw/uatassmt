@@ -21,7 +21,7 @@ import type { SubmitHandler } from 'react-hook-form';
 
 import { valibotResolver } from '@hookform/resolvers/valibot';
 
-import { object, minLength, string, trim, pipe } from "valibot"
+import { object, minLength, string, trim, pipe, optional } from "valibot"
 
 import type { InferInput } from 'valibot';
 
@@ -39,6 +39,8 @@ type Props = {
   username: string
   sscStatus: string
   sscImage?: string
+  sscSector: string
+  sscSubSector: string
   updateSSCList: () => void
 }
 
@@ -59,11 +61,13 @@ const schema = object(
     sscName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'First Name must be at least 3 characters long')),
     sscCode: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'First Name must be at least 3 characters long')),
     username: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Last Name must be at least 3 characters long')),
-    status: pipe(string(), trim() , minLength(1, 'This field is required'))
+    status: pipe(string(), trim() , minLength(1, 'This field is required')),
+    sector: optional(pipe(string(), trim())),
+    subSector: optional(pipe(string(), trim()))
   }
 )
 
-const EditUserDrawer = ({ open, handleClose, sscId, sscName, sscCode, username, sscStatus, sscImage, updateSSCList }: Props) => {
+const EditUserDrawer = ({ open, handleClose, sscId, sscName, sscCode, username, sscStatus, sscImage, sscSector, sscSubSector, updateSSCList }: Props) => {
 
 
   // States
@@ -87,6 +91,8 @@ const EditUserDrawer = ({ open, handleClose, sscId, sscName, sscCode, username, 
       sscCode: sscCode,
       username: username,
       status: sscStatus.toString(),
+      sector: sscSector,
+      subSector: sscSubSector,
       profileImage: ''
     }
   });
@@ -103,6 +109,8 @@ const EditUserDrawer = ({ open, handleClose, sscId, sscName, sscCode, username, 
     formData.append('sscCode', data.sscCode);
     formData.append('username', data.username);
     formData.append('status', data.status);
+    formData.append('sector', data.sector || '');
+    formData.append('subSector', data.subSector || '');
     formData.append('profileImage', data.profileImage);
 
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sectorskills/${sscId}`, {
@@ -248,6 +256,34 @@ const EditUserDrawer = ({ open, handleClose, sscId, sscName, sscCode, username, 
                 label='SSC Code'
                 placeholder='Sector Skills Council Code'
                 {...(errors.sscCode && { error: true, helperText: errors.sscCode.message })}
+              />
+            )}
+          />
+          <Controller
+            name='sector'
+            control={control}
+            rules={{ required: true }}
+            render={({ field }) => (
+              <CustomTextField
+                {...field}
+                fullWidth
+                label='Sector'
+                placeholder='Sector'
+                {...(errors.sector && { error: true, helperText: errors.sector.message })}
+              />
+            )}
+          />
+          <Controller
+            name='subSector'
+            control={control}
+            rules={{ required: true }}
+            render={({ field }) => (
+              <CustomTextField
+                {...field}
+                fullWidth
+                label='Sub Sector'
+                placeholder='Sub Sector'
+                {...(errors.subSector && { error: true, helperText: errors.subSector.message })}
               />
             )}
           />

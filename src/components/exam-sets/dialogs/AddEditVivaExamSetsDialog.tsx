@@ -23,7 +23,7 @@ import type { SubmitHandler } from 'react-hook-form'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 
-import { object, string, trim, minLength, check, pipe } from "valibot"
+import { object, string, trim, minLength, check, pipe, optional } from "valibot"
 
 import type { InferInput } from 'valibot'
 
@@ -63,6 +63,7 @@ const initialData: AddQPDialogData = {
   totalQuestions: '',
   status: '',
   examDuration: '',
+  qbConsultation: 'None',
 }
 
 
@@ -89,6 +90,7 @@ const schema = object(
       )
     ),
     status: pipe(string(), trim(), minLength(1, 'This field is required.')),
+    qbConsultation: optional(pipe(string(), trim())),
     examDuration: pipe( string(), trim(), minLength(1, 'This field is required.'), check((value) => /^(?:[1-9]|[1-9]\d|[1-2]\d{2}|300)$/.test(value), 'Exam duration must be between 1 and 300 minutes and must be a whole number.' ) ),
   }
 );
@@ -145,6 +147,7 @@ const AddEditVivaExamSetsDialog = ({ open, examSetId, handleClose, updateExamSet
         totalQuestions: examSet.total_questions,
         status: examSet.status,
         examDuration: examSet.exam_duration.toString(),
+        qbConsultation: examSet.qb_consultation || 'None',
       })
       setMode(examSet.mode);
 
@@ -609,6 +612,28 @@ const AddEditVivaExamSetsDialog = ({ open, examSetId, handleClose, updateExamSet
                   >
                     <MenuItem value='1'>Publish</MenuItem>
                     <MenuItem value='0'>Unpublish</MenuItem>
+                  </CustomTextField>
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                control={control}
+                name='qbConsultation'
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <CustomTextField
+                    select
+                    fullWidth
+                    id='select-qb-consultation'
+                    label='QB Consultation'
+                    {...field}
+                    onChange={(e) => { field.onChange(e); }}
+                    {...(errors.qbConsultation && { error: true, helperText: errors.qbConsultation.message })}
+                  >
+                    <MenuItem value='None'>None</MenuItem>
+                    <MenuItem value='AB'>AB</MenuItem>
+                    <MenuItem value='Industry'>Industry</MenuItem>
                   </CustomTextField>
                 )}
               />

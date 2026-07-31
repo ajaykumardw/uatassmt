@@ -53,6 +53,7 @@ export async function POST(req: Request) {
     hard,
     questionRandom,
     optionRandom,
+    qbConsultation,
     selectedQuestions,
     set_type
   } = await req.json();
@@ -92,19 +93,20 @@ export async function POST(req: Request) {
         set_name: setName,
         set_type: set_type,
         mode: mode,
-        total_questions: Number(totalQuestions),
-        status: Number(status),
-        exam_duration: Number(examDuration),
-        question_random: questionRandom ? 1 : 0,
-        option_random: optionRandom ? 1 : 0,
-        created_by: createdBy
-      }
-    })
+            total_questions: Number(totalQuestions),
+            status: Number(status),
+            exam_duration: Number(examDuration),
+            question_random: questionRandom ? 1 : 0,
+            option_random: optionRandom ? 1 : 0,
+            qb_consultation: qbConsultation || 'None',
+            created_by: createdBy
+          }
+        })
 
 
-    if(result){
+        if(result){
 
-      for (const question of questions) {
+          for (const question of questions) {
         await prisma.exam_sets_questions.create({
           data: {
             agency_id: agency_id,
@@ -189,6 +191,7 @@ export async function POST(req: Request) {
             question_levels: {"E": easyNum, "M": mediumNum, "H": hardNum},
             question_random: questionRandom ? 1 : 0,
             option_random: optionRandom ? 1 : 0,
+            qb_consultation: qbConsultation || 'None',
             created_by: createdBy
           }
         })

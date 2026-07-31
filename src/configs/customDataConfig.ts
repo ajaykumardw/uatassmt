@@ -8,6 +8,60 @@ export const ModeOfAssessment = [
   { id: '3', label: 'Paper Pen' }
 ]
 
+export const BatchAcceptanceOptions = [
+  { id: 'Accepted', label: 'Accepted' },
+  { id: 'Rejected', label: 'Rejected' }
+]
+
+export const BatchTypeOptions = [
+  { id: 'Regular', label: 'Regular' },
+  { id: 'Re-assessment', label: 'Re-assessment' },
+  { id: 'Third Party (Regular)', label: 'Third Party (Regular)' },
+  { id: 'Third Party (Re-assessment)', label: 'Third Party (Re-assessment)' },
+  { id: 'School Assessment', label: 'School Assessment' }
+]
+
+export const YesNoOptions = [
+  { id: 'Yes', label: 'Yes' },
+  { id: 'No', label: 'No' }
+]
+
+export const NSQFAlignedOptions = [
+  { id: 'NSQF Aligned', label: 'NSQF Aligned' },
+  { id: 'Non Nsqf', label: 'Non Nsqf' }
+]
+
+export const FundingTypeOptions = [
+  { id: 'Fee Based', label: 'Fee Based' },
+  { id: 'Govt. Funded', label: 'Govt. Funded' },
+  { id: 'Non Govt. Funded', label: 'Non Govt. Funded' },
+  { id: 'Others', label: 'Others' }
+]
+
+export const TrainingTypeOptions = [
+  { id: 'STT', label: 'STT' },
+  { id: 'RPL', label: 'RPL' },
+  { id: 'NAPS', label: 'NAPS' },
+  { id: 'LTT', label: 'LTT' },
+  { id: 'STT Self Paced', label: 'STT Self Paced' },
+  { id: 'LTT Self Paced', label: 'LTT Self Paced' },
+  { id: 'Other', label: 'Other' }
+]
+
+export const TypeOfQualificationOptions = [
+  { id: 'General', label: 'General' },
+  { id: 'Futuristic', label: 'Futuristic' },
+  { id: 'Traditional', label: 'Traditional' },
+  { id: 'Multi sectoral', label: 'Multi sectoral' },
+  { id: 'Cross sectoral', label: 'Cross sectoral' },
+  { id: 'Others', label: 'Others' }
+]
+
+export const TypeOfAwardingEntityOptions = [
+  { id: 'NCVET Recognized', label: 'NCVET Recognized' },
+  { id: 'Others', label: 'Others' }
+]
+
 export const ExpectedStudentExcelHeaders = [
   'Batch ID',
   'Candidate ID',

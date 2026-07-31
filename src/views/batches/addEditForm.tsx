@@ -45,7 +45,7 @@ import { getLocalizedUrl } from '@/utils/i18n'
 
 import type { Locale } from '@configs/i18n'
 
-import { MenuProps, ModeOfAssessment } from '@/configs/customDataConfig'
+import { MenuProps, ModeOfAssessment, BatchAcceptanceOptions, BatchTypeOptions, YesNoOptions, NSQFAlignedOptions, FundingTypeOptions, TrainingTypeOptions } from '@/configs/customDataConfig'
 
 import type { SchemesType } from '@/types/schemes/schemesType'
 import AddEditTCForm from '../training-partner/training-centers/list/AddEditTCForm'
@@ -72,7 +72,16 @@ const schema = object(
     loginRestrictCount: pipe(string(), trim() , minLength(1, 'This field is required.') , regex(/^[1-9][0-9]{0,2}$/, 'Login Restrict Count must contain only numbers') , maxLength(3, 'The max length is 3 digits')),
     captureImage: optional(boolean()),
     captureImageInSeconds: optional(pipe(string(), trim() , check((value) => !value || /^[0-9]+$/.test(value), 'Must contain only numbers') , maxLength(10, 'Max length is 10 digits'))),
-    modeOfAssessment: pipe(string(), trim() , minLength(1, 'This field is required'))
+    modeOfAssessment: pipe(string(), trim() , minLength(1, 'This field is required')),
+    batchAllocatedDate: optional(date()),
+    batchAcceptance: optional(pipe(string(), trim())),
+    batchType: optional(pipe(string(), trim())),
+    isSidhBatch: optional(pipe(string(), trim())),
+    isNsqfAligned: optional(pipe(string(), trim())),
+    fundingType: optional(pipe(string(), trim())),
+    trainingType: optional(pipe(string(), trim())),
+    batchStartDate: optional(date()),
+    batchEndDate: optional(date())
   }
 )
 
@@ -132,6 +141,15 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
       captureImage: false,
       captureImageInSeconds: data?.capture_image_in_seconds?.toString() || '',
       modeOfAssessment: data?.assessment_mode?.toString() || '',
+      batchAllocatedDate: (data?.batch_allocated_date ? new Date(data?.batch_allocated_date) : undefined) || undefined,
+      batchAcceptance: data?.batch_acceptance || '',
+      batchType: data?.batch_type || '',
+      isSidhBatch: data?.is_sidh_batch || '',
+      isNsqfAligned: data?.is_nsqf_aligned || '',
+      fundingType: data?.funding_type || '',
+      trainingType: data?.training_type || '',
+      batchStartDate: (data?.batch_start_date ? new Date(data?.batch_start_date) : undefined) || undefined,
+      batchEndDate: (data?.batch_end_date ? new Date(data?.batch_end_date) : undefined) || undefined,
     }
   })
 
@@ -578,6 +596,58 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
               </Grid>
               <Grid item xs={12} sm={6}>
                 <Controller
+                  name='batchAllocatedDate'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: { value, onChange } }) => (
+                    <AppReactDatepicker
+                      selected={value}
+                      showYearDropdown
+                      showMonthDropdown
+                      onChange={onChange}
+                      dateFormat='dd/MM/yyyy'
+                      placeholderText='DD-MM-YYYY'
+                      customInput={
+                        <CustomTextField
+                          value={value}
+                          onChange={onChange}
+                          fullWidth
+                          label='Date on which Batch Allocated by Awarding Body'
+                          {...(errors.batchAllocatedDate && { error: true, helperText: errors.batchAllocatedDate.message })}
+                        />
+                      }
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='batchAcceptance'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomTextField
+                      select
+                      required={true}
+                      fullWidth
+                      label='Batch Accepted/Rejected'
+                      {...field}
+                      {...(errors.batchAcceptance && { error: true, helperText: errors.batchAcceptance.message })}
+                    >
+                      <MenuItem value=''>Select Batch Acceptance</MenuItem>
+                      {BatchAcceptanceOptions && BatchAcceptanceOptions.length > 0 ? (
+                        BatchAcceptanceOptions.map((option) => (
+                          <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem value="Accepted">No Option found</MenuItem>
+                      )}
+                    </CustomTextField>
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
                   name='batchName'
                   control={control}
                   rules={{ required: true }}
@@ -606,6 +676,162 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
                       required={true}
                       {...(errors.batchSize && { error: true, helperText: errors.batchSize.message })}
                     />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='batchStartDate'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: { value, onChange } }) => (
+                    <AppReactDatepicker
+                      selected={value}
+                      showYearDropdown
+                      showMonthDropdown
+                      onChange={onChange}
+                      dateFormat='dd/MM/yyyy'
+                      placeholderText='DD-MM-YYYY'
+                      customInput={
+                        <CustomTextField
+                          value={value}
+                          onChange={onChange}
+                          fullWidth
+                          label='Batch Start Date'
+                          {...(errors.batchStartDate && { error: true, helperText: errors.batchStartDate.message })}
+                        />
+                      }
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='batchEndDate'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: { value, onChange } }) => (
+                    <AppReactDatepicker
+                      selected={value}
+                      showYearDropdown
+                      showMonthDropdown
+                      onChange={onChange}
+                      dateFormat='dd/MM/yyyy'
+                      placeholderText='DD-MM-YYYY'
+                      customInput={
+                        <CustomTextField
+                          value={value}
+                          onChange={onChange}
+                          fullWidth
+                          label='Batch End Date'
+                          {...(errors.batchEndDate && { error: true, helperText: errors.batchEndDate.message })}
+                        />
+                      }
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='batchType'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomTextField
+                      select
+                      required={true}
+                      fullWidth
+                      label='Batch Type'
+                      {...field}
+                      {...(errors.batchType && { error: true, helperText: errors.batchType.message })}
+                    >
+                      <MenuItem value=''>Select Batch Type</MenuItem>
+                      {BatchTypeOptions && BatchTypeOptions.length > 0 ? (
+                        BatchTypeOptions.map((option) => (
+                          <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem value="Regular">No Option found</MenuItem>
+                      )}
+                    </CustomTextField>
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='isSidhBatch'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomTextField
+                      select
+                      required={true}
+                      fullWidth
+                      label='Is it a SIDH batch?'
+                      {...field}
+                      {...(errors.isSidhBatch && { error: true, helperText: errors.isSidhBatch.message })}
+                    >
+                      <MenuItem value=''>Select SIDH Batch</MenuItem>
+                      {YesNoOptions && YesNoOptions.length > 0 ? (
+                        YesNoOptions.map((option) => (
+                          <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem value="No">No Option found</MenuItem>
+                      )}
+                    </CustomTextField>
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='isNsqfAligned'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomTextField
+                      select
+                      required={true}
+                      fullWidth
+                      label='Is it a NSQF Aligned Batch?'
+                      {...field}
+                      {...(errors.isNsqfAligned && { error: true, helperText: errors.isNsqfAligned.message })}
+                    >
+                      <MenuItem value=''>Select NSQF Alignment</MenuItem>
+                      {NSQFAlignedOptions && NSQFAlignedOptions.length > 0 ? (
+                        NSQFAlignedOptions.map((option) => (
+                          <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem value="NSQF Aligned">No Option found</MenuItem>
+                      )}
+                    </CustomTextField>
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='fundingType'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomTextField
+                      select
+                      required={true}
+                      fullWidth
+                      label='Funding Type'
+                      {...field}
+                      {...(errors.fundingType && { error: true, helperText: errors.fundingType.message })}
+                    >
+                      <MenuItem value=''>Select Funding Type</MenuItem>
+                      {FundingTypeOptions && FundingTypeOptions.length > 0 ? (
+                        FundingTypeOptions.map((option) => (
+                          <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem value="Others">No Option found</MenuItem>
+                      )}
+                    </CustomTextField>
                   )}
                 />
               </Grid>
@@ -694,6 +920,32 @@ const AddEditBatchForm = ({id, data, sscData, tpData, trainingCenters, schemesDa
                   <i className='tabler-plus' />
                 </CustomIconButton> */}
                 <Button variant='tonal' disabled={selectedScheme === ''} onClick={() => { setParentSchemeId(Number(selectedScheme)); setAddSubSchemeOpen(true); }} color={selectedScheme === '' ? 'secondary' : 'primary'}>Add Sub Scheme</Button>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name='trainingType'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomTextField
+                      select
+                      required={true}
+                      fullWidth
+                      label='Training Type'
+                      {...field}
+                      {...(errors.trainingType && { error: true, helperText: errors.trainingType.message })}
+                    >
+                      <MenuItem value=''>Select Training Type</MenuItem>
+                      {TrainingTypeOptions && TrainingTypeOptions.length > 0 ? (
+                        TrainingTypeOptions.map((option) => (
+                          <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem value="Regular">No Option found</MenuItem>
+                      )}
+                    </CustomTextField>
+                  )}
+                />
               </Grid>
               <Grid item xs={12} sm={6} className='flex items-end gap-4'>
                 <Controller
