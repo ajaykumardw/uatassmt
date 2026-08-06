@@ -2,9 +2,10 @@ import fs from 'fs';
 
 import path from "path";
 
+import { format } from "date-fns"
+
 import prisma from "@/libs/prisma"
 import { getBrowser } from "@/libs/puppeteerBrowser"
-import { format } from "date-fns"
 import { storageFolders, getAgencyImagePath } from "@/configs/customDataConfig";
 
 const imageToBase64 = (filePath: string) => {
