@@ -220,6 +220,7 @@ const QualificationPackListTable = ({ tableData, updateQPList }: { tableData?: Q
           nQRCode: qpData.nqr_code,
           nSQFLevel: qpData.nsqf_level.toString(),
           qualificationType: qpData.qualification_type || '',
+          subSector: qpData.sub_sector || '',
           version: qpData.version_id.toString(),
           totalTheoryMarks: qpData.total_theory_marks,
           totalVivaMarks: qpData.total_viva_marks,

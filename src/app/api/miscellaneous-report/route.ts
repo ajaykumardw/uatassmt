@@ -364,7 +364,7 @@ const FIELD_MAP: Record<string, FieldMap> = {
     getValue: (row) => row.qualification_pack?.ssc?.sector || row.qualification_pack?.ssc?.ssc_name || ""
   },
   dcf_sub_sector: {
-    getValue: (row) => row.qualification_pack?.ssc?.sub_sector || ""
+    getValue: (row) => row.qualification_pack?.sub_sector || ""
   },
   dcf_category: {
     getValue: () => "NOS"
@@ -606,7 +606,7 @@ const FIELD_MAP: Record<string, FieldMap> = {
     getValue: (row) => row.qualification_pack?.ssc?.ssc_name || ""
   },
   mon_awarding_entity_type: {
-    getValue: () => "NCVET Recognized"
+    getValue: (row) => row.qualification_pack?.ssc?.type_of_awarding_body || ""
   },
   mon_scheduled_start_date: {
     getValue: (row) => row.assessment_start_datetime ? format(new Date(row.assessment_start_datetime), "dd-MM-yyyy") : ""
@@ -685,7 +685,7 @@ const FIELD_MAP: Record<string, FieldMap> = {
     getValue: (row) => row.ssc?.ssc_name || ""
   },
   ann_awarding_entity_type: {
-    getValue: () => "NCVET Recognized"
+    getValue: (row) => row.ssc?.type_of_awarding_body || ""
   },
   ann_level: {
     getValue: (row) => row.nsqf_level || ""

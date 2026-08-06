@@ -20,7 +20,7 @@ export type SSCType = {
   created_at: string
   updated_at: string,
   sector?: string,
-  sub_sector?: string,
+  type_of_awarding_body?: string,
   qualification_packs: QPType[]
   nos: NOSType[]
   agency: UsersType

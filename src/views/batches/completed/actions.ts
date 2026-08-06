@@ -257,6 +257,18 @@ export async function getFiles(batchId: number) {
     result[folderId].count += 1;
   }
 
+  // -------------------------
+  // Candidate Feedback
+  // -------------------------
+
+  result.candidate_feedback.count =
+    await prisma.feedback_responses.count({
+      where: {
+        batch_id: batchId,
+        user_type: 1
+      }
+    });
+
   // // -------------------------
   // // Assessor Feedback
   // // -------------------------

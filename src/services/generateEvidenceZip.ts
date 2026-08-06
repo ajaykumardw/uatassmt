@@ -6,6 +6,8 @@ import { storageFolders, getBatchCenterInspectionFilePath, getBatchGroupMediaFil
 
 import { generateCandidateAadhaarPdf } from "./generateCandidateAadhaarPdf";
 
+import { generateCandidateFeedbackPdf } from "./generateCandidateFeedbackPdf";
+
 // import path from "path";
 
 export type EvidenceFile = {
@@ -91,6 +93,16 @@ export async function generateEvidenceZip(
     tasks.push(
 
       collectCandidateAadhaarFiles(batchId, files)
+
+    );
+
+  }
+
+  if (selectedFolders.includes("candidate_feedback")) {
+
+    tasks.push(
+
+      collectCandidateFeedbackFiles(batchId, files)
 
     );
 
@@ -781,4 +793,63 @@ export async function collectCandidateAadhaarFiles(
     }
   }
 
+}
+
+export async function collectCandidateFeedbackFiles(
+  batchId: number,
+  files: EvidenceFile[]
+) {
+
+  const generatedFiles = await generateCandidateFeedbackPdf(batchId);
+
+  if (generatedFiles.length === 0) {
+
+    return;
+  }
+
+  const responses = await prisma.feedback_responses.findMany({
+    where: {
+      batch_id: batchId,
+      user_type: 1
+    },
+    select: {
+      user_id: true
+    }
+  });
+
+  const studentIds = responses.map(response => response.user_id);
+
+  const students = await prisma.students.findMany({
+    where: {
+      id: { in: studentIds }
+    },
+    select: {
+      id: true,
+      candidate_id: true
+    }
+  });
+
+  const studentIdToCandidateId = new Map(
+    students.map(student => [student.id, student.candidate_id])
+  );
+
+  for (const response of responses) {
+
+    const candidateId = studentIdToCandidateId.get(response.user_id);
+
+    if (!candidateId) {
+      continue;
+    }
+
+    const filePath = `${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.agency}/${storageFolders.batches}/${batchId.toString()}/${storageFolders.student}/${response.user_id.toString()}/feedback/${candidateId}_feedback.pdf`;
+
+    if (!fs.existsSync(filePath)) {
+      continue;
+    }
+
+    files.push({
+      fullPath: filePath,
+      zipPath: `candidates/${candidateId}/${candidateId}_feedback.pdf`
+    });
+  }
 }

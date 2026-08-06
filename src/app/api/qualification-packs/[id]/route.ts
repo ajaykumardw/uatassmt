@@ -40,7 +40,7 @@ export async function POST(
   const session = await getServerSession(authOptions);
   const agency_id = Number(session?.user?.agency_id);
 
-  const {sscId, qualificationPackId, qualificationPackName, nQRCode, nSQFLevel, qualificationType, version, totalTheoryMarks, totalVivaMarks, totalPracticalMarks, totalProjectMarks, totalMarks, isTheoryCutoff, isVivaCutoff, isPracticalCutoff, isOverallCutoff, isNOSCutoff, isWeightedAvailable, theoryCutoffMarks, vivaCutoffMarks, practicalCutoffMarks, overallCutoffMarks, nosCutoffMarks, weightedAvailable} = await req.json();
+  const {sscId, qualificationPackId, qualificationPackName, nQRCode, nSQFLevel, qualificationType, subSector, version, totalTheoryMarks, totalVivaMarks, totalPracticalMarks, totalProjectMarks, totalMarks, isTheoryCutoff, isVivaCutoff, isPracticalCutoff, isOverallCutoff, isNOSCutoff, isWeightedAvailable, theoryCutoffMarks, vivaCutoffMarks, practicalCutoffMarks, overallCutoffMarks, nosCutoffMarks, weightedAvailable} = await req.json();
 
   const theoryCutoff = isTheoryCutoff === true ? theoryCutoffMarks : '';
   const vivaCutoff = isVivaCutoff === true ? vivaCutoffMarks : '';
@@ -94,6 +94,7 @@ export async function POST(
         nqr_code: nQRCode,
         nsqf_level: nSQFLevel,
         qualification_type: qualificationType || null,
+        sub_sector: subSector || null,
         version_id: Number(version),
         total_marks: Number(totalMarks),
         total_theory_marks: Number(totalTheoryMarks),

@@ -27,6 +27,7 @@ import { object, minLength, string, forward, check, trim, pipe, optional } from 
 import type { InferInput } from 'valibot'
 
 import CustomTextField from '@core/components/mui/TextField'
+import { TypeOfAwardingEntityOptions } from '@/configs/customDataConfig'
 
 type Props = {
   open: boolean
@@ -68,7 +69,7 @@ const schema = pipe(
       confirmPassword: pipe(string(), trim() , minLength(1, 'This field is required')),
       status: pipe(string(), trim() , minLength(1, 'This field is required')),
       sector: optional(pipe(string(), trim())),
-      subSector: optional(pipe(string(), trim()))
+      typeOfAwardingBody: optional(pipe(string(), trim()))
     }
   ),
   forward(
@@ -105,7 +106,7 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
       confirmPassword: '',
       status: '1',
       sector: '',
-      subSector: '',
+      typeOfAwardingBody: '',
       profileImage: ''
     }
   })
@@ -129,7 +130,7 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
     formData.append('confirmPassword', data.confirmPassword);
     formData.append('status', data.status);
     formData.append('sector', data.sector || '');
-    formData.append('subSector', data.subSector || '');
+    formData.append('typeOfAwardingBody', data.typeOfAwardingBody || '');
     formData.append('profileImage', data.profileImage);
 
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sectorskills`, {
@@ -307,17 +308,23 @@ const AddUserDrawer = ({ open, handleClose, updateSSCList }: Props) => {
             )}
           />
           <Controller
-            name='subSector'
+            name='typeOfAwardingBody'
             control={control}
             rules={{ required: true }}
             render={({ field }) => (
               <CustomTextField
-                {...field}
+                select
                 fullWidth
-                label='Sub Sector'
-                placeholder='Sub Sector'
-                {...(errors.subSector && { error: true, helperText: errors.subSector.message })}
-              />
+                label='Type of Awarding Body'
+                {...field}
+                value={field.value || ''}
+                {...(errors.typeOfAwardingBody && { error: true, helperText: errors.typeOfAwardingBody.message })}
+              >
+                <MenuItem value=''>Select Type of Awarding Body</MenuItem>
+                {TypeOfAwardingEntityOptions.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>
+                ))}
+              </CustomTextField>
             )}
           />
           <Controller

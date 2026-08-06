@@ -28,7 +28,7 @@ import type { InferInput } from 'valibot';
 import { Avatar } from '@mui/material';
 
 import CustomTextField from '@core/components/mui/TextField';
-import { sscImagePath } from '@/configs/customDataConfig';
+import { sscImagePath, TypeOfAwardingEntityOptions } from '@/configs/customDataConfig';
 
 type Props = {
   open: boolean
@@ -40,7 +40,7 @@ type Props = {
   sscStatus: string
   sscImage?: string
   sscSector: string
-  sscSubSector: string
+  sscTypeOfAwardingBody: string
   updateSSCList: () => void
 }
 
@@ -63,11 +63,11 @@ const schema = object(
     username: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Last Name must be at least 3 characters long')),
     status: pipe(string(), trim() , minLength(1, 'This field is required')),
     sector: optional(pipe(string(), trim())),
-    subSector: optional(pipe(string(), trim()))
+    typeOfAwardingBody: optional(pipe(string(), trim()))
   }
 )
 
-const EditUserDrawer = ({ open, handleClose, sscId, sscName, sscCode, username, sscStatus, sscImage, sscSector, sscSubSector, updateSSCList }: Props) => {
+const EditUserDrawer = ({ open, handleClose, sscId, sscName, sscCode, username, sscStatus, sscImage, sscSector, sscTypeOfAwardingBody, updateSSCList }: Props) => {
 
 
   // States
@@ -92,7 +92,7 @@ const EditUserDrawer = ({ open, handleClose, sscId, sscName, sscCode, username, 
       username: username,
       status: sscStatus.toString(),
       sector: sscSector,
-      subSector: sscSubSector,
+      typeOfAwardingBody: sscTypeOfAwardingBody,
       profileImage: ''
     }
   });
@@ -110,7 +110,7 @@ const EditUserDrawer = ({ open, handleClose, sscId, sscName, sscCode, username, 
     formData.append('username', data.username);
     formData.append('status', data.status);
     formData.append('sector', data.sector || '');
-    formData.append('subSector', data.subSector || '');
+    formData.append('typeOfAwardingBody', data.typeOfAwardingBody || '');
     formData.append('profileImage', data.profileImage);
 
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sectorskills/${sscId}`, {
@@ -274,17 +274,23 @@ const EditUserDrawer = ({ open, handleClose, sscId, sscName, sscCode, username, 
             )}
           />
           <Controller
-            name='subSector'
+            name='typeOfAwardingBody'
             control={control}
             rules={{ required: true }}
             render={({ field }) => (
               <CustomTextField
-                {...field}
+                select
                 fullWidth
-                label='Sub Sector'
-                placeholder='Sub Sector'
-                {...(errors.subSector && { error: true, helperText: errors.subSector.message })}
-              />
+                label='Type of Awarding Body'
+                {...field}
+                value={field.value || ''}
+                {...(errors.typeOfAwardingBody && { error: true, helperText: errors.typeOfAwardingBody.message })}
+              >
+                <MenuItem value=''>Select Type of Awarding Body</MenuItem>
+                {TypeOfAwardingEntityOptions.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>
+                ))}
+              </CustomTextField>
             )}
           />
           <Controller

@@ -287,6 +287,11 @@ export const folders = [
     status: 1 as 0 | 1
   },
   {
+    id: "candidate_feedback",
+    name: "Candidate Feedback",
+    status: 1 as 0 | 1
+  },
+  {
     id: "attendance_sheet",
     name: "Attendance Sheet",
     status: 1 as 0 | 1

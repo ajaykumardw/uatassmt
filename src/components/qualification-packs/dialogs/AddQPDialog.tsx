@@ -60,6 +60,7 @@ const initialData: AddQPDialogData = {
   qualificationPackName: '',
   nSQFLevel: '',
   qualificationType: '',
+  subSector: '',
   version: '',
   nQRCode: '',
   totalTheoryMarks: '',
@@ -86,6 +87,7 @@ const schema = object(
     qualificationPackName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Qualification pack name must be at least 3 characters long')),
     nSQFLevel: pipe(string(), trim() , minLength(1, 'This field is required'), maxLength(6, 'Max length is 6 characters')),
     qualificationType: optional(pipe(string(), trim() ,)),
+    subSector: optional(pipe(string(), trim() ,)),
     nQRCode: optional(pipe(string(), trim() ,)),
     version: pipe(string(), trim() , minLength(1, 'This field is required')),
     totalTheoryMarks: pipe(string(), trim() , minLength(1, 'Total theory marks is required') , regex(/^[0-9]+(?:\.[0-9]+)?$/, 'Total theory marks must contain only numbers') , maxLength(10, 'Max length is 10 digits')),
@@ -406,7 +408,7 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
 
                     // inputProps={{ readOnly: qpId && true }}
                     // disabled={qpId ? true : false}
-                    
+
                     required={true}
                     {...field}
                     {...(errors.qualificationPackId && { error: true, helperText: errors.qualificationPackId.message })}
@@ -586,6 +588,21 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
                       <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>
                     ))}
                   </CustomTextField>
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                control={control}
+                name='subSector'
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <CustomTextField
+                    fullWidth
+                    {...field}
+                    {...(errors.subSector && { error: true, helperText: errors.subSector.message })}
+                    label='Sub Sector'
+                  />
                 )}
               />
             </Grid>

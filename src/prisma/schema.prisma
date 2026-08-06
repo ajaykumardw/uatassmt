@@ -186,6 +186,7 @@ model qualification_packs {
   nqr_code                 String?                  @db.VarChar(100)
   nsqf_level               String                   @db.VarChar(6)
   qualification_type       String?                  @db.VarChar(50)
+  sub_sector               String?                  @db.VarChar(100)
   version                  version                  @relation(fields: [version_id], references: [id])
   version_id               Int
   total_marks              Decimal                  @db.Decimal(10, 2)
@@ -442,6 +443,7 @@ model sector_skill_councils {
   ssc_image    String?
   sector       String?   @db.VarChar(100)
   sub_sector   String?   @db.VarChar(100)
+  type_of_awarding_body String? @db.VarChar(100)
   status       Int       @default(1) @db.TinyInt
   created_by   Int?
   deleted_at   DateTime? @db.DateTime(0)

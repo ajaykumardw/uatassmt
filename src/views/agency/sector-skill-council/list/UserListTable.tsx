@@ -165,7 +165,7 @@ const UserListTable = ({ tableData, updateSSCList }: { tableData?: SSCType[], up
   const [sscStatus, setStatus] = useState('0');
   const [sscImage, setSSCImage] = useState('');
   const [sscSector, setSSCSector] = useState('');
-  const [sscSubSector, setSSCSubSector] = useState('');
+  const [sscTypeOfAwardingBody, setSSCTypeOfAwardingBody] = useState('');
   const [rowSelection, setRowSelection] = useState({})
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -240,7 +240,7 @@ const UserListTable = ({ tableData, updateSSCList }: { tableData?: SSCType[], up
               <i className='tabler-eye text-[22px] text-textSecondary' />
             </IconButton> */}
             {row.original.created_by === agency_id && ( <>
-              <IconButton onClick={() => { setEditUserOpen(!editUserOpen); setSSCId(row.original.id); setSSCName(row.original.ssc_name); setSscCode(row.original.ssc_code); setUsername(row.original.ssc_username); setStatus(row.original.status.toString()); setSSCImage(row.original.ssc_image); setSSCSector(row.original.sector || ''); setSSCSubSector(row.original.sub_sector || ''); }}>
+              <IconButton onClick={() => { setEditUserOpen(!editUserOpen); setSSCId(row.original.id); setSSCName(row.original.ssc_name); setSscCode(row.original.ssc_code); setUsername(row.original.ssc_username); setStatus(row.original.status.toString()); setSSCImage(row.original.ssc_image); setSSCSector(row.original.sector || ''); setSSCTypeOfAwardingBody(row.original.type_of_awarding_body || ''); }}>
                 <i className='tabler-edit text-[22px] text-textSecondary' />
               </IconButton>
               <OptionMenu
@@ -423,7 +423,7 @@ const UserListTable = ({ tableData, updateSSCList }: { tableData?: SSCType[], up
         />
       </Card>
       <AddUserDrawer open={addUserOpen} updateSSCList={updateSSCList} handleClose={() => setAddUserOpen(!addUserOpen)} />
-      <EditUserDrawer sscId={sscId} open={editUserOpen} handleClose={() => setEditUserOpen(!editUserOpen)} updateSSCList={updateSSCList} sscName={sscName} sscCode={sscCode} username={username} sscStatus={sscStatus} sscImage={sscImage} sscSector={sscSector} sscSubSector={sscSubSector} />
+      <EditUserDrawer sscId={sscId} open={editUserOpen} handleClose={() => setEditUserOpen(!editUserOpen)} updateSSCList={updateSSCList} sscName={sscName} sscCode={sscCode} username={username} sscStatus={sscStatus} sscImage={sscImage} sscSector={sscSector} sscTypeOfAwardingBody={sscTypeOfAwardingBody} />
       <ChangePasswordDialog open={openChangePassword} onClose={() => {setOpenChangePassword(false); setSelectedUserId(null); }} userId={selectedUserId} userType='ssc' />
     </>
   )
