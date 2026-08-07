@@ -549,7 +549,7 @@ const AddQPDialog = ({ open, qpId, handleClose, updateQPList, data }: AddQPDialo
                     required={true}
                     {...field}
                     {...(errors.nSQFLevel && { error: true, helperText: errors.nSQFLevel.message })}
-                    label='NQR Level'
+                    label='NSQF Level'
                   />
 
                   // <CustomTextField

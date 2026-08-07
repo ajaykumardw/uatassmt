@@ -6,6 +6,8 @@ import { format } from "date-fns"
 
 import prisma from "@/libs/prisma"
 import { getBrowser } from "@/libs/puppeteerBrowser"
+import { decrypt, maskAadhaar } from "@/utils/encryption"
+
 import { storageFolders, getAgencyImagePath } from "@/configs/customDataConfig";
 
 const imageToBase64 = (filePath: string) => {
@@ -44,11 +46,7 @@ export async function generateCandidateFeedbackPdf(
           }
         }
       },
-      feedback_response_answers: {
-        include: {
-          feedback_question: true
-        }
-      }
+      feedback_response_answers: true
     }
   })
 
@@ -65,7 +63,9 @@ export async function generateCandidateFeedbackPdf(
     select: {
       id: true,
       candidate_id: true,
-      candidate_name: true
+      candidate_name: true,
+      aadhaar_no: true,
+      image: true
     }
   })
 
@@ -155,6 +155,32 @@ export async function generateCandidateFeedbackPdf(
 
     if (!student) {
       continue
+    }
+
+    let attendanceSelfieHtml = ''
+
+    if (student.image) {
+
+      const imagePath = path.join(
+        process.cwd(),
+        storageFolders.storage,
+        storageFolders.uploads,
+        storageFolders.agency,
+        storageFolders.batches,
+        batchId.toString(),
+        storageFolders.student,
+        student.id.toString(),
+        storageFolders.images,
+        student.image
+      )
+
+      if (fs.existsSync(imagePath)) {
+        attendanceSelfieHtml = `
+          <div class="attendance-box">
+            <img src="${imageToBase64(imagePath)}" class="attendance-image" />
+          </div>
+        `
+      }
     }
 
     const answerMap = new Map(
@@ -267,6 +293,20 @@ body {
 .header {
   text-align: center;
   margin-bottom: 20px;
+}
+
+.attendance-box {
+  position: absolute;
+  top: 0;
+  right: 0;
+  text-align: center;
+}
+
+.attendance-image {
+  max-height: 80px;
+  max-width: 80px;
+  object-fit: contain;
+  border: 1px solid #ccc;
 }
 
 .agency-logo {
@@ -383,6 +423,7 @@ ${agencyLogoBase64 ? `
 ` : ''}
 
 <div class="header">
+  ${attendanceSelfieHtml}
   ${agencyLogoBase64 ? `
   <div class="agency-logo">
     <img src="${agencyLogoBase64}" alt="Agency Logo" />
@@ -423,8 +464,8 @@ ${agencyLogoBase64 ? `
   <tr>
     <td><b>Candidate ID</b></td>
     <td>${student.candidate_id}</td>
-    <td></td>
-    <td></td>
+    <td><b>Candidate Aadhaar</b></td>
+    <td>${student.aadhaar_no ? maskAadhaar(decrypt(student.aadhaar_no)) : ''}</td>
   </tr>
 </table>
 
