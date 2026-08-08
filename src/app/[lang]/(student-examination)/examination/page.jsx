@@ -157,7 +157,13 @@ const Examination = () => {
 
   // Fetch exam data from the API
   const getExamData = async () => {
-    const data = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student-exam-set`).then(res => res.json());
+    const languageId = typeof window !== "undefined" ? Number(localStorage.getItem('exam_language_id')) || 1 : 1;
+
+    const data = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student-exam-set`, {
+      headers: {
+        'x-exam-language': String(languageId)
+      }
+    }).then(res => res.json());
 
     const now = DateTime.now().setZone('Asia/Kolkata');
     const start = DateTime.fromISO(data.batch.assessment_start_datetime).setZone('Asia/Kolkata');
@@ -268,12 +274,14 @@ const Examination = () => {
 
     const ip = await getIp();
 
+    const languageId = typeof window !== "undefined" ? Number(localStorage.getItem('exam_language_id')) || 1 : 1;
+
     const data = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student-exam-result`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json' // Assuming you're sending JSON data
       },
-      body: JSON.stringify({"examSetId": examData.id, "examDurations": examData.exam_duration, "totalQuestions": examData.total_questions, "ip": ip, "userAgent": navigator.userAgent})
+      body: JSON.stringify({"examSetId": examData.id, "examDurations": examData.exam_duration, "totalQuestions": examData.total_questions, "ip": ip, "userAgent": navigator.userAgent, "language_id": languageId})
     }).then(res => res.json());
 
     console.log("data in frontend:", data);

@@ -15,6 +15,10 @@ export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
   const session = await getServerSession(authOptions);
 
+  // Language selected on the exam start page (if the exam has not started yet,
+  // there is no student_exam_set_result row to read the language_id from)
+  const requestedLanguageId = Number(req.headers.get("x-exam-language")) || null;
+
   // console.log("authHeader", authHeader);
 
   if (!authHeader && !session) {
@@ -49,6 +53,7 @@ export async function GET(req: NextRequest) {
         },
         select: {
           id: true,
+          agency_id: true,
           student_exam_set_results: true,
           exam_set_results: true,
           batch: {
@@ -198,7 +203,7 @@ export async function GET(req: NextRequest) {
         (result: any) => result?.exam_set_id === exam?.batch?.theory_exam_set?.id
       );
 
-      const jwtStudentLanguageId = jwtStudentLanguageResult?.language_id || 1;
+      const jwtStudentLanguageId = jwtStudentLanguageResult?.language_id || requestedLanguageId || 1;
 
       let jwtTranslationMap = new Map<number, any>();
 
@@ -243,6 +248,8 @@ export async function GET(req: NextRequest) {
 
       const remainingTimeInSeconds = totalExamSeconds !== null ? (totalExamSeconds - spentSeconds) : 0;
 
+      const languagesData = await fetchStudentLanguages(Number(exam.agency_id));
+
       const data = {
         batch: {
           assessment_start_datetime: exam.batch.assessment_start_datetime,
@@ -266,7 +273,8 @@ export async function GET(req: NextRequest) {
         instruction: exam?.batch?.theory_exam_set?.instruction,
 
         theory_questions: questions || [],
-        feedback_submitted: isFeedbackFromSubmitted ? true : false
+        feedback_submitted: isFeedbackFromSubmitted ? true : false,
+        languages: languagesData
       }
 
       if (data.question_random) {
@@ -325,6 +333,7 @@ export async function GET(req: NextRequest) {
     },
     select: {
       id: true,
+      agency_id: true,
       student_exam_set_results: true,
       exam_set_results: true,
       batch_id: true,
@@ -448,7 +457,7 @@ export async function GET(req: NextRequest) {
     (result: any) => result?.exam_set_id === exam?.batch?.theory_exam_set?.id
   );
 
-  const studentLanguageId = studentLanguageResult?.language_id || 1;
+  const studentLanguageId = studentLanguageResult?.language_id || requestedLanguageId || 1;
 
   let translationMap = new Map<number, any>();
 
@@ -515,7 +524,35 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  return NextResponse.json(exam);
+  const languages = await fetchStudentLanguages(Number(exam?.agency_id));
+
+  return NextResponse.json({ ...exam, languages });
+}
+
+async function fetchStudentLanguages(agencyId: number | null) {
+  if (!agencyId) {
+    return { all_languages: [], enabled_language_ids: [] };
+  }
+
+  const allLanguages = await prisma.languages.findMany({
+    select: {
+      id: true,
+      alias: true,
+      full_name: true,
+      short_name: true,
+    },
+    orderBy: { full_name: 'asc' }
+  })
+
+  const enabledRows = await prisma.agency_languages.findMany({
+    where: { agency_id: agencyId },
+    select: { language_id: true }
+  })
+
+  return {
+    all_languages: allLanguages.map(l => ({ ...l, id: Number(l.id) })),
+    enabled_language_ids: enabledRows.map(r => r.language_id),
+  }
 }
 
 // export async function POST(req: Request) {

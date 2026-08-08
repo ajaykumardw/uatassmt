@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 
 import { useParams } from 'next/navigation';
 
-import { Card, CardHeader, CardContent, Typography, Button, CardActions, Divider } from "@mui/material";
+import { Card, CardHeader, CardContent, Typography, Button, CardActions, Divider, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 
 import Grid from "@mui/material/Grid";
 
@@ -25,6 +25,8 @@ const ExamTest = () => {
   const [studentExamResults, setStudentExamResults] = useState< student_exam_set_results | null>(null);
   const [remainingAttempts, setRemainingAttempts] = useState<number>(0)
   const [feedbackSubmitted, setFeedbackSubmitted] = useState<boolean>(false);
+  const [availableLanguages, setAvailableLanguages] = useState<any[]>([]);
+  const [selectedLanguage, setSelectedLanguage] = useState<number>(1);
 
   const getExamInstructions = async () => {
     const data = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student-exam-set`).then(function (res) { return res.json() });
@@ -46,6 +48,23 @@ const ExamTest = () => {
 
     setExamSet(data.batch.theory_exam_set);
     setFeedbackSubmitted(data.feedback_submitted);
+
+    const languages = data.languages;
+    const enabledIds = (languages?.enabled_language_ids || []).map(Number);
+
+    const filtered = (languages?.all_languages || []).filter(
+      (l: any) => enabledIds.includes(Number(l.id))
+    );
+
+    setAvailableLanguages(filtered);
+
+    if (filtered.length > 0) {
+      const existingId = data.student_exam_set_results
+        ?.find((r: any) => r.exam_set_id === data.batch.theory_exam_set.id)
+        ?.language_id;
+
+      setSelectedLanguage(existingId ? Number(existingId) : Number(filtered[0].id));
+    }
 
   }
 
@@ -90,6 +109,9 @@ const ExamTest = () => {
 
   const handleStartExam = (url: string) => {
     if (typeof window !== "undefined") {
+      // Persist selected language so the exam window can send it via POST
+      localStorage.setItem('exam_language_id', String(selectedLanguage));
+
       // Open a new window with the given URL, and additional window options
       const newWindow = window.open(url, '_blank', "width=" + window.screen.availWidth + ",height=" + window.screen.availHeight + ",toolbar=1,location=0,scrollbars=no,resizable=no");
 
@@ -189,6 +211,23 @@ const ExamTest = () => {
           {examSet && remainingAttempts > 0 && batchData?.assessment_start_datetime && new Date(batchData?.assessment_start_datetime) <= new Date() &&
             batchData?.assessment_end_datetime && new Date() <= new Date(batchData?.assessment_end_datetime) && !feedbackSubmitted && (
               <CardActions>
+                {availableLanguages.length > 0 && (
+                  <FormControl size="small" sx={{ minWidth: 180, mbe: 2 }} className='mie-4'>
+                    <InputLabel id="exam-language-label">Question Language</InputLabel>
+                    <Select
+                      labelId="exam-language-label"
+                      label="Question Language"
+                      value={selectedLanguage}
+                      onChange={(e) => setSelectedLanguage(Number(e.target.value))}
+                    >
+                      {availableLanguages.map((lang: any) => (
+                        <MenuItem key={lang.id} value={Number(lang.id)}>
+                          {lang.full_name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
                 <Button variant="contained" onClick={() => handleStartExam(examPageUrl)}>
                   {batchData.login_restrict && remainingAttempts < batchData.login_restrict ? 'Resume Exam' : 'Start Exam'}
                 </Button>
