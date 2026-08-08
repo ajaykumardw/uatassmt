@@ -297,14 +297,14 @@ body {
 
 .attendance-box {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 20px;
+  right: 20px;
   text-align: center;
 }
 
 .attendance-image {
-  max-height: 80px;
-  max-width: 80px;
+  max-height: 150px;
+  max-width: 150px;
   object-fit: contain;
   border: 1px solid #ccc;
 }
