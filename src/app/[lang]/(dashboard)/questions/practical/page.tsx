@@ -11,6 +11,7 @@ import SkeletonTable from '@/components/skeleton/SkeletonTable'
 const Question = () => {
   // Vars
   const [data, setQuestions] = useState([])
+  const [languages, setLanguages] = useState([])
   const [loading, setLoading] = useState(true);
 
   const getQuestionsData = async () => {
@@ -21,9 +22,10 @@ const Question = () => {
       throw new Error('Failed to fetch Practical Questions')
     }
 
-    const questionsData = await res.json();
+    const result = await res.json();
 
-    setQuestions(questionsData);
+    setQuestions(result.data || []);
+    setLanguages(result.languages || []);
     setLoading(false);
 
   }
@@ -40,7 +42,7 @@ const Question = () => {
   // console.log(data);
 
   if(!loading){
-    return <QuestionsList questionsData={data} updateQuestionsList={updateQuestionsList} />
+    return <QuestionsList questionsData={data} languages={languages} updateQuestionsList={updateQuestionsList} />
   }else{
     return <SkeletonTable />
   }

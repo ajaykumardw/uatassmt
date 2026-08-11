@@ -18,11 +18,20 @@ export async function POST(req: Request) {
     },
     select: {
       pc_id: true,
+      theory_marks: true,
     },
   });
 
   const existingIds = existingPcs.map(pc => pc.pc_id);
   const nonExistingPcIds = pcIds.filter(id => !existingIds.includes(id));
 
-  return NextResponse.json({ nonExistingPcIds });
+  const pcTheoryMarks: Record<string, number> = {};
+
+  existingPcs.forEach(pc => {
+    const id = pc.pc_id as string;
+
+    pcTheoryMarks[id] = Number(pc.theory_marks || 0);
+  });
+
+  return NextResponse.json({ nonExistingPcIds, pcTheoryMarks });
 }

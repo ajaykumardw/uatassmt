@@ -9,14 +9,14 @@ import VivaQuestionsListTable from './VivaQuestionsListTable'
 
 // import UserListCards from './UserListCards'
 
-const QuestionsList = ({ questionsData, updateQuestionsList }: { questionsData?: questions[], updateQuestionsList: () => void }) => {
+const QuestionsList = ({ questionsData, languages, updateQuestionsList }: { questionsData?: questions[], languages?: any[], updateQuestionsList: () => void }) => {
   return (
     <Grid container spacing={6}>
       {/* <Grid item xs={12}>
         <UserListCards />
       </Grid> */}
       <Grid item xs={12}>
-        <VivaQuestionsListTable tableData={questionsData} updateQuestionsList={updateQuestionsList} />
+        <VivaQuestionsListTable tableData={questionsData} languages={languages} updateQuestionsList={updateQuestionsList} />
       </Grid>
     </Grid>
   )

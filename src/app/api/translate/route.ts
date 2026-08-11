@@ -36,13 +36,13 @@ export async function POST(req: Request) {
     const texts = Array.isArray(text) ? text : [text]
 
     const translatedTexts = await Promise.all(
-      texts.map(async (t: string) => {
-        if (!t.trim()) return ''
-        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${langCode}&dt=t&q=${encodeURIComponent(t)}`
+      texts.map(async (t: any) => {
+        if (!t || !String(t).trim()) return ''
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${langCode}&dt=t&q=${encodeURIComponent(String(t))}`
         const res = await fetch(url)
         const data = await res.json()
 
-        return data?.[0]?.map((item: any) => item[0]).join('') || t
+        return data?.[0]?.map((item: any) => item[0]).join('') || String(t)
       })
     )
 

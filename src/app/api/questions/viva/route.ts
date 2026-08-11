@@ -36,6 +36,11 @@ export async function GET() {
           exam_set_id: true
         }
       },
+      translations: {
+        select: {
+          language_id: true
+        }
+      },
     }
   })
 
@@ -70,7 +75,17 @@ export async function GET() {
 
   // console.log(qualificationPacks);
 
-  return NextResponse.json(formattedQuestions);
+  const languages = await prisma.languages.findMany({
+    select: {
+      id: true,
+      alias: true,
+      full_name: true,
+      short_name: true
+    },
+    orderBy: { full_name: 'asc' }
+  });
+
+  return NextResponse.json({ data: formattedQuestions, languages: languages.map(l => ({ ...l, id: Number(l.id) })) });
 }
 
 export async function POST(req: Request) {

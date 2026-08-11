@@ -20,4 +20,7 @@ export type QuestionsType = {
   updated_at?: string
   deleted_at?: string
   pc: PCType[]
+  translations?: {
+    language_id: number
+  }[]
 }

@@ -80,6 +80,8 @@ import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
 
 import ConfirmDialog from '@/components/ConfirmDialog';
 
+import LanguageAvailabilityChips from '@/components/questions/LanguageAvailabilityChips';
+
 // import type { PCType } from '@/types/pc/pcType';
 
 // declare module '@tanstack/table-core' {
@@ -172,7 +174,16 @@ const userStatusObj: UserStatusType = {
 // Column Definitions
 const columnHelper = createColumnHelper<QuestionsTypeWithAction>()
 
-const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SSCType[], updateQuestionsList: () => void }) => {
+const QuestionsListTable = ({ tableData, languages, updateQuestionsList }: { tableData?: SSCType[], languages?: { id: number, full_name: string, short_name: string }[], updateQuestionsList: () => void }) => {
+  const languageMap = useMemo(() => {
+    const map: Record<number, { id: number, full_name: string, short_name: string }> = {}
+
+    languages?.forEach(l => {
+      map[Number(l.id)] = l
+    })
+
+    return map
+  }, [languages])
 
   // States
 
@@ -283,6 +294,12 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
               </Typography>
             </div>
           </div>
+        )
+      }),
+      columnHelper.accessor('translations', {
+        header: 'Available In',
+        cell: ({ row }) => (
+          <LanguageAvailabilityChips translations={row.original.translations} languageMap={languageMap} />
         )
       }),
       columnHelper.accessor('question', {
@@ -467,7 +484,7 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
     ],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [languageMap]
   )
 
   const table = useReactTable({
@@ -693,6 +710,7 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
       <TranslateQuestionDialog
         open={translateQuestionOpen}
         questionId={translateQuestionData.id}
+        questionType='theory'
         questionData={{
           question: translateQuestionData.question,
           option1: translateQuestionData.option1,
@@ -703,6 +721,7 @@ const QuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: SS
           question_explanation: translateQuestionData.question_explanation,
         }}
         handleClose={() => setTranslateQuestionOpen(false)}
+        updateQuestionsList={updateQuestionsList}
       />
       <ConfirmDialog
         open={confirmDeleteOpen}

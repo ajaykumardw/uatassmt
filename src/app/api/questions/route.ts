@@ -429,6 +429,12 @@ export async function GET(req: Request) {
               }
             }
           }
+        },
+
+        translations:{
+          select:{
+            language_id:true
+          }
         }
 
       }
@@ -536,6 +542,12 @@ export async function GET(req: Request) {
                             select:{
                               id:true,
                               exam_set_id:true
+                            }
+                          },
+
+                          translations:{
+                            select:{
+                              language_id:true
                             }
                           }
 
@@ -688,7 +700,17 @@ export async function GET(req: Request) {
   console.log(formatted);
 
 
-  return NextResponse.json(formatted);
+  const languages = await prisma.languages.findMany({
+    select: {
+      id: true,
+      alias: true,
+      full_name: true,
+      short_name: true
+    },
+    orderBy: { full_name: 'asc' }
+  });
+
+  return NextResponse.json({ data: formatted, languages: languages.map(l => ({ ...l, id: Number(l.id) })) });
 
 }
 

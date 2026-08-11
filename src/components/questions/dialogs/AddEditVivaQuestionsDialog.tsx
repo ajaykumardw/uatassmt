@@ -60,15 +60,14 @@ type AddQPDialogProps = {
 //   country: 'US',
 //   useAsBillingAddress: true
 // }
-const initialData: AddQPDialogData = {
-  sscId: '',
-  qpId: '',
-  nosId: '',
-  selectPC: [],
-  questionName: '',
-  questionMarks: '',
-  language: '1',
-}
+  const initialData: AddQPDialogData = {
+    sscId: '',
+    qpId: '',
+    nosId: '',
+    selectPC: [],
+    questionName: '',
+    questionMarks: '',
+  }
 
 
 const schema = object(
@@ -78,8 +77,7 @@ const schema = object(
     nosId: pipe(string(), trim() , minLength(1, 'This field is required')),
     selectPC: array(string(), 'This field is required'),
     questionName: pipe(string(), trim() , minLength(1, 'This field is required') , minLength(3, 'Question name must be at least 3 characters long')),
-    questionMarks: pipe(string(), trim() , minLength(1, 'This field is required') , check((value) => !value || /^[1-9]\d*(\.\d+)?$/.test(value), 'Marks must be greater then 0.') ,),
-    language: optional(string()),
+    questionMarks: optional(pipe(string(), trim() , check((value) => !value || /^[1-9]\d*(\.\d+)?$/.test(value), 'Marks must be greater then 0.')), 'optional field'),
   }
 )
 
@@ -93,7 +91,6 @@ const AddEditVivaQuestionsDialog = ({ open, questionId, handleClose, updateQuest
   const [nosData, setNOSData] = useState<NOSType[]>([]);
   const [pcData, setPCData] = useState<PCType[]>([]);
   const [totalPCMarks, setTotalPCMarks] = useState<number>(0);
-  const [languages, setLanguages] = useState<{ id: number; alias: string; full_name: string }[]>([])
 
   // const [nosData, setNOSData] = useState<NOSType[]>([]);
 
@@ -167,7 +164,6 @@ const AddEditVivaQuestionsDialog = ({ open, questionId, handleClose, updateQuest
 
   useEffect(() => {
     getSSCData();
-    fetchLanguages();
   }, []);
 
   useEffect(() => {
@@ -176,20 +172,6 @@ const AddEditVivaQuestionsDialog = ({ open, questionId, handleClose, updateQuest
       getVivaQuestionData(questionId)
     }
   }, [open, questionId])
-
-  const fetchLanguages = async () => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/agency-languages`)
-      const json = await res.json()
-      const result = json.data
-
-      if (result) {
-        const enabled = result.enabled_language_ids || []
-
-        setLanguages((result.all_languages || []).filter((l: any) => enabled.includes(Number(l.id))))
-      }
-    } catch {}
-  }
 
   const handleSSCChange = async (ssc: string) => {
 
@@ -290,17 +272,16 @@ const AddEditVivaQuestionsDialog = ({ open, questionId, handleClose, updateQuest
       selectPC: vivaQuestionData?.selectPC || [],
       questionName: vivaQuestionData?.questionName || '',
       questionMarks: vivaQuestionData?.questionMarks || '',
-      language: vivaQuestionData?.language || '1',
     }
   })
 
   const onSubmit: SubmitHandler<AddQPDialogData> = async (data: AddQPDialogData) => {
     // e.preventDefault();
 
-    if(Number(data.questionMarks) !== totalPCMarks){
+    if (data.questionMarks && data.questionMarks.trim() !== '' && Number(data.questionMarks) !== totalPCMarks) {
       setError('questionMarks', {
         type: 'custom',
-        message: `Total marks of selected PCs is ${totalPCMarks}. Please update the marks accordingly.`
+        message: totalPCMarks === 0 ? 'No viva marks configured for selected PC(s). You can leave the marks blank.' : `Total marks of selected PCs is ${totalPCMarks}. Please update the marks accordingly.`
       })
 
       return;
@@ -309,7 +290,7 @@ const AddEditVivaQuestionsDialog = ({ open, questionId, handleClose, updateQuest
 
     setLoading(true)
 
-    const payload = { ...data, language_id: data.language ? Number(data.language) : 1 }
+    const payload = { ...data, language_id: 1 }
 
     if (questionId) {
 
@@ -599,35 +580,13 @@ const AddEditVivaQuestionsDialog = ({ open, questionId, handleClose, updateQuest
               <Controller
                 control={control}
                 name='questionMarks'
-                rules={{ required: true }}
                 render={({ field }) => (
                   <CustomTextField
                     fullWidth
-                    required={true}
                     {...field}
                     {...(errors.questionMarks && { error: true, helperText: errors.questionMarks.message })}
                     label='Marks'
                   />
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                control={control}
-                name='language'
-                render={({ field }) => (
-                  <CustomTextField
-                    fullWidth
-                    select
-                    label='Language'
-                    {...field}
-                  >
-                    {languages.map((lang) => (
-                      <MenuItem key={lang.id} value={String(lang.id)}>
-                        {lang.full_name}
-                      </MenuItem>
-                    ))}
-                  </CustomTextField>
                 )}
               />
             </Grid>

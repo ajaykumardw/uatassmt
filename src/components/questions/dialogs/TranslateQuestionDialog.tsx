@@ -39,16 +39,18 @@ type LangTranslation = {
 type TranslateQuestionDialogProps = {
   open: boolean
   questionId: number
+  questionType?: string
   questionData: {
     question: string
-    option1: string
-    option2: string
+    option1: string | null
+    option2: string | null
     option3: string | null
     option4: string | null
     option5: string | null
     question_explanation: string | null
   }
   handleClose: () => void
+  updateQuestionsList?: () => void
 }
 
 const emptyTranslation = (): LangTranslation => ({
@@ -56,7 +58,7 @@ const emptyTranslation = (): LangTranslation => ({
   option3: '', option4: '', option5: '', question_explanation: ''
 })
 
-const TranslateQuestionDialog = ({ open, questionId, questionData, handleClose }: TranslateQuestionDialogProps) => {
+const TranslateQuestionDialog = ({ open, questionId, questionType, questionData, handleClose, updateQuestionsList }: TranslateQuestionDialogProps) => {
   const [languages, setLanguages] = useState<LanguageOption[]>([])
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [translations, setTranslations] = useState<LangTranslation[]>([])
@@ -64,6 +66,8 @@ const TranslateQuestionDialog = ({ open, questionId, questionData, handleClose }
   const [savedVersions, setSavedVersions] = useState<Map<number, LangTranslation>>(new Map())
   const [translating, setTranslating] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  const isTheory = questionType === 'theory'
 
   useEffect(() => {
     if (open) {
@@ -77,7 +81,10 @@ const TranslateQuestionDialog = ({ open, questionId, questionData, handleClose }
 
           if (result) {
             const enabled = result.enabled_language_ids || []
-            const available = (result.all_languages || []).filter((l: any) => enabled.includes(Number(l.id)))
+
+            const available = (result.all_languages || [])
+              .filter((l: any) => enabled.includes(Number(l.id)))
+              .filter((l: any) => Number(l.id) !== 1)
 
             setLanguages(available)
 
@@ -89,7 +96,8 @@ const TranslateQuestionDialog = ({ open, questionId, questionData, handleClose }
 
                 if (existing.length > 0) {
                   const mapped = existing
-                    .filter((t: any) => enabled.includes(Number(t.language_id)))
+                    .filter((t: any) => Number(t.language_id) !== 1)
+                    .filter((t: any) => available.some((l: any) => Number(l.id) === Number(t.language_id)))
                     .map((t: any) => {
                       const lang = available.find((l: any) => Number(l.id) === Number(t.language_id))
 
@@ -157,7 +165,11 @@ const TranslateQuestionDialog = ({ open, questionId, questionData, handleClose }
     }
 
     setTranslating(true)
-    const texts = [questionData.question, questionData.option1, questionData.option2, questionData.option3 || '', questionData.option4 || '', questionData.option5 || '', questionData.question_explanation || '']
+
+    const texts = isTheory
+      ? [questionData.question, questionData.option1 || '', questionData.option2 || '', questionData.option3 || '', questionData.option4 || '', questionData.option5 || '', questionData.question_explanation || '']
+      : [questionData.question]
+
     const results: LangTranslation[] = []
 
     for (const id of selectedIds) {
@@ -176,13 +188,21 @@ const TranslateQuestionDialog = ({ open, questionId, questionData, handleClose }
         const result = await res.json()
         const t = result.data.translatedTexts || result.translatedTexts || []
 
-        if (t.length >= 7) {
+        if (isTheory && t.length >= 7) {
           results.push({
             language_id: Number(lang.id),
             language_name: lang.full_name,
             question: t[0], option1: t[1], option2: t[2],
             option3: t[3], option4: t[4], option5: t[5],
             question_explanation: t[6],
+          })
+        } else if (!isTheory && t.length >= 1) {
+          results.push({
+            language_id: Number(lang.id),
+            language_name: lang.full_name,
+            question: t[0], option1: '', option2: '',
+            option3: '', option4: '', option5: '',
+            question_explanation: '',
           })
         }
       } catch { /* skip */ }
@@ -216,6 +236,24 @@ const TranslateQuestionDialog = ({ open, questionId, questionData, handleClose }
     }
 
     setSaving(true)
+
+    // Languages previously saved but no longer selected -> delete their translations
+    const selectedIds = translations.map(t => Number(t.language_id))
+    const removedIds = [...savedVersions.keys()].filter(id => !selectedIds.includes(Number(id)))
+
+    if (removedIds.length > 0) {
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/question-translations`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            question_id: questionId,
+            language_ids: removedIds
+          })
+        })
+      } catch { /* ignore delete errors */ }
+    }
+
     let count = 0
 
     for (const t of translations) {
@@ -250,6 +288,7 @@ const TranslateQuestionDialog = ({ open, questionId, questionData, handleClose }
         const next = new Map(prev)
 
         translations.forEach(t => next.set(t.language_id, t))
+        removedIds.forEach(id => next.delete(Number(id)))
 
         return next
       })
@@ -257,10 +296,12 @@ const TranslateQuestionDialog = ({ open, questionId, questionData, handleClose }
         const next = new Map(prev)
 
         translations.forEach(t => next.set(t.language_id, t))
+        removedIds.forEach(id => next.delete(Number(id)))
 
         return next
       })
       toast.success(`Saved ${count} language(s)!`)
+      updateQuestionsList?.()
       handleClose()
     } else {
       toast.error('Save failed')
@@ -290,10 +331,14 @@ const TranslateQuestionDialog = ({ open, questionId, questionData, handleClose }
             </Typography>
             <Typography variant='body2' color='text.primary' className='mbe-4 p-2 bg-actionHover rounded'>
               <strong>Q:</strong> {questionData.question}<br />
-              <strong>1:</strong> {questionData.option1} &nbsp; <strong>2:</strong> {questionData.option2}
-              {questionData.option3 && <> &nbsp; <strong>3:</strong> {questionData.option3}</>}
-              {questionData.option4 && <> &nbsp; <strong>4:</strong> {questionData.option4}</>}
-              {questionData.option5 && <> &nbsp; <strong>5:</strong> {questionData.option5}</>}
+              {isTheory && (
+                <>
+                  <strong>1:</strong> {questionData.option1} &nbsp; <strong>2:</strong> {questionData.option2}
+                  {questionData.option3 && <> &nbsp; <strong>3:</strong> {questionData.option3}</>}
+                  {questionData.option4 && <> &nbsp; <strong>4:</strong> {questionData.option4}</>}
+                  {questionData.option5 && <> &nbsp; <strong>5:</strong> {questionData.option5}</>}
+                </>
+              )}
             </Typography>
           </Grid>
 
@@ -356,8 +401,8 @@ const TranslateQuestionDialog = ({ open, questionId, questionData, handleClose }
                       updateTranslation(t.language_id, 'question_explanation', saved.question_explanation || '')
                     } else {
                       updateTranslation(t.language_id, 'question', questionData.question)
-                      updateTranslation(t.language_id, 'option1', questionData.option1)
-                      updateTranslation(t.language_id, 'option2', questionData.option2)
+                      updateTranslation(t.language_id, 'option1', questionData.option1 || '')
+                      updateTranslation(t.language_id, 'option2', questionData.option2 || '')
                       updateTranslation(t.language_id, 'option3', questionData.option3 || '')
                       updateTranslation(t.language_id, 'option4', questionData.option4 || '')
                       updateTranslation(t.language_id, 'option5', questionData.option5 || '')
@@ -377,24 +422,28 @@ const TranslateQuestionDialog = ({ open, questionId, questionData, handleClose }
                     onChange={e => updateTranslation(t.language_id, 'question', e.target.value)}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  <CustomTextField fullWidth label='Option 1' value={t.option1} onChange={e => updateTranslation(t.language_id, 'option1', e.target.value)} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <CustomTextField fullWidth label='Option 2' value={t.option2} onChange={e => updateTranslation(t.language_id, 'option2', e.target.value)} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <CustomTextField fullWidth label='Option 3' value={t.option3} onChange={e => updateTranslation(t.language_id, 'option3', e.target.value)} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <CustomTextField fullWidth label='Option 4' value={t.option4} onChange={e => updateTranslation(t.language_id, 'option4', e.target.value)} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <CustomTextField fullWidth label='Option 5' value={t.option5} onChange={e => updateTranslation(t.language_id, 'option5', e.target.value)} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <CustomTextField multiline fullWidth label='Question Explanation' value={t.question_explanation} onChange={e => updateTranslation(t.language_id, 'question_explanation', e.target.value)} />
-                </Grid>
+                {isTheory && (
+                  <>
+                    <Grid item xs={12} sm={6}>
+                      <CustomTextField fullWidth label='Option 1' value={t.option1} onChange={e => updateTranslation(t.language_id, 'option1', e.target.value)} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <CustomTextField fullWidth label='Option 2' value={t.option2} onChange={e => updateTranslation(t.language_id, 'option2', e.target.value)} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <CustomTextField fullWidth label='Option 3' value={t.option3} onChange={e => updateTranslation(t.language_id, 'option3', e.target.value)} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <CustomTextField fullWidth label='Option 4' value={t.option4} onChange={e => updateTranslation(t.language_id, 'option4', e.target.value)} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <CustomTextField fullWidth label='Option 5' value={t.option5} onChange={e => updateTranslation(t.language_id, 'option5', e.target.value)} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <CustomTextField multiline fullWidth label='Question Explanation' value={t.question_explanation} onChange={e => updateTranslation(t.language_id, 'question_explanation', e.target.value)} />
+                    </Grid>
+                  </>
+                )}
               </Grid>
             </Grid>
           ))}

@@ -9,13 +9,15 @@ import prisma from '@/libs/prisma';
 
 export async function POST(req: Request) {
 
-  const {uploadData, sscID, qpID, language_id} = await req.json();
+  const {uploadData, sscID, qpID} = await req.json();
 
   const session = await getServerSession(authOptions);
   const createdBy = Number(session?.user.id);
   const agencyId = Number(session?.user?.agency_id);
 
-  const result = await Promise.all(uploadData.map( async (item: any) => {
+  const validationErrors: string[] = [];
+
+  const uploadItems = await Promise.all(uploadData.map(async (item: any) => {
 
     const pcIds = item.PC_ID.toString().split(',').map((id: string) => id.trim());
 
@@ -29,15 +31,37 @@ export async function POST(req: Request) {
         },
       },
       select: {
-        id: true
+        id: true,
+        theory_marks: true
       }
     });
+
+    const totalPcTheoryMarks = pcs.reduce((sum: number, pc: any) => sum + Number(pc.theory_marks || 0), 0);
+    const providedMarks = Number(item.Marks);
+
+    if (totalPcTheoryMarks < providedMarks) {
+      validationErrors.push(
+        `Question "${item.Question}" has Marks (${providedMarks}) greater than the total theory marks (${totalPcTheoryMarks}) of its linked PC(s) [${pcIds.join(', ')}]. Please provide correct marks.`
+      );
+    }
+
+    return { item, pcs };
+  }));
+
+  if (validationErrors.length > 0) {
+    return NextResponse.json({
+      message: 'Validation failed!',
+      errors: validationErrors
+    }, { status: 400 });
+  }
+
+  const result = await Promise.all(uploadItems.map(async ({ item, pcs }) => {
 
     return await prisma.questions.create({
       data: {
         ssc_id: Number(sscID),
         qp_id: Number(qpID),
-        language_id: item.Language_ID || language_id || 1,
+        language_id: 1,
         question_type: 'theory',
         question_level: item.Question_Level,
         question_explanation: item.Question_Explanation,
@@ -52,7 +76,7 @@ export async function POST(req: Request) {
         agency_id: agencyId,
         created_by: createdBy,
         pc_questions:{
-          create:pcs.map(pc=>({
+          create:pcs.map((pc: { id: number }) => ({
 
             agency_id:agencyId,
 

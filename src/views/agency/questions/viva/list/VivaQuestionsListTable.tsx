@@ -67,6 +67,8 @@ import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
 
 import ConfirmDialog from '@/components/ConfirmDialog';
 
+import LanguageAvailabilityChips from '@/components/questions/LanguageAvailabilityChips';
+
 // declare module '@tanstack/table-core' {
 //   interface FilterFns {
 //     fuzzy: FilterFn<unknown>
@@ -156,7 +158,16 @@ const userStatusObj: UserStatusType = {
 // Column Definitions
 const columnHelper = createColumnHelper<QuestionsTypeWithAction>()
 
-const VivaQuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?: questions[], updateQuestionsList: () => void }) => {
+const VivaQuestionsListTable = ({ tableData, languages, updateQuestionsList }: { tableData?: questions[], languages?: { id: number, full_name: string, short_name: string }[], updateQuestionsList: () => void }) => {
+  const languageMap = useMemo(() => {
+    const map: Record<number, { id: number, full_name: string, short_name: string }> = {}
+
+    languages?.forEach(l => {
+      map[Number(l.id)] = l
+    })
+
+    return map
+  }, [languages])
 
   // States
 
@@ -237,6 +248,12 @@ const VivaQuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?
               </Typography>
             </div>
           </div>
+        )
+      }),
+      columnHelper.accessor('translations', {
+        header: 'Available In',
+        cell: ({ row }) => (
+          <LanguageAvailabilityChips translations={row.original.translations} languageMap={languageMap} />
         )
       }),
       columnHelper.accessor('question', {
@@ -333,7 +350,7 @@ const VivaQuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?
     ],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [languageMap]
   )
 
   const table = useReactTable({
@@ -544,6 +561,7 @@ const VivaQuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?
       <TranslateQuestionDialog
         open={translateQuestionOpen}
         questionId={translateQuestionData.id}
+        questionType='viva'
         questionData={{
           question: translateQuestionData.question,
           option1: translateQuestionData.option1,
@@ -554,6 +572,7 @@ const VivaQuestionsListTable = ({ tableData, updateQuestionsList }: { tableData?
           question_explanation: translateQuestionData.question_explanation,
         }}
         handleClose={() => setTranslateQuestionOpen(false)}
+        updateQuestionsList={updateQuestionsList}
       />
       <ConfirmDialog
         open={confirmDeleteOpen}

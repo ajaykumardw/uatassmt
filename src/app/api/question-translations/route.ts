@@ -104,3 +104,36 @@ export async function POST(req: Request) {
     message: 'Translation saved successfully'
   })
 }
+
+export async function DELETE(req: Request) {
+  const session = await getServerSession(authOptions)
+  const userId = Number(session?.user?.id)
+
+  if (!userId) {
+    return NextResponse.json({ status: 'Error', statusCode: 401, message: 'Unauthorized' }, { status: 401 })
+  }
+
+  const body = await req.json()
+  const { question_id, language_ids } = body
+
+  if (!question_id || !Array.isArray(language_ids) || language_ids.length === 0) {
+    return NextResponse.json({
+      status: 'Error', statusCode: 400, message: 'question_id and language_ids array are required'
+    }, { status: 400 })
+  }
+
+  await prisma.question_translations.deleteMany({
+    where: {
+      question_id: Number(question_id),
+      language_id: {
+        in: language_ids.map((id: number) => Number(id))
+      }
+    }
+  })
+
+  return NextResponse.json({
+    status: 'Success',
+    statusCode: 200,
+    message: 'Translations deleted successfully'
+  })
+}

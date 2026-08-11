@@ -11,14 +11,14 @@ import type { SSCType } from '@/types/sectorskills/sscType'
 
 // import UserListCards from './UserListCards'
 
-const QuestionsList = ({ questionsData, updateQuestionsList }: { questionsData?: SSCType[], updateQuestionsList: () => void }) => {
+const QuestionsList = ({ questionsData, languages, updateQuestionsList }: { questionsData?: SSCType[], languages?: any[], updateQuestionsList: () => void }) => {
   return (
     <Grid container spacing={6}>
       {/* <Grid item xs={12}>
         <UserListCards />
       </Grid> */}
       <Grid item xs={12}>
-        <QuestionsListTable tableData={questionsData} updateQuestionsList={updateQuestionsList} />
+        <QuestionsListTable tableData={questionsData} languages={languages} updateQuestionsList={updateQuestionsList} />
       </Grid>
     </Grid>
   )

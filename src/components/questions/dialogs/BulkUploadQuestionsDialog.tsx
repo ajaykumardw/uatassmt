@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 // MUI Imports
 import Dialog from '@mui/material/Dialog'
@@ -9,7 +9,7 @@ import Button from '@mui/material/Button'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
-import { Alert, AlertTitle, Avatar, CircularProgress, Grid, IconButton, LinearProgress, List, ListItem, MenuItem, TablePagination, Typography } from '@mui/material'
+import { Alert, AlertTitle, Avatar, CircularProgress, Grid, IconButton, LinearProgress, List, ListItem, TablePagination, Typography } from '@mui/material'
 
 // import * as XLSX from 'xlsx';
 
@@ -38,7 +38,6 @@ import tableStyles from '@core/styles/table.module.css';
 import DialogCloseButton from '@components/dialogs/DialogCloseButton'
 import AppReactDropzone from '@/libs/styles/AppReactDropzone'
 import TablePaginationComponent from '@/components/TablePaginationComponent'
-import CustomTextField from '@core/components/mui/TextField'
 
 import { ExpectedTheoryQuestionExcelHeaders } from '@/configs/customDataConfig'
 
@@ -257,25 +256,6 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
   const [data, setData] = useState<any[]>([]);
   const [uploadData, setUploadData] = useState<any[]>([]);
   const [fileInput, setFileInput] = useState<File | null>(null);
-  const [languages, setLanguages] = useState<{ id: number; alias: string; full_name: string }[]>([]);
-  const [bulkLanguageId, setBulkLanguageId] = useState<number>(1);
-
-  useEffect(() => {
-    if (open) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/agency-languages`)
-        .then(res => res.json())
-        .then(res => {
-          const result = res.data
-
-          if (result) {
-            const enabled = result.enabled_language_ids || []
-
-            setLanguages((result.all_languages || []).filter((l: any) => enabled.includes(Number(l.id))))
-          }
-        })
-        .catch(() => {})
-    }
-  }, [open]);
 
   const handleReset = () => {
 
@@ -441,6 +421,15 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
                 message: `Duplicate PC ID "${duplicatePCIds.join(", ")}".`
               } : null;
 
+              const totalPcTheoryMarks = (item?.PC_ID?.toString().split(',').map((id: string) => id.trim()) || []).reduce((sum: number, id: string) => sum + Number(data.pcTheoryMarks?.[id] || 0), 0);
+
+              const providedMarks = Number(item?.Marks);
+
+              const marksError = pcResult.length === 0 && totalPcTheoryMarks > 0 && providedMarks > totalPcTheoryMarks ? {
+                path: [{ key: 'Marks' }],
+                message: `Marks (${providedMarks}) greater than linked PC(s) total theory marks (${totalPcTheoryMarks}). Please provide correct marks.`
+              } : null;
+
               // Validate student data using your existing schema
               const result = await safeParse(schema, item);
 
@@ -449,6 +438,7 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
                 ...(result.issues || []),
                 pcIdsError,
                 duplicatePCError,
+                marksError,
                 Option1Error,
                 Option2Error,
                 Option3Error,
@@ -840,7 +830,7 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
         headers: {
           'Content-Type': 'application/json' // Assuming you're sending JSON data
         },
-        body: JSON.stringify({uploadData, sscID, qpID, language_id: bulkLanguageId})
+        body: JSON.stringify({uploadData, sscID, qpID})
       });
 
       if(res.ok){
@@ -855,9 +845,19 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
 
       } else {
         // setLoading(false);
-        toast.error('Something went wrong!', {
-          hideProgressBar: false
-        });
+        const errorData = await res.json().catch(() => null);
+
+        if (errorData?.errors?.length > 0) {
+          errorData.errors.forEach((error: string) => {
+            toast.error(error, {
+              hideProgressBar: false
+            });
+          });
+        } else {
+          toast.error(errorData?.message || 'Something went wrong!', {
+            hideProgressBar: false
+          });
+        }
       }
     } else {
       toast.error('No validated data available!', {
@@ -901,20 +901,6 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
                 </Alert>
               }
               <div className='flex gap-4 items-center'>
-                <CustomTextField
-                  select
-                  size='small'
-                  label='Language'
-                  value={bulkLanguageId}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBulkLanguageId(Number(e.target.value))}
-                  sx={{ minWidth: 200 }}
-                >
-                  {languages.map((lang) => (
-                    <MenuItem key={lang.id} value={lang.id}>
-                      {lang.full_name}
-                    </MenuItem>
-                  ))}
-                </CustomTextField>
                 <Typography>Use the same format as given below :<Button className='ml-2' variant='contained' href="/uploads/sample/bulk_theory_question_sample_file.xlsx" download>Download</Button></Typography>
               </div>
             </div>

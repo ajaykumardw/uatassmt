@@ -58,7 +58,7 @@ const TableFilters = ({ setSSCID, setQPID, setPCID, setAllPC, setData, tableData
       const data = await res.json();
 
       // Remove duplicates from fetched data
-      const uniqueData: SSCType[] = removeDuplicates(data, 'id');
+      const uniqueData: SSCType[] = removeDuplicates(data.data || data, 'id');
 
       setSSCData(uniqueData);
     } catch (error) {

@@ -121,7 +121,6 @@ const initialData: AddQPDialogData = {
   option2: '',
   option: ['','',''],
   correctAnswer: '',
-  language: '1',
 
   // isTheoryCutosff: false,
   // isVivaCutoff: false,
@@ -178,7 +177,6 @@ const schema = object(
     option2: pipe(string(), trim() , minLength(1, 'This field is required')),
     option: optional(array(string(),'optional field')),
     correctAnswer: pipe(string(), trim() , minLength(1, 'Please check any one option field for correct answer')),
-    language: optional(string()),
 
     // options: Pipe(array(string(), minLength(2, 'At least two options are required')))
 
@@ -231,7 +229,6 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
   // States
   const [userData, setUserData] = useState<AddQPDialogProps['data']>(data || initialData)
   const [loading, setLoading] = useState(false);
-  const [languages, setLanguages] = useState<{ id: number; alias: string; full_name: string }[]>([])
 
   // const [ssData, setSscUsers] = useState<SSCType[]>([])
   // const [qpData, setQPData] = useState<QPType[]>([])
@@ -278,23 +275,6 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
 
   }, [data]);
 
-  useEffect(() => {
-    if (open) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/agency-languages`)
-        .then(res => res.json())
-        .then(res => {
-          const result = res.data
-
-          if (result) {
-            const enabled = result.enabled_language_ids || []
-
-            setLanguages((result.all_languages || []).filter((l: any) => enabled.includes(Number(l.id))))
-          }
-        })
-        .catch(() => {})
-    }
-  }, [open]);
-
   // useEffect(() => {
   //   console.log("allPC", allPC);
   // }, [allPC])
@@ -322,8 +302,7 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
       option1: userData?.option1 || '',
       option2: userData?.option2 || '',
       option: [userData?.option?.[0] ?? '', userData?.option?.[1] ?? '', userData?.option?.[2] ?? ''],
-      correctAnswer: userData?.correctAnswer || '',
-      language: userData?.language || '1'
+      correctAnswer: userData?.correctAnswer || ''
     }
   })
 
@@ -386,7 +365,7 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
     data.sscId = sscID
     data.qpId = qpID
 
-    const payload = { ...data, language_id: data.language ? Number(data.language) : 1 }
+    const payload = { ...data, language_id: 1 }
 
     setLoading(true)
 
@@ -597,26 +576,6 @@ const AddEditQuestionsDialog = ({ open, sscID, qpID, pcID, allPC, questionId, ha
                     {questionLevel.map((level, index) => (
                       <MenuItem key={index} value={level.value}>
                         {level.name}
-                      </MenuItem>
-                    ))}
-                  </CustomTextField>
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                control={control}
-                name='language'
-                render={({ field }) => (
-                  <CustomTextField
-                    fullWidth
-                    select
-                    label='Language'
-                    {...field}
-                  >
-                    {languages.map((lang) => (
-                      <MenuItem key={lang.id} value={String(lang.id)}>
-                        {lang.full_name}
                       </MenuItem>
                     ))}
                   </CustomTextField>
