@@ -11,6 +11,7 @@ export async function GET(req: Request) {
 
   const url = new URL(await req.url);
   const qpId = url.searchParams.get('qpId');
+  const tpId = url.searchParams.get('tpId');
   const isToday = url.searchParams.get('today');
   const isCompleted = url.searchParams.get('completed');
 
@@ -20,6 +21,7 @@ export async function GET(req: Request) {
   const whereCondition = {
     agency_id: agencyId,
     ...(qpId ? { qp_id: Number(qpId) } : {}),
+    ...(tpId ? { training_partner_id: Number(tpId) } : {}),
     ...(isToday && isToday == 'true' ? {
       assessment_start_datetime: {
         gte: new Date(new Date().setHours(0, 0, 0, 0)),

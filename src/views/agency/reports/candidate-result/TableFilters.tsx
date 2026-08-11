@@ -7,7 +7,7 @@ import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 
-import type { batches, exam_sets } from '@prisma/client';
+import type { batches, exam_sets, users } from '@prisma/client';
 
 // Type Imports
 import type { SSCType } from '@/types/sectorskills/sscType';
@@ -24,8 +24,10 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
   // States
   const [ssc, setSSC] = useState<SSCType['id']>(-1);
   const [qp, setQP] = useState<QPType['id']>(-1);
+  const [tp, setTP] = useState<number>(-1);
   const [sscData, setSSCData] = useState<SSCType[]>([]);
   const [qpData, setQPData] = useState<QPType[]>([]);
+  const [tpData, setTPData] = useState<users[]>([]);
   const [batchId, setBatchId] = useState<number>(-1);
   const [batchData, setBatchData] = useState<batches[]>([]);
 
@@ -53,6 +55,46 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
     // const data = await res.json();
 
     // setSSCData(data);
+
+  }
+
+  const getTPData = async () => {
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/training-partner`)
+
+    if (!res.ok) {
+      throw new Error('Failed to fetch training partners')
+    }
+
+    const data = await res.json();
+
+    setTPData(data);
+
+  }
+
+  const fetchBatches = async (qpId: number, tpId: number) => {
+
+    setBatchData([]);
+
+    if (qpId > 0 || tpId > 0) {
+
+      const params = new URLSearchParams();
+
+      if (qpId > 0) params.append('qpId', String(qpId));
+
+      if (tpId > 0) params.append('tpId', String(tpId));
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches?${params.toString()}`);
+
+      const data = await res.json();
+
+      setBatchData(data);
+
+    } else {
+
+      setBatchData([]);
+
+    }
 
   }
 
@@ -93,18 +135,19 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
 
     setQP(qpId);
 
-    // const selectedSSC = sscData.find(ssc => ssc.id === ssc_id);
+    fetchBatches(qpId, tp);
 
-    if(qpId) {
+  };
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches?qpId=${qpId}`).then(function (response) { return response.json() })
+  const handleTPChange = async (tp: string) => {
 
-      setBatchData(res);
-    }else{
+    const tpId = Number(tp);
 
-      setBatchData([]);
-    }
+    setTP(tpId);
 
+    setBatchId(-1);
+
+    fetchBatches(qp, tpId);
 
   };
 
@@ -140,11 +183,35 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
 
   useEffect(() => {
     getSSCData();
+    getTPData();
   }, []);
 
   return (
     <CardContent>
       <Grid container spacing={6}>
+        <Grid item xs={12} sm={4}>
+          <TextField
+            select
+            fullWidth
+            id='select-tp'
+            value={tp}
+            onChange={(e) => handleTPChange(e.target.value)}
+            SelectProps={{ MenuProps, displayEmpty: true }}
+            label="Training Partner"
+            size="small"
+          >
+            <MenuItem value='-1'>Select Training Partner</MenuItem>
+            {tpData.length > 0 ? (
+              tpData.map((tp) => (
+                <MenuItem key={tp.id.toString()} value={tp.id.toString()}>
+                  {tp.company_name}
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem disabled>No training partner found</MenuItem>
+            )}
+          </TextField>
+        </Grid>
         <Grid item xs={12} sm={4}>
           <TextField
             select
