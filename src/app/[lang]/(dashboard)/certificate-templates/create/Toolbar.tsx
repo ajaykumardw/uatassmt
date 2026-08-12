@@ -941,9 +941,51 @@ export default function Toolbar({ canvas, fabric, mode = "create", templateId, i
   };
 
   // certificate content with multiple dynamic fields
+  const boldTokensInLine = (line: string, tokens: string[]) => {
+    const charStyles: any = {};
+
+    tokens.forEach((token) => {
+      let index = 0;
+
+      while (index < line.length) {
+        const start = line.indexOf(token, index);
+
+        if (start === -1) break;
+
+        for (let i = start; i < start + token.length; i++) {
+          charStyles[i] = { fontWeight: "bold" };
+        }
+
+        index = start + token.length;
+      }
+    });
+
+    return charStyles;
+  };
+
   const addCertificateContent = () => {
+    const lines = [
+      "This is to certify that",
+      "{{candidate_name}} {{father_name}}",
+      "has successfully completed the assessment for the Job role of",
+      "{{qp_name}}",
+      "conforming to National Skills Qualifications Framework Level-{{qp_level}}",
+      "Scheme:- {{scheme}}",
+      "Institution Name:- {{tp_name}}",
+      "Assessed by:- {{agency_name}}"
+    ];
+
+    const styles: any = {};
+
+    styles[1] = boldTokensInLine(lines[1], ["{{candidate_name}}", "{{father_name}}"]);
+    styles[3] = boldTokensInLine(lines[3], ["{{qp_name}}"]);
+    styles[4] = boldTokensInLine(lines[4], ["{{qp_level}}"]);
+    styles[5] = boldTokensInLine(lines[5], ["{{scheme}}"]);
+    styles[6] = boldTokensInLine(lines[6], ["{{tp_name}}"]);
+    styles[7] = boldTokensInLine(lines[7], ["{{agency_name}}"]);
+
     const text = new Textbox(
-      "This is to certify that\n{{candidate_name}} {{father_name}}\nhas successfully completed the assessment for the Job role of\n{{qp_name}}\nconforming to National Skills Qualifications Framework Level-{{qp_level}}\nScheme:- {{scheme}}\nInstitution Name:- {{tp_name}}\nAssessed by:- {{agency_name}}",
+      lines.join("\n"),
       {
         left: canvas.getWidth() / 2,
         top: 300,
@@ -955,7 +997,9 @@ export default function Toolbar({ canvas, fabric, mode = "create", templateId, i
         lineHeight: 1.4,
 
         editable: true,
-        selectable: true
+        selectable: true,
+
+        styles
       }
     );
 
@@ -1071,16 +1115,6 @@ export default function Toolbar({ canvas, fabric, mode = "create", templateId, i
   };
 
   const addHeadStamp = () => {
-    const boldLine = (content: string) => {
-      const charStyles: any = {};
-
-      for (let i = 0; i < content.length; i++) {
-        charStyles[i] = { fontWeight: "bold" };
-      }
-
-      return charStyles;
-    };
-
     const text = new Textbox(
       "{{head_name}}\nHead of Assessment\n{{agency_name}}",
       {
@@ -1102,8 +1136,8 @@ export default function Toolbar({ canvas, fabric, mode = "create", templateId, i
         lineHeight: 1.2,
 
         styles: {
-          0: boldLine("{{head_name}}"),
-          2: boldLine("{{agency_name}}")
+          0: boldTokensInLine("{{head_name}}", ["{{head_name}}"]),
+          2: boldTokensInLine("{{agency_name}}", ["{{agency_name}}"])
         }
       }
     );
