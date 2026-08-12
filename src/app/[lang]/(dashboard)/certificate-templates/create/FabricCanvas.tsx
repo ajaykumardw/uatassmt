@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 
 import Card from "@mui/material/Card";
 
-export default function FabricCanvas({ onReady }: any) {
+export default function FabricCanvas({ onReady, width = 1123, height = 794 }: any) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -18,6 +18,8 @@ export default function FabricCanvas({ onReady }: any) {
       canvas = new Canvas(canvasRef.current!, {
         preserveObjectStacking: true
       });
+
+      canvas.setDimensions({ width, height });
 
       // grid snap
       const grid = 10;
@@ -41,8 +43,8 @@ export default function FabricCanvas({ onReady }: any) {
     <Card className="inline-block h-full">
       <canvas
         ref={canvasRef}
-        width={1123}
-        height={794}
+        width={width}
+        height={height}
       />
     </Card>
   );

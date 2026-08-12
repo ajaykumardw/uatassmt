@@ -517,12 +517,12 @@ import { toast } from "react-toastify";
 
 import CustomIconButton from "@/@core/components/mui/IconButton";
 
-export default function Toolbar({ canvas, fabric }: any) {
+export default function Toolbar({ canvas, fabric, mode = "create", templateId, initialConfig, initialName, onSaved }: any) {
   const { Textbox, Rect, Text, Group, Image } = fabric;
 
   const [fontSize, setFontSize] = useState(20);
   const [color, setColor] = useState("#000000");
-  const [name, setName] = useState("Template Name");
+  const [name, setName] = useState(initialName || "Template Name");
 
   const [orientation, setOrientation] =
     useState<"portrait" | "landscape">("landscape");
@@ -1098,6 +1098,225 @@ export default function Toolbar({ canvas, fabric }: any) {
     canvas.renderAll();
   };
 
+  // ================= LOAD EXISTING TEMPLATE =================
+  const loadTemplate = async (config: any) => {
+    if (!config) return;
+
+    // reset canvas
+    canvas.getObjects().forEach((obj: any) => canvas.remove(obj));
+
+    canvas.setDimensions({ width: config.width || 1123, height: config.height || 794 });
+
+    setOrientation(config.orientation || "landscape");
+
+    // ================= BACKGROUND =================
+    if (config.background?.url) {
+      try {
+        const img = await loadImage(config.background.url);
+
+        img.set({
+          left: 0,
+          top: 0,
+          originX: "left",
+          originY: "top",
+          scaleX: (config.width || 1123) / img.width,
+          scaleY: (config.height || 794) / img.height,
+          selectable: false,
+          evented: false
+        });
+
+        img.customType = "background";
+        img.existingUrl = config.background.url;
+
+        canvas.add(img);
+        canvas.moveObjectTo(img, 0);
+      } catch (e) {
+        console.error("Error loading background:", e);
+      }
+    }
+
+    // ================= ELEMENTS =================
+    for (const el of config.elements || []) {
+      try {
+        // ---------- STATIC TEXT ----------
+        if (el.type === "static_text") {
+          const text = new Textbox(el.text || "Text", {
+            left: el.left,
+            top: el.top,
+            width: el.width || 200,
+            fontSize: el.fontSize || 20,
+            fill: el.color || "#000",
+            fontWeight: el.fontWeight,
+            fontStyle: el.fontStyle,
+            underline: el.underline,
+            textAlign: el.textAlign,
+            lineHeight: el.lineHeight,
+            fontFamily: el.fontFamily,
+            opacity: el.opacity,
+            angle: el.angle,
+            scaleX: el.scaleX || 1,
+            scaleY: el.scaleY || 1
+          });
+
+          if (el.originX) text.set({ originX: el.originX });
+          if (el.originY) text.set({ originY: el.originY });
+
+          text.customType = "static_text";
+
+          canvas.add(text);
+        }
+
+        // ---------- DYNAMIC TEXT ----------
+        if (el.type === "dynamic_text") {
+          const text = new Textbox(el.text || `{{${el.key}}}`, {
+            left: el.left,
+            top: el.top,
+            width: el.width || 200,
+            fontSize: el.fontSize || 20,
+            fill: el.color || "#000",
+            fontWeight: el.fontWeight,
+            fontStyle: el.fontStyle,
+            underline: el.underline,
+            textAlign: el.textAlign,
+            lineHeight: el.lineHeight,
+            fontFamily: el.fontFamily,
+            opacity: el.opacity,
+            angle: el.angle,
+            scaleX: el.scaleX || 1,
+            scaleY: el.scaleY || 1,
+            editable: false
+          });
+
+          if (el.originX) text.set({ originX: el.originX });
+          if (el.originY) text.set({ originY: el.originY });
+
+          text.customType = "dynamic_text";
+          text.dataKey = el.key;
+
+          canvas.add(text);
+        }
+
+        // ---------- IMAGE ----------
+        if (el.type === "image" && el.src) {
+          const img = await loadImage(el.src);
+
+          img.set({
+            left: el.left,
+            top: el.top,
+            angle: el.angle,
+            opacity: el.opacity
+          });
+
+          if (el.originX) img.set({ originX: el.originX });
+          if (el.originY) img.set({ originY: el.originY });
+
+          img.set({
+            scaleX: (el.width || 100) / img.width,
+            scaleY: (el.height || 100) / img.height
+          });
+
+          img.customType = "image";
+          img.fileKey = el.fileKey;
+          img.existingSrc = el.src;
+
+          canvas.add(img);
+        }
+
+        // ---------- QR ----------
+        if (el.type === "qr") {
+          const rect = new Rect({
+            width: el.size || 100,
+            height: el.size || 100,
+            fill: "#eee",
+            stroke: "#000"
+          });
+
+          const label = new Text("QR", {
+            fontSize: 16,
+            originX: "center",
+            originY: "center"
+          });
+
+          const group = new Group([rect, label], {
+            left: el.left,
+            top: el.top,
+            angle: el.angle,
+            opacity: el.opacity
+          });
+
+          group.customType = "qr";
+
+          canvas.add(group);
+        }
+
+        // ---------- AGENCY LOGO ----------
+        if (el.type === "agency_logo") {
+          const rect = new Rect({
+            width: el.width || 100,
+            height: el.height || 100,
+            fill: "#eee",
+            stroke: "#000"
+          });
+
+          const label = new Text("Agency Logo", {
+            fontSize: 16,
+            originX: "center",
+            originY: "center"
+          });
+
+          const group = new Group([rect, label], {
+            left: el.left,
+            top: el.top,
+            angle: el.angle,
+            opacity: el.opacity
+          });
+
+          group.customType = "agency_logo";
+
+          canvas.add(group);
+        }
+
+        // ---------- AGENCY STAMP ----------
+        if (el.type === "agency_stamp") {
+          const rect = new Rect({
+            width: el.width || 100,
+            height: el.height || 100,
+            fill: "#eee",
+            stroke: "#000"
+          });
+
+          const label = new Text("Stamp", {
+            fontSize: 16,
+            originX: "center",
+            originY: "center"
+          });
+
+          const group = new Group([rect, label], {
+            left: el.left,
+            top: el.top,
+            angle: el.angle,
+            opacity: el.opacity
+          });
+
+          group.customType = "agency_stamp";
+
+          canvas.add(group);
+        }
+      } catch (e) {
+        console.error("Error loading element:", el, e);
+      }
+    }
+
+    canvas.renderAll();
+  };
+
+  // ================= LOAD TEMPLATE ON MOUNT =================
+  useEffect(() => {
+    if (initialConfig && canvas) {
+      loadTemplate(initialConfig);
+    }
+  }, [canvas, initialConfig]);
+
   // ================= PREFILL TEMPLATE =================
   const prefillTemplate = () => {
 
@@ -1263,7 +1482,8 @@ export default function Toolbar({ canvas, fabric }: any) {
 
         background = {
           type: "image",
-          fileKey: "background"
+          fileKey: "background",
+          ...(obj.existingUrl ? { url: obj.existingUrl } : {})
         };
 
         return null;
@@ -1410,7 +1630,8 @@ export default function Toolbar({ canvas, fabric }: any) {
           left: obj.left,
           top: obj.top,
           width: obj.width * obj.scaleX,
-          height: obj.height * obj.scaleY
+          height: obj.height * obj.scaleY,
+          ...(obj.existingSrc ? { src: obj.existingSrc } : {})
         };
       }
 
@@ -1432,7 +1653,8 @@ export default function Toolbar({ canvas, fabric }: any) {
           originX: obj.originX,
           originY: obj.originY,
           angle: obj.angle,
-          opacity: obj.opacity
+          opacity: obj.opacity,
+          ...(obj.existingSrc ? { src: obj.existingSrc } : {})
         };
       }
 
@@ -1466,16 +1688,24 @@ export default function Toolbar({ canvas, fabric }: any) {
 
     try {
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/certificate/templates`, {
-        method: "POST",
+      const url = mode === "edit"
+        ? `${process.env.NEXT_PUBLIC_API_URL}/certificate/templates/${templateId}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/certificate/templates`;
+
+      const res = await fetch(url, {
+        method: mode === "edit" ? "PUT" : "POST",
         body: formData // NOT JSON
       });
 
-      if (res.ok){
+      const data = await res.json();
 
-        toast.success("Template saved!");
+      if (res.ok && data.success) {
+
+        toast.success(mode === "edit" ? "Template updated!" : "Template saved!");
+
+        onSaved?.();
       } else {
-        toast.error("Failed to save template.");
+        toast.error(data.message || "Failed to save template.");
       }
 
     } catch (error) {
@@ -1771,7 +2001,7 @@ export default function Toolbar({ canvas, fabric }: any) {
         <Typography variant="h6">Actions</Typography>
         <div className="flex flex-col gap-2">
           <Button color="primary" variant="contained" onClick={saveTemplate} disabled={name.trim() === ""}>
-            Save Template
+            {mode === "edit" ? "Update Template" : "Save Template"}
           </Button>
           <Button color="error" variant="outlined" onClick={deleteSelected}>
             Delete

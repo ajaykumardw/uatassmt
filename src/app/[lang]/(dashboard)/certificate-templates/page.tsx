@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { useParams, useRouter } from "next/navigation";
+
 import {
   Card,
   CardContent,
@@ -52,6 +54,10 @@ export default function TemplateListing() {
     useState(false);
 
   const {data: session} = useSession();
+
+  const router = useRouter();
+
+  const { lang } = useParams();
 
   console.log("Session:", session?.user);
 
@@ -274,6 +280,9 @@ export default function TemplateListing() {
                   <Button
                     fullWidth
                     variant='outlined'
+                    onClick={() =>
+                      router.push(`/${lang}/certificate-templates/edit/${template.id}`)
+                    }
                   >
                     Edit
                   </Button>
