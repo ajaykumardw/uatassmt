@@ -537,8 +537,22 @@ export default function Toolbar({ canvas, fabric, mode = "create", templateId, i
     new Promise<any>((resolve) => {
       const imgEl = new window.Image();
 
+      const timeout = setTimeout(() => {
+        imgEl.src = "";
+        resolve(null);
+      }, 8000);
+
+      imgEl.onload = () => {
+        clearTimeout(timeout);
+        resolve(new Image(imgEl));
+      };
+
+      imgEl.onerror = () => {
+        clearTimeout(timeout);
+        resolve(null);
+      };
+
       imgEl.src = src;
-      imgEl.onload = () => resolve(new Image(imgEl));
     });
 
   // ================= ORIENTATION =================
@@ -1114,22 +1128,24 @@ export default function Toolbar({ canvas, fabric, mode = "create", templateId, i
       try {
         const img = await loadImage(config.background.url);
 
-        img.set({
-          left: 0,
-          top: 0,
-          originX: "left",
-          originY: "top",
-          scaleX: (config.width || 1123) / img.width,
-          scaleY: (config.height || 794) / img.height,
-          selectable: false,
-          evented: false
-        });
+        if (img) {
+          img.set({
+            left: 0,
+            top: 0,
+            originX: "left",
+            originY: "top",
+            scaleX: (config.width || 1123) / img.width,
+            scaleY: (config.height || 794) / img.height,
+            selectable: false,
+            evented: false
+          });
 
-        img.customType = "background";
-        img.existingUrl = config.background.url;
+          img.customType = "background";
+          img.existingUrl = config.background.url;
 
-        canvas.add(img);
-        canvas.moveObjectTo(img, 0);
+          canvas.add(img);
+          canvas.moveObjectTo(img, 0);
+        }
       } catch (e) {
         console.error("Error loading background:", e);
       }
@@ -1199,6 +1215,10 @@ export default function Toolbar({ canvas, fabric, mode = "create", templateId, i
         // ---------- IMAGE ----------
         if (el.type === "image" && el.src) {
           const img = await loadImage(el.src);
+
+          if (!img) {
+            continue;
+          }
 
           img.set({
             left: el.left,
