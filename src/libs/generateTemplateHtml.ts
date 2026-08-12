@@ -8,6 +8,49 @@ export default function generateTemplateHtml(template: any) {
     elements
   } = template;
 
+  // ================= PER-CHARACTER BOLD =================
+  const buildStyledText = (text: string, styles: any) => {
+    if (!text || !styles) return text;
+
+    return text
+      .split("\n")
+      .map((line, lineIndex) => {
+        const lineStyles = styles[lineIndex];
+
+        if (!lineStyles) return line;
+
+        let result = "";
+        let isBold = false;
+        let buffer = "";
+
+        const flush = () => {
+          if (!buffer) return;
+
+          result += isBold ? `<b>${buffer}</b>` : buffer;
+
+          buffer = "";
+        };
+
+        for (let i = 0; i < line.length; i++) {
+          const currentBold =
+            !!lineStyles[i]?.fontWeight &&
+            lineStyles[i].fontWeight === "bold";
+
+          if (currentBold !== isBold) {
+            flush();
+            isBold = currentBold;
+          }
+
+          buffer += line[i];
+        }
+
+        flush();
+
+        return result;
+      })
+      .join("\n");
+  };
+
   const renderElement = (el: any) => {
 
     // ================= STATIC TEXT =================
@@ -60,7 +103,7 @@ export default function generateTemplateHtml(template: any) {
 
             transform-origin:top left;
           "
-        >${el.text}</div>
+        >${buildStyledText(el.text, el.styles)}</div>
       `;
     }
 
@@ -114,7 +157,7 @@ export default function generateTemplateHtml(template: any) {
 
             transform-origin:top left;
           "
-        >${el.text}</div>
+        >${buildStyledText(el.text, el.styles)}</div>
       `;
     }
 

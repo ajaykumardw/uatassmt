@@ -1071,6 +1071,16 @@ export default function Toolbar({ canvas, fabric, mode = "create", templateId, i
   };
 
   const addHeadStamp = () => {
+    const boldLine = (content: string) => {
+      const charStyles: any = {};
+
+      for (let i = 0; i < content.length; i++) {
+        charStyles[i] = { fontWeight: "bold" };
+      }
+
+      return charStyles;
+    };
+
     const text = new Textbox(
       "{{head_name}}\nHead of Assessment\n{{agency_name}}",
       {
@@ -1089,7 +1099,12 @@ export default function Toolbar({ canvas, fabric, mode = "create", templateId, i
         lockRotation: false,
 
         textAlign: "left", // looks better by default
-        lineHeight: 1.2
+        lineHeight: 1.2,
+
+        styles: {
+          0: boldLine("{{head_name}}"),
+          2: boldLine("{{agency_name}}")
+        }
       }
     );
 
@@ -1171,7 +1186,8 @@ export default function Toolbar({ canvas, fabric, mode = "create", templateId, i
             opacity: el.opacity,
             angle: el.angle,
             scaleX: el.scaleX || 1,
-            scaleY: el.scaleY || 1
+            scaleY: el.scaleY || 1,
+            styles: el.styles
           });
 
           if (el.originX) text.set({ originX: el.originX });
@@ -1200,7 +1216,8 @@ export default function Toolbar({ canvas, fabric, mode = "create", templateId, i
             angle: el.angle,
             scaleX: el.scaleX || 1,
             scaleY: el.scaleY || 1,
-            editable: false
+            editable: false,
+            styles: el.styles
           });
 
           if (el.originX) text.set({ originX: el.originX });
@@ -1544,7 +1561,8 @@ export default function Toolbar({ canvas, fabric, mode = "create", templateId, i
           textAlign: obj.textAlign,
           lineHeight: obj.lineHeight,
           fontFamily: obj.fontFamily,
-          opacity: obj.opacity
+          opacity: obj.opacity,
+          styles: obj.styles
         };
       }
 
@@ -1585,7 +1603,8 @@ export default function Toolbar({ canvas, fabric, mode = "create", templateId, i
           textAlign: obj.textAlign,
           lineHeight: obj.lineHeight,
           fontFamily: obj.fontFamily,
-          opacity: obj.opacity
+          opacity: obj.opacity,
+          styles: obj.styles
         };
       }
 
