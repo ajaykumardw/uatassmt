@@ -471,7 +471,7 @@ const AddEditTCForm = ({ open, tpId, tcId, handleClose, updateTCList, data, stat
                     required={true}
                     {...field}
                     {...(errors.firstName && { error: true, helperText: errors.firstName.message })}
-                    label='TC Spokesperson First Name'
+                    label='TC SPOC First Name'
                   />
                 )}
               />
@@ -487,7 +487,7 @@ const AddEditTCForm = ({ open, tpId, tcId, handleClose, updateTCList, data, stat
                     required={true}
                     {...field}
                     {...(errors.lastName && { error: true, helperText: errors.lastName.message })}
-                    label='TC Spokesperson Last Name'
+                    label='TC SPOC Last Name'
                   />
                 )}
               />

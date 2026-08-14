@@ -8,6 +8,8 @@ import { generateCandidateAadhaarPdf } from "./generateCandidateAadhaarPdf";
 
 import { generateCandidateFeedbackPdf } from "./generateCandidateFeedbackPdf";
 
+import { generateAssessorFeedbackPdf } from "./generateAssessorFeedbackPdf";
+
 // import path from "path";
 
 export type EvidenceFile = {
@@ -69,7 +71,7 @@ export async function generateEvidenceZip(
 
   }
 
-  if (selectedFolders.includes("viva")) {
+  if (selectedFolders.includes("viva_exam")) {
 
     tasks.push(
 
@@ -84,6 +86,19 @@ export async function generateEvidenceZip(
     tasks.push(
 
       collectInspectionFiles(batchId, files, selectedFolders)
+
+    );
+
+    tasks.push(
+
+      (async () => {
+
+        await generateAssessorFeedbackPdf(batchId);
+
+        await collectAssessorFeedbackFile(batchId, files);
+
+      })()
+
     );
 
   }

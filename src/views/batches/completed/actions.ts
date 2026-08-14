@@ -269,40 +269,83 @@ export async function getFiles(batchId: number) {
       }
     });
 
-  // // -------------------------
-  // // Assessor Feedback
-  // // -------------------------
+  // -------------------------
+  // Assessor Feedback
+  // -------------------------
 
-  // result.assessor_feedback.count =
-  //   await getAssessorFeedbackCount(batchId);
+  result.assessor_feedback.count =
+    await prisma.feedback_responses.count({
+      where: {
+        batch_id: batchId,
+        user_type: 2
+      }
+    });
 
-  // // -------------------------
-  // // Student Image + Aadhaar
-  // // -------------------------
+  // -------------------------
+  // Student Image + Aadhaar
+  // -------------------------
 
-  // result.student_image_and_aadhaar.count =
-  //   await getStudentImageAadhaarCount(batchId);
+  result.student_image_and_aadhaar.count =
+    await prisma.students.count({
+      where: {
+        batch_id: batchId,
+        OR: [
+          { image: { not: null } },
+          { id_front_image: { not: null } }
+        ]
+      }
+    });
 
-  // // -------------------------
-  // // Theory Exam
-  // // -------------------------
+  // -------------------------
+  // Theory Exam
+  // -------------------------
 
-  // result.theory_exam.count =
-  //   await getTheoryExamCount(batchId);
+  const [theoryMedia, theoryCaptured] =
+    await Promise.all([
+      prisma.media_files.count({
+        where: {
+          OR: [
+            { candidate: { batch_id: batchId } },
+            { group: { batch_id: batchId, group_type: "theory" } }
+          ]
+        }
+      }),
+      prisma.student_captured_images.count({
+        where: {
+          student: { batch_id: batchId }
+        }
+      })
+    ]);
 
-  // // -------------------------
-  // // Practical Exam
-  // // -------------------------
+  result.theory_exam.count = theoryMedia + theoryCaptured;
 
-  // result.practical_exam.count =
-  //   await getPracticalExamCount(batchId);
+  // -------------------------
+  // Practical Exam
+  // -------------------------
 
-  // // -------------------------
-  // // Viva Exam
-  // // -------------------------
+  result.practical_exam.count =
+    await prisma.media_files.count({
+      where: {
+        OR: [
+          { candidate: { batch_id: batchId } },
+          { group: { batch_id: batchId, group_type: "practical" } }
+        ]
+      }
+    });
 
-  // result.viva_exam.count =
-  //   await getVivaExamCount(batchId);
+  // -------------------------
+  // Viva Exam
+  // -------------------------
+
+  result.viva_exam.count =
+    await prisma.media_files.count({
+      where: {
+        OR: [
+          { candidate: { batch_id: batchId } },
+          { group: { batch_id: batchId, group_type: "viva" } }
+        ]
+      }
+    });
 
   return {
     success: true,

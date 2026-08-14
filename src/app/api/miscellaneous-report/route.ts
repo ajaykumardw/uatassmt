@@ -196,13 +196,25 @@ const FIELD_MAP: Record<string, FieldMap> = {
         ?.nsqf_level || ""
   },
 
-  pass: { getValue: () => "" },
-  fail: { getValue: () => "" },
-  absent: { getValue: () => "" },
+  pass: {
+    getValue: (row) => row._master?.pass ?? ""
+  },
+  fail: {
+    getValue: (row) => row._master?.fail ?? ""
+  },
+  absent: {
+    getValue: (row) => row._master?.absent ?? ""
+  },
   drop_out: { getValue: () => "" },
-  present_count: { getValue: () => "" },
-  pass_percent: { getValue: () => "" },
-  average_percent: { getValue: () => "" },
+  present_count: {
+    getValue: (row) => row._master?.present ?? ""
+  },
+  pass_percent: {
+    getValue: (row) => row._master?.passPercent ?? ""
+  },
+  average_percent: {
+    getValue: (row) => row._master?.avgPercent ?? ""
+  },
 
   assessor_name: {
     getValue: (row) =>
@@ -250,17 +262,23 @@ const FIELD_MAP: Record<string, FieldMap> = {
 
   tc_spoc_name: {
     getValue: (row) =>
-      row.center_spoc_person_name || ""
+      row.center_spoc_person_name ||
+      [row.training_center?.first_name, row.training_center?.last_name].filter(Boolean).join(" ") ||
+      ""
   },
 
   tc_spoc_contact_details: {
     getValue: (row) =>
-      row.center_spoc_person_phone || ""
+      row.center_spoc_person_phone ||
+      row.training_center?.mobile_no ||
+      ""
   },
 
   tc_spoc_email_id: {
     getValue: (row) =>
-      row.center_spoc_person_email || ""
+      row.center_spoc_person_email ||
+      row.training_center?.email ||
+      ""
   },
 
   invoice_no: { getValue: () => "" },
@@ -1176,6 +1194,94 @@ export async function POST(
           assessedCount: assessed,
           passedCount: totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * assessed) : 0,
           avgMarks: totalAttempts > 0 ? ((totalCorrect / totalAttempts) * 100).toFixed(2) : ""
+        }
+      }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | COMPUTE MASTER SHEET STATS PER BATCH (Pass/Fail/Absent/Percentages)
+    |--------------------------------------------------------------------------
+    */
+
+    if (!isAnnualReport) {
+      const masterBatchIds = rows.map(r => r.id)
+
+      const resultGroups =
+        await prisma.students.groupBy({
+          by: ["batch_id", "result"],
+          _count: { id: true },
+          where: {
+            batch_id: { in: masterBatchIds }
+          }
+        })
+
+      const resultCountMap =
+        new Map<number, { pass: number; fail: number; absent: number }>()
+
+      for (const g of resultGroups) {
+        const entry =
+          resultCountMap.get(g.batch_id) || { pass: 0, fail: 0, absent: 0 }
+
+        if (g.result === 1) {
+          entry.pass = g._count.id
+        } else if (g.result === 2) {
+          entry.fail = g._count.id
+        } else {
+          entry.absent += g._count.id
+        }
+
+        resultCountMap.set(g.batch_id, entry)
+      }
+
+      const studentExamRows = await prisma.$queryRawUnsafe<
+        { batch_id: number; correct: number | null; total_questions: number | null }[]
+      >(`
+        SELECT s.batch_id,
+               SUM(sr.correct) AS correct,
+               SUM(sr.total_questions) AS total_questions
+        FROM student_exam_set_results sr
+        JOIN students s ON s.id = sr.student_id
+        WHERE s.batch_id IN (${masterBatchIds.join(",")})
+        GROUP BY s.batch_id, sr.student_id
+      `)
+
+      const perBatchPercentages =
+        new Map<number, number[]>()
+
+      for (const r of studentExamRows) {
+        if (!r.total_questions) continue
+
+        const percentage =
+          (Number(r.correct || 0) / Number(r.total_questions)) * 100
+
+        if (!perBatchPercentages.has(r.batch_id)) {
+          perBatchPercentages.set(r.batch_id, [])
+        }
+
+        perBatchPercentages.get(r.batch_id)!.push(percentage)
+      }
+
+      for (const row of rows as any[]) {
+        const counts =
+          resultCountMap.get(row.id) || { pass: 0, fail: 0, absent: 0 }
+
+        const present = counts.pass + counts.fail
+
+        const percentages = perBatchPercentages.get(row.id)
+
+        const avgPercent =
+          percentages && percentages.length > 0
+            ? (percentages.reduce((sum, p) => sum + p, 0) / percentages.length).toFixed(2)
+            : ""
+
+        row._master = {
+          pass: counts.pass,
+          fail: counts.fail,
+          absent: counts.absent,
+          present: present,
+          passPercent: present > 0 ? ((counts.pass / present) * 100).toFixed(2) : "",
+          avgPercent
         }
       }
     }

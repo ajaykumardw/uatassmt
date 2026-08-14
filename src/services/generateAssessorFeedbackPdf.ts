@@ -2,11 +2,56 @@ import fs from 'fs';
 
 import path from "path";
 
-// import { pipeline } from 'stream/promises';
+import { parse, format } from "date-fns"
 
 import prisma from "@/libs/prisma"
 import { getBrowser } from "@/libs/puppeteerBrowser"
-import { storageFolders } from "@/configs/customDataConfig";
+
+import { storageFolders, getAgencyImagePath } from "@/configs/customDataConfig";
+
+const imageToBase64 = (filePath: string) => {
+
+  const ext = path.extname(filePath).toLowerCase();
+
+  const mimeType =
+    ext === '.png'
+      ? 'image/png'
+      : ext === '.webp'
+        ? 'image/webp'
+        : 'image/jpeg';
+
+  const buffer = fs.readFileSync(filePath);
+
+  const base64 = `data:${mimeType};base64,${buffer.toString('base64')}`;
+
+  return base64;
+};
+
+const dateFormats = [
+  'dd-MMM-yyyy hh:mm a',
+  'dd-MMM-yyyy',
+  'dd-MM-yyyy',
+  'dd/MM/yyyy',
+  'dd MMM yyyy'
+];
+
+const formatDateValue = (value?: string | null) => {
+
+  if (!value) {
+    return ''
+  }
+
+  for (const dateFormat of dateFormats) {
+
+    const parsed = parse(value, dateFormat, new Date())
+
+    if (!isNaN(parsed.getTime())) {
+      return format(parsed, 'dd-MM-yyyy')
+    }
+  }
+
+  return value
+};
 
 export async function generateAssessorFeedbackPdf(
   batchId: number
@@ -17,14 +62,6 @@ export async function generateAssessorFeedbackPdf(
       user_type: 2
     },
     include: {
-
-      // batch: {
-      //   select: {
-      //     id: true,
-      //     batch_name: true
-      //   }
-      // },
-      
       feedback_form: {
         include: {
           feedback_questions: {
@@ -46,47 +83,194 @@ export async function generateAssessorFeedbackPdf(
     return
   }
 
-  // if (!feedbackResponse.batch) {
-  //   return
-  // }
+  const batch = await prisma.batches.findUnique({
+    where: { id: batchId },
+    select: {
+      training_partner: {
+        select: {
+          company_name: true
+        }
+      },
+      agency: {
+        select: {
+          id: true,
+          avatar: true,
+          company_name: true,
+          address: true,
+          pin_code: true
+        }
+      }
+    }
+  })
+
+  let agencyLogoBase64 = ''
+
+  const agency = batch?.agency
+
+  if (agency?.avatar) {
+    const logoPath = path.join(
+      process.cwd(),
+      getAgencyImagePath(agency.id, agency.avatar)
+    )
+
+    if (fs.existsSync(logoPath)) {
+      agencyLogoBase64 = imageToBase64(logoPath)
+    }
+  }
+
+  const agencyName = agency?.company_name || ''
+
+  const trainingPartnerName = batch?.training_partner?.company_name || ''
 
   const answerMap = new Map(
     feedbackResponse.feedback_response_answers.map(answer => [
       answer.feedback_question_id,
-      answer.answer_value || ''
+      answer
     ])
   )
 
-  const questionsHtml =
-    feedbackResponse.feedback_form.feedback_questions
-      .map(question => {
-        const answer = answerMap.get(question.id) || ''
+  const questions = feedbackResponse.feedback_form.feedback_questions
 
-        const yesChecked =
-          answer.toLowerCase() === 'yes' ||
-          answer.toLowerCase() === 'y'
+  const isInfoQuestion = (question: { question: string; question_type: number }) =>
+    question.question_type === 3 &&
+    !/overall remarks/i.test(question.question) &&
+    !/reason/i.test(question.question)
 
-        const noChecked =
-          answer.toLowerCase() === 'no' ||
-          answer.toLowerCase() === 'n'
+  const infoEntries: { label: string; value: string }[] = questions
+    .filter(isInfoQuestion)
+    .map(question => ({
+      label: question.question,
+      value: /date of assessment/i.test(question.question)
+        ? formatDateValue(answerMap.get(question.id)?.answer_value)
+        : answerMap.get(question.id)?.answer_value || ''
+    }))
 
+  const trainingPartnerIndex =
+    infoEntries.findIndex(entry => /identity number/i.test(entry.label))
+
+  if (trainingPartnerIndex !== -1) {
+    infoEntries.splice(trainingPartnerIndex + 1, 0, {
+      label: 'Training Partner Name',
+      value: trainingPartnerName
+    })
+  }
+
+  const infoRowsHtml = infoEntries
+    .reduce<{ label: string; value: string }[][]>((rows, entry, index) => {
+      if (index % 2 === 0) {
+        rows.push([entry])
+      } else {
+        rows[rows.length - 1].push(entry)
+      }
+
+      return rows
+
+    }, [])
+    .map(row => `
+      <tr>
+        ${row.map(entry => `
+          <td><b>${entry.label} :</b> ${entry.value}</td>
+        `).join('')}
+        ${row.length === 1 ? '<td></td>' : ''}
+      </tr>
+    `)
+    .join('')
+
+  const questionRowsHtml = questions
+    .filter(question =>
+      question.question_type === 1 ||
+      (question.question_type === 3 && /reason/i.test(question.question))
+    )
+    .map(question => {
+      const answer = answerMap.get(question.id)
+
+      const answerValue = answer?.answer_value || ''
+
+      if (/reason/i.test(question.question)) {
         return `
           <tr>
-            <td>${question.question}</td>
-            <td class="center">${yesChecked ? '☑' : '☐'}</td>
-            <td class="center">${noChecked ? '☑' : '☐'}</td>
+            <td><b>${question.question} :</b></td>
+            <td colspan="2">${answerValue}</td>
           </tr>
         `
-      })
-      .join('')
+      }
+
+      const yesChecked =
+        answerValue.toLowerCase() === 'yes' ||
+        answerValue.toLowerCase() === 'y'
+
+      const noChecked =
+        answerValue.toLowerCase() === 'no' ||
+        answerValue.toLowerCase() === 'n'
+
+      return `
+        <tr>
+          <td><b>${question.question} :</b></td>
+          <td class="center">${yesChecked ? '☑' : '☐'}</td>
+          <td class="center">${noChecked ? '☑' : '☐'}</td>
+        </tr>
+      `
+    })
+    .join('')
 
   const remarksAnswer =
-    feedbackResponse.feedback_response_answers.find(
-      x =>
-        x.feedback_question.question
-          .toLowerCase()
-          .includes('overall remarks')
-    )?.answer_value || ''
+    questions.find(
+      question => /overall remarks/i.test(question.question)
+    )?.id
+
+  const remarksValue =
+    remarksAnswer
+      ? answerMap.get(remarksAnswer)?.answer_value || ''
+      : ''
+
+  const signatureQuestion =
+    questions.find(question => /signature/i.test(question.question))
+
+  let signatureHtml = ''
+
+  if (signatureQuestion) {
+    const signatureAnswer = answerMap.get(signatureQuestion.id)
+
+    if (signatureAnswer?.file) {
+
+      const signaturePath = path.join(
+        process.cwd(),
+        storageFolders.storage,
+        storageFolders.uploads,
+        storageFolders.agency,
+        storageFolders.batches,
+        batchId.toString(),
+        'feedback_response_signature',
+        signatureAnswer.file
+      )
+
+      if (fs.existsSync(signaturePath)) {
+        signatureHtml = `
+          <div class="signature-box">
+            <img src="${imageToBase64(signaturePath)}" class="signature-image" />
+          </div>
+        `
+      }
+    }
+  }
+
+  const addressRaw =
+    [agency?.address, agency?.pin_code ? `PIN ${agency.pin_code}` : '']
+      .filter(Boolean)
+      .join(', ')
+
+  const addressLines = addressRaw
+    .split(',')
+    .map(line => line.trim())
+    .filter(Boolean)
+
+  const addressHtml = addressLines
+    .map((line, index) =>
+      index === addressLines.length - 1
+        ? `<div class="addr pin-line">${line}</div>`
+        : `<div class="addr">${line}</div>`
+    )
+    .join('')
 
   const html = `
 <!DOCTYPE html>
@@ -96,25 +280,64 @@ export async function generateAssessorFeedbackPdf(
 <style>
 body {
   font-family: Arial, sans-serif;
-  font-size: 12px;
-  padding: 20px;
+  font-size: 10px;
+  padding: 10px;
+}
+
+.watermark {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.12;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.watermark img {
+  width: 400px;
+  height: 400px;
+  object-fit: contain;
 }
 
 .header {
-  text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 8px;
+}
+
+.logo-line {
+  margin-bottom: 4px;
+  margin-top: 2px;
+}
+
+.logo-line img {
+  max-height: 34px;
+  max-width: 90px;
+  object-fit: contain;
+  float: right;
 }
 
 .company {
-  font-size: 12px;
-  line-height: 18px;
+  font-size: 10px;
+  line-height: 14px;
+  text-align: right;
+}
+
+.addr {
+  font-size: 10px;
+  line-height: 14px;
+  text-align: right;
+}
+
+.pin-line {
+  text-align: center;
 }
 
 .title {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: bold;
-  margin-top: 10px;
+  text-align: center;
   text-decoration: underline;
+  margin: 8px 0 0;
 }
 
 table {
@@ -124,7 +347,7 @@ table {
 
 td, th {
   border: 1px solid #000;
-  padding: 6px;
+  padding: 4px;
   vertical-align: top;
 }
 
@@ -133,34 +356,60 @@ td, th {
 }
 
 .info-table td {
-  height: 28px;
+  height: 22px;
 }
 
 .remarks-box {
   border: 1px solid #000;
-  min-height: 80px;
-  padding: 10px;
+  min-height: 45px;
+  padding: 6px;
 }
 
-.signature {
-  margin-top: 40px;
+.signature-section {
+  margin-top: 16px;
 }
 
-.label {
+.signature-label {
   font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.signature-box {
+  border: 1px solid #000;
+  min-height: 50px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+}
+
+.signature-image {
+  max-height: 50px;
+  max-width: 240px;
+  object-fit: contain;
 }
 </style>
 </head>
 
 <body>
 
+${agencyLogoBase64 ? `
+<div class="watermark">
+  <img src="${agencyLogoBase64}" />
+</div>
+` : ''}
+
 <div class="header">
-  <div class="company">
-    Vistaskills Private Limited<br/>
-    Office No. 319, Block A, 3rd Floor,<br/>
-    Chandigarh Citi Center (CCC),<br/>
-    VIP Road, Zirakpur, Punjab - 140603
+  ${agencyLogoBase64 ? `
+  <div class="logo-line">
+    <img src="${agencyLogoBase64}" alt="Agency Logo" />
   </div>
+  ` : ''}
+
+  <div class="company">
+    ${agencyName}
+  </div>
+
+  ${addressHtml}
 
   <div class="title">
     ASSESSOR'S FEEDBACK FORM
@@ -168,63 +417,34 @@ td, th {
 </div>
 
 <table class="info-table">
-  <tr>
-    <td><b>Assessor's Name</b></td>
-    <td></td>
-    <td><b>Assessment Agency Name</b></td>
-    <td></td>
-  </tr>
-
-  <tr>
-    <td><b>Assessor's Identity Number</b></td>
-    <td></td>
-    <td><b>Training Center Name</b></td>
-    <td></td>
-  </tr>
-
-  <tr>
-    <td><b>Center ID</b></td>
-    <td></td>
-    <td><b>Batch ID</b></td>
-    <td>${batchId}</td>
-  </tr>
-
-  <tr>
-    <td><b>Date of Assessment</b></td>
-    <td>${feedbackResponse.submitted_at.toLocaleDateString()}</td>
-    <td><b>Training Partner Name</b></td>
-    <td></td>
-  </tr>
+  ${infoRowsHtml}
 </table>
 
 <br/>
 
 <table>
-  <thead>
-    <tr>
-      <th style="width:80%">Question</th>
-      <th style="width:10%">Yes</th>
-      <th style="width:10%">No</th>
-    </tr>
-  </thead>
+  <tr>
+    <th>Tick the appropriate answer</th>
+    <th style="width:10%">Yes</th>
+    <th style="width:10%">No</th>
+  </tr>
 
-  <tbody>
-    ${questionsHtml}
-  </tbody>
+  ${questionRowsHtml}
 </table>
 
 <br/>
 
 <div>
-  <div class="label">Overall Remarks:</div>
+  <div class="signature-label">Overall Remarks :</div>
 
   <div class="remarks-box">
-    ${remarksAnswer}
+    ${remarksValue}
   </div>
 </div>
 
-<div class="signature">
-  <b>Assessor's Signature :</b>
+<div class="signature-section">
+  <div class="signature-label">Assessor's Signature :</div>
+  ${signatureHtml}
 </div>
 
 </body>
@@ -239,7 +459,8 @@ td, th {
     page = await browser.newPage()
 
     await page.setContent(html, {
-      waitUntil: 'networkidle0'
+      waitUntil: 'load',
+      timeout: 60000
     })
 
     const filename = `assessor-feedback.pdf`
@@ -260,10 +481,10 @@ td, th {
       format: 'A4',
       printBackground: true,
       margin: {
-        top: '10mm',
-        bottom: '10mm',
-        left: '10mm',
-        right: '10mm'
+        top: '6mm',
+        bottom: '6mm',
+        left: '8mm',
+        right: '8mm'
       }
     })
 
