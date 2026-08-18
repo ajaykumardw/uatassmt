@@ -2,12 +2,12 @@ import fs from 'fs';
 
 import path from "path";
 
-import { parse, format } from "date-fns"
+import { format } from "date-fns"
 
 import prisma from "@/libs/prisma"
 import { getBrowser } from "@/libs/puppeteerBrowser"
 
-import { storageFolders, getAgencyImagePath } from "@/configs/customDataConfig";
+import { getAgencyImagePath } from "@/configs/customDataConfig";
 
 const imageToBase64 = (filePath: string) => {
 
@@ -27,85 +27,22 @@ const imageToBase64 = (filePath: string) => {
   return base64;
 };
 
-const dateFormats = [
-  'dd-MMM-yyyy hh:mm a',
-  'dd-MMM-yyyy',
-  'dd-MM-yyyy',
-  'dd/MM/yyyy',
-  'dd MMM yyyy'
-];
-
-const formatDateValue = (value?: string | null) => {
-
-  if (!value) {
-    return ''
-  }
-
-  for (const dateFormat of dateFormats) {
-
-    const parsed = parse(value, dateFormat, new Date())
-
-    if (!isNaN(parsed.getTime())) {
-      return format(parsed, 'dd-MM-yyyy')
-    }
-  }
-
-  return value
-};
-
-export async function generateAssessorFeedbackPdf(
-  batchId: number
-) {
-  const feedbackResponse = await prisma.feedback_responses.findFirst({
-    where: {
-      batch_id: batchId,
-      user_type: 2
-    },
+export async function generateAssessorFeedbackBlankPdf(
+  batch: any
+): Promise<Buffer> {
+  const feedbackForm = await prisma.feedback_forms.findFirst({
+    where: { form_type: 2 },
+    orderBy: { id: 'desc' },
     include: {
-      feedback_form: {
-        include: {
-          feedback_questions: {
-            orderBy: {
-              id: 'asc'
-            }
-          }
-        }
-      },
-      feedback_response_answers: {
-        include: {
-          feedback_question: true
-        }
+      feedback_questions: {
+        orderBy: { id: 'asc' }
       }
     }
   })
-
-  if (!feedbackResponse) {
-    return
-  }
-
-  const batch = await prisma.batches.findUnique({
-    where: { id: batchId },
-    select: {
-      training_partner: {
-        select: {
-          company_name: true
-        }
-      },
-      agency: {
-        select: {
-          id: true,
-          avatar: true,
-          company_name: true,
-          address: true,
-          pin_code: true
-        }
-      }
-    }
-  })
-
-  let agencyLogoBase64 = ''
 
   const agency = batch?.agency
+
+  let agencyLogoBase64 = ''
 
   if (agency?.avatar) {
     const logoPath = path.join(
@@ -122,27 +59,57 @@ export async function generateAssessorFeedbackPdf(
 
   const trainingPartnerName = batch?.training_partner?.company_name || ''
 
-  const answerMap = new Map(
-    feedbackResponse.feedback_response_answers.map(answer => [
-      answer.feedback_question_id,
-      answer
-    ])
-  )
+  const trainingCenter = batch?.training_center
 
-  const questions = feedbackResponse.feedback_form.feedback_questions
+  const assessorName =
+    [batch?.assessor?.first_name, batch?.assessor?.last_name]
+      .filter(Boolean)
+      .join(' ') || ''
+
+  const completeAddress = [
+    trainingCenter?.address,
+    trainingCenter?.city?.city_name,
+    trainingCenter?.state?.state_name
+  ].filter(Boolean).join(', ')
+
+  const students = batch?.students || []
+
+  const totalCandidates = students.length
+
+  const assessmentDate = batch?.assessment_start_datetime
+    ? format(new Date(batch.assessment_start_datetime), 'dd-MM-yyyy')
+    : ''
+
+  const questions = feedbackForm?.feedback_questions || []
 
   const isInfoQuestion = (question: { question: string; question_type: number }) =>
     question.question_type === 3 &&
     !/overall remarks/i.test(question.question) &&
     !/reason/i.test(question.question)
 
+  const resolveInfoValue = (label: string) => {
+    if (/agency/i.test(label)) return agencyName
+    if (/assessor's name/i.test(label)) return assessorName
+    if (/identity number/i.test(label)) return batch?.assessor?.user_name || ''
+    if (/training center/i.test(label)) return trainingCenter?.company_name || ''
+    if (/complete address/i.test(label)) return completeAddress
+    if (/center id/i.test(label)) return trainingCenter?.user_name || ''
+    if (/batch id/i.test(label)) return batch?.batch_name || ''
+    if (/job role/i.test(label)) return batch?.qualification_pack?.qualification_pack_name || ''
+    if (/no\. of candidates|no of candidates/i.test(label)) return String(totalCandidates)
+    if (/preferred language/i.test(label)) return ''
+    if (/conducted in the language/i.test(label)) return ''
+    if (/spoc name/i.test(label)) return batch?.center_spoc_person_name || `${trainingCenter?.first_name || ''} ${trainingCenter?.last_name || ''}`.trim()
+    if (/date of assessment/i.test(label)) return assessmentDate
+    
+return ''
+  }
+
   const infoEntries: { label: string; value: string }[] = questions
     .filter(isInfoQuestion)
     .map(question => ({
       label: question.question,
-      value: /date of assessment/i.test(question.question)
-        ? formatDateValue(answerMap.get(question.id)?.answer_value)
-        : answerMap.get(question.id)?.answer_value || ''
+      value: resolveInfoValue(question.question)
     }))
 
   const trainingPartnerIndex =
@@ -182,77 +149,24 @@ export async function generateAssessorFeedbackPdf(
       (question.question_type === 3 && /reason/i.test(question.question))
     )
     .map(question => {
-      const answer = answerMap.get(question.id)
-
-      const answerValue = answer?.answer_value || ''
-
       if (/reason/i.test(question.question)) {
         return `
           <tr>
             <td><b>${question.question} :</b></td>
-            <td colspan="2">${answerValue}</td>
+            <td colspan="2"></td>
           </tr>
         `
       }
 
-      const yesChecked =
-        answerValue.toLowerCase() === 'yes' ||
-        answerValue.toLowerCase() === 'y'
-
-      const noChecked =
-        answerValue.toLowerCase() === 'no' ||
-        answerValue.toLowerCase() === 'n'
-
       return `
         <tr>
           <td><b>${question.question} :</b></td>
-          <td class="center">${yesChecked ? '☑' : '☐'}</td>
-          <td class="center">${noChecked ? '☑' : '☐'}</td>
+          <td class="center"></td>
+          <td class="center"></td>
         </tr>
       `
     })
     .join('')
-
-  const remarksAnswer =
-    questions.find(
-      question => /overall remarks/i.test(question.question)
-    )?.id
-
-  const remarksValue =
-    remarksAnswer
-      ? answerMap.get(remarksAnswer)?.answer_value || ''
-      : ''
-
-  const signatureQuestion =
-    questions.find(question => /signature/i.test(question.question))
-
-  let signatureHtml = ''
-
-  if (signatureQuestion) {
-    const signatureAnswer = answerMap.get(signatureQuestion.id)
-
-    if (signatureAnswer?.file) {
-
-      const signaturePath = path.join(
-        process.cwd(),
-        storageFolders.storage,
-        storageFolders.uploads,
-        storageFolders.agency,
-        storageFolders.batches,
-        batchId.toString(),
-        'feedback_response_signature',
-        signatureAnswer.file
-      )
-
-      if (fs.existsSync(signaturePath)) {
-        signatureHtml = `
-          <div class="signature-box">
-            <img src="${imageToBase64(signaturePath)}" class="signature-image" />
-          </div>
-        `
-      }
-    }
-  }
 
   const addressRaw = agency?.address || '';
 
@@ -287,35 +201,41 @@ body {
 }
 
 .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 8px;
 }
 
 .logo-line {
-  margin-bottom: 4px;
-  margin-top: 2px;
-  text-align: center;
+  flex: 0 0 auto;
 }
 
 .logo-line img {
-  max-height: 34px;
-  max-width: 90px;
+  max-height: 110px;
+  max-width: 110px;
   object-fit: contain;
 }
 
-.company {
-  font-size: 10px;
-  line-height: 14px;
+.company-block {
   text-align: right;
-  max-width: 55%;
+  max-width: 60%;
   margin-left: auto;
+}
+
+.company {
+  font-size: 14px;
+  line-height: 16px;
+  font-weight: bold;
+  color: #000;
   word-wrap: break-word;
 }
 
 .addr {
-  font-size: 10px;
+  margin-top: 4px;
+  font-size: 11px;
   line-height: 14px;
-  text-align: right;
-  max-width: 55%;
+  max-width: 170px;
   margin-left: auto;
   word-wrap: break-word;
 }
@@ -329,7 +249,7 @@ body {
   font-weight: bold;
   text-align: center;
   text-decoration: underline;
-  margin: 8px 0 0;
+  margin: 14px 0 14px;
 }
 
 table {
@@ -373,12 +293,6 @@ td, th {
   display: flex;
   align-items: center;
 }
-
-.signature-image {
-  max-height: 50px;
-  max-width: 240px;
-  object-fit: contain;
-}
 </style>
 </head>
 
@@ -397,15 +311,17 @@ ${agencyLogoBase64 ? `
   </div>
   ` : ''}
 
-  <div class="company">
-    ${agencyName}
-  </div>
+  <div class="company-block">
+    <div class="company">
+      ${agencyName}
+    </div>
 
-  ${addressHtml}
-
-  <div class="title">
-    ASSESSOR'S FEEDBACK FORM
+    ${addressHtml}
   </div>
+</div>
+
+<div class="title">
+  ASSESSOR'S FEEDBACK FORM
 </div>
 
 <table class="info-table">
@@ -429,14 +345,12 @@ ${agencyLogoBase64 ? `
 <div>
   <div class="signature-label">Overall Remarks :</div>
 
-  <div class="remarks-box">
-    ${remarksValue}
-  </div>
+  <div class="remarks-box"></div>
 </div>
 
 <div class="signature-section">
   <div class="signature-label">Assessor's Signature :</div>
-  ${signatureHtml}
+  <div class="signature-box"></div>
 </div>
 
 </body>
@@ -445,31 +359,15 @@ ${agencyLogoBase64 ? `
 
   const browser = await getBrowser();
 
-  let page = null;
+  const page = await browser.newPage()
 
   try {
-    page = await browser.newPage()
-
     await page.setContent(html, {
       waitUntil: 'load',
       timeout: 60000
     })
 
-    const filename = `assessor-feedback.pdf`
-
-    const uploadDir = path.join(process.cwd(), storageFolders.storage, storageFolders.uploads, storageFolders.agency, storageFolders.batches, batchId.toString(), "assessor_feedback");
-
-    try {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    } catch (err) {
-      console.error('Error creating upload directory:', err);
-      throw new Error('Failed to create upload directory');
-    }
-
-    const filePath = path.join(uploadDir, filename);
-
-    await page.pdf({
-      path: filePath,
+    const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
       margin: {
@@ -480,17 +378,16 @@ ${agencyLogoBase64 ? `
       }
     })
 
-    return filePath;
+    return Buffer.from(pdfBuffer)
 
   } catch (error) {
 
-    console.error('Error generating PDF:', error)
-    throw error;
+    console.error(`Error generating Assessor Feedback PDF for batch ${batch?.id}:`, error)
+
+    throw error
 
   } finally {
 
-    if (page) {
-      await page.close();
-    }
+    await page.close()
   }
 }

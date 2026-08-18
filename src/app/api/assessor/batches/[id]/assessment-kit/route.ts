@@ -15,6 +15,15 @@ import prisma from "@/libs/prisma";
 
 import { decrypt } from "@/utils/encryption";
 
+import { generateAnnexureM1Pdf } from "@/services/generateAnnexureM1Pdf";
+import { generateAnnexureM2Pdf } from "@/services/generateAnnexureM2Pdf";
+import { generateAnnexureNPdf } from "@/services/generateAnnexureNPdf";
+import { generateTrainingProviderFeedbackPdf } from "@/services/generateTrainingProviderFeedbackPdf";
+import { generateAssessorFeedbackBlankPdf } from "@/services/generateAssessorFeedbackBlankPdf";
+import { generateTcDeclarationPdf } from "@/services/generateTcDeclarationPdf";
+import { generateUndertakingPdf } from "@/services/generateUndertakingPdf";
+import { generateApaarDeclarationPdf } from "@/services/generateApaarDeclarationPdf";
+
 import { getAgencyImagePath, getAgencyUsersFilePath, getSSCImagePath } from "@/configs/customDataConfig";
 
 export async function GET(
@@ -58,7 +67,13 @@ export async function GET(
           select: {
             id: true,
             company_name: true,
-            avatar: true
+            avatar: true,
+            address: true,
+            pin_code: true,
+            first_name: true,
+            last_name: true,
+            mobile_no: true,
+            email: true
           }
         },
         qualification_pack: {
@@ -87,6 +102,15 @@ export async function GET(
             candidate_name: "asc"
           }
         },
+        assessor: {
+          select: {
+            id: true,
+            user_name: true,
+            first_name: true,
+            last_name: true,
+            mobile_no: true
+          }
+        },
         training_partner: {
           select: {
             id: true,
@@ -97,7 +121,24 @@ export async function GET(
         },
         training_center: {
           select: {
-            address: true
+            id: true,
+            user_name: true,
+            company_name: true,
+            address: true,
+            first_name: true,
+            last_name: true,
+            mobile_no: true,
+            email: true,
+            city: {
+              select: {
+                city_name: true
+              }
+            },
+            state: {
+              select: {
+                state_name: true
+              }
+            }
           }
         },
         scheme: {
@@ -132,12 +173,47 @@ export async function GET(
     const agencyImage = batch.agency?.avatar ? getAgencyImagePath(batch.agency.id, batch.agency.avatar) : null;
     const tpImage = batch.training_partner?.avatar ? getAgencyUsersFilePath(batch.training_partner?.id, batch.training_partner?.avatar) : null;
 
-    const file = await generateAttendancePdf({ ...batch, students: formattedBatch, sscImage: sscImage, agencyImage: agencyImage, tpImage: tpImage });
+    const url = new URL(request.url);
 
-    return new Response(file, {
+    const doc = url.searchParams.get("doc") || "attendance";
+
+    let file: Buffer | null = null;
+
+    let filename = "";
+
+    if (doc === "annexure-m1") {
+      file = await generateAnnexureM1Pdf(batch);
+      filename = `${batch.batch_name}_annexure_m1.pdf`;
+    } else if (doc === "annexure-m2") {
+      file = await generateAnnexureM2Pdf(batch);
+      filename = `${batch.batch_name}_annexure_m2.pdf`;
+    } else if (doc === "annexure-n") {
+      file = await generateAnnexureNPdf(batch);
+      filename = `${batch.batch_name}_annexure_n.pdf`;
+    } else if (doc === "tp-feedback") {
+      file = await generateTrainingProviderFeedbackPdf(batch);
+      filename = `${batch.batch_name}_tp_feedback_form.pdf`;
+    } else if (doc === "assessor-feedback") {
+      file = await generateAssessorFeedbackBlankPdf(batch);
+      filename = `${batch.batch_name}_assessor_feedback_form.pdf`;
+    } else if (doc === "tc-declaration") {
+      file = await generateTcDeclarationPdf(batch);
+      filename = `${batch.batch_name}_tc_declaration.pdf`;
+    } else if (doc === "undertaking") {
+      file = await generateUndertakingPdf(batch);
+      filename = `${batch.batch_name}_undertaking_form.pdf`;
+    } else if (doc === "apaar-declaration") {
+      file = await generateApaarDeclarationPdf(batch);
+      filename = `${batch.batch_name}_declaration_for_apaar_id.pdf`;
+    } else {
+      file = await generateAttendancePdf({ ...batch, students: formattedBatch, sscImage: sscImage, agencyImage: agencyImage, tpImage: tpImage });
+      filename = `${batch.batch_name}_assessment_attendance_sheet.pdf`;
+    }
+
+    return new Response(new Uint8Array(file), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename=${batch.batch_name}_assessment_attendance_sheet.pdf`
+        "Content-Disposition": `attachment; filename=${filename}`
       }
     });
 

@@ -24,7 +24,7 @@ type BatchesWithQP = batches & {qualification_pack: QPType};
 const TableFilters = ({ setData, tableData }: { setData: any; tableData?: BatchesWithQP[] }) => {
   // States
 
-  const [month, setMonth] = useState<Date>(new Date())
+  const [month, setMonth] = useState<Date | null>(null)
 
 
   useEffect(() => {

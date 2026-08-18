@@ -46,6 +46,10 @@ export async function GET(req: NextRequest) {
         const lastThirtyDays = new Date();
 
         lastThirtyDays.setDate(now.getDate() - 30);
+
+        // Temporary bypass for local development
+        const isLocalDev = process.env.NODE_ENV === "development";
+
         const fromDate = from ? new Date(from) : null;
 
         if (fromDate) fromDate.setHours(0, 0, 0, 0);
@@ -62,8 +66,11 @@ export async function GET(req: NextRequest) {
         if (status === "completed") {
             whereClause.batch_completed = 1;
             whereClause.assessment_start_datetime = {
-                gte: fromDate || lastThirtyDays,
-                lte: toDate || now
+                ...(isLocalDev
+                    ? {}
+                    : { gte: fromDate || lastThirtyDays, lte: toDate || now }),
+                ...(fromDate && { gte: fromDate }),
+                ...(toDate && { lte: toDate })
             };
         } else if (status === "notCompleted") {
             whereClause.batch_completed = 0;
