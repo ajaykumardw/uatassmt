@@ -60,7 +60,7 @@ export async function generateTcDeclarationPdf(
   const assessorName =
     [batch?.assessor?.first_name, batch?.assessor?.last_name]
       .filter(Boolean)
-      .join(' ') + "," || ''
+      .join(' ') || ''
 
   const trainingCenter = batch?.training_center
 
@@ -215,8 +215,8 @@ body {
 
 <div class="para">
   This is to declare that the following assessment has been completed by
-  Assessor <span class="filled">${assessorName}</span> on
-  <span class="filled">${assessmentDate}</span> (Date) as per the standard
+  Assessor <span style="font-weight: bold;">${assessorName}</span>, on
+  <span style="font-weight: bold;">${assessmentDate}</span> (Date) as per the standard
   operating assessment guideline by SSC &amp; NSDC.
 </div>
 
