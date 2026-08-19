@@ -235,7 +235,7 @@ body {
   margin-top: 4px;
   font-size: 11px;
   line-height: 14px;
-  max-width: 170px;
+  max-width: 240px;
   margin-left: auto;
   word-wrap: break-word;
 }

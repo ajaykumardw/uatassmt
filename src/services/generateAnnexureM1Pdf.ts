@@ -148,7 +148,7 @@ body {
   margin-top: 4px;
   font-size: 11px;
   line-height: 14px;
-  max-width: 170px;
+  max-width: 240px;
   margin-left: auto;
   word-wrap: break-word;
 }
@@ -172,7 +172,7 @@ table {
 
 td, th {
   border: 1px solid #000;
-  padding: 4px;
+  padding: 3px;
   vertical-align: middle;
 }
 
@@ -202,7 +202,7 @@ th {
 }
 
 .signature-section {
-  margin-top: 18px;
+  margin-top: 16px;
   display: table;
   width: 100%;
 }
@@ -210,8 +210,12 @@ th {
 .signature-col {
   display: table-cell;
   width: 50%;
-  height: 80px;
+  height: 120px;
   vertical-align: top;
+}
+
+.signature-col.right {
+  text-align: right;
 }
 
 .signature-line {
@@ -220,11 +224,11 @@ th {
 
 .signature-label {
   font-weight: bold;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .note {
-  margin-top: 40px;
+  margin-top: 18px;
   font-size: 9px;
   text-align: justify;
 }
@@ -272,7 +276,7 @@ th {
     <div class="signature-line"><b>Assessor's Name</b> - ${assessorName}</div>
     <div class="signature-label">Assessor's Signature</div>
   </div>
-  <div class="signature-col">
+  <div class="signature-col right">
     <div class="signature-line"><b>Center Head Name</b> - ${centerHeadName}</div>
     <div class="signature-label">Center Head Signature &amp; Stamp</div>
   </div>

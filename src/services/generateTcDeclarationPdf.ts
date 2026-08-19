@@ -18,7 +18,7 @@ const imageToBase64 = (filePath: string) => {
 
   const buffer = fs.readFileSync(filePath);
 
-  
+
 return `data:${mimeType};base64,${buffer.toString('base64')}`;
 };
 
@@ -60,7 +60,7 @@ export async function generateTcDeclarationPdf(
   const assessorName =
     [batch?.assessor?.first_name, batch?.assessor?.last_name]
       .filter(Boolean)
-      .join(' ') || ''
+      .join(' ') + "," || ''
 
   const trainingCenter = batch?.training_center
 
@@ -131,7 +131,7 @@ body {
 .addr {
   margin-top: 4px;
   font-size: 13px;
-  max-width: 170px;
+  max-width: 240px;
   margin-left: auto;
   word-wrap: break-word;
 }
@@ -215,7 +215,7 @@ body {
 
 <div class="para">
   This is to declare that the following assessment has been completed by
-  Assessor: <span class="filled">${assessorName}</span>. On
+  Assessor <span class="filled">${assessorName}</span> on
   <span class="filled">${assessmentDate}</span> (Date) as per the standard
   operating assessment guideline by SSC &amp; NSDC.
 </div>

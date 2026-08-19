@@ -18,7 +18,7 @@ const imageToBase64 = (filePath: string) => {
 
   const buffer = fs.readFileSync(filePath);
 
-  
+
 return `data:${mimeType};base64,${buffer.toString('base64')}`;
 };
 
@@ -119,7 +119,7 @@ body {
 .addr {
   margin-top: 4px;
   font-size: 13px;
-  max-width: 170px;
+  max-width: 240px;
   margin-left: auto;
   word-wrap: break-word;
 }
@@ -253,7 +253,9 @@ body {
 
 <p><b>For and on behalf of the Training Partner</b></p>
 
-<p><b>Center Manager</b></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
 
 <p>
   <b>Name:</b> <span class="filled">${centerManagerName}</span><br/>
@@ -261,10 +263,6 @@ body {
   <b>Mobile No.:</b> <span class="filled">${centerManagerMobile}</span><br/>
   <b>Date:</b> <span class="filled">${date}</span>
 </p>
-
-<p>&nbsp;</p>
-
-<p><b>Signature &amp; Seal</b></p>
 
 </body>
 </html>
