@@ -79,6 +79,11 @@ export async function generateApaarDeclarationPdf(
 <head>
 <meta charset="utf-8" />
 <style>
+* {
+  padding: 0;
+  margin: 0;
+}
+
 body {
   font-family: "Calibri", sans-serif;
   font-size: 14px;
@@ -282,8 +287,8 @@ body {
       format: 'A4',
       printBackground: true,
       margin: {
-        top: '8mm',
-        bottom: '8mm',
+        top: '6mm',
+        bottom: '6mm',
         left: '10mm',
         right: '10mm'
       }

@@ -91,6 +91,11 @@ export async function generateTcDeclarationPdf(
 <head>
 <meta charset="utf-8" />
 <style>
+* {
+  padding: 0;
+  margin: 0;
+}
+
 body {
   font-family: "Times New Roman", serif;
   font-size: 16px;
@@ -274,10 +279,10 @@ body {
       format: 'A4',
       printBackground: true,
       margin: {
-        top: '8mm',
-        bottom: '8mm',
-        left: '10mm',
-        right: '10mm'
+        top: '6mm',
+        bottom: '6mm',
+        left: '8mm',
+        right: '8mm'
       }
     })
 

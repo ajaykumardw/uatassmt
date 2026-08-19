@@ -122,6 +122,11 @@ export async function generateAnnexureM2Pdf(batch: any): Promise<Buffer> {
 <head>
 <meta charset="utf-8" />
 <style>
+* {
+  padding: 0;
+  margin: 0;
+}
+
 body {
   font-family: Arial, sans-serif;
   font-size: 10px;
@@ -132,7 +137,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 0px;
 }
 
 .logo-line {
@@ -177,7 +182,7 @@ body {
   font-weight: bold;
   text-align: center;
   text-decoration: underline;
-  margin: 14px 0 14px;
+  margin: 0px 0 4px;
 }
 
 table {
@@ -233,7 +238,7 @@ th {
 }
 
 .signature-line {
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .signature-label {
@@ -242,7 +247,7 @@ th {
 }
 
 .note {
-  margin-top: 18px;
+  margin-top: 10px;
   font-size: 9px;
   text-align: justify;
 }
