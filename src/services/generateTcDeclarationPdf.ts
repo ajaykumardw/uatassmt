@@ -121,7 +121,7 @@ body {
 
 .company-block {
   text-align: right;
-  max-width: 60%;
+  max-width: 250px;
   margin-left: auto;
 }
 
@@ -135,8 +135,8 @@ body {
 
 .addr {
   margin-top: 4px;
-  font-size: 13px;
-  max-width: 240px;
+  font-size: 11px;
+  max-width: 220px;
   margin-left: auto;
   word-wrap: break-word;
 }

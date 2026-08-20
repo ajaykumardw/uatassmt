@@ -278,13 +278,8 @@ ${agencyLogoBase64 ? `
   <tr>
     <td><b>Date</b></td>
     <td></td>
-    <td><b>Location</b></td>
-    <td>${trainingCenterLocation}</td>
-  </tr>
-
-  <tr>
     <td><b>Batch ID</b></td>
-    <td colspan="3">${batch?.batch_name || ''}</td>
+    <td>${batch?.batch_name || ''}</td>
   </tr>
 
   <tr>
@@ -292,6 +287,11 @@ ${agencyLogoBase64 ? `
     <td>${batchSize}</td>
     <td><b>No. of Assessed</b></td>
     <td>${noOfAssessed}</td>
+  </tr>
+
+  <tr>
+    <td><b>Location</b></td>
+    <td colspan="3">${trainingCenterLocation}</td>
   </tr>
 </table>
 

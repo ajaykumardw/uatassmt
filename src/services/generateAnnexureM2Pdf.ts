@@ -152,7 +152,7 @@ body {
 
 .company-block {
   text-align: right;
-  max-width: 60%;
+  max-width: 250px;
   margin-left: auto;
 }
 
@@ -168,7 +168,7 @@ body {
   margin-top: 4px;
   font-size: 11px;
   line-height: 14px;
-  max-width: 240px;
+  max-width: 220px;
   margin-left: auto;
   word-wrap: break-word;
 }

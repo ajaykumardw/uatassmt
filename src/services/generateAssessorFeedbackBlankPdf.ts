@@ -101,7 +101,7 @@ export async function generateAssessorFeedbackBlankPdf(
     if (/conducted in the language/i.test(label)) return ''
     if (/spoc name/i.test(label)) return batch?.center_spoc_person_name || `${trainingCenter?.first_name || ''} ${trainingCenter?.last_name || ''}`.trim()
     if (/date of assessment/i.test(label)) return assessmentDate
-    
+
 return ''
   }
 
@@ -219,7 +219,7 @@ body {
 
 .company-block {
   text-align: right;
-  max-width: 60%;
+  max-width: 250px;
   margin-left: auto;
 }
 
@@ -235,7 +235,7 @@ body {
   margin-top: 4px;
   font-size: 11px;
   line-height: 14px;
-  max-width: 240px;
+  max-width: 220px;
   margin-left: auto;
   word-wrap: break-word;
 }
@@ -268,7 +268,7 @@ td, th {
 }
 
 .info-table td {
-  height: 22px;
+  height: 40px;
 }
 
 .remarks-box {
