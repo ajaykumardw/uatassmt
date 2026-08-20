@@ -291,11 +291,11 @@ th {
   <div class="signature-col">
     <div class="signature-line"><b>Assessor's ID</b> - ${assessorId}</div>
     <div class="signature-line"><b>Assessor's Name</b> - ${assessorName}</div>
-    <div class="signature-label">Assessor's Signature</div>
+    <div class="signature-line"><b>Assessor's Signature</b></div>
   </div>
   <div class="signature-col right">
     <div class="signature-line"><b>Center Head Name</b> - ${centerHeadName}</div>
-    <div class="signature-label">Center Head Signature &amp; Stamp</div>
+    <div class="signature-line"><b>Center Head Signature &amp; Stamp</b></div>
   </div>
 </div>
 
