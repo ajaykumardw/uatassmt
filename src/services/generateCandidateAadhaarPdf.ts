@@ -116,6 +116,7 @@ export async function generateCandidateAadhaarPdf(
             }
             .aadhaar-image > img {
             	width: 100%;
+              max-height: 380px;
               display: block;
             	object-fit: contain;
             }
@@ -133,7 +134,7 @@ export async function generateCandidateAadhaarPdf(
             </div>
             <div class="aadhaar-image">
             	<div>Aadhaar Back</div>
-            	<img class="aadhaar-image" src="${aadhaarBackBase64}" alt="Aadhaar Back">
+            	<img src="${aadhaarBackBase64}" alt="Aadhaar Back">
             </div>
           </div>
         </body>
@@ -142,7 +143,7 @@ export async function generateCandidateAadhaarPdf(
 
     try {
 
-      await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+      await page.setContent(htmlContent, { waitUntil: "domcontentloaded" });
 
       const pdfBuffer = await page.pdf({
         format: "A4",

@@ -242,7 +242,7 @@ body {
 
 <div class="field">TP Name: <span class="filled">${trainingPartnerName}</span></div>
 
-<div class="field">TC Name: <span class="filled">${tcName}</span></div>
+<div class="field">TC&nbsp;Name: <span class="filled">${tcName}</span></div>
 
 <div class="field">Mobile no: <span class="filled">${tcMobile}</span></div>
 

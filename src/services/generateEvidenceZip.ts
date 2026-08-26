@@ -467,10 +467,35 @@ async function collectInspectionFiles(
 
   for (const file of inspection) {
 
+    const defaultPath =
+      getBatchCenterInspectionFilePath(batchId, file.file_name);
+
+    let fullPath = defaultPath;
+
+    if (
+      !fs.existsSync(defaultPath) &&
+      file.category?.category_name
+    ) {
+
+      const categoryFolder =
+        file.category.category_name.replace(/_/g, "-");
+
+      const categoryPath =
+        `${storageFolders.storage}/${storageFolders.uploads}/` +
+        `${storageFolders.agency}/${storageFolders.batches}/` +
+        `${batchId}/${categoryFolder}/${file.file_name}`;
+
+      if (fs.existsSync(categoryPath)) {
+
+        fullPath = categoryPath;
+
+      }
+
+    }
+
     files.push({
 
-      fullPath:
-        getBatchCenterInspectionFilePath(batchId, file.file_name),
+      fullPath,
 
       zipPath:
         `${file.category.category_name}/${file.file_name}`
@@ -796,11 +821,11 @@ export async function collectCandidateAadhaarFiles(
 
     for (const student of students) {
 
-      const aadhaarPath = `${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.agency}/${storageFolders.batches}/${batchId.toString()}/${storageFolders.student}/${student.id.toString()}/aadhaar/${student.id_front_image}`;
+      const aadhaarPdfPath = `${storageFolders.storage}/${storageFolders.uploads}/${storageFolders.agency}/${storageFolders.batches}/${batchId}/${storageFolders.student}/${student.id}/aadhaar/${student.candidate_id}_aadhaar.pdf`;
 
-      if (fs.existsSync(aadhaarPath)) {
+      if (fs.existsSync(aadhaarPdfPath)) {
         files.push({
-          fullPath: aadhaarPath,
+          fullPath: aadhaarPdfPath,
           zipPath: `candidates/${student.candidate_id}/aadhaar/${student.candidate_id}_aadhaar.pdf`
         });
       }

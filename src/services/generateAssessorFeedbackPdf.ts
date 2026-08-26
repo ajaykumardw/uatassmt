@@ -302,20 +302,25 @@ body {
   object-fit: contain;
 }
 
-.company {
-  font-size: 10px;
-  line-height: 14px;
+.company-block {
   text-align: right;
-  max-width: 55%;
+  max-width: 250px;
   margin-left: auto;
+}
+
+.company {
+  font-size: 14px;
+  line-height: 16px;
+  font-weight: bold;
+  color: #000;
   word-wrap: break-word;
 }
 
 .addr {
-  font-size: 10px;
+  margin-top: 4px;
+  font-size: 11px;
   line-height: 14px;
-  text-align: right;
-  max-width: 55%;
+  max-width: 220px;
   margin-left: auto;
   word-wrap: break-word;
 }
@@ -397,15 +402,17 @@ ${agencyLogoBase64 ? `
   </div>
   ` : ''}
 
-  <div class="company">
-    ${agencyName}
-  </div>
+  <div class="company-block">
+    <div class="company">
+      ${agencyName}
+    </div>
 
-  ${addressHtml}
-
-  <div class="title">
-    ASSESSOR'S FEEDBACK FORM
+    ${addressHtml}
   </div>
+</div>
+
+<div class="title">
+  ASSESSOR'S FEEDBACK FORM
 </div>
 
 <table class="info-table">
