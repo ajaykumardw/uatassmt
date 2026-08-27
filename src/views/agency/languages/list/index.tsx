@@ -24,19 +24,36 @@ type Props = {
   updateData: (data: { all_languages: Language[]; enabled_language_ids: number[] }) => void
 }
 
+const ENGLISH_ID = 1
+
 const LanguagesList = ({ data, updateData }: Props) => {
   const [selected, setSelected] = useState<number[]>([])
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    setSelected(data.enabled_language_ids.map(Number))
+    const ids = data.enabled_language_ids.map(Number)
+
+    if (!ids.includes(ENGLISH_ID)) {
+      ids.unshift(ENGLISH_ID)
+    }
+
+    setSelected(ids)
   }, [data.enabled_language_ids])
 
   const toggleLanguage = (id: number) => {
+    if (id === ENGLISH_ID) return
+
     setSelected(prev =>
       prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]
     )
   }
+
+  const sortedLanguages = [...data.all_languages].sort((a, b) => {
+    if (a.id === ENGLISH_ID) return -1
+    if (b.id === ENGLISH_ID) return 1
+
+    return a.full_name.localeCompare(b.full_name)
+  })
 
   const handleSave = async () => {
 
@@ -83,24 +100,42 @@ const LanguagesList = ({ data, updateData }: Props) => {
           />
           <CardContent>
             <Grid container spacing={2}>
-              {data.all_languages.map((lang) => (
-                <Grid item xs={12} sm={6} md={4} key={lang.id}>
-                  <div className='flex items-center justify-between p-3 border rounded hover:bg-actionHover'>
-                    <div>
-                      <Typography variant='body1' className='font-medium'>
-                        {lang.full_name}
-                      </Typography>
-                      <Typography variant='caption' color='text.secondary'>
-                        {lang.alias} ({lang.short_name})
-                      </Typography>
+              {sortedLanguages.map((lang) => {
+                const isEnglish = lang.id === ENGLISH_ID
+
+                return (
+                  <Grid item xs={12} sm={6} md={4} key={lang.id}>
+                    <div className='flex items-center justify-between p-3 border rounded hover:bg-actionHover'>
+                      <div>
+                        <Typography variant='body1' className='font-medium'>
+                          {lang.full_name}
+                          {isEnglish && (
+                            <Typography component='span' variant='caption' color='primary' sx={{ ml: 1 }}>
+                              (Default)
+                            </Typography>
+                          )}
+                        </Typography>
+                        <Typography variant='caption' color='text.secondary'>
+                          {lang.alias} ({lang.short_name})
+                        </Typography>
+                      </div>
+                      <Switch
+                        checked={selected.includes(Number(lang.id))}
+                        onChange={() => toggleLanguage(Number(lang.id))}
+                        disabled={isEnglish}
+                        sx={{
+                          '&.Mui-checked, &.Mui-checked.Mui-disabled': {
+                            '& .MuiSwitch-thumb': {
+                              border: '2px solid',
+                              borderColor: 'primary.main'
+                            }
+                          }
+                        }}
+                      />
                     </div>
-                    <Switch
-                      checked={selected.includes(Number(lang.id))}
-                      onChange={() => toggleLanguage(Number(lang.id))}
-                    />
-                  </div>
-                </Grid>
-              ))}
+                  </Grid>
+                )
+              })}
             </Grid>
           </CardContent>
         </Card>
