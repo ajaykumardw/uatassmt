@@ -105,7 +105,13 @@ const LanguagesList = ({ data, updateData }: Props) => {
 
                 return (
                   <Grid item xs={12} sm={6} md={4} key={lang.id}>
-                    <div className='flex items-center justify-between p-3 border rounded hover:bg-actionHover'>
+                    <div
+                      className='flex items-center justify-between p-3 border rounded hover:bg-actionHover'
+                      style={{
+                        borderColor: selected.includes(Number(lang.id)) ? 'var(--mui-palette-primary-main)' : undefined,
+                        backgroundColor: selected.includes(Number(lang.id)) ? 'var(--mui-palette-primary-lightOpacity)' : undefined
+                      }}
+                    >
                       <div>
                         <Typography variant='body1' className='font-medium'>
                           {lang.full_name}
@@ -123,14 +129,6 @@ const LanguagesList = ({ data, updateData }: Props) => {
                         checked={selected.includes(Number(lang.id))}
                         onChange={() => toggleLanguage(Number(lang.id))}
                         disabled={isEnglish}
-                        sx={{
-                          '&.Mui-checked, &.Mui-checked.Mui-disabled': {
-                            '& .MuiSwitch-thumb': {
-                              border: '2px solid',
-                              borderColor: 'primary.main'
-                            }
-                          }
-                        }}
                       />
                     </div>
                   </Grid>
