@@ -85,12 +85,6 @@ export async function generateEvidenceZip(
 
     tasks.push(
 
-      collectInspectionFiles(batchId, files, selectedFolders)
-
-    );
-
-    tasks.push(
-
       (async () => {
 
         await generateAssessorFeedbackPdf(batchId);
