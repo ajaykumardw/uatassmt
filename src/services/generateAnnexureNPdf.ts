@@ -65,8 +65,10 @@ export async function generateAnnexureNPdf(
   const trainingCenterLocation = [
     trainingCenterName,
     trainingCenter?.address,
-    trainingCenter?.city?.city_name,
-    trainingCenter?.state?.state_name
+
+    // trainingCenter?.city?.city_name,
+    // trainingCenter?.state?.state_name
+
   ].filter(Boolean).join(', ')
 
   const questions =

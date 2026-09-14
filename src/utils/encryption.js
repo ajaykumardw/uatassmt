@@ -49,7 +49,7 @@ export function maskAadhaar(aadhaar){
 
   const digits = aadhaar.replace(/\D/g, '');
 
-  return `XXXXXXXX${digits.slice(-4)}`;
+  return `XXXX XXXX ${digits.slice(-4)}`;
 
 }
 

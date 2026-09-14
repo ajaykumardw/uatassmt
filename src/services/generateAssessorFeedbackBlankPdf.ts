@@ -68,8 +68,10 @@ export async function generateAssessorFeedbackBlankPdf(
 
   const completeAddress = [
     trainingCenter?.address,
-    trainingCenter?.city?.city_name,
-    trainingCenter?.state?.state_name
+
+    // trainingCenter?.city?.city_name,
+    // trainingCenter?.state?.state_name
+
   ].filter(Boolean).join(', ')
 
   const students = batch?.students || []

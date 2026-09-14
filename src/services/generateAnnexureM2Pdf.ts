@@ -6,6 +6,7 @@ import prisma from "@/libs/prisma"
 import { getBrowser } from "@/libs/puppeteerBrowser"
 
 import { getAgencyImagePath } from "@/configs/customDataConfig";
+import { maskAadhaar } from '@/utils/encryption';
 
 const imageToBase64 = (filePath: string) => {
 
@@ -68,7 +69,7 @@ export async function generateAnnexureM2Pdf(batch: any): Promise<Buffer> {
     .findUnique({
       where: { user_id: batch?.assessor?.id }
     })
-    .then(data => data?.aadhaar_no || '')
+    .then(data => data?.aadhaar_no ? maskAadhaar(data.aadhaar_no) || '' : '')
     .catch(() => '')
 
   const M2_ROWS: { label: string; value: string }[] = [
