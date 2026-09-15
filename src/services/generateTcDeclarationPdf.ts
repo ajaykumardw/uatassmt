@@ -255,9 +255,9 @@ body {
   Whatsapp or email.
 </div>
 
-<div class="contact">${agencyContactName} (Head of Assessments): ${agencyContactPhone}</div>
+<div class="contact">${agencyContactName} (Head of Assessments): <strong>${agencyContactPhone}</strong></div>
 
-<div class="contact">Email: ${agencyContactEmail}</div>
+<div class="contact">Email: <strong>${agencyContactEmail}</strong></div>
 
 <div class="contact">(Requested to TC Manager to send the Scan copy of the declaration to the above email ID)</div>
 

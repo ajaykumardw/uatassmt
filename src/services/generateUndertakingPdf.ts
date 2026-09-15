@@ -203,9 +203,9 @@ body {
   I, <span class="filled">${centerManagerName}</span> on behalf of TC/TP Name
   <span class="filled">${trainingPartnerName}</span> declare that identity of the candidates
   whose names are in Assessment Attendance Sheet and appearing in the
-  examination for the Qualification Pack <span class="filled">${qualificationPack}</span>.
+  examination for the Qualification Pack <span class="filled">${qualificationPack}</span>
   Batch Name: <span class="filled">${batchName}</span> Assessment Date:
-  <span class="filled">${assessmentDate}</span>. have been validated by us as per their
+  <span class="filled">${assessmentDate}</span> have been validated by us as per their
   Aadhaar Numbers and other identity as mentioned in the application form
   and the data uploaded on SDMS portal for the said batch.
 </p>

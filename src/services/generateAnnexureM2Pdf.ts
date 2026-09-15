@@ -234,6 +234,11 @@ th {
   vertical-align: top;
 }
 
+.inr-left {
+  display: inline-block;
+  text-align: left;
+}
+
 .signature-col.right {
   text-align: right;
 }
@@ -295,8 +300,10 @@ th {
     <div class="signature-line"><b>Assessor's Signature</b></div>
   </div>
   <div class="signature-col right">
-    <div class="signature-line"><b>Center Head Name</b> - ${centerHeadName}</div>
-    <div class="signature-line"><b>Center Head Signature &amp; Stamp</b></div>
+    <div class="inr-left">
+      <div class="signature-line"><b>Center Head Name</b> - ${centerHeadName}</div>
+      <div class="signature-line"><b>Center Head Signature &amp; Stamp</b></div>
+    </div>
   </div>
 </div>
 

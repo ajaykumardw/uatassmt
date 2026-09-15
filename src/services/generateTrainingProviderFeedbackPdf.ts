@@ -76,7 +76,7 @@ export async function generateTrainingProviderFeedbackPdf(
 
   const batchSize = students.length
 
-  const noOfAssessed = students.filter((s: any) => s?.attendance === 1).length
+  // const noOfAssessed = students.filter((s: any) => s?.attendance === 1).length
 
   const questions =
     (feedbackForm?.feedback_questions || [])
@@ -288,7 +288,7 @@ ${agencyLogoBase64 ? `
     <td><b>Batch Size</b></td>
     <td>${batchSize}</td>
     <td><b>No. of Assessed</b></td>
-    <td>${noOfAssessed}</td>
+    <td></td>
   </tr>
 
   <tr>
