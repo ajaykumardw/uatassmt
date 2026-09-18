@@ -630,3 +630,9 @@ export const STUDENT_RESULT = {
   PASS: 1,
   FAIL: 2
 } as const;
+
+export const STUDENT_RESULT_LABEL: Record<number, string> = {
+  [STUDENT_RESULT.PENDING]: 'PENDING',
+  [STUDENT_RESULT.PASS]: 'PASS',
+  [STUDENT_RESULT.FAIL]: 'FAIL'
+}
