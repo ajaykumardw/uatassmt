@@ -745,6 +745,8 @@ import { useParams, useRouter } from "next/navigation";
 
 import { signOut, useSession } from "next-auth/react";
 
+import { toast } from "react-toastify";
+
 import classnames from "classnames";
 import Webcam from "react-webcam";
 
@@ -784,6 +786,7 @@ const CapturePage = () => {
   const [long, setLong] = useState<string>("Fetching...");
   const [time, setTime] = useState<string>("");
   const [address, setAddress] = useState<string>("Fetching address...");
+  const [locationAllowed, setLocationAllowed] = useState<boolean | null>(null);
 
   const { data: session } = useSession();
   const token = session?.user?.accessToken;
@@ -859,17 +862,17 @@ const CapturePage = () => {
     };
   }, []);
 
-  useEffect(() => {
-    // ⏱️ Live Time
-    const interval = setInterval(() => {
-      setTime(new Date().toLocaleString());
-    }, 1000);
+  const requestLocation = () => {
+    setLat("Fetching...");
+    setLong("Fetching...");
+    setAddress("Fetching address...");
+    setLocationAllowed(null);
 
-    // 📍 Get Location
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         setLat(pos.coords.latitude.toFixed(5));
         setLong(pos.coords.longitude.toFixed(5));
+        setLocationAllowed(true);
 
         try {
           const res = await fetch(
@@ -897,8 +900,19 @@ const CapturePage = () => {
         setLat("Denied");
         setLong("Denied");
         setAddress("Denied");
+        setLocationAllowed(false);
       }
     );
+  };
+
+  useEffect(() => {
+    // ⏱️ Live Time
+    const interval = setInterval(() => {
+      setTime(new Date().toLocaleString());
+    }, 1000);
+
+    // 📍 Get Location
+    requestLocation();
 
     return () => clearInterval(interval);
   }, []);
@@ -1047,7 +1061,7 @@ const CapturePage = () => {
     if (!webcamRef.current) return;
 
     if (type === "selfie" && !faceDetected) {
-      alert("Ensure exactly one face is visible.");
+      toast.error("Ensure exactly one face is visible.");
 
       return;
     }
@@ -1145,7 +1159,19 @@ const CapturePage = () => {
     setLoading(true);
 
     if (!liveSelfie || !aadhaarFront || !aadhaarBack) {
-      alert("Capture all images first.");
+      toast.error("Capture all images first.");
+      setLoading(false);
+
+      return;
+    }
+
+    if (locationAllowed !== true) {
+      if (locationAllowed === false) {
+        toast.error("Location access is required to submit. Please allow location and try again.");
+      } else {
+        toast.error("Waiting for location access. Please allow location and try again.");
+      }
+
       setLoading(false);
 
       return;
@@ -1172,11 +1198,11 @@ const CapturePage = () => {
       if (res.ok) {
         router.push("/student-dashboard");
       } else {
-        alert("Upload failed");
+        toast.error("Upload failed");
       }
     } catch (err) {
       console.error(err);
-      alert("Upload error");
+      toast.error("Upload error");
     } finally {
       setLoading(false);
     }
@@ -1259,6 +1285,16 @@ const CapturePage = () => {
 
               {multipleFaces && (
                 <p style={{ color: "orange" }}>Multiple faces detected ⚠️</p>
+              )}
+
+              <p style={{ color: locationAllowed === true ? "green" : locationAllowed === false ? "red" : "orange", fontWeight: "bold" }}>
+                {locationAllowed === true ? "Location access granted ✅" : locationAllowed === false ? "Location access denied ❌" : "Waiting for location access ⏳"}
+              </p>
+
+              {locationAllowed === false && (
+                <Button variant="outlined" color="error" size="small" onClick={requestLocation}>
+                  Retry Location Access
+                </Button>
               )}
 
               <div className="mt-4 flex gap-2 flex-wrap">
