@@ -2,9 +2,6 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 
-import { useParams } from 'next/navigation'
-import Link from 'next/link'
-
 import {
   useReactTable,
   getCoreRowModel,
@@ -33,11 +30,9 @@ import LinearProgress from '@mui/material/LinearProgress'
 import Typography from '@mui/material/Typography'
 import { format } from 'date-fns'
 
-import type { Locale } from '@configs/i18n'
-import { getLocalizedUrl } from '@/utils/i18n'
 import TablePaginationComponent from '@components/TablePaginationComponent'
 
-import { getBatchesByMonth } from './actions'
+import { getSscBatchesByMonth } from './actions'
 
 interface BatchRow {
   id: number
@@ -54,19 +49,21 @@ interface BatchRow {
 }
 
 interface Props {
-  todayBatches: BatchRow[]
-  thisMonthBatches: BatchRow[]
+  sscId: number
+  todayBatches?: BatchRow[]
+  thisMonthBatches?: BatchRow[]
+  initialMonth?: number
+  initialYear?: number
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const PAGE_SIZE = 10
 
-const BatchesTable = ({ todayBatches, thisMonthBatches }: Props) => {
-  const { lang: locale } = useParams()
+const SscBatchesTable = ({ sscId, todayBatches = [], thisMonthBatches = [], initialMonth, initialYear }: Props) => {
   const now = new Date()
   const [tab, setTab] = useState('today')
-  const [year, setYear] = useState(now.getFullYear())
-  const [month, setMonth] = useState(now.getMonth() + 1)
+  const [year, setYear] = useState(initialYear ?? now.getFullYear())
+  const [month, setMonth] = useState(initialMonth ?? now.getMonth() + 1)
   const [page, setPage] = useState(0)
   const [monthData, setMonthData] = useState<BatchRow[]>(thisMonthBatches)
   const [total, setTotal] = useState(thisMonthBatches.length)
@@ -83,14 +80,7 @@ const BatchesTable = ({ todayBatches, thisMonthBatches }: Props) => {
       },
       columnHelper.accessor('batch_name', {
         header: 'Batch Name',
-        cell: ({ row }) => (
-          <Link
-            href={getLocalizedUrl(`batches/edit/${row.original.id}`, locale as Locale)}
-            className='text-[var(--mui-palette-primary-main)] no-underline hover:underline font-medium'
-          >
-            {row.original.batch_name}
-          </Link>
-        ),
+        cell: ({ row }) => <Typography className='font-medium'>{row.original.batch_name}</Typography>,
       }),
       columnHelper.accessor('scheme_name', {
         header: 'Scheme',
@@ -156,7 +146,7 @@ const BatchesTable = ({ todayBatches, thisMonthBatches }: Props) => {
         ),
       },
     ],
-    [page]
+    [page, columnHelper]
   )
 
   const todayTable = useReactTable({
@@ -173,7 +163,7 @@ const BatchesTable = ({ todayBatches, thisMonthBatches }: Props) => {
     manualPagination: true,
     pageCount: Math.ceil(total / PAGE_SIZE),
     state: { pagination: { pageIndex: page, pageSize: PAGE_SIZE } },
-    onPaginationChange: (updater) => {
+    onPaginationChange: updater => {
       const next = typeof updater === 'function'
         ? updater({ pageIndex: page, pageSize: PAGE_SIZE })
         : updater
@@ -187,14 +177,14 @@ const BatchesTable = ({ todayBatches, thisMonthBatches }: Props) => {
     setLoading(true)
 
     try {
-      const res = await getBatchesByMonth(year, month, page + 1, PAGE_SIZE)
+      const res = await getSscBatchesByMonth(sscId, year, month, page + 1, PAGE_SIZE)
 
       setMonthData(res.rows)
       setTotal(res.total)
     } finally {
       setLoading(false)
     }
-  }, [year, month, page])
+  }, [sscId, year, month, page])
 
   useEffect(() => {
     if (tab === 'month') fetchMonthData()
@@ -257,7 +247,7 @@ const BatchesTable = ({ todayBatches, thisMonthBatches }: Props) => {
           </TableBody>
         </Table>
       </TableContainer>
-      <TablePaginationComponent table={table as any} total={total} />
+      <TablePaginationComponent table={table as any} total={tab === 'today' ? todayBatches.length : total} />
     </>
   )
 
@@ -301,4 +291,4 @@ const BatchesTable = ({ todayBatches, thisMonthBatches }: Props) => {
   )
 }
 
-export default BatchesTable
+export default SscBatchesTable

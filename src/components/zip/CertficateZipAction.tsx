@@ -42,7 +42,7 @@ const CertificateZipAction = ({ batchId }: { batchId: number }) => {
 
         } else {
 
-          toast.error('Zip generation failed')
+          toast.error(data.job?.error_message || 'Zip generation failed')
         }
       }
     }, 2000)
@@ -61,8 +61,8 @@ const CertificateZipAction = ({ batchId }: { batchId: number }) => {
 
       const data = await res.json()
 
-      if (!data?.job) {
-        toast.error('Failed to create job')
+      if (!res.ok || !data?.job) {
+        toast.error(data?.message || 'Failed to create job')
 
         return
       }

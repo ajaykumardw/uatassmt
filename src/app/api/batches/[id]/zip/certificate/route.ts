@@ -10,6 +10,7 @@ import { authOptions } from "@/libs/auth";
 
 import { createCertificateJob } from "@/services/job.service";
 import prisma from "@/libs/prisma";
+import { STUDENT_RESULT } from "@/configs/customDataConfig";
 
 export async function POST(
   request: NextRequest,
@@ -31,10 +32,11 @@ export async function POST(
   }
 
   const batch = await prisma.batches.findUnique({
-
     where: { id: batchId, agency_id: userId },
-    select: { id: true }
-
+    select: {
+      id: true,
+      _count: { select: { students: { where: { result: STUDENT_RESULT.PASS } } } },
+    },
   });
 
   if (!batch) {
@@ -43,6 +45,14 @@ export async function POST(
       statusCode: 404,
       message: "Batch not found"
     }, { status: 404 });
+  }
+
+  if (batch._count.students === 0) {
+    return NextResponse.json({
+      status: "Error",
+      statusCode: 422,
+      message: "No passed candidates found in this batch. Certificate generation cannot be started."
+    }, { status: 422 });
   }
 
   console.log("Received request to generate certificates for batch ID:", batchId);
