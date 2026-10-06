@@ -318,6 +318,7 @@ const CompletedBatchesListTable = ({ tableData, updateBatchList }: { tableData?:
       toast.success(res.message || 'Hard Copy marked as received')
     } else {
       toast.error(res.message || 'Failed to update')
+      throw new Error(res.message || 'Failed to update')
     }
   }
 
