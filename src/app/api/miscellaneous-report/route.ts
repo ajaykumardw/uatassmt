@@ -2,11 +2,23 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { getServerSession } from "next-auth";
 
-import { format, getMonth, getYear } from "date-fns";
+import { getMonth, getYear } from "date-fns";
+
+import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 
 import prisma from "@/libs/prisma";
 
 import { authOptions } from "@/libs/auth";
+
+const APP_TIMEZONE = process.env.MY_APP_TIMEZONE || "Asia/Kolkata";
+
+const formatDate = (date: unknown, pattern: string) => {
+  if (!date) return "";
+
+  return formatInTimeZone(new Date(date as any), APP_TIMEZONE, pattern);
+};
+
+const zonedDate = (date: unknown) => toZonedTime(new Date(date as any), APP_TIMEZONE)
 
 type FieldMap = {
   getValue: (row: any, index?: number) => any;
@@ -29,7 +41,7 @@ const FIELD_MAP: Record<string, FieldMap> = {
       // return row.assessment_start_datetime;
       if (!row.assessment_start_datetime) return "";
 
-      const date = row.assessment_start_datetime;
+      const date = zonedDate(row.assessment_start_datetime);
       const year = getYear(date);
       const month = getMonth(date); // 0 = Jan, 3 = April
 
@@ -42,14 +54,14 @@ const FIELD_MAP: Record<string, FieldMap> = {
   year: {
     getValue: (row) =>
       row.created_at
-        ? format(new Date(row.created_at), "yyyy")
+        ? formatDate(row.created_at, "yyyy")
         : ""
   },
 
   month: {
     getValue: (row) =>
       row.created_at
-        ? format(new Date(row.created_at), "MMM-yy")
+        ? formatDate(row.created_at, "MMM-yy")
         : ""
   },
 
@@ -75,7 +87,7 @@ const FIELD_MAP: Record<string, FieldMap> = {
 
   scheduling_batch_date: {
     getValue: (row) =>
-      row.batch_allocated_date ? format(new Date(row.batch_allocated_date), 'dd-MMM-yy') : ""
+      formatDate(row.batch_allocated_date, 'dd-MMM-yy')
   },
 
   batch_id: {
@@ -90,31 +102,27 @@ const FIELD_MAP: Record<string, FieldMap> = {
 
   batch_start_date: {
     getValue: (row) =>
-      row.batch_start_date ? format(new Date(row.batch_start_date), 'dd-MMM-yy') : ""
+      formatDate(row.batch_start_date, 'dd-MMM-yy')
   },
 
   batch_end_date: {
     getValue: (row) =>
-      row.batch_end_date ? format(new Date(row.batch_end_date), 'dd-MMM-yy') : ""
+      formatDate(row.batch_end_date, 'dd-MMM-yy')
   },
 
   training_completed_month: {
     getValue: (row) =>
-      row.assessment_end_datetime
-        ? format(new Date(
-            row.assessment_end_datetime
-          ), "MMMM")
-        : ""
+      formatDate(row.batch_end_date, "MMMM")
   },
 
   assessment_date: {
     getValue: (row) =>
-      row.assessment_start_datetime ? format(row.assessment_start_datetime, "dd-MMM-yy") : ""
+      formatDate(row.assessment_start_datetime, "dd-MMM-yy")
   },
 
   actual_assessment_date: {
     getValue: (row) =>
-      row.assessment_end_datetime ? format(row.assessment_end_datetime, "dd-MMM-yy") : ""
+      formatDate(row.assessment_end_datetime, "dd-MMM-yy")
   },
 
   exam_mode: {
@@ -322,10 +330,10 @@ const FIELD_MAP: Record<string, FieldMap> = {
     getValue: (row) => row.agency?.company_name || ""
   },
   dcf_month: {
-    getValue: (row) => row.assessment_end_datetime ? format(new Date(row.assessment_end_datetime), "MMMM") : ""
+    getValue: (row) => formatDate(row.assessment_end_datetime, "MMMM")
   },
   dcf_year: {
-    getValue: (row) => row.assessment_end_datetime ? format(new Date(row.assessment_end_datetime), "yyyy") : ""
+    getValue: (row) => formatDate(row.assessment_end_datetime, "yyyy")
   },
   dcf_batch_id: {
     getValue: (row) => row.batch_name || ""
@@ -406,10 +414,10 @@ const FIELD_MAP: Record<string, FieldMap> = {
     getValue: () => ""
   },
   dcf_training_start_date: {
-    getValue: (row) => row.batch_start_date ? format(new Date(row.batch_start_date), "dd-MM-yyyy") : ""
+    getValue: (row) => formatDate(row.batch_start_date, "dd-MM-yyyy")
   },
   dcf_training_end_date: {
-    getValue: (row) => row.batch_end_date ? format(new Date(row.batch_end_date), "dd-MM-yyyy") : ""
+    getValue: (row) => formatDate(row.batch_end_date, "dd-MM-yyyy")
   },
   dcf_industry_training: {
     getValue: () => ""
@@ -451,7 +459,7 @@ const FIELD_MAP: Record<string, FieldMap> = {
     getValue: (row) => row.assessor ? `${row.assessor.first_name || ""} ${row.assessor.last_name || ""}`.trim() : ""
   },
   dcf_aa_allotment_date: {
-    getValue: (row) => row.assessor_assign_datetime ? format(new Date(row.assessor_assign_datetime), "dd-MM-yyyy") : ""
+    getValue: (row) => formatDate(row.assessor_assign_datetime, "dd-MM-yyyy")
   },
   dcf_assessment_mode: {
     getValue: (row) => {
@@ -468,16 +476,16 @@ const FIELD_MAP: Record<string, FieldMap> = {
     getValue: () => ""
   },
   dcf_scheduled_date: {
-    getValue: (row) => row.assessment_start_datetime ? format(new Date(row.assessment_start_datetime), "dd-MM-yyyy") : ""
+    getValue: (row) => formatDate(row.assessment_start_datetime, "dd-MM-yyyy")
   },
   dcf_learners_assessed: {
     getValue: (row) => row._dcf?.assessedCount ?? 0
   },
   dcf_actual_start_date: {
-    getValue: (row) => row.assessment_start_datetime ? format(new Date(row.assessment_start_datetime), "dd-MM-yyyy") : ""
+    getValue: (row) => formatDate(row.assessment_start_datetime, "dd-MM-yyyy")
   },
   dcf_actual_end_date: {
-    getValue: (row) => row.assessment_end_datetime ? format(new Date(row.assessment_end_datetime), "dd-MM-yyyy") : ""
+    getValue: (row) => formatDate(row.assessment_end_datetime, "dd-MM-yyyy")
   },
   dcf_assessors_deployed: {
     getValue: (row) => row.assessor ? 1 : 0
@@ -547,13 +555,13 @@ const FIELD_MAP: Record<string, FieldMap> = {
     getValue: (row) => row.is_nsqf_aligned || ""
   },
   mon_month: {
-    getValue: (row) => row.assessment_end_datetime ? format(new Date(row.assessment_end_datetime), "MMMM") : ""
+    getValue: (row) => formatDate(row.assessment_end_datetime, "MMMM")
   },
   mon_year: {
-    getValue: (row) => row.assessment_end_datetime ? format(new Date(row.assessment_end_datetime), "yyyy") : ""
+    getValue: (row) => formatDate(row.assessment_end_datetime, "yyyy")
   },
   mon_allocation_date: {
-    getValue: (row) => row.batch_allocated_date ? format(new Date(row.batch_allocated_date), "dd-MM-yyyy") : ""
+    getValue: (row) => formatDate(row.batch_allocated_date, "dd-MM-yyyy")
   },
   mon_batch_status: {
     getValue: (row) => row.batch_acceptance || ""
@@ -615,13 +623,13 @@ const FIELD_MAP: Record<string, FieldMap> = {
     getValue: (row) => row.qualification_pack?.ssc?.type_of_awarding_body || ""
   },
   mon_scheduled_start_date: {
-    getValue: (row) => row.assessment_start_datetime ? format(new Date(row.assessment_start_datetime), "dd-MM-yyyy") : ""
+    getValue: (row) => formatDate(row.assessment_start_datetime, "dd-MM-yyyy")
   },
   mon_actual_start_date: {
-    getValue: (row) => row.assessment_start_datetime ? format(new Date(row.assessment_start_datetime), "dd-MM-yyyy") : ""
+    getValue: (row) => formatDate(row.assessment_start_datetime, "dd-MM-yyyy")
   },
   mon_actual_end_date: {
-    getValue: (row) => row.assessment_end_datetime ? format(new Date(row.assessment_end_datetime), "dd-MM-yyyy") : ""
+    getValue: (row) => formatDate(row.assessment_end_datetime, "dd-MM-yyyy")
   },
   mon_toa_certified_assessor: {
     getValue: () => ""
