@@ -75,7 +75,7 @@ const FIELD_MAP: Record<string, FieldMap> = {
 
   scheduling_batch_date: {
     getValue: (row) =>
-      row.created_at ? format(new Date(row.created_at), 'dd-MMM-yy') : ""
+      row.batch_allocated_date ? format(new Date(row.batch_allocated_date), 'dd-MMM-yy') : ""
   },
 
   batch_id: {
@@ -90,12 +90,12 @@ const FIELD_MAP: Record<string, FieldMap> = {
 
   batch_start_date: {
     getValue: (row) =>
-      row.assessment_start_datetime ? format(new Date(row.assessment_start_datetime), 'dd-MMM-yy') : ""
+      row.batch_start_date ? format(new Date(row.batch_start_date), 'dd-MMM-yy') : ""
   },
 
   batch_end_date: {
     getValue: (row) =>
-      row.assessment_end_datetime ? format(new Date(row.assessment_end_datetime), 'dd-MMM-yy') : ""
+      row.batch_end_date ? format(new Date(row.batch_end_date), 'dd-MMM-yy') : ""
   },
 
   training_completed_month: {
