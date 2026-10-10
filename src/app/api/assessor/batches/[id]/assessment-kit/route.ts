@@ -480,7 +480,10 @@ const generateAttendancePdf = async (batch: any) => {
           styles: { ...styles, fontStyle: "bold" }
         },
         {
-          content: (format(new Date(), "dd-MM-yyyy") || ""),
+
+          // content: (format(new Date(), "dd-MM-yyyy") || ""),
+          
+          content: (format(new Date(batch.assessment_start_datetime), "dd-MM-yyyy") || ""),
           colSpan: 2,
           styles: { ...styles, fontStyle: "bold" }
         }
