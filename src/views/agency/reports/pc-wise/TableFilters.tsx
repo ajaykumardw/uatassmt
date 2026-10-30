@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 import CardContent from '@mui/material/CardContent';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import type { batches, exam_sets, users } from '@prisma/client';
 
@@ -20,6 +22,10 @@ import { MenuProps } from '@/configs/customDataConfig';
 
 const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch: any, tableData?: exam_sets[] }) => {
   // States
+  const [searchBy, setSearchBy] = useState<string>('');
+  const [searchValue, setSearchValue] = useState<string>('');
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState(false);
   const [ssc, setSSC] = useState<SSCType['id']>(-1);
   const [qp, setQP] = useState<QPType['id']>(-1);
   const [tp, setTP] = useState<number>(-1);
@@ -61,7 +67,7 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
 
   }
 
-  const fetchBatches = async (qpId: number, tpId: number) => {
+  const fetchBatches = async (qpId: number, tpId: number, sscIdParam?: number) => {
 
     setBatchData([]);
 
@@ -73,11 +79,13 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
 
       if (tpId > 0) params.append('tpId', String(tpId));
 
+      if (sscIdParam && sscIdParam > 0 && searchBy !== '') params.append('sscId', String(sscIdParam));
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches?${params.toString()}`);
 
       const data = await res.json();
 
-      setBatchData(data);
+      setBatchData(Array.isArray(data) ? data : []);
 
     } else {
 
@@ -85,6 +93,30 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
 
     }
 
+  }
+
+  const fetchBatchByName = async (batchName: string) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches?batchName=${encodeURIComponent(batchName)}`);
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : data ? [data] : [];
+      const exactMatches = list.filter((b: any) => b.batch_name?.toLowerCase() === batchName.toLowerCase());
+      const results = exactMatches;
+
+      if (results.length > 0) {
+        setBatchData(results);
+        setBatchId(results[0].id);
+        setBatch(results[0].id);
+      } else {
+        setBatchData([]);
+        setBatchId(-1);
+        setBatch(null);
+      }
+    } catch (e) {
+      setBatchData([]);
+      setBatchId(-1);
+      setBatch(null);
+    }
   }
 
 
@@ -135,6 +167,7 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
     setTP(tpId);
 
     setBatchId(-1);
+    setBatchData([]);
 
     fetchBatches(qp, tpId);
 
@@ -149,6 +182,46 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
     // console.log("batch:", batch);
 
   }
+
+  const handleSearchByChange = (value: string) => {
+    setSearchBy(value);
+    setSearchValue('');
+    setError('');
+    setBatchId(-1);
+    setBatchData([]);
+    setBatch(null);
+    setSSC(-1);
+    setQP(-1);
+    setQPData([]);
+    setTP(-1);
+  };
+
+  const handleSearchValueChange = (value: string) => {
+    if (value.trim().length > 60) {
+      setError('Max length is 60 characters.');
+      
+return;
+    }
+
+    setSearchValue(value.trim());
+    setError('');
+  };
+
+  const handleSearchClick = async () => {
+    if (!searchBy) return;
+
+    if (searchBy === 'batch_id') {
+      if (!searchValue) return;
+      setLoading(true);
+      setBatchId(-1);
+      setBatchData([]);
+      setBatch(null);
+      await fetchBatchByName(searchValue);
+      setLoading(false);
+      
+return;
+    }
+  };
 
   // Effect to handle data fetching and setting
   useEffect(() => {
@@ -178,86 +251,267 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
   return (
     <CardContent>
       <Grid container spacing={6}>
+        {searchBy === '' && (
+          <>
+            <Grid item xs={12} sm={4}>
+              <CustomTextField
+                select
+                fullWidth
+                id='select-tp'
+                value={tp}
+                onChange={(e) => handleTPChange(e.target.value)}
+                SelectProps={{ MenuProps, displayEmpty: true }}
+              >
+                <MenuItem value='-1'>Select Training Partner</MenuItem>
+                {tpData.length > 0 ? (
+                  tpData.map((tp) => (
+                    <MenuItem key={tp.id.toString()} value={tp.id.toString()}>
+                      {tp.company_name}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>No training partner found</MenuItem>
+                )}
+              </CustomTextField>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <CustomTextField
+                select
+                fullWidth
+                id='select-ssc'
+                value={ssc}
+                onChange={(e) => handleSSCChange(e.target.value)}
+                SelectProps={{ MenuProps, displayEmpty: true }}
+              >
+                <MenuItem value='-1'>Select SSC</MenuItem>
+                {sscData.map((ssc, index) => (
+                  <MenuItem key={index} value={ssc.id.toString()}>
+                    {ssc.ssc_name}
+                  </MenuItem>
+                ))}
+              </CustomTextField>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <CustomTextField
+                select
+                fullWidth
+                id='select-qp'
+                value={qp}
+                onChange={(e) => handleQPChange(e.target.value)}
+                SelectProps={{ MenuProps, displayEmpty: true }}
+              >
+                <MenuItem value='-1'>Select Qualification Pack</MenuItem>
+                {qpData.length > 0 ? (
+                  qpData.map((qualificationPack) => (
+                    <MenuItem key={qualificationPack.id.toString()} value={qualificationPack.id.toString()}>
+                      {qualificationPack.qualification_pack_name}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>No qualification pack found</MenuItem>
+                )}
+              </CustomTextField>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <CustomTextField
+                select
+                fullWidth
+                id='select-batch'
+                value={batchId}
+                onChange={e => handleBatchChange(e.target.value)}
+                SelectProps={{ MenuProps, displayEmpty: true }}
+              >
+                <MenuItem value='-1'>Select Batch</MenuItem>
+                {batchData.length > 0 ? (
+                  batchData.map((batch) => (
+                    <MenuItem key={batch.id.toString()} value={batch.id.toString()}>
+                      {batch.batch_name}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>No batch found</MenuItem>
+                )}
+              </CustomTextField>
+            </Grid>
+          </>
+        )}
+
+        {searchBy === 'ssc' && (
+          <>
+            <Grid item xs={12} sm={3}>
+              <CustomTextField
+                select
+                fullWidth
+                id='search-ssc-select'
+                value={ssc}
+                onChange={(e) => handleSSCChange(e.target.value)}
+                SelectProps={{ MenuProps, displayEmpty: true }}
+              >
+                <MenuItem value='-1'>Select SSC</MenuItem>
+                {sscData.map((ssc, index) => (
+                  <MenuItem key={index} value={ssc.id.toString()}>
+                    {ssc.ssc_name}
+                  </MenuItem>
+                ))}
+              </CustomTextField>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <CustomTextField
+                select
+                fullWidth
+                id='select-qp'
+                value={qp}
+                onChange={(e) => handleQPChange(e.target.value)}
+                SelectProps={{ MenuProps, displayEmpty: true }}
+              >
+                <MenuItem value='-1'>Select Qualification Pack</MenuItem>
+                {qpData.length > 0 ? (
+                  qpData.map((qualificationPack) => (
+                    <MenuItem key={qualificationPack.id.toString()} value={qualificationPack.id.toString()}>
+                      {qualificationPack.qualification_pack_name}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>No qualification pack found</MenuItem>
+                )}
+              </CustomTextField>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <CustomTextField
+                select
+                fullWidth
+                id='select-batch'
+                value={batchId}
+                onChange={e => handleBatchChange(e.target.value)}
+                SelectProps={{ MenuProps, displayEmpty: true }}
+              >
+                <MenuItem value='-1'>Select Batch</MenuItem>
+                {batchData.length > 0 ? (
+                  batchData.map((batch) => (
+                    <MenuItem key={batch.id.toString()} value={batch.id.toString()}>
+                      {batch.batch_name}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>No batch found</MenuItem>
+                )}
+              </CustomTextField>
+            </Grid>
+          </>
+        )}
+
+        {searchBy === 'tp' && (
+          <>
+            <Grid item xs={12} sm={3}>
+              <CustomTextField
+                select
+                fullWidth
+                id='search-tp-select'
+                value={tp}
+                onChange={(e) => handleTPChange(e.target.value)}
+                SelectProps={{ MenuProps, displayEmpty: true }}
+              >
+                <MenuItem value='-1'>Select Training Partner</MenuItem>
+                {tpData.length > 0 ? (
+                  tpData.map((tp) => (
+                    <MenuItem key={tp.id.toString()} value={tp.id.toString()}>
+                      {tp.company_name}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>No training partner found</MenuItem>
+                )}
+              </CustomTextField>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <CustomTextField
+                select
+                fullWidth
+                id='select-qp'
+                value={qp}
+                onChange={(e) => handleQPChange(e.target.value)}
+                SelectProps={{ MenuProps, displayEmpty: true }}
+              >
+                <MenuItem value='-1'>Select Qualification Pack</MenuItem>
+                {qpData.length > 0 ? (
+                  qpData.map((qualificationPack) => (
+                    <MenuItem key={qualificationPack.id.toString()} value={qualificationPack.id.toString()}>
+                      {qualificationPack.qualification_pack_name}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>No qualification pack found</MenuItem>
+                )}
+              </CustomTextField>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <CustomTextField
+                select
+                fullWidth
+                id='select-batch'
+                value={batchId}
+                onChange={e => handleBatchChange(e.target.value)}
+                SelectProps={{ MenuProps, displayEmpty: true }}
+              >
+                <MenuItem value='-1'>Select Batch</MenuItem>
+                {batchData.length > 0 ? (
+                  batchData.map((batch) => (
+                    <MenuItem key={batch.id.toString()} value={batch.id.toString()}>
+                      {batch.batch_name}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>No batch found</MenuItem>
+                )}
+              </CustomTextField>
+            </Grid>
+          </>
+        )}
+
         <Grid item xs={12} sm={4}>
           <CustomTextField
             select
             fullWidth
-            id='select-tp'
-            value={tp}
-            onChange={(e) => handleTPChange(e.target.value)}
+            id='select-search'
+            value={searchBy}
+            onChange={(e) => handleSearchByChange(e.target.value)}
             SelectProps={{ MenuProps, displayEmpty: true }}
           >
-            <MenuItem value='-1'>Select Training Partner</MenuItem>
-            {tpData.length > 0 ? (
-              tpData.map((tp) => (
-                <MenuItem key={tp.id.toString()} value={tp.id.toString()}>
-                  {tp.company_name}
-                </MenuItem>
-              ))
-            ) : (
-              <MenuItem disabled>No training partner found</MenuItem>
-            )}
+            <MenuItem value=''>Select Search By</MenuItem>
+            <MenuItem value='ssc'>SSC</MenuItem>
+            <MenuItem value='tp'>TP</MenuItem>
+            <MenuItem value='batch_id'>Batch Name</MenuItem>
           </CustomTextField>
         </Grid>
-        <Grid item xs={12} sm={4}>
-          <CustomTextField
-            select
-            fullWidth
-            id='select-ssc'
-            value={ssc}
-            onChange={(e) => handleSSCChange(e.target.value)}
-            SelectProps={{ MenuProps, displayEmpty: true }}
-          >
-            <MenuItem value='-1'>Select SSC</MenuItem>
-            {sscData.map((ssc, index) => (
-              <MenuItem key={index} value={ssc.id.toString()}>
-                {ssc.ssc_name}
-              </MenuItem>
-            ))}
-          </CustomTextField>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <CustomTextField
-            select
-            fullWidth
-            id='select-qp'
-            value={qp}
-            onChange={(e) => handleQPChange(e.target.value)}
-            SelectProps={{ MenuProps, displayEmpty: true }}
-          >
-            <MenuItem value='-1'>Select Qualification Pack</MenuItem>
-            {qpData.length > 0 ? (
-              qpData.map((qualificationPack) => (
-                <MenuItem key={qualificationPack.id.toString()} value={qualificationPack.id.toString()}>
-                  {qualificationPack.qualification_pack_name}
-                </MenuItem>
-              ))
-            ) : (
-              <MenuItem disabled>No qualification pack found</MenuItem>
-            )}
-          </CustomTextField>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <CustomTextField
-            select
-            fullWidth
-            id='select-batch'
-            value={batchId}
-            onChange={e => handleBatchChange(e.target.value)}
-            SelectProps={{ MenuProps, displayEmpty: true }}
-          >
-            <MenuItem value='-1'>Select Batch</MenuItem>
-            {batchData.length > 0 ? (
-              batchData.map((batch) => (
-                <MenuItem key={batch.id.toString()} value={batch.id.toString()}>
-                  {batch.batch_name}
-                </MenuItem>
-              ))
-            ) : (
-              <MenuItem disabled>No batch found</MenuItem>
-            )}
-          </CustomTextField>
-        </Grid>
+        {searchBy === 'batch_id' && (
+          <>
+            <Grid item xs={12} xl={2} sm={4}>
+              <CustomTextField
+                fullWidth
+                id='select-search'
+                value={searchValue}
+                error={!!error}
+                placeholder='Batch Name'
+                onChange={(e) => handleSearchValueChange(e.target.value)}
+                helperText={error}
+              />
+            </Grid>
+            <Grid item xs={12} xl={2} sm={4}>
+              <div className="flex items-start gap-4">
+                <Button
+                  variant={searchValue === '' ? 'tonal' : 'contained'}
+                  disabled={searchValue === '' || loading}
+                  color={searchValue === '' ? 'secondary' : 'primary'}
+                  onClick={handleSearchClick}
+                  className='is-full sm:is-auto'
+                  size='small'
+                >
+                  {loading ? <CircularProgress size={24} color='inherit' /> : <i className={searchValue === '' ? 'tabler-search-off' : 'tabler-search'} /> }
+                </Button>
+              </div>
+            </Grid>
+          </>
+        )}
       </Grid>
     </CardContent>
   );

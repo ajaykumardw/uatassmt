@@ -12,16 +12,22 @@ export async function GET(req: Request) {
   const url = new URL(await req.url);
   const qpId = url.searchParams.get('qpId');
   const tpId = url.searchParams.get('tpId');
+  const sscId = url.searchParams.get('sscId');
+  const batchIdParam = url.searchParams.get('batchId') || url.searchParams.get('id');
+  const batchName = url.searchParams.get('batchName') || url.searchParams.get('batch_name');
   const isToday = url.searchParams.get('today');
   const isCompleted = url.searchParams.get('completed');
 
   const session = await getServerSession(authOptions);
   const agencyId = Number(session?.user?.agency_id);
 
-  const whereCondition = {
+  const whereCondition: any = {
+    ...(batchIdParam ? { id: Number(batchIdParam) } : {}),
     agency_id: agencyId,
+    ...(batchName ? { batch_name: batchName } : {}),
     ...(qpId ? { qp_id: Number(qpId) } : {}),
     ...(tpId ? { training_partner_id: Number(tpId) } : {}),
+    ...(sscId && !batchName ? { qualification_pack: { ssc_id: Number(sscId) } } : {}),
     ...(isToday && isToday == 'true' ? {
       assessment_start_datetime: {
         gte: new Date(new Date().setHours(0, 0, 0, 0)),
