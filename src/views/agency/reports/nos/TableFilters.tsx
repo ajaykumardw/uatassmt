@@ -7,6 +7,7 @@ import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
+import Autocomplete from '@mui/material/Autocomplete';
 
 import type { batches, exam_sets, users } from '@prisma/client';
 
@@ -120,6 +121,29 @@ const TableFilters = ({ setData, setBatch, tableData }: { setData: any, setBatch
   }
 
 
+  const getQPsByTP = async (tpId: number) => {
+    setQPData([]);
+
+    if (tpId <= 0) return;
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/batches?tpId=${tpId}`);
+    const data = await res.json();
+    const list = Array.isArray(data) ? data : [];
+    const uniqueQPs: QPType[] = [];
+    const seen = new Set<number>();
+
+    list.forEach((batch: any) => {
+      const qualificationPack = batch.qualification_pack;
+
+      if (qualificationPack && !seen.has(qualificationPack.id)) {
+        seen.add(qualificationPack.id);
+        uniqueQPs.push(qualificationPack as QPType);
+      }
+    });
+
+    setQPData(uniqueQPs);
+  }
+
   // Function to handle SSC change
   const handleSSCChange = async (ssc: string) => {
     setQP(-1);
@@ -196,7 +220,9 @@ return;
     }
 
     if (searchBy === 'tp') {
-      fetchBatches(qp, tpId);
+      setQP(-1);
+      setQPData([]);
+      getQPsByTP(tpId);
       
 return;
     }
@@ -473,25 +499,18 @@ return;
         {searchBy === 'tp' && (
           <>
             <Grid item xs={12} sm={3}>
-              <CustomTextField
-                select
+              <Autocomplete
                 fullWidth
                 id='search-tp-select'
-                value={tp}
-                onChange={(e) => handleTPChange(e.target.value)}
-                SelectProps={{ MenuProps, displayEmpty: true }}
-              >
-                <MenuItem value='-1'>Select Training Partner</MenuItem>
-                {tpData.length > 0 ? (
-                  tpData.map((tp) => (
-                    <MenuItem key={tp.id.toString()} value={tp.id.toString()}>
-                      {tp.company_name}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled>No training partner found</MenuItem>
+                options={tpData}
+                value={tpData.find((trainingPartner) => trainingPartner.id === tp) || null}
+                getOptionLabel={(option) => option.company_name || ''}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                onChange={(e, value) => handleTPChange(value ? String(value.id) : '-1')}
+                renderInput={(params) => (
+                  <CustomTextField {...params} placeholder='Search Training Partner' />
                 )}
-              </CustomTextField>
+              />
             </Grid>
             <Grid item xs={12} sm={3}>
               <CustomTextField
