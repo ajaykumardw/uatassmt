@@ -11,7 +11,7 @@ import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 
-import { CircularProgress } from '@mui/material'
+import { Alert, CircularProgress } from '@mui/material'
 
 // Component Imports
 import { toast } from 'react-toastify'
@@ -160,12 +160,25 @@ const AddEditPCDialog = ({ open, nosId, pcId, handleClose, updatePCList, data }:
     control,
     reset,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<AddQPDialogData>({
     resolver: valibotResolver(schema),
     defaultValues: initialData,
     values: userData
   })
+
+  const watchedValues = watch()
+
+  const markFields = [
+    { key: 'theoryMarks' as const, label: 'Theory' },
+    { key: 'practicalMarks' as const, label: 'Practical' },
+    { key: 'vivaMarks' as const, label: 'Viva' }
+  ]
+
+  const downgradedMarks = pcId && data
+    ? markFields.filter(({ key }) => Number(watchedValues[key] ?? 0) < Number(data[key] ?? 0))
+    : []
 
   // const handleClose = () => {
   //   setOpen(false)
@@ -196,15 +209,19 @@ const AddEditPCDialog = ({ open, nosId, pcId, handleClose, updatePCList, data }:
       });
 
       if (res.ok) {
+        const successData = await res.json().catch(() => ({}));
+
         setLoading(false);
         reset();
-        toast.success('PC has been updated successfully!', {
+        toast.success(successData.message || 'PC has been updated successfully!', {
           hideProgressBar: false
         });
         updatePCList();
       } else {
+        const errorData = await res.json().catch(() => ({}));
+
         setLoading(false);
-        toast.error('PC not updated. Something went wrong here!', {
+        toast.error(errorData.message || 'PC not updated. Something went wrong here!', {
           hideProgressBar: false
         });
       }
@@ -281,6 +298,13 @@ const AddEditPCDialog = ({ open, nosId, pcId, handleClose, updatePCList, data }:
       </DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent className='overflow-visible pbs-0 sm:pli-16'>
+          {pcId && (
+            <Alert severity={downgradedMarks.length > 0 ? 'warning' : 'info'} sx={{ mb: 4 }}>
+              {downgradedMarks.length > 0
+                ? `${downgradedMarks.map(({ label }) => label).join(', ')} marks are being reduced. On save, marks of linked questions that exceed the new combined PC marks will be reduced automatically. Exam set marks will not be changed.`
+                : 'Changing Theory, Practical, or Viva marks can affect linked questions. If you reduce these marks, marks of linked questions that exceed the new combined PC marks will be reduced automatically. Exam set marks will not be changed.'}
+            </Alert>
+          )}
           <Grid container spacing={5}>
             <Grid item xs={12} sm={6}>
               <Controller

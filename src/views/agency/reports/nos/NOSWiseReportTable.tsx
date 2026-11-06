@@ -452,8 +452,8 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null, examSe
     const practicalTotal = Object.values(practicalPcMarks).reduce((sum, m) => sum + m, 0);
     const vivaTotal = Object.values(vivaPcMarks).reduce((sum, m) => sum + m, 0);
 
-    const gross = theoryTotal + practicalTotal + vivaTotal;
-    const percent = grossMax > 0 ? (gross / grossMax) * 100 : 0;
+    const gross = roundMark(theoryTotal + practicalTotal + vivaTotal);
+    const percent = grossMax > 0 ? roundMark((gross / grossMax) * 100) : 0;
 
     if (percent >= overAllCutOff) {
       passedStudents.push(studentId);

@@ -112,14 +112,18 @@ export async function POST(
 
   if (questionExist) {
 
-    const newPCToConnect = selectPC.filter((pcId: any) => {
-      return !questionExist.pc_questions.some(existingPC => existingPC.pc.id === Number(pcId));
-    });
+    const existingPCIds = questionExist.pc_questions.map(existingPC => existingPC.pc_id);
 
-    // Find nos to disconnect (those present in DB but not in selectedNos)
-    const pcToDisconnect = questionExist.pc_questions.filter(existingPC => {
-      return !selectPC.includes(existingPC.pc.id.toString());
-    });
+    const selectedPCIds = selectPC.map((pcId: string) => Number(pcId));
+
+    const newPCToConnect = selectedPCIds.filter(
+      (pcId: number) => !existingPCIds.includes(pcId)
+    );
+
+    // Find pcs to remove (those present in DB but not in selectedPC)
+    const pcToDisconnect = existingPCIds.filter(
+      (pcId: number) => !selectedPCIds.includes(pcId)
+    );
 
 
     const pcsTotalMarks = await prisma.pc.aggregate({
@@ -128,7 +132,7 @@ export async function POST(
       },
       where: {
         id: {
-          in: selectPC.map((value: string) => Number(value))
+          in: selectedPCIds
         }
       }
     });
@@ -157,8 +161,18 @@ export async function POST(
         answer: Number(correctAnswer),
         marks: Number(pcsTotalMarks._sum.theory_marks),
         pc_questions: {
-          connect: newPCToConnect.map((pcId: any) => ({ id: Number(pcId) })),
-          disconnect: pcToDisconnect.map(pc => ({ id: pc.id }))
+          create: newPCToConnect.map((pcId: number) => ({
+            agency_id: agency_id,
+            created_by: Number(session?.user?.id),
+            pc: {
+              connect: { id: pcId }
+            }
+          })),
+          deleteMany: {
+            pc_id: {
+              in: pcToDisconnect
+            }
+          }
         }
       }
     });
