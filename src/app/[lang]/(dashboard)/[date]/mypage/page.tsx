@@ -4,11 +4,11 @@ import { useState } from "react";
 
 import { toast } from "react-toastify";
 
-import { CardContent, TextField, Button, Typography, TableContainer, Table, TableRow, TableHead, TableCell, TableBody, LinearProgress, InputAdornment, IconButton } from "@mui/material";
+import { Alert, CardContent, TextField, Button, Typography, TableContainer, Table, TableRow, TableHead, TableCell, TableBody, LinearProgress, InputAdornment, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Divider } from "@mui/material";
 
 import Card from "@mui/material/Card";
 
-import { passCandidates } from "./action";
+import { applyPracticalVivaAdjustment, passCandidates } from "./action-v2";
 
 const Page = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -17,6 +17,8 @@ const Page = () => {
   const [downloadLoading, setDownloadLoading] = useState(false);
   const [response, setResponse] = useState<any>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [adjustmentLog, setAdjustmentLog] = useState<any>(null);
+  const [adjustmentLoading, setAdjustmentLoading] = useState(false);
 
   // 🔥 Download sample Excel (runtime, no storage)
   const downloadSample = async () => {
@@ -111,6 +113,61 @@ const Page = () => {
       toast.error("Something went wrong");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApplyAdjustment = async () => {
+    if (!adjustmentLog) return;
+
+    if (!password) {
+      toast.error("Please enter password");
+
+      return;
+    }
+
+    try {
+      setAdjustmentLoading(true);
+
+      const res = await applyPracticalVivaAdjustment({
+        studentId: adjustmentLog.student_id,
+        batchId: adjustmentLog.batch_id,
+        targetPercent: adjustmentLog.target_percentage ?? null,
+        password,
+      });
+
+      if (!res.success) {
+        throw new Error("Adjustment could not be applied");
+      }
+
+      setResponse((prev: any) => ({
+        ...prev,
+        logs: prev.logs.map((item: any) =>
+          item.student_id === res.log.student_id &&
+          item.candidate_id === res.log.candidate_id
+            ? { ...item, ...res.log, adjustment: undefined, requires_adjustment: false }
+            : item
+        ),
+        batchStats: prev.batchStats?.map((stat: any) =>
+          stat.batch_name === adjustmentLog.batch_name
+            ? {
+                ...stat,
+                passed_students: stat.passed_students + 1,
+                average_pass_percentage: res.average_pass_percentage,
+              }
+            : stat
+        ),
+      }));
+
+      toast.success("Practical/Viva marks adjusted and result updated");
+      setAdjustmentLog(null);
+    } catch (error) {
+      console.error(error);
+
+      toast.error(
+        error instanceof Error ? error.message : "Something went wrong"
+      );
+    } finally {
+      setAdjustmentLoading(false);
     }
   };
 
@@ -243,6 +300,7 @@ const Page = () => {
                       <TableCell><b>Old Incorrect</b></TableCell>
                       <TableCell><b>New Incorrect</b></TableCell>
                       <TableCell><b>Status</b></TableCell>
+                      <TableCell><b>Adjustment</b></TableCell>
                     </TableRow>
                   </TableHead>
 
@@ -267,15 +325,29 @@ const Page = () => {
                           style={{
                             color: item.status.includes("Failed") || item.status.includes("Error")
                               ? "red"
-                              : item.status === "Success"
+                              : item.status.startsWith("Success")
                                 ? "green"
-                                : item.status.includes("Auto-passed")
-                                  ? "blue"
-                                  : "orange",
+                                : item.status.includes("Adjustment required")
+                                  ? "orange"
+                                  : "inherit",
                             fontWeight: 500
                           }}
                         >
                           {item.status}
+                        </TableCell>
+                        <TableCell>
+                          {item.requires_adjustment && item.adjustment?.length ? (
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="warning"
+                              onClick={() => setAdjustmentLog(item)}
+                            >
+                              Review & Apply
+                            </Button>
+                          ) : (
+                            "-"
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -286,6 +358,126 @@ const Page = () => {
           )}
         </CardContent>
       </Card>
+
+      <Dialog
+        open={Boolean(adjustmentLog)}
+        onClose={() => (adjustmentLoading ? null : setAdjustmentLog(null))}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Review Practical / Viva Mark Adjustment</DialogTitle>
+        <DialogContent dividers>
+          {adjustmentLog && (
+            <div className="flex flex-col gap-4">
+              <div>
+                <Typography variant="subtitle1">
+                  <b>{adjustmentLog.candidate_name || "-"}</b>{" "}
+                  ({adjustmentLog.candidate_id})
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Batch: {adjustmentLog.batch_name}
+                </Typography>
+              </div>
+
+              <Alert severity="warning">
+                Theory-only result could not satisfy the{" "}
+                {adjustmentLog.target_percentage != null
+                  ? "target"
+                  : "pass criteria"}
+                . Review the proposed Practical/Viva changes below and approve
+                only if they are acceptable.
+              </Alert>
+
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <Typography variant="body2">
+                  Target:{" "}
+                  <b>
+                    {adjustmentLog.target_percentage != null
+                      ? `${adjustmentLog.target_percentage}%`
+                      : "Default"}
+                  </b>
+                </Typography>
+                <Typography variant="body2">
+                  Theory only:{" "}
+                  <b>
+                    {adjustmentLog.theory_only_percentage != null
+                      ? `${adjustmentLog.theory_only_percentage.toFixed(2)}%`
+                      : "-"}
+                  </b>
+                </Typography>
+                <Typography variant="body2">
+                  After adjustment:{" "}
+                  <b>
+                    {adjustmentLog.actual_percentage != null
+                      ? `${adjustmentLog.actual_percentage.toFixed(2)}%`
+                      : "-"}
+                  </b>
+                </Typography>
+              </div>
+
+              <Typography variant="body2">{adjustmentLog.reason}</Typography>
+
+              <Divider />
+
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell><b>Component</b></TableCell>
+                      <TableCell><b>Question ID</b></TableCell>
+                      <TableCell><b>Old Marks</b></TableCell>
+                      <TableCell><b>New Marks</b></TableCell>
+                      <TableCell><b>Change</b></TableCell>
+                      <TableCell><b>Reason</b></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {adjustmentLog.adjustment?.map((change: any) => (
+                      <TableRow key={change.attemptId}>
+                        <TableCell className="capitalize">
+                          {change.component}
+                        </TableCell>
+                        <TableCell>{change.questionId}</TableCell>
+                        <TableCell>{change.oldMarks}</TableCell>
+                        <TableCell>{change.newMarks}</TableCell>
+                        <TableCell
+                          style={{
+                            color:
+                              change.newMarks > change.oldMarks
+                                ? "green"
+                                : "red",
+                            fontWeight: 500
+                          }}
+                        >
+                          {change.newMarks > change.oldMarks ? "+" : ""}
+                          {(change.newMarks - change.oldMarks).toFixed(2)}
+                        </TableCell>
+                        <TableCell>{change.reason}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </div>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setAdjustmentLog(null)}
+            disabled={adjustmentLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="warning"
+            onClick={handleApplyAdjustment}
+            disabled={adjustmentLoading}
+          >
+            {adjustmentLoading ? "Applying..." : "Approve & Apply"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

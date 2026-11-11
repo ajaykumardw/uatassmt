@@ -12,6 +12,13 @@ import type { QPType } from "@/types/qualification-pack/qpType";
 
 import DialogCloseButton from "@/components/dialogs/DialogCloseButton";
 import { agencyImagePath } from "@/configs/customDataConfig";
+import { RESULT_CRITERIA } from "@/configs/resultCriteria";
+import {
+  evaluateResult,
+  getEnabledObtained,
+  getEnabledTotal,
+  getPercentage,
+} from "@/libs/resultCriteria";
 
 type nosWithPcs = nos & {
   pcs: pc[];
@@ -28,6 +35,99 @@ type PCReportDialogProps = {
 }
 
 const PCReportDialog = ({ open, handleClose, theoryMarks, practicalMarks, vivaMarks, batchReportData, selectedCandidate } : PCReportDialogProps) => {
+
+  const hasSection = {
+    theory: Boolean(batchReportData?.theory_exam_set_id),
+    practical: Boolean(batchReportData?.practical_exam_set_id),
+    viva: Boolean(batchReportData?.viva_exam_set_id),
+  };
+
+  const getEnabledNosTotal = (nosItem: any) => {
+    return (nosItem.pcs || []).reduce((sum: number, pcItem: any) => {
+      return sum +
+        (RESULT_CRITERIA.theory && hasSection.theory ? Number(pcItem.theory_marks || 0) : 0) +
+        (RESULT_CRITERIA.practical && hasSection.practical ? Number(pcItem.practical_marks || 0) : 0) +
+        (RESULT_CRITERIA.viva && hasSection.viva ? Number(pcItem.viva_marks || 0) : 0);
+    }, 0);
+  };
+
+  const getEnabledNosObtained = (nosItem: any) => {
+    return (nosItem.pcs || []).reduce((sum: number, pcItem: any) => {
+      return sum +
+        (RESULT_CRITERIA.theory && hasSection.theory ? Number(theoryMarks?.pcs?.[pcItem.id] || 0) : 0) +
+        (RESULT_CRITERIA.practical && hasSection.practical ? Number(practicalMarks?.pcs?.[pcItem.id] || 0) : 0) +
+        (RESULT_CRITERIA.viva && hasSection.viva ? Number(vivaMarks?.pcs?.[pcItem.id] || 0) : 0);
+    }, 0);
+  };
+
+  const sectionTotals = {
+    theory: Number(batchReportData?.qualification_pack?.total_theory_marks || 0),
+    practical: Number(batchReportData?.qualification_pack?.total_practical_marks || 0),
+    viva: Number(batchReportData?.qualification_pack?.total_viva_marks || 0),
+  };
+
+  const sectionObtained = {
+    theory: Object.values(theoryMarks?.pcs || {}).reduce(
+      (sum: number, marks: any) => sum + Number(marks || 0),
+      0
+    ),
+    practical: Object.values(practicalMarks?.pcs || {}).reduce(
+      (sum: number, marks: any) => sum + Number(marks || 0),
+      0
+    ),
+    viva: Object.values(vivaMarks?.pcs || {}).reduce(
+      (sum: number, marks: any) => sum + Number(marks || 0),
+      0
+    ),
+  };
+
+  const overallPercentage = getPercentage(
+    getEnabledObtained(sectionObtained, hasSection),
+    getEnabledTotal(sectionTotals, hasSection)
+  );
+
+  const nosResults: Array<{ percentage: number; cutoff: number }> = [];
+
+  for (const nosItem of batchReportData?.nos || []) {
+    const totalMarks = getEnabledNosTotal(nosItem);
+
+    if (totalMarks <= 0) continue;
+
+    nosResults.push({
+      percentage: getPercentage(getEnabledNosObtained(nosItem), totalMarks),
+      cutoff: Number(batchReportData?.qualification_pack?.nos_cutoff_marks || 0),
+    });
+  }
+
+  const finalEvaluation = evaluateResult({
+    theory: {
+      applicable: hasSection.theory,
+      percentage: getPercentage(
+        sectionObtained.theory,
+        sectionTotals.theory
+      ),
+      cutoff: Number(batchReportData?.qualification_pack?.theory_cutoff_marks || 0),
+    },
+    practical: {
+      applicable: hasSection.practical,
+      percentage: getPercentage(
+        sectionObtained.practical,
+        sectionTotals.practical
+      ),
+      cutoff: Number(batchReportData?.qualification_pack?.practical_cutoff_marks || 0),
+    },
+    viva: {
+      applicable: hasSection.viva,
+      percentage: getPercentage(sectionObtained.viva, sectionTotals.viva),
+      cutoff: Number(batchReportData?.qualification_pack?.viva_cutoff_marks || 0),
+    },
+    overall: {
+      applicable: true,
+      percentage: overallPercentage,
+      cutoff: Number(batchReportData?.qualification_pack?.overall_cutoff_marks || 0),
+    },
+    nos: nosResults,
+  });
 
   const handleGenerateReport = async () => {
     
@@ -215,22 +315,17 @@ const PCReportDialog = ({ open, handleClose, theoryMarks, practicalMarks, vivaMa
                   <td colSpan={3} className="border-0 bs-[30px] p-1.5 text-[13px]"></td>
                 </tr>
                 {batchReportData?.nos.map((nosItem) => {
-                  const totalMarks = nosItem.pcs.reduce((sum, pcItem) => {
-                    return sum + parseFloat(pcItem.theory_marks?.toString() || '0') +
-                      parseFloat(pcItem.practical_marks?.toString() || '0') +
-                      parseFloat(pcItem.viva_marks?.toString() || '0');
-                  }, 0);
+                  const totalMarks = getEnabledNosTotal(nosItem);
 
-                  const obtainedMarks = nosItem.pcs.reduce((sum, pcItem) => {
-                    const obtainedTheoryMarks = theoryMarks?.pcs?.[pcItem.id] || 0;
-                    const obtainedPracticalMarks = practicalMarks?.pcs?.[pcItem.id] || 0;
-                    const obtainedVivaMarks = vivaMarks?.pcs?.[pcItem.id] || 0;
+                  const obtainedMarks = getEnabledNosObtained(nosItem);
 
-                    return sum + obtainedTheoryMarks + obtainedPracticalMarks + obtainedVivaMarks;
-                  }, 0);
+                  const percentage = getPercentage(obtainedMarks, totalMarks);
 
-                  const percentage = totalMarks > 0 ? (obtainedMarks / totalMarks) * 100 : 0;
-                  const status = percentage >= (batchReportData?.qualification_pack?.nos_cutoff_marks || 0) ? 'Pass' : 'Fail';
+                  const status = RESULT_CRITERIA.nos
+                    ? percentage >= (batchReportData?.qualification_pack?.nos_cutoff_marks || 0)
+                      ? 'Pass'
+                      : 'Fail'
+                    : 'N/A';
 
                   return (
                     <tr key={`summary-${nosItem.nos_id}`} className="border-0">
@@ -247,72 +342,10 @@ const PCReportDialog = ({ open, handleClose, theoryMarks, practicalMarks, vivaMa
                 <tr className="border-0">
                   <td colSpan={3} className="border-0 bs-[30px] p-1.5 text-[13px]"></td>
                   <td className="bs-[30px] p-1.5 text-[13px]">Total</td>
-                  <td className="bs-[30px] p-1.5 text-[13px]">{batchReportData?.nos.reduce((sum, nosItem) => {
-                    return sum + nosItem.pcs.reduce((pcSum, pcItem) => {
-                      return pcSum + parseFloat(pcItem.theory_marks?.toString() || '0') +
-                        parseFloat(pcItem.practical_marks?.toString() || '0') +
-                        parseFloat(pcItem.viva_marks?.toString() || '0');
-                    }, 0);
-                  }, 0).toFixed(2)}</td>
-                  <td className="bs-[30px] p-1.5 text-[13px]">{batchReportData?.nos.reduce((sum, nosItem) => {
-                    return sum + nosItem.pcs.reduce((pcSum, pcItem) => {
-                      const obtainedTheoryMarks = theoryMarks?.pcs?.[pcItem.id] || 0;
-                      const obtainedPracticalMarks = practicalMarks?.pcs?.[pcItem.id] || 0;
-                      const obtainedVivaMarks = vivaMarks?.pcs?.[pcItem.id] || 0;
-
-                      return pcSum + obtainedTheoryMarks + obtainedPracticalMarks + obtainedVivaMarks;
-                    }, 0);
-                  }, 0).toFixed(2)}</td>
-                  <td className="bs-[30px] p-1.5 text-[13px]">
-                    {(() => {
-                      const totalMarks = batchReportData?.nos.reduce((sum, nosItem) => {
-                        return sum + nosItem.pcs.reduce((pcSum, pcItem) => {
-                          return pcSum + parseFloat(pcItem.theory_marks?.toString() || '0') +
-                            parseFloat(pcItem.practical_marks?.toString() || '0') +
-                            parseFloat(pcItem.viva_marks?.toString() || '0');
-                        }, 0);
-                      }, 0) || 0;
-
-                      const obtainedMarks = batchReportData?.nos.reduce((sum, nosItem) => {
-                        return sum + nosItem.pcs.reduce((pcSum, pcItem) => {
-                          const obtainedTheoryMarks = theoryMarks?.pcs?.[pcItem.id] || 0;
-                          const obtainedPracticalMarks = practicalMarks?.pcs?.[pcItem.id] || 0;
-                          const obtainedVivaMarks = vivaMarks?.pcs?.[pcItem.id] || 0;
-
-                          return pcSum + obtainedTheoryMarks + obtainedPracticalMarks + obtainedVivaMarks;
-                        }, 0);
-                      }, 0) || 0;
-
-                      const percentage = totalMarks > 0 ? (obtainedMarks / totalMarks) * 100 : 0;
-
-                      return percentage % 1 ? percentage.toFixed(2) : percentage;
-                    })()}
-                  </td>
-                  {/* <td className="bs-[30px] p-1.5 text-[13px]"> */}
-                    {(() => {
-                      const totalMarks = batchReportData?.nos.reduce((sum, nosItem) => {
-                        return sum + nosItem.pcs.reduce((pcSum, pcItem) => {
-                          return pcSum + parseFloat(pcItem.theory_marks?.toString() || '0') +
-                            parseFloat(pcItem.practical_marks?.toString() || '0') +
-                            parseFloat(pcItem.viva_marks?.toString() || '0');
-                        }, 0);
-                      }, 0) || 0;
-
-                      const obtainedMarks = batchReportData?.nos.reduce((sum, nosItem) => {
-                        return sum + nosItem.pcs.reduce((pcSum, pcItem) => {
-                          const obtainedTheoryMarks = theoryMarks?.pcs?.[pcItem.id] || 0;
-                          const obtainedPracticalMarks = practicalMarks?.pcs?.[pcItem.id] || 0;
-                          const obtainedVivaMarks = vivaMarks?.pcs?.[pcItem.id] || 0;
-
-                          return pcSum + obtainedTheoryMarks + obtainedPracticalMarks + obtainedVivaMarks;
-                        }, 0);
-                      }, 0) || 0;
-
-                      const percentage = totalMarks > 0 ? (obtainedMarks / totalMarks) * 100 : 0;
-
-                      return percentage >= (batchReportData?.qualification_pack?.overall_cutoff_marks || 0) ? <td className="bs-[30px] p-1.5 text-[13px] pass">Pass</td> : <td className="bs-[30px] p-1.5 text-[13px] fail">Fail</td>;
-                    })()}
-                  {/* </td> */}
+                  <td className="bs-[30px] p-1.5 text-[13px]">{getEnabledTotal(sectionTotals, hasSection).toFixed(2)}</td>
+                  <td className="bs-[30px] p-1.5 text-[13px]">{getEnabledObtained(sectionObtained, hasSection).toFixed(2)}</td>
+                  <td className="bs-[30px] p-1.5 text-[13px]">{overallPercentage % 1 ? overallPercentage.toFixed(2) : overallPercentage}</td>
+                  {finalEvaluation.pass ? <td className="bs-[30px] p-1.5 text-[13px] pass">Pass</td> : <td className="bs-[30px] p-1.5 text-[13px] fail">Fail</td>}
                   <td colSpan={3} className="border-0 bs-[30px] p-1.5 text-[13px]"></td>
                 </tr>
               </tbody>

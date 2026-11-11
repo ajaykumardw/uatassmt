@@ -200,12 +200,8 @@ import { format } from "date-fns";
 
 import prisma from "@/libs/prisma";
 import { STUDENT_RESULT } from "@/configs/customDataConfig";
-
-const safePercent = (obtained: number, total: number) => {
-  if (!total || total === 0) return 0;
-
-  return (obtained / total) * 100;
-};
+import { evaluateResult, getEnabledOverallPercentage, getPercentage } from "@/libs/resultCriteria";
+import { calculateNosPercentages, type ResultQuestion } from "@/libs/resultCriteriaNos";
 
 const updateBatchWiseCandidateResult = async (
   batchId: number,
@@ -259,7 +255,7 @@ const updateBatchWiseCandidateResult = async (
     // =========================
     const students = await prisma.students.findMany({
       where: { batch_id: batchId, attendance: 1 },
-      select: { id: true },
+      select: { id: true, certificate_no: true },
     });
 
     if (!students.length) throw new Error("No students found");
@@ -269,24 +265,85 @@ const updateBatchWiseCandidateResult = async (
     if (onProgress) await onProgress(20);
 
     // =========================
-    // 3. THEORY MARKS MAP
+    // 3. EXAM SET QUESTIONS + PC/NOS
     // =========================
-    let questionMarks = new Map<number, number>();
+    const examSetIds = [
+      batch.theory_exam_set_id,
+      batch.practical_exam_set_id,
+      batch.viva_exam_set_id,
+    ].filter((id): id is number => Boolean(id));
 
-    if (batch.theory_exam_set_id) {
-      const questions = await prisma.exam_sets_questions.findMany({
-        where: { exam_set_id: batch.theory_exam_set_id },
-        select: { question_id: true, marks: true },
-      });
+    const examSetQuestions = examSetIds.length
+      ? await prisma.exam_sets_questions.findMany({
+          where: { exam_set_id: { in: examSetIds } },
+          select: {
+            exam_set_id: true,
+            question_id: true,
+            marks: true,
+            questions: {
+              select: {
+                question_type: true,
+                pc_questions: {
+                  select: {
+                    pc: {
+                      select: {
+                        id: true,
+                        theory_marks: true,
+                        practical_marks: true,
+                        viva_marks: true,
+                        nos: {
+                          select: { nos_id: true, nos_name: true },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        })
+      : [];
 
-      questionMarks = new Map(
-        questions.map((q) => [q.question_id, Number(q.marks)])
-      );
+    const examSetType = new Map<number, "theory" | "practical" | "viva">();
+
+    if (batch.theory_exam_set_id) examSetType.set(batch.theory_exam_set_id, "theory");
+    if (batch.practical_exam_set_id) examSetType.set(batch.practical_exam_set_id, "practical");
+    if (batch.viva_exam_set_id) examSetType.set(batch.viva_exam_set_id, "viva");
+
+    const resultQuestions: ResultQuestion[] = examSetQuestions.map((item) => ({
+      id: item.question_id,
+      type: examSetType.get(item.exam_set_id) || item.questions.question_type,
+      marks: Number(item.marks) || 0,
+      pcs: item.questions.pc_questions.map((pcQuestion) => ({
+        pcId: pcQuestion.pc.id,
+        nosCode: pcQuestion.pc.nos.nos_id,
+        nosName: pcQuestion.pc.nos.nos_name,
+        theoryMarks: Number(pcQuestion.pc.theory_marks) || 0,
+        practicalMarks: Number(pcQuestion.pc.practical_marks) || 0,
+        vivaMarks: Number(pcQuestion.pc.viva_marks) || 0,
+      })),
+    }));
+
+    const theoryQuestionMarks = new Map<number, number>();
+
+    for (const question of resultQuestions) {
+      if (question.type === "theory") {
+        theoryQuestionMarks.set(question.id, question.marks);
+      }
     }
+
+    const validAttemptQuestionIds = resultQuestions
+      .filter((question) => question.type === "practical" || question.type === "viva")
+      .map((question) => question.id);
+
+    const typeByQuestionId = new Map(
+      resultQuestions.map((question) => [question.id, question.type])
+    );
 
     // =========================
     // 4. THEORY RESULTS
     // =========================
+    const theoryCorrectMap = new Map<number, Set<number>>();
     const theoryMap = new Map<number, number>();
 
     if (batch.theory_exam_set_id) {
@@ -305,10 +362,16 @@ const updateBatchWiseCandidateResult = async (
 
       for (const r of results) {
         if (r.student_answer === r.correct_answer) {
+          if (!theoryCorrectMap.has(r.student_id)) {
+            theoryCorrectMap.set(r.student_id, new Set<number>());
+          }
+
+          theoryCorrectMap.get(r.student_id)?.add(r.question_id);
+
           theoryMap.set(
             r.student_id,
             (theoryMap.get(r.student_id) || 0) +
-              (questionMarks.get(r.question_id) || 0)
+              (theoryQuestionMarks.get(r.question_id) || 0)
           );
         }
       }
@@ -317,28 +380,45 @@ const updateBatchWiseCandidateResult = async (
     // =========================
     // 5. PRACTICAL + VIVA
     // =========================
-    const attempts = await prisma.student_question_attempts.findMany({
-      where: { student_id: { in: studentIds } },
-      select: {
-        student_id: true,
-        obtained_marks: true,
-        question: {
-          select: { question_type: true },
-        },
-      },
-    });
+    const attemptsByStudent = new Map<
+      number,
+      Array<{ questionId: number; obtainedMarks: number }>
+    >();
 
     const practicalMap = new Map<number, number>();
     const vivaMap = new Map<number, number>();
 
-    for (const a of attempts) {
-      const marks = Number(a.obtained_marks) || 0;
-      const type = a.question?.question_type;
+    if (validAttemptQuestionIds.length > 0) {
+      const attempts = await prisma.student_question_attempts.findMany({
+        where: {
+          student_id: { in: studentIds },
+          question_id: { in: validAttemptQuestionIds },
+        },
+        select: {
+          student_id: true,
+          question_id: true,
+          obtained_marks: true,
+        },
+      });
 
-      if (type === "practical") {
-        practicalMap.set(a.student_id, (practicalMap.get(a.student_id) || 0) + marks);
-      } else if (type === "viva") {
-        vivaMap.set(a.student_id, (vivaMap.get(a.student_id) || 0) + marks);
+      for (const a of attempts) {
+        const marks = Number(a.obtained_marks) || 0;
+        const type = typeByQuestionId.get(a.question_id);
+
+        const studentAttempts = attemptsByStudent.get(a.student_id) || [];
+
+        studentAttempts.push({
+          questionId: a.question_id,
+          obtainedMarks: marks,
+        });
+
+        attemptsByStudent.set(a.student_id, studentAttempts);
+
+        if (type === "practical") {
+          practicalMap.set(a.student_id, (practicalMap.get(a.student_id) || 0) + marks);
+        } else if (type === "viva") {
+          vivaMap.set(a.student_id, (vivaMap.get(a.student_id) || 0) + marks);
+        }
       }
     }
 
@@ -348,6 +428,12 @@ const updateBatchWiseCandidateResult = async (
     const chunkSize = 100;
     let processed = 0;
     const total = students.length;
+
+    const hasTheory = Boolean(batch.theory_exam_set_id);
+    const hasPractical = Boolean(batch.practical_exam_set_id);
+    const hasViva = Boolean(batch.viva_exam_set_id);
+
+    const nosCutoff = Number(qp.nos_cutoff_marks) || 0;
 
     const tp = batch.training_partner;
 
@@ -374,7 +460,15 @@ const updateBatchWiseCandidateResult = async (
 
     const tpStateCode = tp?.state?.state_code;
 
-    const usedRandoms = new Set();
+    const usedRandoms = new Set<number>();
+
+    for (const student of students) {
+      const lastPart = student.certificate_no?.split("|").pop();
+
+      if (lastPart && /^\d{3}$/.test(lastPart)) {
+        usedRandoms.add(Number(lastPart));
+      }
+    }
 
     function getUniqueThreeDigits() {
 
@@ -398,48 +492,94 @@ const updateBatchWiseCandidateResult = async (
           const practical = practicalMap.get(s.id) || 0;
           const viva = vivaMap.get(s.id) || 0;
 
-          const totalMarks = theory + practical + viva;
+          const theoryPercentage = getPercentage(
+            theory,
+            Number(qp.total_theory_marks)
+          );
 
-          const overallPercent = safePercent(totalMarks, Number(qp.total_marks));
+          const practicalPercentage = getPercentage(
+            practical,
+            Number(qp.total_practical_marks)
+          );
 
-          const theoryOk =
-            !batch.theory_exam_set_id ||
-            safePercent(theory, Number(qp.total_theory_marks)) >=
-              Number(qp.theory_cutoff_marks);
+          const vivaPercentage = getPercentage(
+            viva,
+            Number(qp.total_viva_marks)
+          );
 
-          const practicalOk =
-            !batch.practical_exam_set_id ||
-            safePercent(practical, Number(qp.total_practical_marks)) >=
-              Number(qp.practical_cutoff_marks);
+          const overallPercent = getEnabledOverallPercentage(
+            {
+              theory,
+              practical,
+              viva,
+            },
+            {
+              theory: Number(qp.total_theory_marks),
+              practical: Number(qp.total_practical_marks),
+              viva: Number(qp.total_viva_marks),
+            },
+            {
+              theory: hasTheory,
+              practical: hasPractical,
+              viva: hasViva,
+            }
+          );
 
-          const vivaOk =
-            !batch.viva_exam_set_id ||
-            safePercent(viva, Number(qp.total_viva_marks)) >=
-              Number(qp.viva_cutoff_marks);
+          const nosResults = calculateNosPercentages(resultQuestions, {
+            theoryCorrectQuestionIds: theoryCorrectMap.get(s.id),
+            attempts: attemptsByStudent.get(s.id) || [],
+          }).map((nos) => ({
+            ...nos,
+            cutoff: nosCutoff,
+          }));
 
-          const result =
-            theoryOk &&
-            practicalOk &&
-            vivaOk &&
-            overallPercent >= Number(qp.overall_cutoff_marks)
-              ? STUDENT_RESULT.PASS
-              : STUDENT_RESULT.FAIL;
+          const evaluation = evaluateResult({
+            theory: {
+              applicable: hasTheory,
+              percentage: theoryPercentage,
+              cutoff: Number(qp.theory_cutoff_marks) || 0,
+            },
+            practical: {
+              applicable: hasPractical,
+              percentage: practicalPercentage,
+              cutoff: Number(qp.practical_cutoff_marks) || 0,
+            },
+            viva: {
+              applicable: hasViva,
+              percentage: vivaPercentage,
+              cutoff: Number(qp.viva_cutoff_marks) || 0,
+            },
+            overall: {
+              applicable: true,
+              percentage: overallPercent,
+              cutoff: Number(qp.overall_cutoff_marks) || 0,
+            },
+            nos: nosResults,
+          });
 
-          let certificate_no: string | null = null;
+          const result = evaluation.pass
+            ? STUDENT_RESULT.PASS
+            : STUDENT_RESULT.FAIL;
+
+          let certificate_no: string | null = s.certificate_no;
 
           if (result === STUDENT_RESULT.PASS) {
 
-            const uniqueNum = getUniqueThreeDigits();
-            const agencyShortName = 'VISTA';
+            if (!certificate_no) {
+              const uniqueNum = getUniqueThreeDigits();
+              const agencyShortName = 'VISTA';
 
-            certificate_no = [
-              agencyShortName,
-              tpShortName,
-              tpStateCode,
-              uniqueNum
-            ].filter(Boolean).join("|");
+              certificate_no = [
+                agencyShortName,
+                tpShortName,
+                tpStateCode,
+                uniqueNum
+              ].filter(Boolean).join("|");
+            }
 
             // certificate_no = `${agencyShortName}|${tpShortName}|${tpStateCode || ""}|${uniqueNum}`;
+          } else {
+            certificate_no = null;
           }
 
           return prisma.students.update({

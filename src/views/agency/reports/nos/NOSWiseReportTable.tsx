@@ -62,6 +62,13 @@ import tableStyles from '@core/styles/table.module.css'
 
 import type { QPType } from '@/types/qualification-pack/qpType';
 import { agencyImagePath } from '@/configs/customDataConfig';
+import { RESULT_CRITERIA } from '@/configs/resultCriteria';
+import {
+  evaluateResult,
+  getEnabledObtained,
+  getEnabledTotal,
+  getPercentage,
+} from '@/libs/resultCriteria';
 
 // import AddEditExamSetsDialog from '@/components/exam-sets/dialogs/AddEditExamSetsDialog';
 
@@ -320,7 +327,13 @@ const distributeMarksByPcWeight = (
 
 };
 
-const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null, examSetQuestionsMarks?: Record<number, number>): FinalResult => {
+const getTheoryMarksPerStudent = (
+  students: Student[],
+  qp: QPType | null,
+  examSetQuestionsMarks?: Record<number, number>,
+  nosTotals?: Record<string, { theory: number; practical: number; viva: number }>,
+  hasSection?: { theory: boolean; practical: boolean; viva: boolean }
+): FinalResult => {
   const theoryMarks: TheoryMarksResult = {};
 
   const practicalMarks: PracticalMarksResult = {};
@@ -352,9 +365,6 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null, examSe
 
     const vivaPcMarks: Record<string, number> = {};
     const vivaNosMarks: Record<string, number> = {};
-
-    const grossMax = qp?.total_marks ?? 0;
-    const overAllCutOff = qp?.overall_cutoff_marks ?? 0;
 
     // Keep only the LAST entry per question (matches server-side Map behavior)
     const theoryQuestionMap: Record<string, { isCorrect: boolean; question: any }> = {};
@@ -453,9 +463,93 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null, examSe
     const vivaTotal = Object.values(vivaPcMarks).reduce((sum, m) => sum + m, 0);
 
     const gross = roundMark(theoryTotal + practicalTotal + vivaTotal);
-    const percent = grossMax > 0 ? roundMark((gross / grossMax) * 100) : 0;
 
-    if (percent >= overAllCutOff) {
+    const sections = hasSection || {
+      theory: true,
+      practical: true,
+      viva: true,
+    };
+
+    const theoryPercentage = getPercentage(
+      theoryTotal,
+      Number(qp?.total_theory_marks || 0)
+    );
+
+    const practicalPercentage = getPercentage(
+      practicalTotal,
+      Number(qp?.total_practical_marks || 0)
+    );
+
+    const vivaPercentage = getPercentage(
+      vivaTotal,
+      Number(qp?.total_viva_marks || 0)
+    );
+
+    const overallPercentage = getPercentage(
+      getEnabledObtained(
+        {
+          theory: theoryTotal,
+          practical: practicalTotal,
+          viva: vivaTotal,
+        },
+        sections
+      ),
+      getEnabledTotal(
+        {
+          theory: Number(qp?.total_theory_marks || 0),
+          practical: Number(qp?.total_practical_marks || 0),
+          viva: Number(qp?.total_viva_marks || 0),
+        },
+        sections
+      )
+    );
+
+    const nosResults: Array<{ percentage: number; cutoff: number }> = [];
+
+    for (const [nosCode, totals] of Object.entries(nosTotals || {})) {
+      const totalMarks =
+        (RESULT_CRITERIA.theory && sections.theory ? totals.theory : 0) +
+        (RESULT_CRITERIA.practical && sections.practical ? totals.practical : 0) +
+        (RESULT_CRITERIA.viva && sections.viva ? totals.viva : 0);
+
+      if (totalMarks <= 0) continue;
+
+      const obtainedMarks =
+        (RESULT_CRITERIA.theory && sections.theory ? nosMarks[nosCode] || 0 : 0) +
+        (RESULT_CRITERIA.practical && sections.practical ? practicalNosMarks[nosCode] || 0 : 0) +
+        (RESULT_CRITERIA.viva && sections.viva ? vivaNosMarks[nosCode] || 0 : 0);
+
+      nosResults.push({
+        percentage: getPercentage(obtainedMarks, totalMarks),
+        cutoff: Number(qp?.nos_cutoff_marks || 0),
+      });
+    }
+
+    const evaluation = evaluateResult({
+      theory: {
+        applicable: sections.theory,
+        percentage: theoryPercentage,
+        cutoff: Number(qp?.theory_cutoff_marks || 0),
+      },
+      practical: {
+        applicable: sections.practical,
+        percentage: practicalPercentage,
+        cutoff: Number(qp?.practical_cutoff_marks || 0),
+      },
+      viva: {
+        applicable: sections.viva,
+        percentage: vivaPercentage,
+        cutoff: Number(qp?.viva_cutoff_marks || 0),
+      },
+      overall: {
+        applicable: true,
+        percentage: overallPercentage,
+        cutoff: Number(qp?.overall_cutoff_marks || 0),
+      },
+      nos: nosResults,
+    });
+
+    if (evaluation.pass) {
       passedStudents.push(studentId);
     } else {
       failedStudents.push(studentId);
@@ -480,7 +574,7 @@ const getTheoryMarksPerStudent = (students: Student[], qp: QPType | null, examSe
     totalPracticalMarks[studentId] = roundMark(practicalTotal);
     totalVivaMarks[studentId] = roundMark(vivaTotal);
     grossTotal[studentId] = roundMark(gross);
-    percentage[studentId] = parseFloat(percent.toFixed(2));
+    percentage[studentId] = overallPercentage;
   });
 
   return {
@@ -835,7 +929,35 @@ const NOSWiseReportTable = () => {
     examSetQuestionsMarks[esq.questions.id] = esq.marks ?? esq.questions.marks ?? 0;
   });
 
-  const { theoryMarks, totalTheoryMarks, practicalMarks, totalPracticalMarks, vivaMarks, totalVivaMarks, grossTotal, absentStudents, passedStudents, failedStudents } = getTheoryMarksPerStudent(batchReportData?.students || [], batchReportData?.qualification_pack || null, examSetQuestionsMarks);
+  const nosTotals: Record<
+    string,
+    { theory: number; practical: number; viva: number }
+  > = {};
+
+  (batchReportData as any)?.nos?.forEach((nosItem: any) => {
+    nosTotals[nosItem.nos_id] = {
+      theory: (nosItem.pcs || []).reduce(
+        (sum: number, pcItem: any) => sum + Number(pcItem.theory_marks || 0),
+        0
+      ),
+      practical: (nosItem.pcs || []).reduce(
+        (sum: number, pcItem: any) => sum + Number(pcItem.practical_marks || 0),
+        0
+      ),
+      viva: (nosItem.pcs || []).reduce(
+        (sum: number, pcItem: any) => sum + Number(pcItem.viva_marks || 0),
+        0
+      ),
+    };
+  });
+
+  const hasSection = {
+    theory: Boolean(batchReportData?.theory_exam_set_id),
+    practical: Boolean(batchReportData?.practical_exam_set_id),
+    viva: Boolean(batchReportData?.viva_exam_set_id),
+  };
+
+  const { theoryMarks, totalTheoryMarks, practicalMarks, totalPracticalMarks, vivaMarks, totalVivaMarks, grossTotal, absentStudents, passedStudents, failedStudents, percentage } = getTheoryMarksPerStudent(batchReportData?.students || [], batchReportData?.qualification_pack || null, examSetQuestionsMarks, nosTotals, hasSection);
 
   const activeExamCount =
   (batchReportData?.theory_exam_set_id ? 1 : 0) +
@@ -1139,25 +1261,19 @@ const NOSWiseReportTable = () => {
                     {batchReportData?.viva_exam_set_id && <td className='light-gray'>{totalVivaMarks[student.candidate_id] ?? 0}</td>}
                     <td className='light-gray'>{grossTotal[student.candidate_id] ?? 0}</td>
                     <td>
-                      {
-                        batchReportData?.qualification_pack?.total_marks
-                          ? (
-                              ((grossTotal[student.candidate_id] ?? 0) / batchReportData.qualification_pack.total_marks) * 100
-                            ).toFixed(2)
-                          : "0.00"
-                      }
+                      {(percentage[student.candidate_id] ?? 0).toFixed(2)}
                     </td>
                     <td className={
                       absentStudents.includes(student.candidate_id)
-                            ? 'absent'             // or 'warning' if you want it highlighted
-                            : ((grossTotal[student.candidate_id] ?? 0) / batchReportData.qualification_pack.total_marks) * 100 >= (batchReportData?.qualification_pack?.overall_cutoff_marks ?? 0)
-                              ? 'pass'
-                              : 'fail'
+                        ? 'absent'
+                        : passedStudents.includes(student.candidate_id)
+                          ? 'pass'
+                          : 'fail'
                     }>
                       {
                         absentStudents.includes(student.candidate_id)
                           ? 'Absent'
-                          : ((grossTotal[student.candidate_id] ?? 0) / batchReportData.qualification_pack.total_marks) * 100 >= (batchReportData?.qualification_pack?.overall_cutoff_marks ?? 0)
+                          : passedStudents.includes(student.candidate_id)
                             ? 'Pass'
                             : 'Fail'
                       }

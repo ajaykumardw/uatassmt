@@ -449,6 +449,7 @@ export async function GET(
           candidate_id: true,
           candidate_name: true,
           attendance: true,
+          result: true,
 
           // student_exam_set_results: true,
 

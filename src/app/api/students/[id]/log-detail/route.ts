@@ -99,6 +99,18 @@ import { decrypt } from "@/utils/encryption";
 
 import { agencyImagePath, agencyUsersFilePath, sscImagePath } from "@/configs/customDataConfig";
 import getValidImage from "@/utils/getValidImage";
+import { RESULT_CRITERIA } from "@/configs/resultCriteria";
+import {
+  evaluateResult,
+  getEnabledObtained,
+  getEnabledTotal,
+  getPercentage,
+  getSectionStatus,
+} from "@/libs/resultCriteria";
+import {
+  calculateNosPercentages,
+  type ResultQuestion,
+} from "@/libs/resultCriteriaNos";
 
 // =======================================
 // COMMON SORT HELPER
@@ -216,6 +228,8 @@ export async function GET(
           select: {
             batch_name: true,
             theory_exam_set_id: true,
+            practical_exam_set_id: true,
+            viva_exam_set_id: true,
             assessment_start_datetime: true,
             theory_exam_set: true,
             scheme: true,
@@ -234,6 +248,7 @@ export async function GET(
                 total_project_marks: true,
                 total_marks: true,
                 overall_cutoff_marks: true,
+                nos_cutoff_marks: true,
                 ssc: {
                   select: {
                     id: true,
@@ -276,11 +291,19 @@ export async function GET(
   const examSetId =
     student.batch.theory_exam_set_id;
 
+  const examSetIds = [
+    student.batch.theory_exam_set_id,
+    student.batch.practical_exam_set_id,
+    student.batch.viva_exam_set_id,
+  ].filter((id): id is number => Boolean(id));
+
   const questionsRaw =
     await prisma.exam_sets_questions.findMany({
 
       where: {
-        exam_set_id: examSetId!
+        exam_set_id: {
+          in: examSetIds
+        }
       },
 
       include: {
@@ -307,7 +330,37 @@ export async function GET(
 
     });
 
-  const questions = sortByNosAndPc(questionsRaw);
+  const questions = sortByNosAndPc(
+    questionsRaw.filter((item) => item.exam_set_id === examSetId)
+  );
+
+  const examSetType = new Map<number, "theory" | "practical" | "viva">();
+
+  if (student.batch.theory_exam_set_id) {
+    examSetType.set(student.batch.theory_exam_set_id, "theory");
+  }
+
+  if (student.batch.practical_exam_set_id) {
+    examSetType.set(student.batch.practical_exam_set_id, "practical");
+  }
+
+  if (student.batch.viva_exam_set_id) {
+    examSetType.set(student.batch.viva_exam_set_id, "viva");
+  }
+
+  const resultQuestions: ResultQuestion[] = questionsRaw.map((item) => ({
+    id: item.questions.id,
+    type: examSetType.get(item.exam_set_id) || item.questions.question_type,
+    marks: Number(item.marks) || 0,
+    pcs: item.questions.pc_questions.map((pcQuestion) => ({
+      pcId: pcQuestion.pc.id,
+      nosCode: pcQuestion.pc.nos.nos_id,
+      nosName: pcQuestion.pc.nos.nos_name,
+      theoryMarks: Number(pcQuestion.pc.theory_marks) || 0,
+      practicalMarks: Number(pcQuestion.pc.practical_marks) || 0,
+      vivaMarks: Number(pcQuestion.pc.viva_marks) || 0,
+    })),
+  }));
 
   const results =
     await prisma.exam_set_results.findMany({
@@ -326,6 +379,22 @@ export async function GET(
         r
       ])
     );
+
+  const theoryCorrectQuestionIds = new Set<number>();
+
+  for (const result of results) {
+    if (result.student_answer === result.correct_answer) {
+      theoryCorrectQuestionIds.add(result.question_id);
+    }
+  }
+
+  const practicalQuestionIds = resultQuestions
+    .filter((question) => question.type === "practical")
+    .map((question) => question.id);
+
+  const vivaQuestionIds = resultQuestions
+    .filter((question) => question.type === "viva")
+    .map((question) => question.id);
 
 //   const report = questions.map((item, index) => {
 
@@ -456,7 +525,7 @@ export async function GET(
 
     const marks = item.marks || question.marks || 0;
 
-    const isCorrect = result?.student_answer === question.answer;
+    const isCorrect = result?.student_answer === result?.correct_answer;
 
     let obtainedMarks = 0;
 
@@ -488,7 +557,7 @@ export async function GET(
       candidate_response:
         studentAnswer,
 
-      status: !result ? -1 : result.student_answer === question.answer ? 1 : result.student_answer == 0 ? -1 : 0,
+      status: !result ? -1 : result.student_answer === result.correct_answer ? 1 : result.student_answer == 0 ? -1 : 0,
 
       open_time: openTime,
       submit_time: submitTime,
@@ -508,8 +577,8 @@ export async function GET(
   const practicalAttemptsRaw = await prisma.student_question_attempts.findMany({
     where: {
       student_id: studentId,
-      question: {
-        question_type: "practical"
+      question_id: {
+        in: practicalQuestionIds
       }
     },
     include: {
@@ -561,8 +630,8 @@ export async function GET(
   const vivaAttemptsRaw = await prisma.student_question_attempts.findMany({
     where: {
       student_id: studentId,
-      question: {
-        question_type: "viva"
+      question_id: {
+        in: vivaQuestionIds
       }
     },
     include: {
@@ -623,8 +692,21 @@ export async function GET(
     student.batch.qualification_pack.total_project_marks
   )
 
-  const totalMarks = Number(
-    student.batch.qualification_pack.total_marks
+  const hasTheory = Boolean(student.batch.theory_exam_set_id);
+  const hasPractical = Boolean(student.batch.practical_exam_set_id);
+  const hasViva = Boolean(student.batch.viva_exam_set_id);
+
+  const totalMarks = getEnabledTotal(
+    {
+      theory: totalTheoryMarks,
+      practical: totalPracticalMarks,
+      viva: totalVivaMarks,
+    },
+    {
+      theory: hasTheory,
+      practical: hasPractical,
+      viva: hasViva,
+    }
   );
 
   let obtainedTheoryMarks = 0;
@@ -639,7 +721,7 @@ export async function GET(
 
     const marks = item.marks || question.marks || 0;
 
-    if (result && result.student_answer === question.answer) {
+    if (result && result.student_answer === result.correct_answer) {
       obtainedTheoryMarks += marks;
     }
   });
@@ -652,43 +734,39 @@ export async function GET(
     obtainedVivaMarks += Number(item.obtained_marks || 0);
   });
 
-  const nosMap = new Map();
-
-  const allRows = [
-    ...report,
-    ...practical_report,
-    ...viva_report
+  const attemptMarks = [
+    ...practicalAttemptsRaw.map((item) => ({
+      questionId: item.question_id,
+      obtainedMarks: Number(item.obtained_marks || 0),
+    })),
+    ...vivaAttemptsRaw.map((item) => ({
+      questionId: item.question_id,
+      obtainedMarks: Number(item.obtained_marks || 0),
+    })),
   ];
 
-  for (const row of allRows) {
+  const nosCutoff =
+    Number(student.batch.qualification_pack.nos_cutoff_marks) || 0;
 
-    const nosName = row.nos_name || "N/A";
-
-    if (!nosMap.has(nosName)) {
-      nosMap.set(nosName, {
-        nos_name: nosName,
-        total_marks: 0,
-        obtained_marks: 0
-      });
-    }
-
-    const item = nosMap.get(nosName);
-
-    item.total_marks += Number(row.max_marks || 0);
-    item.obtained_marks += Number(row.obtained_marks || 0);
-  }
-
-  const summary_report = Array.from(nosMap.values()).map((item, index) => ({
-    sr_no: index + 1,
-    nos_name: item.nos_name,
-    total_marks: item.total_marks,
-    obtained_marks: item.obtained_marks
+  const nosResults = calculateNosPercentages(resultQuestions, {
+    theoryCorrectQuestionIds,
+    attempts: attemptMarks,
+  }).map((nos) => ({
+    ...nos,
+    cutoff: nosCutoff,
   }));
 
-  const theoryPercentage = totalTheoryMarks > 0 ? (obtainedTheoryMarks / totalTheoryMarks) * 100 : 0;
-  const practicalPercentage = totalPracticalMarks > 0 ? (obtainedPracticalMarks / totalPracticalMarks) * 100 : 0;
-  const vivaPercentage = totalVivaMarks > 0 ? (obtainedVivaMarks / totalVivaMarks) * 100 : 0;
-  const projectPercentage = totalProjectMarks > 0 ? (obtainedProjectMarks / totalProjectMarks) * 100 : 0;
+  const summary_report = nosResults.map((nos, index) => ({
+    sr_no: index + 1,
+    nos_name: nos.nosName || nos.nosCode,
+    total_marks: nos.totalMarks,
+    obtained_marks: nos.obtainedMarks,
+  }));
+
+  const theoryPercentage = getPercentage(obtainedTheoryMarks, totalTheoryMarks);
+  const practicalPercentage = getPercentage(obtainedPracticalMarks, totalPracticalMarks);
+  const vivaPercentage = getPercentage(obtainedVivaMarks, totalVivaMarks);
+  const projectPercentage = getPercentage(obtainedProjectMarks, totalProjectMarks);
 
   const theoryCutoff =
     Number(student.batch.qualification_pack.theory_cutoff_marks) || 0;
@@ -702,27 +780,70 @@ export async function GET(
   const projectCutoff =
     Number(student.batch.qualification_pack.overall_cutoff_marks) || 0;
 
-  const theoryResultStatus =
-    theoryPercentage >= theoryCutoff ? "PASS" : "FAIL";
+  const theoryResultStatus = getSectionStatus(
+    theoryPercentage,
+    theoryCutoff,
+    RESULT_CRITERIA.theory && hasTheory
+  );
 
-  const practicalResultStatus =
-    practicalPercentage >= practicalCutoff ? "PASS" : "FAIL";
+  const practicalResultStatus = getSectionStatus(
+    practicalPercentage,
+    practicalCutoff,
+    RESULT_CRITERIA.practical && hasPractical
+  );
 
-  const vivaResultStatus =
-    vivaPercentage >= vivaCutoff ? "PASS" : "FAIL";
+  const vivaResultStatus = getSectionStatus(
+    vivaPercentage,
+    vivaCutoff,
+    RESULT_CRITERIA.viva && hasViva
+  );
 
   const projectResultStatus =
     projectPercentage >= projectCutoff ? "PASS" : "FAIL";
 
-  const obtainedMarks = obtainedTheoryMarks + obtainedPracticalMarks + obtainedVivaMarks + obtainedProjectMarks;
+  const obtainedMarks = getEnabledObtained(
+    {
+      theory: obtainedTheoryMarks,
+      practical: obtainedPracticalMarks,
+      viva: obtainedVivaMarks,
+    },
+    {
+      theory: hasTheory,
+      practical: hasPractical,
+      viva: hasViva,
+    }
+  );
 
   const overallCutoff =
     Number(student.batch.qualification_pack.overall_cutoff_marks) || 0;
 
-  const overallPercentage = totalMarks > 0 ? (obtainedMarks / totalMarks) * 100 : 0;
+  const overallPercentage = getPercentage(obtainedMarks, totalMarks);
 
-  const overallResultStatus =
-    overallPercentage >= overallCutoff ? "PASS" : "FAIL";
+  const evaluation = evaluateResult({
+    theory: {
+      applicable: hasTheory,
+      percentage: theoryPercentage,
+      cutoff: theoryCutoff,
+    },
+    practical: {
+      applicable: hasPractical,
+      percentage: practicalPercentage,
+      cutoff: practicalCutoff,
+    },
+    viva: {
+      applicable: hasViva,
+      percentage: vivaPercentage,
+      cutoff: vivaCutoff,
+    },
+    overall: {
+      applicable: true,
+      percentage: overallPercentage,
+      cutoff: overallCutoff,
+    },
+    nos: nosResults,
+  });
+
+  const overallResultStatus = evaluation.pass ? "PASS" : "FAIL";
 
   const sscImage = student.batch.qualification_pack.ssc?.ssc_image
     ? getValidImage(student.batch.qualification_pack.ssc.ssc_image, `ssc/${student.batch.qualification_pack.ssc.id}`)

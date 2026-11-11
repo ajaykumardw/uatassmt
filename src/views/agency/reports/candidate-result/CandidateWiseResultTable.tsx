@@ -73,7 +73,7 @@ import tableStyles from '@core/styles/table.module.css'
 
 // import CustomAvatar from '@/@core/components/mui/Avatar';
 
-import { MenuProps, STUDENT_RESULT, TableRowLimit } from '@/configs/customDataConfig';
+import { MenuProps, STUDENT_RESULT, STUDENT_RESULT_LABEL, TableRowLimit } from '@/configs/customDataConfig';
 import LogDetailDialog from './LogDetailDialog';
 import ResultSheetAction from '@/components/zip/resultSheetAction';
 import CertificateZipAction from '@/components/zip/CertficateZipAction';
@@ -990,6 +990,28 @@ const CandidateWiseResultTable = () => {
             size='small'
           />
         )}</>
+      }),
+      columnHelper.accessor('result', {
+        header: 'Result',
+        cell: ({ row }) => {
+          const result = row.original.result;
+
+          return (
+            <Chip
+              variant='outlined'
+              className='capitalize'
+              label={STUDENT_RESULT_LABEL[result ?? STUDENT_RESULT.PENDING] ?? 'Pending'}
+              color={
+                result === STUDENT_RESULT.PASS
+                  ? 'success'
+                  : result === STUDENT_RESULT.FAIL
+                    ? 'error'
+                    : 'warning'
+              }
+              size='small'
+            />
+          );
+        }
       }),
       columnHelper.accessor('action', {
         header: 'Action',
