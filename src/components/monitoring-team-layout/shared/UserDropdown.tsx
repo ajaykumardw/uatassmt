@@ -32,6 +32,7 @@ import { useSettings } from '@core/hooks/useSettings'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
+import { getProfileRoute } from '@/utils/getProfileRoute'
 
 // Styled component for badge content
 const BadgeContentSpan = styled('span')({
@@ -55,6 +56,8 @@ const UserDropdown = () => {
   const { data: session } = useSession()
   const { settings } = useSettings()
   const { lang: locale } = useParams()
+
+  const profileRoute = getProfileRoute(session?.user)
 
   const handleDropdownOpen = () => {
     !open ? setOpen(true) : setOpen(false)
@@ -132,10 +135,12 @@ const UserDropdown = () => {
                     </div>
                   </div>
                   <Divider className='mlb-1' />
-                  <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e, '/pages/user-profile')}>
-                    <i className='tabler-user text-[22px]' />
-                    <Typography color='text.primary'>My Profile</Typography>
-                  </MenuItem>
+                  {profileRoute && (
+                    <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e, profileRoute)}>
+                      <i className='tabler-user text-[22px]' />
+                      <Typography color='text.primary'>My Profile</Typography>
+                    </MenuItem>
+                  )}
                   {/* <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e, '/pages/account-settings')}>
                     <i className='tabler-settings text-[22px]' />
                     <Typography color='text.primary'>Settings</Typography>

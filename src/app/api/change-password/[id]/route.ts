@@ -22,8 +22,11 @@ export async function POST(
   }
 
   const session = await getServerSession(authOptions);
+  const sessionUserId = Number(session?.user?.id);
+  const isSelf = Boolean(session?.user) && sessionUserId === id && !session?.user?.is_student;
+  const isAgencyAdmin = session?.user?.user_type === 'AG';
 
-  if (session?.user?.user_type !== 'AG') {
+  if (!isSelf && !isAgencyAdmin) {
     return NextResponse.json(
       { status: 'Error', message: 'Unauthorized' },
       { status: 401 }
@@ -32,6 +35,12 @@ export async function POST(
 
   const { newPassword, userType } = await req.json();
 
+  const selectedUserType = isSelf
+    ? session?.user?.is_ssc
+      ? 'ssc'
+      : 'user'
+    : userType;
+
   if (!newPassword || newPassword.length < 6) {
     return NextResponse.json(
       { status: 'Error', message: 'Password must be at least 6 characters' },
@@ -39,7 +48,7 @@ export async function POST(
     );
   }
 
-  if (!userType) {
+  if (!selectedUserType) {
     return NextResponse.json(
       { status: 'Error', message: 'userType is required' },
       { status: 400 }
@@ -58,7 +67,7 @@ export async function POST(
       user: { model: prisma.users, field: 'password' },
     };
 
-    const selected = updateMap[userType] ?? updateMap['user'];
+    const selected = updateMap[selectedUserType] ?? updateMap['user'];
 
     // 🔍 1. Check if the user exists
     const existingUser = await selected.model.findUnique({

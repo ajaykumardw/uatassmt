@@ -18,6 +18,9 @@ import '@assets/iconify-icons/generated-icons.css'
 // Config Imports
 import { i18n } from '@configs/i18n'
 
+// Theme Imports
+import publicSans from '@core/theme/font'
+
 // Util Imports
 import { getSystemMode } from '@core/utils/serverHelpers'
 
@@ -38,7 +41,7 @@ export default function RootLayout({
   const systemMode = getSystemMode()
 
   return (
-    <html id='__next' lang="en">
+    <html id='__next' lang="en" className={publicSans.variable}>
       <body className="flex is-full min-bs-full flex-auto flex-col">
         <Providers direction={direction}>
           <BlankLayout systemMode={systemMode}>{children}</BlankLayout>

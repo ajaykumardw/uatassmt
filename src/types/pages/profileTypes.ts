@@ -88,6 +88,12 @@ export type ConnectionsTabType = {
   isConnected: boolean
   chips: ProfileChipType[]
 }
+export type ProfileActivityType = {
+  title: string
+  time: string
+  description: string
+  color?: ThemeColor
+}
 export type ProfileTabType = {
   teams: ProfileTeamsType[]
   about: ProfileCommonType[]
@@ -96,6 +102,7 @@ export type ProfileTabType = {
   teamsTech: ProfileTeamsTechType[]
   connections: ProfileConnectionsType[]
   projectTable: ProjectTableRowType[]
+  activities?: ProfileActivityType[]
 }
 export type UserProfileActiveTab = ProfileTabType | TeamsTabType[] | ProjectsTabType[] | ConnectionsTabType[]
 

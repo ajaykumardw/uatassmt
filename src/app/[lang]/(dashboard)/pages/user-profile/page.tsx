@@ -1,44 +1,18 @@
-// React Imports
-import type { ReactElement } from 'react'
+import { redirect } from 'next/navigation'
 
-// Next Imports
-import dynamic from 'next/dynamic'
+import { getServerSession } from 'next-auth'
 
-// Type Imports
-import type { Data } from '@/types/pages/profileTypes'
+import type { Locale } from '@configs/i18n'
 
-// Component Imports
-import UserProfile from '@views/pages/user-profile'
+import { authOptions } from '@/libs/auth'
+import { getLocalizedUrl } from '@/utils/i18n'
+import { getProfileRoute } from '@/utils/getProfileRoute'
 
-const ProfileTab = dynamic(() => import('@views/pages/user-profile/profile'))
-const TeamsTab = dynamic(() => import('@views/pages/user-profile/teams'))
-const ProjectsTab = dynamic(() => import('@views/pages/user-profile/projects'))
-const ConnectionsTab = dynamic(() => import('@views/pages/user-profile/connections'))
+const ProfilePage = async ({ params }: { params: { lang: Locale } }) => {
+  const session = await getServerSession(authOptions)
+  const profileRoute = getProfileRoute(session?.user)
 
-// Vars
-const tabContentList = (data?: Data): { [key: string]: ReactElement } => ({
-  profile: <ProfileTab data={data?.users.profile} />,
-  teams: <TeamsTab data={data?.users.teams} />,
-  projects: <ProjectsTab data={data?.users.projects} />,
-  connections: <ConnectionsTab data={data?.users.connections} />
-})
-
-const getData = async () => {
-  // Vars
-  const res = await fetch(`${process.env.API_URL}/pages/profile`)
-
-  if (!res.ok) {
-    throw new Error('Failed to fetch profileData')
-  }
-
-  return res.json()
-}
-
-const ProfilePage = async () => {
-  // Vars
-  const data = await getData()
-
-  return <UserProfile data={data} tabContentList={tabContentList(data)} />
+  redirect(getLocalizedUrl(profileRoute || '/dashboard', params.lang))
 }
 
 export default ProfilePage

@@ -11,6 +11,9 @@ import type { Locale } from '@configs/i18n'
 // Config Imports
 import { i18n } from '@configs/i18n'
 
+// Theme Imports
+import publicSans from '@core/theme/font'
+
 // Style Imports
 import '@/app/globals.css'
 
@@ -34,7 +37,7 @@ const RootLayout = ({ children, params }: ChildrenType & { params: { lang: Local
   const direction = i18n.langDirection[params.lang]
 
   return (
-    <html id='__next' lang={params.lang} dir={direction} suppressHydrationWarning>
+    <html id='__next' lang={params.lang} dir={direction} className={publicSans.variable} suppressHydrationWarning>
       <body className='flex is-full min-bs-full flex-auto flex-col'>
         {children}
       </body>

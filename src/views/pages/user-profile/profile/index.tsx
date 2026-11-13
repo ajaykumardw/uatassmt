@@ -19,7 +19,7 @@ const ProfileTab = ({ data }: { data?: ProfileTabType }) => {
       <Grid item lg={8} md={7} xs={12}>
         <Grid container spacing={6}>
           <Grid item xs={12}>
-            <ActivityTimeline />
+            <ActivityTimeline activities={data?.activities} />
           </Grid>
           <ConnectionsTeams connections={data?.connections} teamsTech={data?.teamsTech} />
           <Grid item xs={12}>
