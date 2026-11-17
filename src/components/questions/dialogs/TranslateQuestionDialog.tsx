@@ -51,6 +51,7 @@ type TranslateQuestionDialogProps = {
   }
   handleClose: () => void
   updateQuestionsList?: () => void
+  onTranslated?: (questionId: number, languageIds: number[]) => void
 }
 
 const emptyTranslation = (): LangTranslation => ({
@@ -58,7 +59,7 @@ const emptyTranslation = (): LangTranslation => ({
   option3: '', option4: '', option5: '', question_explanation: ''
 })
 
-const TranslateQuestionDialog = ({ open, questionId, questionType, questionData, handleClose, updateQuestionsList }: TranslateQuestionDialogProps) => {
+const TranslateQuestionDialog = ({ open, questionId, questionType, questionData, handleClose, updateQuestionsList, onTranslated }: TranslateQuestionDialogProps) => {
   const [languages, setLanguages] = useState<LanguageOption[]>([])
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [translations, setTranslations] = useState<LangTranslation[]>([])
@@ -255,6 +256,7 @@ const TranslateQuestionDialog = ({ open, questionId, questionType, questionData,
     }
 
     let count = 0
+    const savedLanguageIds: number[] = []
 
     for (const t of translations) {
       if (!t.question.trim()) continue // skip empty (reset) translations
@@ -276,7 +278,10 @@ const TranslateQuestionDialog = ({ open, questionId, questionType, questionData,
           })
         })
 
-        if (res.ok) count++
+        if (res.ok) {
+          count++
+          savedLanguageIds.push(Number(t.language_id))
+        }
       } catch { /* skip */ }
     }
 
@@ -302,6 +307,7 @@ const TranslateQuestionDialog = ({ open, questionId, questionType, questionData,
       })
       toast.success(`Saved ${count} language(s)!`)
       updateQuestionsList?.()
+      onTranslated?.(Number(questionId), savedLanguageIds)
       handleClose()
     } else {
       toast.error('Save failed')

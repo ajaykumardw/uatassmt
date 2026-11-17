@@ -65,6 +65,7 @@ import tableStyles from '@core/styles/table.module.css'
 
 import AddEditQuestionsDialog from '@/components/questions/dialogs/AddEditQuestionsDialog';
 import TranslateQuestionDialog from '@/components/questions/dialogs/TranslateQuestionDialog';
+import BulkTranslateQuestionsDialog from '@/components/questions/dialogs/BulkTranslateQuestionsDialog';
 
 // import AddEditPCDialog from '@/components/pc/dialogs/AddEditPCDialog';
 
@@ -81,6 +82,8 @@ import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
 import LanguageAvailabilityChips from '@/components/questions/LanguageAvailabilityChips';
+import TranslatedQuestionPreview from '@/components/questions/TranslatedQuestionPreview';
+import useQuestionTranslationPreview from '@/hooks/useQuestionTranslationPreview';
 
 // import type { PCType } from '@/types/pc/pcType';
 
@@ -185,13 +188,18 @@ const QuestionsListTable = ({ tableData, languages, updateQuestionsList }: { tab
     return map
   }, [languages])
 
+  const { translationPreview, toggleLanguage, revealTranslations } = useQuestionTranslationPreview()
+
   // States
 
   const [addQuestionOpen, setAddQuestionOpen] = useState(false);
   const [bulkUploadQuestionsOpen, setBulkUploadQuestionsOpen] = useState(false);
   const [editQuestionOpen, setEditQuestionOpen] = useState(false);
-  const [translateQuestionOpen, setTranslateQuestionOpen] = useState(false);
-  const [translateQuestionData, setTranslateQuestionData] = useState({ id: 0, question: '', option1: '', option2: '', option3: '', option4: '', option5: '', question_explanation: '' })
+const [translateQuestionOpen, setTranslateQuestionOpen] = useState(false);
+const [translateQuestionData, setTranslateQuestionData] = useState({ id: 0, question: '', option1: '', option2: '', option3: '', option4: '', option5: '', question_explanation: '' })
+const [bulkTranslateOpen, setBulkTranslateOpen] = useState(false);
+const [bulkTranslateQuestions, setBulkTranslateQuestions] = useState<QuestionsTypeWithAction[]>([])
+const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const [editQuestionData, setEditQuestionData] = useState({
@@ -297,9 +305,50 @@ const QuestionsListTable = ({ tableData, languages, updateQuestionsList }: { tab
         )
       }),
       columnHelper.accessor('translations', {
-        header: 'Available In',
+        header: ({ table }) => {
+          const selectableIds = table
+            .getPrePaginationRowModel()
+            .rows.map(row => Number(row.original.id))
+
+          const selectedCount = selectableIds.filter(id => translateSelectedIds.includes(id)).length
+          const allSelected = selectableIds.length > 0 && selectedCount === selectableIds.length
+
+          return (
+            <div className='flex items-center gap-2'>
+              <Checkbox
+                size='small'
+                checked={allSelected}
+                indeterminate={selectedCount > 0 && !allSelected}
+                disabled={selectableIds.length === 0}
+                onChange={() => {
+                  if (allSelected) {
+                    setTranslateSelectedIds(prev => prev.filter(id => !selectableIds.includes(id)))
+                  } else {
+                    setTranslateSelectedIds(prev => Array.from(new Set([...prev, ...selectableIds])))
+                  }
+                }}
+                inputProps={{ 'aria-label': 'Select all questions for translation' }}
+              />
+              <span>Available In</span>
+            </div>
+          )
+        },
         cell: ({ row }) => (
-          <LanguageAvailabilityChips translations={row.original.translations} languageMap={languageMap} />
+          <div className='flex items-center gap-2'>
+            <Checkbox
+              size='small'
+              checked={translateSelectedIds.includes(Number(row.original.id))}
+              onChange={() => toggleTranslateSelection(Number(row.original.id))}
+              inputProps={{ 'aria-label': `Select question ${row.original.id} for translation` }}
+            />
+            <LanguageAvailabilityChips
+              translations={row.original.translations}
+              languageMap={languageMap}
+              questionId={Number(row.original.id)}
+              selectedLanguageId={translationPreview[Number(row.original.id)]?.languageId}
+              onLanguageClick={toggleLanguage}
+            />
+          </div>
         )
       }),
       columnHelper.accessor('question', {
@@ -310,6 +359,12 @@ const QuestionsListTable = ({ tableData, languages, updateQuestionsList }: { tab
               <Typography color='text.primary' className='font-medium min-w-96 text-wrap'>
                 {row.original.question}
               </Typography>
+              <TranslatedQuestionPreview
+                entry={translationPreview[Number(row.original.id)]}
+                field='question'
+                languageMap={languageMap}
+                showLanguageLabel
+              />
             </div>
           </div>
         )
@@ -317,86 +372,127 @@ const QuestionsListTable = ({ tableData, languages, updateQuestionsList }: { tab
       columnHelper.accessor('option1', {
         header: 'Option 1',
         cell: ({ row }) => (
-          <div className='flex items-center gap-2 min-w-40 text-wrap'>
+          <div className='flex items-start gap-2 min-w-40 text-wrap'>
             {row.original.option1 &&
               <CustomAvatar skin='light' color={row.original.answer == 1 ? 'success' : 'error'} size={28}>
                 <i className={classnames('bs-4 is-4', row.original.answer == 1 ? 'tabler-check' : 'tabler-x')} />
               </CustomAvatar>
             }
-            <Typography className='capitalize' color='text.primary'>
-              {row.original.option1}
-            </Typography>
+            <div className='flex flex-col'>
+              <Typography className='capitalize' color='text.primary'>
+                {row.original.option1}
+              </Typography>
+              <TranslatedQuestionPreview
+                entry={translationPreview[Number(row.original.id)]}
+                field='option1'
+                languageMap={languageMap}
+              />
+            </div>
           </div>
         )
       }),
       columnHelper.accessor('option2', {
         header: 'Option 2',
         cell: ({ row }) => (
-          <div className='flex items-center gap-2'>
+          <div className='flex items-start gap-2'>
             {row.original.option2 &&
               <CustomAvatar skin='light' color={row.original.answer == 2 ? 'success' : 'error'} size={28}>
                 <i className={classnames('bs-4 is-4', row.original.answer == 2 ? 'tabler-check' : 'tabler-x')} />
               </CustomAvatar>
             }
-            <Typography className='capitalize' color='text.primary'>
-              {row.original.option2}
-            </Typography>
-
+            <div className='flex flex-col'>
+              <Typography className='capitalize' color='text.primary'>
+                {row.original.option2}
+              </Typography>
+              <TranslatedQuestionPreview
+                entry={translationPreview[Number(row.original.id)]}
+                field='option2'
+                languageMap={languageMap}
+              />
+            </div>
           </div>
         )
       }),
       columnHelper.accessor('option3', {
         header: 'Option 3',
         cell: ({ row }) => (
-          <div className='flex items-center gap-2'>
+          <div className='flex items-start gap-2'>
             {row.original.option3 &&
               <CustomAvatar skin='light' color={row.original.answer == 3 ? 'success' : 'error'} size={28}>
                 <i className={classnames('bs-4 is-4', row.original.answer == 3 ? 'tabler-check' : 'tabler-x')} />
               </CustomAvatar>
             }
-            <Typography className='capitalize' color='text.primary'>
-              {row.original.option3}
-            </Typography>
+            <div className='flex flex-col'>
+              <Typography className='capitalize' color='text.primary'>
+                {row.original.option3}
+              </Typography>
+              <TranslatedQuestionPreview
+                entry={translationPreview[Number(row.original.id)]}
+                field='option3'
+                languageMap={languageMap}
+              />
+            </div>
           </div>
         )
       }),
       columnHelper.accessor('option4', {
         header: 'Option 4',
         cell: ({ row }) => (
-          <div className='flex items-center gap-2'>
+          <div className='flex items-start gap-2'>
             {row.original.option4 &&
               <CustomAvatar skin='light' color={row.original.answer == 4 ? 'success' : 'error'} size={28}>
                 <i className={classnames('bs-4 is-4', row.original.answer == 4 ? 'tabler-check' : 'tabler-x')} />
               </CustomAvatar>
             }
-            <Typography className='capitalize' color='text.primary'>
-              {row.original.option4}
-            </Typography>
+            <div className='flex flex-col'>
+              <Typography className='capitalize' color='text.primary'>
+                {row.original.option4}
+              </Typography>
+              <TranslatedQuestionPreview
+                entry={translationPreview[Number(row.original.id)]}
+                field='option4'
+                languageMap={languageMap}
+              />
+            </div>
           </div>
         )
       }),
       columnHelper.accessor('option5', {
         header: 'Option 5',
         cell: ({ row }) => (
-          <div className='flex items-center gap-2'>
+          <div className='flex items-start gap-2'>
             {row.original.option5 &&
               <CustomAvatar skin='light' color={row.original.answer == 5 ? 'success' : 'error'} size={28}>
                 <i className={classnames('bs-4 is-4', row.original.answer == 5 ? 'tabler-check' : 'tabler-x')} />
               </CustomAvatar>
             }
-            <Typography className='capitalize' color='text.primary'>
-              {row.original.option5}
-            </Typography>
+            <div className='flex flex-col'>
+              <Typography className='capitalize' color='text.primary'>
+                {row.original.option5}
+              </Typography>
+              <TranslatedQuestionPreview
+                entry={translationPreview[Number(row.original.id)]}
+                field='option5'
+                languageMap={languageMap}
+              />
+            </div>
           </div>
         )
       }),
       columnHelper.accessor('question_explanation', {
         header: 'Explanation',
         cell: ({ row }) => (
-          <div className='flex items-center gap-2'>
-            <Typography className='capitalize min-w-96 text-wrap' color='text.primary'>
-              {row.original.question_explanation}
-            </Typography>
+          <div className='flex items-start gap-2'>
+            <div className='flex flex-col min-w-96'>
+              <Typography className='capitalize text-wrap' color='text.primary'>
+                {row.original.question_explanation}
+              </Typography>
+              <TranslatedQuestionPreview
+                entry={translationPreview[Number(row.original.id)]}
+                field='question_explanation'
+                languageMap={languageMap}
+              />
+            </div>
           </div>
         )
       }),
@@ -484,7 +580,7 @@ const QuestionsListTable = ({ tableData, languages, updateQuestionsList }: { tab
     ],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [languageMap]
+    [languageMap, translateSelectedIds, translationPreview, toggleLanguage]
   )
 
   const table = useReactTable({
@@ -528,6 +624,19 @@ const QuestionsListTable = ({ tableData, languages, updateQuestionsList }: { tab
       .getSelectedRowModel()
       .flatRows.map(row => row.original.id);
   }, [rowSelection, table]);
+
+  const toggleTranslateSelection = (id: number) => {
+    setTranslateSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(selectedId => selectedId !== id) : [...prev, id]
+    )
+  }
+
+
+  const translateSelectedQuestions = table
+    .getPrePaginationRowModel()
+    .rows
+    .filter(row => translateSelectedIds.includes(Number(row.original.id)))
+    .map(row => row.original)
 
   const handleBulkDeleteQuestions = async () => {
 
@@ -592,6 +701,20 @@ const QuestionsListTable = ({ tableData, languages, updateQuestionsList }: { tab
             >
               Export
             </Button>
+            { translateSelectedQuestions.length > 0 && (
+              <Button
+                color='primary'
+                variant='tonal'
+                startIcon={<i className='tabler-language' />}
+                className='is-full sm:is-auto'
+                onClick={() => {
+                  setBulkTranslateQuestions(translateSelectedQuestions);
+                  setBulkTranslateOpen(true);
+                }}
+              >
+                Translate Selected ({translateSelectedQuestions.length})
+              </Button>
+            )}
             { selectedIds.length > 0 && (
               <Button
                 color='error'
@@ -722,6 +845,15 @@ const QuestionsListTable = ({ tableData, languages, updateQuestionsList }: { tab
         }}
         handleClose={() => setTranslateQuestionOpen(false)}
         updateQuestionsList={updateQuestionsList}
+        onTranslated={revealTranslations}
+      />
+      <BulkTranslateQuestionsDialog
+        open={bulkTranslateOpen}
+        questions={bulkTranslateQuestions}
+        questionType='theory'
+        handleClose={() => setBulkTranslateOpen(false)}
+        updateQuestionsList={updateQuestionsList}
+        onTranslated={revealTranslations}
       />
       <ConfirmDialog
         open={confirmDeleteOpen}

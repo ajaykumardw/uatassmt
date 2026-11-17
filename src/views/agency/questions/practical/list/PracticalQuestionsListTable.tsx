@@ -70,11 +70,14 @@ import tableStyles from '@core/styles/table.module.css'
 import type { QuestionsType } from '@/types/questions/questionsType';
 import AddEditPracticalQuestionsDialog from '@/components/questions/dialogs/AddEditPracticalQuestionsDialog';
 import TranslateQuestionDialog from '@/components/questions/dialogs/TranslateQuestionDialog';
+import BulkTranslateQuestionsDialog from '@/components/questions/dialogs/BulkTranslateQuestionsDialog';
 import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
 
 import ConfirmDialog from '@/components/ConfirmDialog';
 
 import LanguageAvailabilityChips from '@/components/questions/LanguageAvailabilityChips';
+import TranslatedQuestionPreview from '@/components/questions/TranslatedQuestionPreview';
+import useQuestionTranslationPreview from '@/hooks/useQuestionTranslationPreview';
 
 // import type { PCType } from '@/types/pc/pcType';
 
@@ -179,6 +182,8 @@ const PracticalQuestionsListTable = ({ tableData, languages, updateQuestionsList
     return map
   }, [languages])
 
+  const { translationPreview, toggleLanguage, revealTranslations } = useQuestionTranslationPreview()
+
   // States
 
   const [addQuestionOpen, setAddQuestionOpen] = useState(false);
@@ -205,8 +210,11 @@ const PracticalQuestionsListTable = ({ tableData, languages, updateQuestionsList
   const [questionId, setQuestionId] = useState(0);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [translateQuestionOpen, setTranslateQuestionOpen] = useState(false);
-  const [translateQuestionData, setTranslateQuestionData] = useState({ id: 0, question: '', option1: '', option2: '', option3: '', option4: '', option5: '', question_explanation: '' })
+const [translateQuestionOpen, setTranslateQuestionOpen] = useState(false);
+const [translateQuestionData, setTranslateQuestionData] = useState({ id: 0, question: '', option1: '', option2: '', option3: '', option4: '', option5: '', question_explanation: '' })
+const [bulkTranslateOpen, setBulkTranslateOpen] = useState(false);
+const [bulkTranslateQuestions, setBulkTranslateQuestions] = useState<QuestionsTypeWithAction[]>([])
+const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
 
   // const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
@@ -261,9 +269,50 @@ const PracticalQuestionsListTable = ({ tableData, languages, updateQuestionsList
         )
       }),
       columnHelper.accessor('translations', {
-        header: 'Available In',
+        header: ({ table }) => {
+          const selectableIds = table
+            .getPrePaginationRowModel()
+            .rows.map(row => Number(row.original.id))
+
+          const selectedCount = selectableIds.filter(id => translateSelectedIds.includes(id)).length
+          const allSelected = selectableIds.length > 0 && selectedCount === selectableIds.length
+
+          return (
+            <div className='flex items-center gap-2'>
+              <Checkbox
+                size='small'
+                checked={allSelected}
+                indeterminate={selectedCount > 0 && !allSelected}
+                disabled={selectableIds.length === 0}
+                onChange={() => {
+                  if (allSelected) {
+                    setTranslateSelectedIds(prev => prev.filter(id => !selectableIds.includes(id)))
+                  } else {
+                    setTranslateSelectedIds(prev => Array.from(new Set([...prev, ...selectableIds])))
+                  }
+                }}
+                inputProps={{ 'aria-label': 'Select all questions for translation' }}
+              />
+              <span>Available In</span>
+            </div>
+          )
+        },
         cell: ({ row }) => (
-          <LanguageAvailabilityChips translations={row.original.translations} languageMap={languageMap} />
+          <div className='flex items-center gap-2'>
+            <Checkbox
+              size='small'
+              checked={translateSelectedIds.includes(Number(row.original.id))}
+              onChange={() => toggleTranslateSelection(Number(row.original.id))}
+              inputProps={{ 'aria-label': `Select question ${row.original.id} for translation` }}
+            />
+            <LanguageAvailabilityChips
+              translations={row.original.translations}
+              languageMap={languageMap}
+              questionId={Number(row.original.id)}
+              selectedLanguageId={translationPreview[Number(row.original.id)]?.languageId}
+              onLanguageClick={toggleLanguage}
+            />
+          </div>
         )
       }),
       columnHelper.accessor('question', {
@@ -274,6 +323,12 @@ const PracticalQuestionsListTable = ({ tableData, languages, updateQuestionsList
               <Typography color='text.primary' className='font-medium'>
                 {row.original.question}
               </Typography>
+              <TranslatedQuestionPreview
+                entry={translationPreview[Number(row.original.id)]}
+                field='question'
+                languageMap={languageMap}
+                showLanguageLabel
+              />
             </div>
           </div>
         )
@@ -360,7 +415,7 @@ const PracticalQuestionsListTable = ({ tableData, languages, updateQuestionsList
     ],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [languageMap]
+    [languageMap, translateSelectedIds, translationPreview, toggleLanguage]
   )
 
   const table = useReactTable({
@@ -401,6 +456,19 @@ const PracticalQuestionsListTable = ({ tableData, languages, updateQuestionsList
       .getSelectedRowModel()
       .flatRows.map(row => row.original.id);
   }, [rowSelection, table]);
+
+  const toggleTranslateSelection = (id: number) => {
+    setTranslateSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(selectedId => selectedId !== id) : [...prev, id]
+    )
+  }
+
+
+  const translateSelectedQuestions = table
+    .getPrePaginationRowModel()
+    .rows
+    .filter(row => translateSelectedIds.includes(Number(row.original.id)))
+    .map(row => row.original)
 
   const handleBulkDeleteQuestions = async () => {
 
@@ -465,6 +533,20 @@ const PracticalQuestionsListTable = ({ tableData, languages, updateQuestionsList
             >
               Export
             </Button>
+            { translateSelectedQuestions.length > 0 && (
+              <Button
+                color='primary'
+                variant='tonal'
+                startIcon={<i className='tabler-language' />}
+                className='is-full sm:is-auto'
+                onClick={() => {
+                  setBulkTranslateQuestions(translateSelectedQuestions);
+                  setBulkTranslateOpen(true);
+                }}
+              >
+                Translate Selected ({translateSelectedQuestions.length})
+              </Button>
+            )}
             { selectedIds.length > 0 && (
               <Button
                 color='error'
@@ -585,6 +667,15 @@ const PracticalQuestionsListTable = ({ tableData, languages, updateQuestionsList
         }}
         handleClose={() => setTranslateQuestionOpen(false)}
         updateQuestionsList={updateQuestionsList}
+        onTranslated={revealTranslations}
+      />
+      <BulkTranslateQuestionsDialog
+        open={bulkTranslateOpen}
+        questions={bulkTranslateQuestions}
+        questionType='practical'
+        handleClose={() => setBulkTranslateOpen(false)}
+        updateQuestionsList={updateQuestionsList}
+        onTranslated={revealTranslations}
       />
       <ConfirmDialog
         open={confirmDeleteOpen}

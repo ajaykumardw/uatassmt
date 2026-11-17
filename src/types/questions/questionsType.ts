@@ -1,5 +1,16 @@
 import type { PCType } from "../pc/pcType"
 
+export type QuestionTranslationType = {
+  language_id: number
+  question?: string | null
+  option1?: string | null
+  option2?: string | null
+  option3?: string | null
+  option4?: string | null
+  option5?: string | null
+  question_explanation?: string | null
+}
+
 export type QuestionsType = {
   id: number
   agency_id: number
@@ -20,7 +31,5 @@ export type QuestionsType = {
   updated_at?: string
   deleted_at?: string
   pc: PCType[]
-  translations?: {
-    language_id: number
-  }[]
+  translations?: QuestionTranslationType[]
 }
