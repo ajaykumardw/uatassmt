@@ -297,7 +297,7 @@ const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
         header: 'ID',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
+            <div className='flex w-full min-w-0 flex-col'>
               <Typography color='text.primary' className='font-medium'>
                 {row.original.id}
               </Typography>
@@ -356,7 +356,7 @@ const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
         header: 'Question',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
+            <div className='flex w-full min-w-0 flex-col'>
               <ClampedQuestionText text={row.original.question} className='font-medium min-w-96' />
               <TranslatedQuestionPreview
                 entry={translationPreview[Number(row.original.id)]}
@@ -371,13 +371,13 @@ const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
       columnHelper.accessor('option1', {
         header: 'Option 1',
         cell: ({ row }) => (
-          <div className='flex items-start gap-2 min-w-40 text-wrap'>
+          <div className='flex w-40 max-w-40 min-w-0 items-start gap-2 text-wrap'>
             {row.original.option1 &&
               <CustomAvatar skin='light' color={row.original.answer == 1 ? 'success' : 'error'} size={28}>
                 <i className={classnames('bs-4 is-4', row.original.answer == 1 ? 'tabler-check' : 'tabler-x')} />
               </CustomAvatar>
             }
-            <div className='flex flex-col'>
+            <div className='flex w-full min-w-0 flex-col'>
               <ClampedQuestionText text={row.original.option1 || ''} lines={2} className='capitalize' />
               <TranslatedQuestionPreview
                 entry={translationPreview[Number(row.original.id)]}
@@ -391,13 +391,13 @@ const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
       columnHelper.accessor('option2', {
         header: 'Option 2',
         cell: ({ row }) => (
-          <div className='flex items-start gap-2'>
+          <div className='flex w-40 max-w-40 min-w-0 items-start gap-2'>
             {row.original.option2 &&
               <CustomAvatar skin='light' color={row.original.answer == 2 ? 'success' : 'error'} size={28}>
                 <i className={classnames('bs-4 is-4', row.original.answer == 2 ? 'tabler-check' : 'tabler-x')} />
               </CustomAvatar>
             }
-            <div className='flex flex-col'>
+            <div className='flex w-full min-w-0 flex-col'>
               <ClampedQuestionText text={row.original.option2 || ''} lines={2} className='capitalize' />
               <TranslatedQuestionPreview
                 entry={translationPreview[Number(row.original.id)]}
@@ -411,13 +411,13 @@ const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
       columnHelper.accessor('option3', {
         header: 'Option 3',
         cell: ({ row }) => (
-          <div className='flex items-start gap-2'>
+          <div className='flex w-40 max-w-40 min-w-0 items-start gap-2'>
             {row.original.option3 &&
               <CustomAvatar skin='light' color={row.original.answer == 3 ? 'success' : 'error'} size={28}>
                 <i className={classnames('bs-4 is-4', row.original.answer == 3 ? 'tabler-check' : 'tabler-x')} />
               </CustomAvatar>
             }
-            <div className='flex flex-col'>
+            <div className='flex w-full min-w-0 flex-col'>
               <ClampedQuestionText text={row.original.option3 || ''} lines={2} className='capitalize' />
               <TranslatedQuestionPreview
                 entry={translationPreview[Number(row.original.id)]}
@@ -431,13 +431,13 @@ const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
       columnHelper.accessor('option4', {
         header: 'Option 4',
         cell: ({ row }) => (
-          <div className='flex items-start gap-2'>
+          <div className='flex w-40 max-w-40 min-w-0 items-start gap-2'>
             {row.original.option4 &&
               <CustomAvatar skin='light' color={row.original.answer == 4 ? 'success' : 'error'} size={28}>
                 <i className={classnames('bs-4 is-4', row.original.answer == 4 ? 'tabler-check' : 'tabler-x')} />
               </CustomAvatar>
             }
-            <div className='flex flex-col'>
+            <div className='flex w-full min-w-0 flex-col'>
               <ClampedQuestionText text={row.original.option4 || ''} lines={2} className='capitalize' />
               <TranslatedQuestionPreview
                 entry={translationPreview[Number(row.original.id)]}
@@ -451,13 +451,13 @@ const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
       columnHelper.accessor('option5', {
         header: 'Option 5',
         cell: ({ row }) => (
-          <div className='flex items-start gap-2'>
+          <div className='flex w-40 max-w-40 min-w-0 items-start gap-2'>
             {row.original.option5 &&
               <CustomAvatar skin='light' color={row.original.answer == 5 ? 'success' : 'error'} size={28}>
                 <i className={classnames('bs-4 is-4', row.original.answer == 5 ? 'tabler-check' : 'tabler-x')} />
               </CustomAvatar>
             }
-            <div className='flex flex-col'>
+            <div className='flex w-full min-w-0 flex-col'>
               <ClampedQuestionText text={row.original.option5 || ''} lines={2} className='capitalize' />
               <TranslatedQuestionPreview
                 entry={translationPreview[Number(row.original.id)]}

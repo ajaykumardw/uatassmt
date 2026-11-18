@@ -251,7 +251,7 @@ const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
         header: 'ID',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
+            <div className='flex w-full min-w-0 flex-col'>
               <Typography color='text.primary' className='font-medium'>
                 {row.original.id}
               </Typography>
@@ -310,7 +310,7 @@ const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
         header: 'Question',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            <div className='flex flex-col'>
+            <div className='flex w-full min-w-0 flex-col'>
               <ClampedQuestionText text={row.original.question} className='font-medium' />
               <TranslatedQuestionPreview
                 entry={translationPreview[Number(row.original.id)]}

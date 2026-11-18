@@ -33,9 +33,38 @@ const ClampedQuestionText = ({
   useEffect(() => {
     const element = textRef.current
 
-    if (!element || expanded) return
+    if (!element) return
 
-    setCanToggle(element.scrollHeight > element.clientHeight + 1)
+    let cancelled = false
+
+    const measure = () => {
+      if (cancelled || expanded) return
+
+      const clampClass = clampClasses[lines]
+
+      element.classList.remove(clampClass)
+      const fullHeight = element.scrollHeight
+      const clippedWidth = element.scrollWidth > element.clientWidth + 1
+
+      element.classList.add(clampClass)
+
+      setCanToggle(fullHeight > element.clientHeight + 1 || clippedWidth)
+    }
+
+    const frame = requestAnimationFrame(measure)
+    const resizeObserver = new ResizeObserver(measure)
+    const mutationObserver = new MutationObserver(measure)
+
+    resizeObserver.observe(element)
+    mutationObserver.observe(element, { childList: true, characterData: true, subtree: true })
+    document.fonts?.ready.then(measure)
+
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(frame)
+      resizeObserver.disconnect()
+      mutationObserver.disconnect()
+    }
   }, [text, expanded, lines])
 
   useEffect(() => {
@@ -43,12 +72,12 @@ const ClampedQuestionText = ({
   }, [text])
 
   return (
-    <div className='flex flex-col items-start'>
+    <div className='flex w-full min-w-0 flex-col items-start'>
       <Typography
         ref={textRef}
         variant={variant}
         color={color === 'secondary' ? 'text.secondary' : 'text.primary'}
-        className={`text-wrap ${expanded ? '' : clampClasses[lines]} ${className}`}
+        className={`w-full min-w-0 break-words text-wrap ${expanded ? '' : clampClasses[lines]} ${className}`}
       >
         {text}
       </Typography>
