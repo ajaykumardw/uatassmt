@@ -1,5 +1,6 @@
 import Typography from '@mui/material/Typography'
 
+import ClampedQuestionText from '@/components/questions/ClampedQuestionText'
 import type { QuestionTranslationPreviewEntry } from '@/hooks/useQuestionTranslationPreview'
 
 type TranslationField =
@@ -59,9 +60,7 @@ const TranslatedQuestionPreview = ({ entry, field, languageMap, showLanguageLabe
           {language?.full_name || language?.short_name || `Language ${entry.languageId}`}
         </Typography>
       )}
-      <Typography variant='body2' color='text.secondary' className='whitespace-pre-wrap'>
-        {value}
-      </Typography>
+      <ClampedQuestionText text={value} lines={2} variant='body2' color='secondary' />
     </div>
   )
 }

@@ -76,6 +76,7 @@ import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
 import LanguageAvailabilityChips from '@/components/questions/LanguageAvailabilityChips';
+import ClampedQuestionText from '@/components/questions/ClampedQuestionText';
 import TranslatedQuestionPreview from '@/components/questions/TranslatedQuestionPreview';
 import useQuestionTranslationPreview from '@/hooks/useQuestionTranslationPreview';
 
@@ -320,9 +321,7 @@ const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium'>
-                {row.original.question}
-              </Typography>
+              <ClampedQuestionText text={row.original.question} className='font-medium' />
               <TranslatedQuestionPreview
                 entry={translationPreview[Number(row.original.id)]}
                 field='question'
@@ -346,15 +345,19 @@ const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
       columnHelper.accessor('pc', {
         header: 'PC',
         cell: ({ row }) => (
-          <div className='flex flex-col items-start gap-1'>
+          <div
+            className='flex flex-wrap items-start gap-1 max-h-14 overflow-y-auto overscroll-contain pr-1'
+            title={(row.original.pc || []).map(pc => pc.pc_id).join(', ')}
+          >
             {row.original.pc?.map((pc, index) => (
               <Chip
-              key={index}
+                key={index}
                 variant='tonal'
                 className='capitalize'
                 label={pc.pc_id}
                 color='info'
                 size='small'
+                title={pc.pc_id}
               />
             ))}
           </div>

@@ -82,6 +82,7 @@ import { MenuProps, TableRowLimit } from '@/configs/customDataConfig';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
 import LanguageAvailabilityChips from '@/components/questions/LanguageAvailabilityChips';
+import ClampedQuestionText from '@/components/questions/ClampedQuestionText';
 import TranslatedQuestionPreview from '@/components/questions/TranslatedQuestionPreview';
 import useQuestionTranslationPreview from '@/hooks/useQuestionTranslationPreview';
 
@@ -356,9 +357,7 @@ const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             <div className='flex flex-col'>
-              <Typography color='text.primary' className='font-medium min-w-96 text-wrap'>
-                {row.original.question}
-              </Typography>
+              <ClampedQuestionText text={row.original.question} className='font-medium min-w-96' />
               <TranslatedQuestionPreview
                 entry={translationPreview[Number(row.original.id)]}
                 field='question'
@@ -379,9 +378,7 @@ const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
               </CustomAvatar>
             }
             <div className='flex flex-col'>
-              <Typography className='capitalize' color='text.primary'>
-                {row.original.option1}
-              </Typography>
+              <ClampedQuestionText text={row.original.option1 || ''} lines={2} className='capitalize' />
               <TranslatedQuestionPreview
                 entry={translationPreview[Number(row.original.id)]}
                 field='option1'
@@ -401,9 +398,7 @@ const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
               </CustomAvatar>
             }
             <div className='flex flex-col'>
-              <Typography className='capitalize' color='text.primary'>
-                {row.original.option2}
-              </Typography>
+              <ClampedQuestionText text={row.original.option2 || ''} lines={2} className='capitalize' />
               <TranslatedQuestionPreview
                 entry={translationPreview[Number(row.original.id)]}
                 field='option2'
@@ -423,9 +418,7 @@ const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
               </CustomAvatar>
             }
             <div className='flex flex-col'>
-              <Typography className='capitalize' color='text.primary'>
-                {row.original.option3}
-              </Typography>
+              <ClampedQuestionText text={row.original.option3 || ''} lines={2} className='capitalize' />
               <TranslatedQuestionPreview
                 entry={translationPreview[Number(row.original.id)]}
                 field='option3'
@@ -445,9 +438,7 @@ const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
               </CustomAvatar>
             }
             <div className='flex flex-col'>
-              <Typography className='capitalize' color='text.primary'>
-                {row.original.option4}
-              </Typography>
+              <ClampedQuestionText text={row.original.option4 || ''} lines={2} className='capitalize' />
               <TranslatedQuestionPreview
                 entry={translationPreview[Number(row.original.id)]}
                 field='option4'
@@ -467,9 +458,7 @@ const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
               </CustomAvatar>
             }
             <div className='flex flex-col'>
-              <Typography className='capitalize' color='text.primary'>
-                {row.original.option5}
-              </Typography>
+              <ClampedQuestionText text={row.original.option5 || ''} lines={2} className='capitalize' />
               <TranslatedQuestionPreview
                 entry={translationPreview[Number(row.original.id)]}
                 field='option5'
@@ -483,10 +472,8 @@ const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
         header: 'Explanation',
         cell: ({ row }) => (
           <div className='flex items-start gap-2'>
-            <div className='flex flex-col min-w-96'>
-              <Typography className='capitalize text-wrap' color='text.primary'>
-                {row.original.question_explanation}
-              </Typography>
+            <div className='flex w-64 flex-col min-w-0'>
+              <ClampedQuestionText text={row.original.question_explanation || ''} lines={2} className='capitalize w-full min-w-0' />
               <TranslatedQuestionPreview
                 entry={translationPreview[Number(row.original.id)]}
                 field='question_explanation'
@@ -509,15 +496,19 @@ const [translateSelectedIds, setTranslateSelectedIds] = useState<number[]>([])
       columnHelper.accessor('pc', {
         header: 'PC',
         cell: ({ row }) => (
-          <div className='flex flex-col items-start gap-1'>
+          <div
+            className='flex flex-wrap items-start gap-1 max-h-14 overflow-y-auto overscroll-contain pr-1'
+            title={(row.original.pc || []).map(pc => pc.pc_id).join(', ')}
+          >
             {row.original.pc?.map((pc, index) => (
               <Chip
-              key={index}
+                key={index}
                 variant='tonal'
                 className='capitalize'
                 label={pc.pc_id}
                 color='info'
                 size='small'
+                title={pc.pc_id}
               />
             ))}
           </div>
