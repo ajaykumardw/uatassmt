@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
 // MUI Imports
 import Dialog from '@mui/material/Dialog'
@@ -244,6 +244,14 @@ const mapKeys = (data: any[]) => data.map((item: any) => ({
   Correct_Answer: item['Correct_Answer'],
 }));
 
+const readFileAsBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+  const reader = new FileReader();
+
+  reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+  reader.onerror = () => reject(reader.error);
+  reader.readAsDataURL(file);
+});
+
 const columnHelper = createColumnHelper<QuestionsTypeWithError>()
 
 const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuestionsList }: BulkUploadQuestionDialogProps) => {
@@ -251,6 +259,8 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
   // States
   // const [userData, setUserData] = useState<BulkUploadQuestionDialogProps['data']>(data || initialData)
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const uploadingRef = useRef(false);
   const [missingHeadersData, setMissingHeaders] = useState<any[]>([]);
   const [progress, setProgress] = useState<number>(0); // Progress state
   const [data, setData] = useState<any[]>([]);
@@ -823,41 +833,64 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
 
   const handleUploadData = async () => {
 
+    if (uploadingRef.current) return;
+
     if (uploadData.length > 0) {
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions/bulk/theory`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json' // Assuming you're sending JSON data
-        },
-        body: JSON.stringify({uploadData, sscID, qpID})
-      });
+      uploadingRef.current = true;
+      setUploading(true);
 
-      if(res.ok){
+      try {
 
-        toast.success('Questions uploaded successfully!', {
-          hideProgressBar: false
+        const fileBase64 = fileInput ? await readFileAsBase64(fileInput) : '';
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions/bulk/theory`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json' // Assuming you're sending JSON data
+          },
+          body: JSON.stringify({uploadData, sscID, qpID, fileName: fileInput?.name || '', fileBase64})
         });
 
-        updateQuestionsList();
-        setLoading(false);
-        handleReset();
+        if(res.ok){
 
-      } else {
-        // setLoading(false);
-        const errorData = await res.json().catch(() => null);
+          const resultData = await res.json().catch(() => null);
 
-        if (errorData?.errors?.length > 0) {
-          errorData.errors.forEach((error: string) => {
-            toast.error(error, {
+          if (resultData?.skipped > 0) {
+            toast.info(`${resultData.skipped} duplicate question(s) skipped.`, {
               hideProgressBar: false
             });
-          });
-        } else {
-          toast.error(errorData?.message || 'Something went wrong!', {
+          }
+
+          toast.success('Questions uploaded successfully!', {
             hideProgressBar: false
           });
+
+          updateQuestionsList();
+          handleReset();
+
+        } else {
+          const errorData = await res.json().catch(() => null);
+
+          if (errorData?.errors?.length > 0) {
+            errorData.errors.forEach((error: string) => {
+              toast.error(error, {
+                hideProgressBar: false
+              });
+            });
+          } else {
+            toast.error(errorData?.message || 'Something went wrong!', {
+              hideProgressBar: false
+            });
+          }
         }
+      } catch {
+        toast.error('Something went wrong!', {
+          hideProgressBar: false
+        });
+      } finally {
+        uploadingRef.current = false;
+        setUploading(false);
       }
     } else {
       toast.error('No validated data available!', {
@@ -976,11 +1009,11 @@ const BulkUploadQuestionsDialog = ({ open, sscID, qpID, handleClose, updateQuest
         </Grid>
       </DialogContent>
       <DialogActions className='justify-center pbs-0 sm:pbe-16 sm:pli-16'>
-        <Button variant='contained' type='submit' onClick={handleUploadData} disabled={uploadData.length === 0}>
-          {loading && <CircularProgress size={20} color='inherit' />}
+        <Button variant='contained' type='submit' onClick={handleUploadData} disabled={loading || uploading || uploadData.length === 0}>
+          {(loading || uploading) && <CircularProgress size={20} color='inherit' />}
           Upload Question
         </Button>
-        <Button variant='tonal' color='secondary' type='reset' onClick={handleReset}>
+        <Button variant='tonal' color='secondary' type='reset' onClick={handleReset} disabled={uploading}>
           Cancel
         </Button>
       </DialogActions>

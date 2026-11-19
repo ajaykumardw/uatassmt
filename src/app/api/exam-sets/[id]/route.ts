@@ -23,15 +23,7 @@ export async function GET(
       agency_id: agency_id
     },
     include: {
-      exam_sets_questions: {
-        include: {
-          questions: {
-            select: {
-              question_level: true
-            }
-          }
-        }
-      }
+      exam_sets_questions: true
     }
   });
 
@@ -73,15 +65,7 @@ export async function POST(
       agency_id: agency_id
     },
     include: {
-      exam_sets_questions: {
-        include: {
-          questions: {
-            select: {
-              question_level: true
-            }
-          }
-        }
-      }
+      exam_sets_questions: true
     }
   })
 

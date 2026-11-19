@@ -367,7 +367,10 @@ export async function GET(req: Request) {
 
   const url = new URL(req.url);
   const qpId = url.searchParams.get('qpId');
+  const nosId = url.searchParams.get('nosId');
+  const pcId = url.searchParams.get('pcId');
   const qType = url.searchParams.get('qType');
+  const filtersOnly = url.searchParams.get('filtersOnly') === '1';
 
   const session = await getServerSession(authOptions);
   const agency_id = Number(session?.user?.agency_id);
@@ -379,6 +382,58 @@ export async function GET(req: Request) {
       ? 'viva'
       : 'theory';
 
+  if (filtersOnly) {
+    const structure = await prisma.sector_skill_councils.findMany({
+      select: {
+        id: true,
+        agency_id: true,
+        ssc_name: true,
+        qualification_packs: {
+          select: {
+            id: true,
+            qualification_pack_id: true,
+            qualification_pack_name: true,
+            nsqf_level: true,
+            nos: {
+              orderBy: { nos_id: 'asc' },
+              select: {
+                id: true,
+                nos_id: true,
+                nos_name: true,
+                pc: {
+                  orderBy: { pc_id: 'asc' },
+                  select: {
+                    id: true,
+                    pc_id: true,
+                    pc_name: true,
+                    theory_marks: true,
+                    practical_marks: true,
+                    viva_marks: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      orderBy: { ssc_name: 'asc' }
+    });
+
+    const languages = await prisma.languages.findMany({
+      select: {
+        id: true,
+        alias: true,
+        full_name: true,
+        short_name: true
+      },
+      orderBy: { full_name: 'asc' }
+    });
+
+    return NextResponse.json({
+      data: structure,
+      languages: languages.map(language => ({ ...language, id: Number(language.id) }))
+    });
+  }
 
   // ================= QP FILTER =================
 
@@ -394,9 +449,6 @@ export async function GET(req: Request) {
 
         pc_questions:{
           some:{
-
-            // agency_id: agency_id,
-
             pc:{
               nos:{
                 qualification_packs:{
@@ -404,7 +456,9 @@ export async function GET(req: Request) {
                     id:Number(qpId)
                   }
                 }
-              }
+              },
+              ...(nosId && { nos_id: Number(nosId) }),
+              ...(pcId && { id: Number(pcId) })
             }
           }
         }
@@ -414,12 +468,40 @@ export async function GET(req: Request) {
       select:{
 
         id:true,
-        question:true,
-        marks:true,
-        question_type:true,
-        question_level: true,
         agency_id:true,
+        ssc_id:true,
+        qp_id:true,
+        nos_id:true,
+        language_id:true,
+        question_level:true,
+        question_type:true,
+        question:true,
+        option1:true,
+        option2:true,
+        option3:true,
+        option4:true,
+        option5:true,
+        answer:true,
+        marks:true,
+        question_explanation:true,
+        status:true,
+        created_by:true,
+        created_at:true,
+        updated_at:true,
         pc_questions:{
+          where:{
+            pc:{
+              nos:{
+                qualification_packs:{
+                  some: {
+                    id:Number(qpId)
+                  }
+                }
+              },
+              ...(nosId && { nos_id: Number(nosId) }),
+              ...(pcId && { id: Number(pcId) })
+            }
+          },
           select:{
             pc:{
               select:{
@@ -428,6 +510,12 @@ export async function GET(req: Request) {
                 pc_name:true
               }
             }
+          }
+        },
+
+        exam_sets_questions:{
+          select:{
+            id:true
           }
         },
 
@@ -456,7 +544,9 @@ export async function GET(req: Request) {
 
           return numA-numB;
 
-        })
+        }),
+
+      inExamSet:q.exam_sets_questions.length > 0
 
     }));
 
@@ -696,9 +786,6 @@ export async function GET(req: Request) {
     }))
 
   }));
-
-  console.log(formatted);
-
 
   const languages = await prisma.languages.findMany({
     select: {

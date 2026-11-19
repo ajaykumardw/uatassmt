@@ -22,18 +22,7 @@ export async function GET(req: Request) {
   };
 
   const examSets = await prisma.exam_sets.findMany({
-    where: whereCondition,
-    include: {
-      exam_sets_questions: {
-        include: {
-          questions: {
-            select: {
-              question_level: true
-            }
-          }
-        }
-      }
-    }
+    where: whereCondition
   });
 
   return NextResponse.json(examSets);

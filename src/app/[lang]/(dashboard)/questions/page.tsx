@@ -16,7 +16,7 @@ const Question = () => {
 
   const getQuestionsData = async () => {
     // Vars
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions`)
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions?filtersOnly=1`)
 
     if (!res.ok) {
       throw new Error('Failed to fetch NOS')

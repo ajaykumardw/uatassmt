@@ -54,17 +54,7 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
                         set_type: true,
                         exam_sets_questions: {
                             select: {
-                                questions: {
-                                    select: {
-                                        id: true,
-                                        language_id: true,
-                                        question_level: true,
-                                        question_type: true,
-                                        question: true,
-                                        marks: true,
-                                        status: true,
-                                    }
-                                },
+                                question_id: true
                             }
                         },
                     }
@@ -76,17 +66,7 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
                         set_type: true,
                         exam_sets_questions: {
                             select: {
-                                questions: {
-                                    select: {
-                                        id: true,
-                                        language_id: true,
-                                        question_level: true,
-                                        question_type: true,
-                                        question: true,
-                                        marks: true,
-                                        status: true,
-                                    }
-                                },
+                                question_id: true
                             }
                         },
                     }
@@ -94,15 +74,43 @@ export async function GET(req: NextRequest, context: { params: { id: number } })
             }
         });
 
+        const questionIds = [
+            ...(examSets?.practical_exam_set?.exam_sets_questions || []).map(item => item.question_id),
+            ...(examSets?.viva_exam_set?.exam_sets_questions || []).map(item => item.question_id)
+        ];
+
+        const questions = await prisma.questions.findMany({
+            where: {
+                id: {
+                    in: questionIds
+                }
+            },
+            select: {
+                id: true,
+                language_id: true,
+                question_level: true,
+                question_type: true,
+                question: true,
+                marks: true,
+                status: true
+            }
+        });
+
+        const questionMap = new Map(questions.map(question => [question.id, question]));
+
         const mappedExamSets = {
             ...examSets,
             practical_exam_set: {
                 ...examSets?.practical_exam_set,
-                exam_sets_questions: examSets?.practical_exam_set?.exam_sets_questions.map(q => q.questions)
+                exam_sets_questions: (examSets?.practical_exam_set?.exam_sets_questions || [])
+                    .map(item => questionMap.get(item.question_id))
+                    .filter(Boolean)
             },
             viva_exam_set: {
                 ...examSets?.viva_exam_set,
-                exam_sets_questions: examSets?.viva_exam_set?.exam_sets_questions.map(q => q.questions)
+                exam_sets_questions: (examSets?.viva_exam_set?.exam_sets_questions || [])
+                    .map(item => questionMap.get(item.question_id))
+                    .filter(Boolean)
             }
         }
 

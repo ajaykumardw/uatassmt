@@ -12,7 +12,6 @@ import { Chip, Typography } from '@mui/material';
 import type { NOSType } from '@/types/nos/nosType';
 import type { SSCType } from '@/types/sectorskills/sscType';
 import type { QPType } from '@/types/qualification-pack/qpType';
-import type { QuestionsType } from '@/types/questions/questionsType';
 import type { PCType } from '@/types/pc/pcType';
 
 // Component Imports
@@ -45,26 +44,6 @@ const TableFilters = ({ setSSCID, setQPID, setPCID, setAllPC, setData, tableData
   const [qpData, setQPData] = useState<QPType[]>([]);
   const [nosData, setNOSData] = useState<NOSType[]>([]);
   const [pcData, setPCData] = useState<PCType[]>([]);
-
-  // Function to fetch data
-  const fetchData = async () => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions`);
-
-      if (!res.ok) {
-        throw new Error('Failed to fetch data');
-      }
-
-      const data = await res.json();
-
-      // Remove duplicates from fetched data
-      const uniqueData: SSCType[] = removeDuplicates(data.data || data, 'id');
-
-      setSSCData(uniqueData);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
 
   // Function to handle SSC change
   const handleSSCChange = async (ssc: string) => {
@@ -132,39 +111,10 @@ const TableFilters = ({ setSSCID, setQPID, setPCID, setAllPC, setData, tableData
     const selectedNOS = nosData.find(nos => nos.id === nosId);
 
     if (selectedNOS) {
-      console.log(removeDuplicates(selectedNOS.pc, 'id'));
       setPCData(removeDuplicates(selectedNOS.pc || [], 'id'));
     } else {
       setPCData([]);
     }
-  };
-
-  // Function to get all questions
-  const getAllQuestions = (data?: SSCType[], qualificationPackId?: number, nosId?: number, pcId?: number): QuestionsType[] => {
-    let allQuestions: QuestionsType[] = [];
-
-    data?.forEach(entry => {
-      if (entry.qualification_packs && entry.qualification_packs.length > 0) {
-        entry.qualification_packs.forEach(pack => {
-          if ((qualificationPackId && pack.id === qualificationPackId) && pack.nos && pack.nos.length > 0) {
-            pack.nos.forEach(nos => {
-              if ((!nosId || nosId === -1 || nos.id === nosId) &&
-                  nos.pc && nos.pc.length > 0) {
-                nos.pc.forEach(pc => {
-                  if ((!pcId || pcId === -1 || pc.id === pcId) &&
-                      pc.questions && pc.questions.length > 0) {
-                    allQuestions = allQuestions.concat(pc.questions);
-                  }
-                });
-              }
-            });
-          }
-        });
-      }
-    });
-
-    // Remove duplicates based on question ID
-    return removeDuplicates(allQuestions, 'id');
   };
 
   // Function to get all PC
@@ -189,24 +139,59 @@ const TableFilters = ({ setSSCID, setQPID, setPCID, setAllPC, setData, tableData
     return removeDuplicates(allPC, 'id');
   };
 
-  // Effect to handle data fetching and setting
   useEffect(() => {
-    const updateData = async () => {
+    setSSCData(removeDuplicates(tableData || [], 'id'));
+  }, [tableData]);
+
+  useEffect(() => {
+    setAllPC(getAllPC(tableData, qp, nos));
+  }, [tableData, qp, nos, setAllPC]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadQuestions = async () => {
+      if (qp === -1 || !qp) {
+        setData([]);
+
+        return;
+      }
+
+      const params = new URLSearchParams({ qpId: String(qp) });
+
+      if (nos !== -1) params.set('nosId', String(nos));
+      if (pc !== -1) params.set('pcId', String(pc));
+
       try {
-        const questionsData = getAllQuestions(tableData, qp, nos, pc);
-        const pcData = getAllPC(tableData, qp, nos);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/questions?${params.toString()}`);
 
-        setData(questionsData);
-        setAllPC(pcData);
+        if (!res.ok) {
+          throw new Error('Failed to fetch questions');
+        }
 
-        await fetchData(); // Ensure data is fetched and processed correctly
+        const questions = await res.json();
+
+        if (!cancelled) {
+          setData((questions || []).map((question: any) => ({
+            ...question,
+            pc: question.pc || [],
+            inExamSet: question.inExamSet || false
+          })));
+        }
       } catch (error) {
-        console.error('Error updating data:', error);
+        if (!cancelled) {
+          console.error('Error updating data:', error);
+          setData([]);
+        }
       }
     };
 
-    updateData();
-  }, [ssc, qp, nos, pc, tableData, setData, setAllPC]);
+    loadQuestions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [qp, nos, pc, tableData, setData]);
 
   return (
     <CardContent>

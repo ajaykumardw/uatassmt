@@ -13,24 +13,40 @@ export async function GET() {
   const session = await getServerSession(authOptions);
   const agency_id = Number(session?.user?.agency_id)
 
-  console.log("session data from api", session);
-
   const examSets = await prisma.exam_sets.findMany({
     where:{
       agency_id: agency_id
     },
     include: {
-      exam_sets_questions: {
-        include: {
-          questions: {
-            select: {
-              question_level: true
-            }
-          }
-        }
-      }
+      exam_sets_questions: true
     }
   });
 
-  return NextResponse.json(examSets);
+  const questionIds = examSets.flatMap(examSet => examSet.exam_sets_questions.map(item => item.question_id));
+
+  const questions = await prisma.questions.findMany({
+    where: {
+      id: {
+        in: questionIds
+      }
+    },
+    select: {
+      id: true,
+      question_level: true
+    }
+  });
+
+  const questionLevels = new Map(questions.map(question => [question.id, question.question_level]));
+
+  const examSetsWithQuestionLevels = examSets.map(examSet => ({
+    ...examSet,
+    exam_sets_questions: examSet.exam_sets_questions.map(item => ({
+      ...item,
+      questions: {
+        question_level: questionLevels.get(item.question_id) || 'E'
+      }
+    }))
+  }));
+
+  return NextResponse.json(examSetsWithQuestionLevels);
 }
