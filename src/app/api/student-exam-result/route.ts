@@ -10,7 +10,13 @@ import { authOptions } from '@/libs/auth';
 
 import prisma from '@/libs/prisma';
 
+import { enforceStudentAttendance } from '@/libs/studentAttendanceGuard';
+
 export async function POST(req: Request) {
+  const attendanceGuard = await enforceStudentAttendance(req);
+
+  if (!attendanceGuard.ok) return attendanceGuard.response;
+
   const data = await req.json();
   const {examSetId, examDurations, totalQuestions, ip, userAgent, deviceId, language_id} = data;
   const session = await getServerSession(authOptions);

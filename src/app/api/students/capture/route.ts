@@ -16,6 +16,8 @@ import prisma from '@/libs/prisma';
 
 import { storageFolders } from "@/configs/customDataConfig";
 
+import { enforceStudentAttendance } from '@/libs/studentAttendanceGuard';
+
 const allowedTypes = [
   "image/jpeg",
   "image/png",
@@ -49,6 +51,10 @@ const createDirectoryIfNotExist = (dir:string)=>{
 };
 
 export async function POST(req:NextRequest){
+
+  const attendanceGuard = await enforceStudentAttendance(req);
+
+  if(!attendanceGuard.ok) return attendanceGuard.response;
 
   const authHeader =
     req.headers.get("authorization");

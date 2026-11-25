@@ -10,7 +10,13 @@ import { authOptions } from '@/libs/auth';
 
 import prisma from '@/libs/prisma';
 
+import { enforceStudentAttendance } from '@/libs/studentAttendanceGuard';
+
 export async function GET(req: NextRequest) {
+
+  const attendanceGuard = await enforceStudentAttendance(req);
+
+  if (!attendanceGuard.ok) return attendanceGuard.response;
 
   const authHeader = req.headers.get("authorization");
   const session = await getServerSession(authOptions);

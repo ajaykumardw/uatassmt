@@ -13,6 +13,8 @@ import { authOptions } from '@/libs/auth';
 
 import prisma from '@/libs/prisma';
 
+import { enforceStudentAttendance } from '@/libs/studentAttendanceGuard';
+
 const storageFolders = {
   storage: "storage",
   uploads: "uploads",
@@ -119,6 +121,10 @@ export async function GET(req: Request) {
 
 
 export async function POST(req: Request) {
+  const attendanceGuard = await enforceStudentAttendance(req);
+
+  if (!attendanceGuard.ok) return attendanceGuard.response;
+
   const { captured_image } = await req.json();
   const session = await getServerSession(authOptions);
   const student = Number(session?.user.id);

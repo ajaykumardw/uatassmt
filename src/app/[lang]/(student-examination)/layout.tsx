@@ -5,6 +5,7 @@ import type { Locale } from '@configs/i18n'
 // Component Imports
 import Providers from '@components/Providers'
 import BlankLayout from '@layouts/BlankLayout'
+import ImageGuard from '@/hocs/ImageGuard'
 
 // Config Imports
 import { i18n } from '@configs/i18n'
@@ -23,7 +24,9 @@ const Layout = ({ children, params }: Props) => {
 
   return (
     <Providers direction={direction}>
-      <BlankLayout systemMode={systemMode}>{children}</BlankLayout>
+      <ImageGuard locale={params.lang}>
+        <BlankLayout systemMode={systemMode}>{children}</BlankLayout>
+      </ImageGuard>
     </Providers>
   )
 }

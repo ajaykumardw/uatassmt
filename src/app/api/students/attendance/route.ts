@@ -241,6 +241,16 @@ export async function POST(
         const formData = await request.formData();
         const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
 
+        const requiredKeys = ["image", "id_front_image", "id_back_image"] as const;
+
+        for (const key of requiredKeys) {
+            const file = formData.get(key);
+
+            if (!file || !(file instanceof File)) {
+                return errorResponse(`${key} is required.`, 400);
+            }
+        }
+
         // Initialize files to process array
         const filesToProcess = [];
 
@@ -258,40 +268,16 @@ export async function POST(
                     return errorResponse(`${key} is invalid.`, 400);
                 }
 
-                // Check if the student already has an image in the database
-                const student = await prisma.students.findUnique({
-                    where: {
-                        id: studentId,
-                        batch_id: batchId,
-                    },
-                    select: {
-                        [key]: true, // Retrieve the image field (image, id_front_image, or id_back_image)
-                    }
+                const ext = validateFile(file, allowedMimeTypes, MAX_IMAGE_SIZE);
+
+                const filename = `${randomUUID()}.${ext}`;
+
+                filesToProcess.push({
+                    file,
+                    filename,
+                    key,
+                    exists: false,
                 });
-
-                // If the image exists in the database, skip file upload and database update
-                if (student && student[key]) {
-                    console.log(`File for ${key} already exists. Skipping upload.`);
-                    filesToProcess.push({
-                        file,
-                        filename: student[key],
-                        key,
-                        exists: true, // Mark as existing file in the database
-                    });
-                } else {
-                    // Validate file type and size if it doesn't exist in the database
-                    const ext = validateFile(file, allowedMimeTypes, MAX_IMAGE_SIZE);
-
-                    // Generate a unique filename
-                    const filename = `${randomUUID()}.${ext}`;
-
-                    filesToProcess.push({
-                        file,
-                        filename,
-                        key,
-                        exists: false, // New file, needs upload
-                    });
-                }
             }
         }
 
@@ -301,27 +287,14 @@ export async function POST(
         createDirectoryIfNotExist(uploadDir);
 
         // Process each file
-        for (const { file, filename, key, exists } of filesToProcess) {
-            if (exists) {
-                // If the file already exists, skip the file upload and database update
-                continue;
-            }
-
-            // const arrayBuffer = await file.arrayBuffer();
-            // const buffer = Buffer.from(arrayBuffer);
-
-            // // Write the file to disk
-            // fs.writeFileSync(path.resolve(uploadDir, filename as string), buffer);
-
+        for (const { file, filename, key } of filesToProcess) {
             const filePath = path.resolve(uploadDir, filename as string);
 
-            // Stream write (better than buffer)
             await pipeline(
                 file.stream() as unknown as NodeJS.ReadableStream,
                 fs.createWriteStream(filePath)
             );
 
-            // Update database
             await prisma.students.update({
                 where: {
                     id: studentId,
@@ -329,10 +302,35 @@ export async function POST(
                 },
                 data: {
                     [key]: filename,
-                    ...(key === "image" && { attendance: 1 })
                 },
             });
         }
+
+        const updatedStudent = await prisma.students.findUnique({
+            where: {
+                id: studentId,
+                batch_id: batchId,
+            },
+            select: {
+                image: true,
+                id_front_image: true,
+                id_back_image: true,
+            }
+        });
+
+        if (!updatedStudent?.image || !updatedStudent.id_front_image || !updatedStudent.id_back_image) {
+            return errorResponse("All three images are required to mark attendance.", 400);
+        }
+
+        await prisma.students.update({
+            where: {
+                id: studentId,
+                batch_id: batchId,
+            },
+            data: {
+                attendance: 1,
+            },
+        });
 
         const relativePath = path.posix.join(
             storageFolders.storage,

@@ -24,6 +24,8 @@ import {
 
 import prisma from '@/libs/prisma';
 
+import { enforceStudentAttendance } from '@/libs/studentAttendanceGuard';
+
 const schemaValidation = object({
 
   examSetId:
@@ -82,6 +84,10 @@ const schemaValidation = object({
 });
 
 export async function POST(req: Request) {
+  const attendanceGuard = await enforceStudentAttendance(req);
+
+  if (!attendanceGuard.ok) return attendanceGuard.response;
+
   const data = await req.json();
 
   const validation = safeParse(schemaValidation, data);

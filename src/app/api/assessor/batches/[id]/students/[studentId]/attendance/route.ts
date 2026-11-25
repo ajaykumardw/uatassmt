@@ -226,7 +226,12 @@ export async function POST(
         const studentExist = await prisma.students.findUnique({
             where: {
                 id: studentId,
-                batch_id: batchId
+                batch_id: batchId,
+                batch: {
+                    assessor: {
+                        id: Number(decoded.id)
+                    }
+                }
             },
             select: {
                 id: true,
@@ -431,6 +436,11 @@ export async function DELETE(
             where: {
                 id: studentId,
                 batch_id: batchId,
+                batch: {
+                    assessor: {
+                        id: Number(decoded.id)
+                    }
+                }
             },
             select: {
                 image: true,

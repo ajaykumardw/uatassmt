@@ -11,34 +11,15 @@ import type { ChildrenType } from '@core/types'
 import ImageRedirect from '@/components/ImageRedirect'
 import { authOptions } from '@/libs/auth'
 import prisma from '@/libs/prisma'
+import { getStudentAttendanceState, isExcludedIp } from '@/libs/studentAttendanceGuard'
 
 export const dynamic = "force-dynamic";
 
 export default async function ImageGuard({ children, locale }: ChildrenType & { locale: Locale }) {
   const session = await getServerSession(authOptions)
 
-  // Get client IP from headers
-  let ip =
-    headers().get('x-forwarded-for')?.split(',')[0] || // first IP in the chain
-    headers().get('x-real-ip') ||                       // fallback
-    '0.0.0.0'
-
-  // Normalize localhost and IPv4-mapped IPv6
-  if (ip === '::1') ip = '127.0.0.1'
-  if (ip.startsWith('::ffff:')) ip = ip.split('::ffff:')[1]
-
-  // IP whitelist for bypass
-  // const excludeIps = [
-  //   '127.0.0.1',       // localhost dev
-  //   // '103.246.170.213'  // example production IP
-  // ]
-
-  const excludeIps = process.env.EXCLUDE_IPS ? process.env.EXCLUDE_IPS.split(',') : []
-
-  if (excludeIps.includes(ip)) {
-
+  if (isExcludedIp(headers())) {
     return <>{children}</>
-
   }
 
   const studentLog = await prisma.log_sessions.findFirst({
@@ -52,16 +33,7 @@ export default async function ImageGuard({ children, locale }: ChildrenType & { 
     }
   })
 
-  const attendance = await prisma.students.findFirst({
-    where: {
-      id: Number(session?.user.id)
-    },
-    select: {
-      image: true,
-      id_front_image: true,
-      id_back_image: true
-    }
-  })
+  const attendanceState = await getStudentAttendanceState(Number(session?.user.id))
 
-  return <>{studentLog && attendance && attendance.image && attendance.id_front_image && attendance.id_back_image ? children : <ImageRedirect lang={locale} />}</>
+  return <>{studentLog && attendanceState.allowed ? children : <ImageRedirect lang={locale} />}</>
 }

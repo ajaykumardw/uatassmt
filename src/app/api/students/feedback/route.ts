@@ -14,8 +14,14 @@ import prisma from '@/libs/prisma';
 
 import { FeedbackFormTypes, QuestionTypes, storageFolders } from "@/configs/customDataConfig";
 
+import { enforceStudentAttendance } from '@/libs/studentAttendanceGuard';
+
 // GET all forms
 export async function GET(request: NextRequest) {
+
+  const attendanceGuard = await enforceStudentAttendance(request);
+
+  if (!attendanceGuard.ok) return attendanceGuard.response;
 
   const authHeader = request.headers.get("authorization");
 
@@ -126,6 +132,10 @@ export async function GET(request: NextRequest) {
 
 
 export async function POST(req: NextRequest) {
+
+  const attendanceGuard = await enforceStudentAttendance(req);
+
+  if (!attendanceGuard.ok) return attendanceGuard.response;
 
   const authHeader = req.headers.get("authorization");
 

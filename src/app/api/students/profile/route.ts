@@ -12,7 +12,13 @@ import { decrypt, encrypt } from "@/utils/encryption";
 
 import { storageFolders } from "@/configs/customDataConfig";
 
+import { enforceStudentAttendance } from '@/libs/studentAttendanceGuard';
+
 export async function GET(req: NextRequest) {
+
+  const attendanceGuard = await enforceStudentAttendance(req);
+
+  if (!attendanceGuard.ok) return attendanceGuard.response;
 
   const authHeader = req.headers.get("authorization");
 
@@ -139,6 +145,10 @@ export async function GET(req: NextRequest) {
 export async function PATCH(
   req: NextRequest,
 ) {
+
+  const attendanceGuard = await enforceStudentAttendance(req);
+
+  if (!attendanceGuard.ok) return attendanceGuard.response;
 
   const authHeader = req.headers.get("authorization");
 
