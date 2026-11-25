@@ -7,12 +7,11 @@ import archiver from "archiver";
 
 import pLimit from "p-limit";
 
-import { launch } from "puppeteer";
-
 import type {
-  Browser,
   PDFOptions
 } from "puppeteer";
+
+import { withPdfPage } from "@/libs/puppeteerBrowser";
 
 // ================= TYPES =================
 
@@ -32,35 +31,6 @@ export type CandidateData = {
 
   system_identification_no: string;
 };
-
-// ================= SHARED BROWSER =================
-
-let browser: Browser | null =
-  null;
-
-let processedJobs = 0;
-
-// ================= BROWSER =================
-
-async function getBrowser() {
-
-  if (browser) {
-    return browser;
-  }
-
-  browser =
-    await launch({
-
-      headless: true,
-
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox"
-      ]
-    });
-
-  return browser;
-}
 
 // ================= FILE TO BASE64 =================
 
@@ -254,11 +224,6 @@ export const generateCertificatesZip =
         preparedHtml
       );
 
-    // ================= BROWSER =================
-
-    const activeBrowser =
-      await getBrowser();
-
     // ================= ZIP =================
 
     const output =
@@ -363,61 +328,51 @@ export const generateCertificatesZip =
                 </html>
               `;
 
-              // ================= PAGE =================
+              const pdf = await withPdfPage(async (page) => {
+                await page.setViewport({
 
-              const page =
-                await activeBrowser.newPage();
+                  width:
+                    config.width,
 
-              await page.setViewport({
+                  height:
+                    config.height
+                });
 
-                width:
-                  config.width,
-
-                height:
-                  config.height
-              });
-
-              await page.emulateMediaType(
-                "screen"
-              );
-
-              // ================= CONTENT =================
-
-              await page.setContent(
-                finalHtml,
-                {
-                  waitUntil:
-                    "domcontentloaded"
-                }
-              );
-
-              // ================= PDF =================
-
-              const pdfOptions: PDFOptions = {
-
-                width:
-                  `${config.width}px`,
-
-                height:
-                  `${config.height}px`,
-
-                printBackground:
-                  true,
-
-                margin: {
-                  top: "0px",
-                  right: "0px",
-                  bottom: "0px",
-                  left: "0px"
-                }
-              };
-
-              const pdf =
-                await page.pdf(
-                  pdfOptions
+                await page.emulateMediaType(
+                  "screen"
                 );
 
-              await page.close();
+                await page.setContent(
+                  finalHtml,
+                  {
+                    waitUntil:
+                      "domcontentloaded"
+                  }
+                );
+
+                const pdfOptions: PDFOptions = {
+
+                  width:
+                    `${config.width}px`,
+
+                  height:
+                    `${config.height}px`,
+
+                  printBackground:
+                    true,
+
+                  margin: {
+                    top: "0px",
+                    right: "0px",
+                    bottom: "0px",
+                    left: "0px"
+                  }
+                };
+
+                return await page.pdf(
+                  pdfOptions
+                );
+              });
 
               // ================= APPEND =================
 
@@ -459,25 +414,6 @@ export const generateCertificatesZip =
         );
       }
     );
-
-    // ================= RESET =================
-
-    processedJobs++;
-
-    if (
-      processedJobs >= 20
-    ) {
-
-      try {
-
-        await browser?.close();
-
-      } catch { }
-
-      browser = null;
-
-      processedJobs = 0;
-    }
 
     console.timeEnd("generateCertificatesZip");
     console.log("end time", new Date().toISOString());

@@ -14,7 +14,7 @@ import prisma from "@/libs/prisma";
 
 import { getAgencyImagePath, getSSCImagePath } from "@/configs/customDataConfig";
 
-import { getBrowser } from "@/libs/puppeteerBrowser";
+import { withPdfPage } from "@/libs/puppeteerBrowser";
 
 const imageCache =
     new Map<string, string>();
@@ -603,8 +603,6 @@ export const processQuestionPaper = async (
 
         // HTML
 
-        const browser = await getBrowser();
-
         // const pdfBuffers: Buffer[] = [];
 
         let sscLogo = "";
@@ -632,7 +630,6 @@ export const processQuestionPaper = async (
         const totalMarks = batch.qualification_pack.total_theory_marks || 0;
 
         const masterPdf = await PDFDocument.create();
-        const page = await browser.newPage();
 
         // LOOP PAPERS
         let processedPapers = 0;
@@ -935,7 +932,9 @@ export const processQuestionPaper = async (
                 </html>
               `
 
-            const pdf = await generatePDF(page, finalHtml, headerHtml);
+            const pdf = await withPdfPage((page) =>
+                generatePDF(page, finalHtml, headerHtml)
+            );
 
             const mPdf = await PDFDocument.load(pdf);
 
@@ -965,8 +964,6 @@ export const processQuestionPaper = async (
             );
 
         }
-
-        await page.close();
 
         // const finalPDF = await mergePDFs(pdfBuffers);
         const finalPDF = await masterPdf.save();

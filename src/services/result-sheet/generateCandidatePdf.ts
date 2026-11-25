@@ -5,7 +5,7 @@ import { jsPDF } from "jspdf";
 
 import autoTable from "jspdf-autotable"
 
-import { getBrowser } from "@/libs/puppeteerBrowser";
+import { withPdfPage } from "@/libs/puppeteerBrowser";
 
 import notoSansDevanagari from "@/fonts/noto-sans-devanagari-base64";
 
@@ -1669,13 +1669,11 @@ export const generateCandidatePdf = async (data: any, assets: any, type: string 
   data.type = type;
   const html = buildHtml(data, logos, [agencySign, tcSign]);
 
-  const browser = await getBrowser();
-  const page = await browser.newPage();
+  const pdf = await withPdfPage(async (page) => {
+    await page.setContent(html, { waitUntil: "load" });
 
-  await page.setContent(html, { waitUntil: "load" });
-  const pdf = await page.pdf({ format: "A4", printBackground: true, margin: { top: "10mm", bottom: "10mm", left: "5mm", right: "5mm" } });
-
-  await page.close();
+    return await page.pdf({ format: "A4", printBackground: true, margin: { top: "10mm", bottom: "10mm", left: "5mm", right: "5mm" } });
+  });
 
   let fileName = "Result_Sheet.pdf";
 

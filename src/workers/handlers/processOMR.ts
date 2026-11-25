@@ -7,7 +7,7 @@ import { type Job } from "bullmq";
 
 import prisma from "@/libs/prisma";
 
-import { getBrowser } from "@/libs/puppeteerBrowser";
+import { withPdfPage } from "@/libs/puppeteerBrowser";
 
 import { getAgencyImagePath } from "@/configs/customDataConfig";
 
@@ -708,10 +708,6 @@ export const processOMRSheet = async (job: Job) => {
     const questions = 100;
     const options = ["A", "B", "C", "D"];
 
-    const browser = await getBrowser();
-
-    const page = await browser.newPage();
-
     try {
 
       let logo = '';
@@ -725,13 +721,15 @@ export const processOMRSheet = async (job: Job) => {
         assessmentDate: batch?.assessment_start_datetime ? format(batch.assessment_start_datetime, "dd-MM-yyyy") : ""
       }, candidateData);
 
-      await page.setContent(html, {
-        waitUntil: "domcontentloaded",
-      });
+      const pdf = await withPdfPage(async (page) => {
+        await page.setContent(html, {
+          waitUntil: "domcontentloaded",
+        });
 
-      const pdf = await page.pdf({
-        format: "A4",
-        printBackground: true,
+        return await page.pdf({
+          format: "A4",
+          printBackground: true,
+        });
       });
 
       await prisma.jobs.update({
@@ -835,9 +833,6 @@ export const processOMRSheet = async (job: Job) => {
       console.error(`[${new Date().toLocaleDateString()}] error in batch omr sheet store:`, error);
 
       throw new Error("Error in generating OMR sheet");
-
-    } finally {
-      await page.close();
     }
 
   } catch (error) {
