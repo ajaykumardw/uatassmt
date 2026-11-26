@@ -1,10 +1,15 @@
 "use server";
 
+import path from "path";
+
 import { compare } from "bcrypt";
 
 import { getServerSession } from "next-auth";
 
-import { STUDENT_RESULT } from "@/configs/customDataConfig";
+import {
+  STUDENT_RESULT,
+  storageFolders,
+} from "@/configs/customDataConfig";
 
 import { authOptions } from "@/libs/auth";
 
@@ -28,6 +33,12 @@ export type BatchCandidate = {
   result: number;
   percentage: number;
   calculatedResult: number;
+  attendance: number | null;
+  attendanceImages: {
+    image: string | null;
+    idFrontImage: string | null;
+    idBackImage: string | null;
+  };
 };
 
 export type BatchCandidateResponse =
@@ -86,6 +97,10 @@ type BatchContext = {
     candidate_name: string;
     result: number | null;
     certificate_no: string | null;
+    attendance: number | null;
+    image: string | null;
+    id_front_image: string | null;
+    id_back_image: string | null;
   }>;
   resultQuestions: ResultQuestion[];
   theoryCorrectMap: Map<number, Set<number>>;
@@ -99,6 +114,28 @@ const toNumber = (value: unknown) => {
   const parsed = Number(value);
 
   return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const getAttendanceImageUrl = (
+  batchId: number,
+  studentId: number,
+  fileName: string | null
+) => {
+  if (!fileName) return null;
+
+  const relativePath = path.posix.join(
+    storageFolders.storage,
+    storageFolders.uploads,
+    storageFolders.agency,
+    storageFolders.batches,
+    batchId.toString(),
+    storageFolders.student,
+    studentId.toString(),
+    storageFolders.images,
+    fileName
+  );
+
+  return `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/${relativePath}`;
 };
 
 type SessionContextResult =
@@ -238,6 +275,10 @@ const buildBatchContext = async (
       candidate_name: true,
       result: true,
       certificate_no: true,
+      attendance: true,
+      image: true,
+      id_front_image: true,
+      id_back_image: true,
     },
     orderBy: {
       id: "asc",
@@ -661,6 +702,20 @@ export async function getBatchCandidates(
       percentage: evaluation?.percentage ?? 0,
       calculatedResult:
         evaluation?.result ?? STUDENT_RESULT.PENDING,
+      attendance: student.attendance,
+      attendanceImages: {
+        image: getAttendanceImageUrl(batch.id, student.id, student.image),
+        idFrontImage: getAttendanceImageUrl(
+          batch.id,
+          student.id,
+          student.id_front_image
+        ),
+        idBackImage: getAttendanceImageUrl(
+          batch.id,
+          student.id,
+          student.id_back_image
+        ),
+      },
     };
   });
 

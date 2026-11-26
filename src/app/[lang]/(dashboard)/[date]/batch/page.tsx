@@ -29,6 +29,8 @@ import {
   Typography,
 } from "@mui/material";
 
+import OptionMenu from "@/@core/components/option-menu";
+
 import {
   STUDENT_RESULT,
   STUDENT_RESULT_LABEL,
@@ -75,6 +77,9 @@ const Page = () => {
 
   const [confirmAction, setConfirmAction] = useState<ActionType | null>(null);
 
+  const [attendanceCandidate, setAttendanceCandidate] =
+    useState<BatchCandidate | null>(null);
+
   const [password, setPassword] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
@@ -116,6 +121,7 @@ const Page = () => {
         setRows([]);
         setSelectedIds([]);
         setManualResults({});
+        setAttendanceCandidate(null);
         setError(response.error);
         toast.error(response.error);
 
@@ -126,6 +132,7 @@ const Page = () => {
       setRows(response.candidates);
       setSelectedIds([]);
       setManualResults({});
+      setAttendanceCandidate(null);
 
       if (options?.showSuccess) {
         toast.success("Batch results refreshed");
@@ -385,8 +392,10 @@ const Page = () => {
                     <TableCell>Sr No.</TableCell>
                     <TableCell>Candidate ID</TableCell>
                     <TableCell>Candidate Name</TableCell>
+                    <TableCell>Attendance</TableCell>
                     <TableCell>Result</TableCell>
                     <TableCell>Percentage</TableCell>
+                    <TableCell>Action</TableCell>
                   </TableRow>
                 </TableHead>
 
@@ -417,6 +426,15 @@ const Page = () => {
                         </TableCell>
 
                         <TableCell>{row.candidate_name}</TableCell>
+
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            label={row.attendance === 1 ? "Present" : "Absent"}
+                            color={row.attendance === 1 ? "success" : "error"}
+                            variant="outlined"
+                          />
+                        </TableCell>
 
                         <TableCell>
                           <div className="flex min-w-[170px] flex-col gap-1">
@@ -473,13 +491,30 @@ const Page = () => {
                         </TableCell>
 
                         <TableCell>{formatPercentage(row.percentage)}</TableCell>
+
+                        <TableCell align="center">
+                          <OptionMenu
+                            iconButtonProps={{
+                              "aria-label": `Actions for ${row.candidate_id}`,
+                            }}
+                            options={[
+                              {
+                                text: "View attendance photos",
+                                icon: "tabler-camera",
+                                menuItemProps: {
+                                  onClick: () => setAttendanceCandidate(row),
+                                },
+                              },
+                            ]}
+                          />
+                        </TableCell>
                       </TableRow>
                     );
                   })}
 
                   {rows.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} align="center">
+                      <TableCell colSpan={8} align="center">
                         No candidates found in this batch.
                       </TableCell>
                     </TableRow>
@@ -489,6 +524,71 @@ const Page = () => {
             </TableContainer>
           </CardContent>
         </Card>
+      )}
+
+      {attendanceCandidate && (
+        <Dialog
+          open
+          onClose={() => setAttendanceCandidate(null)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>
+            Attendance Photos - {attendanceCandidate.candidate_id}
+          </DialogTitle>
+
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary" className="mb-4">
+              {attendanceCandidate.candidate_name} ·{" "}
+              {attendanceCandidate.attendance === 1 ? "Present" : "Absent"}
+            </Typography>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {[
+                {
+                  label: "Candidate Photo",
+                  src: attendanceCandidate.attendanceImages.image,
+                },
+                {
+                  label: "ID Front",
+                  src: attendanceCandidate.attendanceImages.idFrontImage,
+                },
+                {
+                  label: "ID Back",
+                  src: attendanceCandidate.attendanceImages.idBackImage,
+                },
+              ].map((photo) => (
+                <div key={photo.label} className="border rounded p-3">
+                  <Typography variant="subtitle2" className="mb-2">
+                    {photo.label}
+                  </Typography>
+
+                  {photo.src ? (
+                    <img
+                      src={photo.src}
+                      alt={`${attendanceCandidate?.candidate_id} ${photo.label}`}
+                      loading="lazy"
+                      className="w-full rounded border"
+                    />
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      Not available
+                    </Typography>
+                  )}
+                </div>
+              ))}
+            </div>
+          </DialogContent>
+
+          <DialogActions>
+            <Button
+              onClick={() => setAttendanceCandidate(null)}
+              color="secondary"
+            >
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
       )}
 
       <Dialog
